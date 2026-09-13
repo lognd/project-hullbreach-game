@@ -1,0 +1,41 @@
+name: CI
+
+# Development happens on branches; main only moves by pull request. There
+# is no Unity license in CI yet, so the gate checks what can be checked
+# without an editor: the committed tree is consistent, the editor version
+# is pinned, and nothing generated or secret slipped in. Editor tests and
+# a headless build are tracked in TODO.md.
+
+on:
+  pull_request:
+    branches: ["main"]
+  push:
+    branches: ["main"]
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  tree:
+    name: unity tree
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: check committed tree
+        run: scripts/check_unity_tree.sh
+
+  # The one status check branch protection requires.
+  gate:
+    name: All checks pass
+    runs-on: ubuntu-latest
+    needs: [tree]
+    if: always()
+    steps:
+      - name: verify every job succeeded
+        run: |
+          echo "tree: ${{ needs.tree.result }}"
+          if [ "${{ needs.tree.result }}" != "success" ]; then
+            echo "::error::at least one required job did not succeed"
+            exit 1
+          fi
