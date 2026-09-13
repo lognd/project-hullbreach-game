@@ -112,3 +112,7 @@ InitTestScene*.unity*
 
 # Auto-generated cache in Assets folder
 /[Aa]ssets/[Ss]ceneDependencyCache*
+
+# frob local state (frob does not gate this repo yet, but it may be run here)
+.frob/
+FROBLEMS.md
