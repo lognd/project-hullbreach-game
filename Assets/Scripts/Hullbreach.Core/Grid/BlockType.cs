@@ -14,6 +14,11 @@ namespace Hullbreach.Core
     /// </summary>
     public readonly struct BlockType
     {
+        /// <summary>Width of a single block. (All blocks should be the same size). </summary>
+        public const float Width = 1.0f;
+        /// <summary>Height of a single block. (All blocks should be the same size).</summary>
+        public const float Height = 1.0f; 
+
         public readonly string Name;
 
         /// <summary>Mass of one block. Feeds the mass accumulators.</summary>

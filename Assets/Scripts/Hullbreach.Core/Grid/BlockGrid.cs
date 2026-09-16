@@ -40,18 +40,29 @@ namespace Hullbreach.Core
 
         public IEnumerable<KeyValuePair<int, Block>> All => _blocks;
 
-        // TODO [A1]: Insert at `key`. Reject when already occupied. Update the
-        //            mass accumulators, mark topology dirty, and record CoreKey
-        //            when the type is BlockTypes.Core.
         public bool TryAdd(int key, Block block)
         {
+
+            // If there is already a block, don't add it.
             if (_blocks.ContainsKey(key)) return false;
+
+            if (block.TypeId == BlockTypes.Core)
+            {
+                // If there is already a core in the grid, don't add it.
+                if (CoreKey.HasValue) return false;
+                CoreKey = key;
+            }
+
             _blocks.Add(key, block);
 
-            center = BlockGrid.CenterOf(key);
+            // Required to recalculate mass and moment of inertia of ship to maintain O(1) invariant.
+            float2 center = BlockGrid.CenterOf(key);
+            float mass = BlockTypes.Get(block.TypeId).Mass;
+            Mass.Add(mass, center, MassProperties.RectangleInertia(mass, BlockType.Width, BlockType.Height));
 
-            BlockTypes.Get(block.TypeId).Mass;
-            block.TypeId
+            // Mark topology for recomp.
+            TopologyDirty = true;
+
             return true;
         } 
 
