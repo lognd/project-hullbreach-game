@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Unity.Mathematics;
+using static Unity.Collections.AllocatorManager;
 
 namespace Hullbreach.Core
 {
@@ -56,9 +57,10 @@ namespace Hullbreach.Core
             _blocks.Add(key, block);
 
             // Required to recalculate mass and moment of inertia of ship to maintain O(1) invariant.
-            float2 center = BlockGrid.CenterOf(key);
+            float2 center = CenterOf(key);
             float mass = BlockTypes.Get(block.TypeId).Mass;
-            Mass.Add(mass, center, MassProperties.RectangleInertia(mass, BlockType.Width, BlockType.Height));
+            float rot_inertia = MassProperties.RectangleInertia(mass, BlockType.Width, BlockType.Height);
+            Mass.Add(mass, center, rot_inertia);
 
             // Mark topology for recomp.
             TopologyDirty = true;
@@ -66,10 +68,26 @@ namespace Hullbreach.Core
             return true;
         } 
 
-        // TODO [A1]: Remove at `key`. Refuse to remove the core (S32: the core
-        //            cannot be removed). Update accumulators and mark dirty.
         public bool TryRemove(int key)
-            => throw new NotImplementedException();
+        {
+            // You may not delete core, and the block must be in the map.
+            if (key == CoreKey) return false;
+            if (_blocks.TryGetValue(key, out Block toRemove))
+            {
+                float2 center = CenterOf(key);
+                float mass = BlockTypes.Get(toRemove.TypeId).Mass;
+                float loc_inertia = MassProperties.RectangleInertia(mass, BlockType.Width, BlockType.Height);
+                // Update accumulators.
+                Mass.Remove(mass, center, loc_inertia);
+
+                // Mark topology for recomp.
+                TopologyDirty = true;
+
+                return true;
+            }
+
+            return false;
+        }
 
         // TODO [A1]
         public bool TryGet(int key, out Block block)
