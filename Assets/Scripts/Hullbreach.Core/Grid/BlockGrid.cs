@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using Unity.Mathematics;
-using static Unity.Collections.AllocatorManager;
 
 namespace Hullbreach.Core
 {
@@ -43,9 +42,8 @@ namespace Hullbreach.Core
 
         public bool TryAdd(int key, Block block)
         {
-
             // If there is already a block, don't add it.
-            if (_blocks.ContainsKey(key)) return false;
+            if (Contains(key)) return false;
 
             if (block.TypeId == BlockTypes.Core)
             {
@@ -89,21 +87,37 @@ namespace Hullbreach.Core
             return false;
         }
 
-        // TODO [A1]
-        public bool TryGet(int key, out Block block)
-            => throw new NotImplementedException();
+        public bool TryGet(int key, out Block block) => _blocks.TryGetValue(key, out block);
 
         public bool Contains(int key) => _blocks.ContainsKey(key);
 
         /// <summary>
         /// Replace the block at `key`, for damage accumulation.
         /// </summary>
-        // TODO [A1]: This must NOT mark topology dirty. Damage changes
-        //            stiffness, not connectivity, and rebuilding the node map
-        //            every damage tick would throw away the cached
-        //            factorisations for no reason.
         public bool TrySet(int key, Block block)
-            => throw new NotImplementedException();
+        {
+            if (_blocks.TryGetValue(key, out Block toModify))
+            {
+                float oldMass = BlockTypes.Get(block.TypeId).Mass;
+                float newMass = BlockTypes.Get(block.TypeId).Mass;
+
+                if (oldMass != newMass)
+                {
+                    float2 center = CenterOf(key);
+
+                    float oldInertia = MassProperties.RectangleInertia(oldMass, BlockType.Width, BlockType.Height);
+                    float newInertia = MassProperties.RectangleInertia(newMass, BlockType.Width, BlockType.Height);
+
+                    Mass.Remove(oldMass, center, newInertia);
+                    Mass.Add(newMass, center, newInertia);
+                }
+
+                // Topology is LEFT UNCHANGED.
+
+                return true;
+            }
+            return false;
+        }
 
         public void ClearDirty() => TopologyDirty = false;
 
