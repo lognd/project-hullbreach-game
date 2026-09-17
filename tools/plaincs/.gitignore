@@ -1,0 +1,5 @@
+.deps/
+**/bin/
+**/obj/
+# The Unity template ignores *.csproj at the root; these are hand-written.
+!**/*.csproj

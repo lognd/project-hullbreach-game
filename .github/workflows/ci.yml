@@ -25,17 +25,31 @@ jobs:
       - name: check committed tree
         run: scripts/check_unity_tree.sh
 
+  # The engine-free simulation assemblies and their edit-mode tests, built
+  # with the stock .NET SDK. No Unity license needed; see tools/plaincs.
+  plaincs:
+    name: simulation tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+      - name: build and test
+        run: tools/plaincs/run_tests.sh
+
   # The one status check branch protection requires.
   gate:
     name: All checks pass
     runs-on: ubuntu-latest
-    needs: [tree]
+    needs: [tree, plaincs]
     if: always()
     steps:
       - name: verify every job succeeded
         run: |
           echo "tree: ${{ needs.tree.result }}"
-          if [ "${{ needs.tree.result }}" != "success" ]; then
+          echo "plaincs: ${{ needs.plaincs.result }}"
+          if [ "${{ needs.tree.result }}" != "success" ] || [ "${{ needs.plaincs.result }}" != "success" ]; then
             echo "::error::at least one required job did not succeed"
             exit 1
           fi

@@ -177,3 +177,6 @@ Packages/packages-lock.json linguist-generated
 
 # Exceptions for .asset files such as lightning pre-baking
 LightingData.asset     binary
+
+# Shell scripts must stay LF or bash on WSL/Linux sees "bash\r".
+*.sh                    text eol=lf
