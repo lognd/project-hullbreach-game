@@ -30,16 +30,22 @@ namespace Hullbreach.Core
         /// Sum of (I_local_i + m_i * |p_i|^2).</summary>
         public float SecondMomentAboutOrigin;
 
-        /// <summary>Center of mass, FirstMoment / Total.</summary>
-        // TODO [A2]: Return float2.zero when Total is 0 rather than dividing.
+        /// <summary>Center of mass, FirstMoment / Total. Zero (not NaN) for an
+        /// empty grid, since dividing by zero mass is meaningless.</summary>
         public float2 CenterOfMass
-            => throw new NotImplementedException();
+            => Total == 0f ? float2.zero : FirstMoment / Total;
 
         /// <summary>Rotational inertia about the center of mass.
         /// Parallel axis theorem: I_com = I_origin - M * |com|^2.</summary>
-        // TODO [A2]
         public float InertiaAboutCenterOfMass
-            => throw new NotImplementedException();
+        {
+            get
+            {
+                if (Total == 0f) return 0f;
+                var com = CenterOfMass;
+                return SecondMomentAboutOrigin - Total * math.lengthsq(com);
+            }
+        }
 
         /// <summary>
         /// Inertia of a solid rectangle about its own center:
@@ -48,14 +54,24 @@ namespace Hullbreach.Core
         public static float RectangleInertia(float mass, float width, float height)
             => mass * (width * width + height * height) / 12f;
 
-        // TODO [A2]: Accumulate one block. `center` is ship-local; `localInertia`
-        //            is that block's inertia about its OWN center.
+        /// <summary>Accumulate one block. `center` is ship-local; `localInertia`
+        /// is that block's inertia about its OWN center. Parallel axis theorem
+        /// folds the block's own inertia plus its offset into the origin-frame
+        /// second moment, all in O(1).</summary>
         public void Add(float mass, float2 center, float localInertia)
-            => throw new NotImplementedException();
+        {
+            Total += mass;
+            FirstMoment += mass * center;
+            SecondMomentAboutOrigin += localInertia + mass * math.lengthsq(center);
+        }
 
-        // TODO [A2]: Exact inverse of Add. Removal being O(1) is the entire
-        //            reason the accumulators are kept about the origin.
+        /// <summary>Exact inverse of Add. Removal being O(1) is the entire
+        /// reason the accumulators are kept about the origin.</summary>
         public void Remove(float mass, float2 center, float localInertia)
-            => throw new NotImplementedException();
+        {
+            Total -= mass;
+            FirstMoment -= mass * center;
+            SecondMomentAboutOrigin -= localInertia + mass * math.lengthsq(center);
+        }
     }
 }
