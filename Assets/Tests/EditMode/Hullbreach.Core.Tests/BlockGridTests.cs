@@ -85,6 +85,39 @@ namespace Hullbreach.Core.Tests
         }
 
         [Test]
+        public void TryRemove_ActuallyRemovesTheBlock()
+        {
+            var g = GridWithCore();
+            var k = BlockKey.Pack(1, 0);
+            g.TryAdd(k, new Block(BlockTypes.Hull));
+
+            Assert.IsTrue(g.TryRemove(k));
+            Assert.IsFalse(g.Contains(k), "the block must actually leave the dictionary");
+            Assert.AreEqual(1, g.Count);
+
+            // Re-adding at the same key must succeed -- it would be refused
+            // if TryRemove left a stale entry behind.
+            Assert.IsTrue(g.TryAdd(k, new Block(BlockTypes.Hull)));
+        }
+
+        [Test]
+        public void TrySet_WritesTheNewBlockAndUpdatesMass()
+        {
+            var g = GridWithCore();
+            var k = BlockKey.Pack(1, 0);
+            g.TryAdd(k, new Block(BlockTypes.Hull));
+
+            var massBefore = g.Mass.Total;
+            Assert.IsTrue(g.TrySet(k, new Block(BlockTypes.Armor)));
+
+            g.TryGet(k, out var stored);
+            Assert.AreEqual(BlockTypes.Armor, stored.TypeId, "TrySet must write the new block into the grid");
+
+            var expectedDelta = BlockTypes.Get(BlockTypes.Armor).Mass - BlockTypes.Get(BlockTypes.Hull).Mass;
+            Assert.AreEqual(massBefore + expectedDelta, g.Mass.Total, Tol);
+        }
+
+        [Test]
         public void CenterOf_FollowsTheGridConvention()
         {
             // Block (x,y) spans [x,x+1] x [y,y+1], so its center is offset by 0.5.
