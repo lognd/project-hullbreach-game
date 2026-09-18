@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Hullbreach.Structure
 {
@@ -28,6 +30,22 @@ namespace Hullbreach.Structure
         public const int NodesPerElement = 8;
 
         /// <summary>
+        /// Bias applied to each doubled-lattice axis before packing, so that
+        /// the biased value is always non-negative over the supported range.
+        /// BlockKey covers x,y in [-128,127], so the doubled lattice covers
+        /// roughly [-256,256]; 1024 leaves comfortable headroom (matches the
+        /// "injective at least over [-300,300]^2" requirement with margin).
+        /// </summary>
+        const int Bias = 1024;
+
+        /// <summary>
+        /// Bits to shift the biased x coordinate up by, before OR-ing in y.
+        /// Biased coordinates fit in 16 bits (max ~2048), so 16 keeps the two
+        /// axes from ever overlapping.
+        /// </summary>
+        const int Shift = 16;
+
+        /// <summary>
         /// Doubled-lattice offsets of the 8 nodes, relative to (2i, 2j),
         /// in standard Q8 order.
         /// </summary>
@@ -37,23 +55,69 @@ namespace Hullbreach.Structure
             { 1, 0 }, { 2, 1 }, { 1, 2 }, { 0, 1 },   // midsides 5..8
         };
 
-        // TODO [C1]: Pack a doubled-lattice coordinate into a node id. Must be
-        //            injective over the doubled range (twice BlockKey's range,
-        //            so BlockKey.Pack will NOT fit -- use a wider packing).
+        /// <summary>
+        /// Packs a doubled-lattice coordinate (dx, dy) into a single injective
+        /// int id, by biasing both axes into non-negative range and packing
+        /// x into the high bits, y into the low bits.
+        /// </summary>
         public static int PackNode(int dx, int dy)
-            => throw new NotImplementedException();
+        {
+            int bx = dx + Bias;
+            int by = dy + Bias;
+            return (bx << Shift) | by;
+        }
 
-        // TODO [C1]: Write the 8 global node ids of block (x,y) into `into`
-        //            (length 8), in the standard order above.
+        /// <summary>Exact inverse of <see cref="PackNode"/>.</summary>
+        public static void UnpackNode(int node, out int dx, out int dy)
+        {
+            int bx = node >> Shift;
+            int by = node & 0xFFFF;
+            dx = bx - Bias;
+            dy = by - Bias;
+        }
+
+        /// <summary>
+        /// Writes the 8 global node ids of block (x,y) into `into` (length 8),
+        /// in the standard order given by <see cref="Offsets"/>.
+        /// </summary>
         public static void NodesOf(int x, int y, int[] into)
-            => throw new NotImplementedException();
+        {
+            int bx = 2 * x;
+            int by = 2 * y;
+            for (int i = 0; i < NodesPerElement; i++)
+            {
+                into[i] = PackNode(bx + Offsets[i, 0], by + Offsets[i, 1]);
+            }
+        }
 
-        // TODO [C1]: Build the dense node map for a whole grid: assign each
-        //            distinct node id a contiguous index 0..n-1, because that
-        //            index times 2 is its DOF offset in the global system.
-        //            Rebuild only when topology is dirty.
+        /// <summary>
+        /// Builds the dense node map for a whole grid: assigns each distinct
+        /// node id a contiguous index 0..n-1. Blocks are visited in ascending
+        /// key order (and nodes within a block in standard Q8 order) so that
+        /// two independent builds over the same grid produce byte-identical
+        /// maps -- required for client/server agreement without shipping the
+        /// map itself.
+        /// </summary>
         public static void BuildNodeMap(Hullbreach.Core.BlockGrid grid,
-                                        System.Collections.Generic.Dictionary<int, int> nodeToDense)
-            => throw new NotImplementedException();
+                                        Dictionary<int, int> nodeToDense)
+        {
+            nodeToDense.Clear();
+
+            var keys = grid.All.Select(kvp => kvp.Key).ToList();
+            keys.Sort();
+
+            var buf = new int[NodesPerElement];
+            foreach (var key in keys)
+            {
+                Hullbreach.Core.BlockKey.Unpack(key, out int x, out int y);
+                NodesOf(x, y, buf);
+                for (int i = 0; i < NodesPerElement; i++)
+                {
+                    int node = buf[i];
+                    if (!nodeToDense.ContainsKey(node))
+                        nodeToDense[node] = nodeToDense.Count;
+                }
+            }
+        }
     }
 }
