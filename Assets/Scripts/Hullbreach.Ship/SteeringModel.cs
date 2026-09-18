@@ -19,19 +19,37 @@ namespace Hullbreach.Ship
     /// </summary>
     public static class SteeringModel
     {
-        // TODO [A6]: Decide and document the rule. Two defensible options:
-        //
-        //   (a) Fins are aerodynamic-ish: authority scales with current thrust,
-        //       so steering requires power. Keeps the prototype's feel but
-        //       makes it intentional.
-        //   (b) Fins are reaction wheels / vernier thrusters: authority is
-        //       independent of main thrust, so a drifting ship can still aim.
-        //
-        //   Whichever you pick, torque must scale with the fins' distance from
-        //   the center of mass, or "where you put it matters" stops being true
-        //   for fins even though it is true for thrusters.
+        /// <summary>Torque authority per unit lever arm, with no thrust
+        /// applied. Tunable; chosen so a bare ship visibly turns within a
+        /// couple of seconds at max steer input.</summary>
+        public const float FinAuthority = 4.0f;
+
+        /// <summary>Fraction of FinAuthority added on top at full thrust. Kept
+        /// small and additive (not multiplicative) so steering never drops to
+        /// zero just because the main engine is off.</summary>
+        public const float ThrustBonusFraction = 0.25f;
+
+        /// <summary>
+        /// DECISION (S39 criterion 3): option (b), reaction-wheel / vernier
+        /// fins. Authority is independent of main thrust so a ship coasting
+        /// with the engine off can still be aimed -- a drifting ship that
+        /// cannot turn to compensate is not "handles like it was built", it is
+        /// "handles like a brick". currentThrust still contributes a modest
+        /// (+25% at full thrust) bonus, both to keep the parameter meaningful
+        /// and because a ship under power plausibly has more reaction mass /
+        /// power routed to its attitude thrusters.
+        ///
+        /// Torque still scales with finLeverArm, so WHERE the steering blocks
+        /// sit keeps mattering exactly as it does for main thrusters.
+        /// `inertia` is accepted for callers that want to convert this into an
+        /// angular acceleration themselves, but is not used here -- Torque
+        /// returns a torque, not an alpha.
+        /// </summary>
         public static float Torque(float steerAxis, float currentThrust,
                                    float finLeverArm, float inertia)
-            => throw new NotImplementedException();
+        {
+            float authority = FinAuthority * (1f + ThrustBonusFraction * currentThrust);
+            return steerAxis * authority * finLeverArm;
+        }
     }
 }
