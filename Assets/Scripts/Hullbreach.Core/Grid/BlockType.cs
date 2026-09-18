@@ -1,4 +1,5 @@
 using System;
+using Unity.Mathematics;
 
 namespace Hullbreach.Core
 {
@@ -68,18 +69,29 @@ namespace Hullbreach.Core
         public const byte Thruster = 3;
         public const byte Cannon = 4;
 
-        // TODO [A1]: Put real numbers here once there is something to balance
-        //            against. Keep Hull.YieldStress at 1.0 as the reference.
-        //            Armor wants high SpallStress and lowish YieldStress;
-        //            hull wants the reverse. S33 is the palette the player sees.
+        // Normalized against Hull.YieldStress = 1.0.
+        //
+        //   Core:     the heaviest, toughest block -- it must survive whatever
+        //             kills everything around it, so both stresses are the
+        //             highest in the table and it is stiffer than hull.
+        //   Hull:     the reference. Ductile: ordinary yield, ordinary spall.
+        //   Armor:    ~2x hull mass, stiffer (denser lattice), and brittle:
+        //             high SpallStress/CompressiveStress (brittle solids take
+        //             compression far better than tension) but LOWER
+        //             YieldStress than hull -- it is meant to shatter rather
+        //             than bend.
+        //   Thruster: hull-like stiffness/strength, a bit heavier for the
+        //             machinery packed inside.
+        //   Cannon:   same idea as Thruster -- hull-like structurally, a
+        //             little heavier for its mechanism.
         static readonly BlockType[] Table =
         {
             //             name         mass   E     nu#  yield  spall  compress
-            new BlockType("Core",       1f,    1f,   0,   1f,    1f,    1f),
-            new BlockType("Hull",       1f,    1f,   0,   1f,    1f,    1f),
-            new BlockType("Armor",     1f,    1f,   0,   1f,    1f,    1f),
-            new BlockType("Thruster",   1f,    1f,   0,   1f,    1f,    1f),
-            new BlockType("Cannon",     1f,    1f,   0,   1f,    1f,    1f),
+            new BlockType("Core",       3.0f,  1.5f, 0,   2.0f,  2.0f,  2.0f),
+            new BlockType("Hull",       1.0f,  1.0f, 0,   1.0f,  1.0f,  1.0f),
+            new BlockType("Armor",      2.0f,  1.4f, 0,   0.7f,  2.5f,  4.0f),
+            new BlockType("Thruster",   1.2f,  1.0f, 0,   1.0f,  1.0f,  1.0f),
+            new BlockType("Cannon",     1.3f,  1.0f, 0,   1.0f,  1.0f,  1.0f),
         };
 
         public static BlockType Get(byte typeId) => Table[typeId];
@@ -91,11 +103,20 @@ namespace Hullbreach.Core
         /// This one scalar is the entire reason K_e = E * KHat works, so
         /// everything that changes stiffness must go through here.
         /// </summary>
-        // TODO [D3]: Fold in damage softening. A yielded block should get less
-        //            stiff so it sheds load to its neighbors -- that shedding
-        //            is what makes ductile failure actually read as ductile,
-        //            without needing a nonlinear solve.
+        // TODO [D3]: The floor (0.05) is a placeholder curve that just keeps K
+        //            non-singular; a later DamageModel may replace it with
+        //            something that better matches real ductile softening.
+        /// <summary>
+        /// Fold in damage softening. A yielded block gets less stiff so it
+        /// sheds load to its neighbors -- that shedding is what makes ductile
+        /// failure actually read as ductile, without needing a nonlinear
+        /// solve. Floored at 5% of nominal E so the stiffness matrix never
+        /// goes singular even at full damage.
+        /// </summary>
         public static float EffectiveStiffness(in Block block)
-            => throw new NotImplementedException();
+        {
+            float softening = math.max(0.05f, 1f - block.DamageFraction);
+            return Get(block.TypeId).YoungsModulus * softening;
+        }
     }
 }
