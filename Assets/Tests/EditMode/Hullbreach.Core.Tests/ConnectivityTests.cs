@@ -92,5 +92,44 @@ namespace Hullbreach.Core.Tests
             CollectionAssert.AreEquivalent(
                 new[] { BlockKey.Pack(4, 0), BlockKey.Pack(5, 0) }, detached);
         }
+
+        [Test]
+        public void SplitIntoComponents_SeparatesTwoDisjointChunks()
+        {
+            // Two separate 1x2 debris chunks, far enough apart to share no
+            // adjacency, must come back as two components.
+            var g = new BlockGrid();
+            g.TryAdd(BlockKey.Pack(0, 0), new Block(BlockTypes.Core));
+            g.TryAdd(BlockKey.Pack(10, 0), new Block(BlockTypes.Hull));
+            g.TryAdd(BlockKey.Pack(10, 1), new Block(BlockTypes.Hull));
+            g.TryAdd(BlockKey.Pack(20, 0), new Block(BlockTypes.Hull));
+            g.TryAdd(BlockKey.Pack(20, 1), new Block(BlockTypes.Hull));
+
+            var keys = new List<int>
+            {
+                BlockKey.Pack(10, 0), BlockKey.Pack(10, 1),
+                BlockKey.Pack(20, 0), BlockKey.Pack(20, 1),
+            };
+
+            var components = new List<List<int>>();
+            Connectivity.SplitIntoComponents(g, keys, components);
+
+            Assert.AreEqual(2, components.Count);
+            foreach (var component in components)
+                Assert.AreEqual(2, component.Count);
+        }
+
+        [Test]
+        public void SplitIntoComponents_KeepsOneChunkTogether()
+        {
+            var g = Line(3);
+            var keys = new List<int> { BlockKey.Pack(1, 0), BlockKey.Pack(2, 0) };
+
+            var components = new List<List<int>>();
+            Connectivity.SplitIntoComponents(g, keys, components);
+
+            Assert.AreEqual(1, components.Count);
+            CollectionAssert.AreEquivalent(keys, components[0]);
+        }
     }
 }

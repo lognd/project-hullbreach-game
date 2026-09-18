@@ -78,6 +78,11 @@ namespace Hullbreach.Core
                 // Update accumulators.
                 Mass.Remove(mass, center, loc_inertia);
 
+                // Actually remove the block; leaving it in the dictionary
+                // would let it keep occupying the cell and double-count mass
+                // on any later Add at the same key.
+                _blocks.Remove(key);
+
                 // Mark topology for recomp.
                 TopologyDirty = true;
 
@@ -98,7 +103,7 @@ namespace Hullbreach.Core
         {
             if (_blocks.TryGetValue(key, out Block toModify))
             {
-                float oldMass = BlockTypes.Get(block.TypeId).Mass;
+                float oldMass = BlockTypes.Get(toModify.TypeId).Mass;
                 float newMass = BlockTypes.Get(block.TypeId).Mass;
 
                 if (oldMass != newMass)
@@ -108,9 +113,13 @@ namespace Hullbreach.Core
                     float oldInertia = MassProperties.RectangleInertia(oldMass, BlockType.Width, BlockType.Height);
                     float newInertia = MassProperties.RectangleInertia(newMass, BlockType.Width, BlockType.Height);
 
-                    Mass.Remove(oldMass, center, newInertia);
+                    Mass.Remove(oldMass, center, oldInertia);
                     Mass.Add(newMass, center, newInertia);
                 }
+
+                // Actually write the new block into the dictionary; without
+                // this the caller's damage/modifier update is silently lost.
+                _blocks[key] = block;
 
                 // Topology is LEFT UNCHANGED.
 

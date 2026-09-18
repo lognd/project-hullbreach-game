@@ -19,6 +19,20 @@ namespace Hullbreach.Core.Tests
         }
 
         [Test]
+        public void Pack_ThenUnpack_RoundTrips_ExactlyOverFullRange()
+        {
+            // The scope explicitly calls for an exact round trip over every
+            // coordinate in [-128,127]^2, not just a sampled stride.
+            for (int x = BlockKey.Min; x <= BlockKey.Max; x++)
+            for (int y = BlockKey.Min; y <= BlockKey.Max; y++)
+            {
+                BlockKey.Unpack(BlockKey.Pack(x, y), out var rx, out var ry);
+                Assert.AreEqual(x, rx, $"x round-trip failed for ({x},{y})");
+                Assert.AreEqual(y, ry, $"y round-trip failed for ({x},{y})");
+            }
+        }
+
+        [Test]
         public void Pack_IsInjective()
         {
             // Two different coordinates must never collide, or the grid will
