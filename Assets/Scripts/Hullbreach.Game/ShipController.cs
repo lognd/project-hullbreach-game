@@ -1,9 +1,34 @@
+using System;
 using UnityEngine;
 using Unity.Mathematics;
+using Hullbreach.Core;
 using Hullbreach.Ship;
 
 namespace Hullbreach.Game
 {
+    /// <summary>
+    /// One block of the Inspector-authored ship, before it goes into the
+    /// grid. A plain serializable struct rather than a ScriptableObject or
+    /// prefab-per-ship, because Phase A only needs "a ship exists to fly",
+    /// not a builder UI (that is Hullbreach.Builder's job later).
+    /// </summary>
+    [Serializable]
+    public struct AuthoredBlock
+    {
+        public int x;
+        public int y;
+        public byte typeId;
+        public byte modifiers;
+
+        public AuthoredBlock(int x, int y, byte typeId, byte modifiers = 0)
+        {
+            this.x = x;
+            this.y = y;
+            this.typeId = typeId;
+            this.modifiers = modifiers;
+        }
+    }
+
     /// <summary>
     /// The MonoBehaviour adapter. Lifecycle and Inspector wiring ONLY -- every
     /// line of actual simulation belongs in ShipBody, which has no UnityEngine
@@ -32,6 +57,21 @@ namespace Hullbreach.Game
         // serializes FIELDS only -- a property would not show up at all.
         [SerializeField] Transform[] thrusterMounts;
 
+        /// <summary>The ship's blocks, authored in the Inspector until the
+        /// builder (Hullbreach.Builder) can construct ships at runtime. The
+        /// default lays out a minimal flyable ship: a core, hull fore/aft, two
+        /// thrusters at the wingtips facing up, and a cannon up front.</summary>
+        [SerializeField]
+        AuthoredBlock[] blocks = new[]
+        {
+            new AuthoredBlock(0, 0, BlockTypes.Core),
+            new AuthoredBlock(0, 1, BlockTypes.Hull),
+            new AuthoredBlock(0, -1, BlockTypes.Hull),
+            new AuthoredBlock(-1, -1, BlockTypes.Thruster, 0),
+            new AuthoredBlock(1, -1, BlockTypes.Thruster, 0),
+            new AuthoredBlock(0, 2, BlockTypes.Cannon),
+        };
+
         ShipBody ship;
 
         // Latched input, written in Update and consumed in FixedUpdate.
@@ -48,10 +88,15 @@ namespace Hullbreach.Game
             // over the value the netcode has to agree on.
             body.useAutoMass = false;
 
-            // TODO [A0]: Construct the ShipBody and populate its grid from the
-            //            authored ship. Until Phase A is green, keep
-            //            PlayerSingle on the prefab instead of this.
             ship = new ShipBody();
+            foreach (var b in blocks)
+            {
+                int key = BlockKey.Pack(b.x, b.y);
+                ship.Grid.TryAdd(key, new Block(b.typeId, b.modifiers));
+            }
+            // Force the initial view build now rather than on the first Step,
+            // so mass/CoM are already valid for the very first FixedUpdate.
+            ship.RebuildDerivedViews();
         }
 
         void Update()
@@ -73,13 +118,56 @@ namespace Hullbreach.Game
             var input = new ShipInput(thrustHeld, steerAxis, fireLatched);
             fireLatched = false;   // consume exactly once
 
-            // TODO [A5]: ship.Step(input, Time.fixedDeltaTime), then push the
-            //            result onto the Rigidbody2D -- or, once the custom
-            //            integrator lands (S47), drive the transform directly
-            //            and stop using Rigidbody2D for ship motion entirely.
+            ship.Step(input, Time.fixedDeltaTime);
 
-            // TODO [A3]: Push mass properties from the grid accumulators:
-            //            body.mass, body.centerOfMass, body.inertia.
+            // Push mass properties from the grid accumulators every tick:
+            // adding/removing a block (combat damage, later builder edits)
+            // changes these, and TopologyDirty already gates the expensive
+            // part (RebuildDerivedViews) inside Step, so this is cheap insurance.
+            var mass = ship.Grid.Mass;
+            body.mass = mass.Total;
+            var com = mass.CenterOfMass;
+            body.centerOfMass = new Vector2(com.x, com.y);
+            body.inertia = mass.InertiaAboutCenterOfMass;
+
+            // ShipBody is authoritative for ship motion: it is the plain C#
+            // sim that the headless server (S47) will run too, so the
+            // Rigidbody2D must follow it rather than the other way around.
+            // MovePosition/MoveRotation (not transform.position) keep this
+            // compatible with Rigidbody2D's interpolation and with other
+            // colliders still resolving contacts against it; velocity is set
+            // directly so ricochets/collisions read a physically consistent
+            // rigidbody even though ShipBody, not Box2D, is doing the
+            // integrating.
+            body.linearVelocity = new Vector2(ship.Velocity.x, ship.Velocity.y);
+            body.angularVelocity = math.degrees(ship.AngularVelocity);
+            body.MovePosition(new Vector2(ship.Position.x, ship.Position.y));
+            body.MoveRotation(math.degrees(ship.Rotation));
+        }
+
+        /// <summary>
+        /// Draws each authored block as a wire square in ship-local space,
+        /// plus the current center of mass, so the ship is visible in the
+        /// editor without needing sprites yet.
+        /// </summary>
+        void OnDrawGizmosSelected()
+        {
+            Gizmos.color = Color.cyan;
+            var localBlocks = blocks;
+            for (int i = 0; i < localBlocks.Length; i++)
+            {
+                var b = localBlocks[i];
+                var center = transform.TransformPoint(new Vector3(b.x + 0.5f, b.y + 0.5f, 0f));
+                var size = transform.TransformVector(new Vector3(BlockType.Width, BlockType.Height, 0f));
+                Gizmos.DrawWireCube(center, size);
+            }
+
+            if (ship != null && ship.Grid.Mass.Total > 0f)
+            {
+                Gizmos.color = Color.yellow;
+                var com = ship.Grid.Mass.CenterOfMass;
+                Gizmos.DrawWireSphere(transform.TransformPoint(new Vector3(com.x, com.y, 0f)), 0.15f);
+            }
         }
     }
 }
