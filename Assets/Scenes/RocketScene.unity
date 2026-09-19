@@ -1346,8 +1346,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   rb: {fileID: 1778639501}
-  thruster: {fileID: 930015528}
-  speed: 0
+  thrusters:
+  - {fileID: 930015528}
+  speedPerThruster: 10
+  turrets:
+  - {fileID: 1077467665}
+  speedPerTurret: 1000
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
