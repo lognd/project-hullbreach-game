@@ -74,8 +74,18 @@ namespace Hullbreach.Game
 
         ShipBody ship;
 
+        /// <summary>The underlying plain-C# simulation, exposed so the demo
+        /// scene branch can read state (throttle, mass, etc.) without
+        /// ShipController growing pass-through properties for everything.</summary>
+        public ShipBody Ship => ship;
+
+        /// <summary>Raised once per PendingShots entry drained in
+        /// FixedUpdate, so the demo scene branch can subscribe and spawn a
+        /// projectile without ShipController knowing about prefabs.</summary>
+        public event Action<ShotRequest> ShotFired;
+
         // Latched input, written in Update and consumed in FixedUpdate.
-        bool thrustHeld;
+        float thrustAxis;
         bool fireLatched;
         float steerAxis;
 
@@ -105,8 +115,12 @@ namespace Hullbreach.Game
             //            (rebindable keys). activeInputHandler is currently 2
             //            ("Both"), so the legacy calls still work -- but every
             //            one of these lines breaks the moment that changes.
-            thrustHeld = Input.GetButton("Jump");
-            steerAxis = Input.GetAxis("Horizontal");
+            // Vertical/Horizontal map W/S and Up/Down, A/D and Left/Right by
+            // default in Unity's Input Manager -- Raw so throttle ramping
+            // (ShipBody's job) is not double-smoothed by Unity's own axis
+            // smoothing on top of it.
+            thrustAxis = Input.GetAxisRaw("Vertical");
+            steerAxis = Input.GetAxisRaw("Horizontal");
 
             // Level-triggered input can be read directly; EDGE-triggered input
             // must be latched or FixedUpdate will miss it.
@@ -115,10 +129,20 @@ namespace Hullbreach.Game
 
         void FixedUpdate()
         {
-            var input = new ShipInput(thrustHeld, steerAxis, fireLatched);
+            var input = new ShipInput(thrustAxis, steerAxis, fireLatched);
             fireLatched = false;   // consume exactly once
 
             ship.Step(input, Time.fixedDeltaTime);
+
+            // Drain PendingShots: ShipBody only records intent and applies
+            // its own recoil, so spawning the actual projectile is the
+            // caller's job. Cleared every tick regardless of subscribers, so
+            // an un-observed ship cannot leak memory into the list.
+            for (int i = 0; i < ship.PendingShots.Count; i++)
+            {
+                ShotFired?.Invoke(ship.PendingShots[i]);
+            }
+            ship.PendingShots.Clear();
 
             // Push mass properties from the grid accumulators every tick:
             // adding/removing a block (combat damage, later builder edits)
@@ -150,6 +174,17 @@ namespace Hullbreach.Game
         /// plus the current center of mass, so the ship is visible in the
         /// editor without needing sprites yet.
         /// </summary>
+        /// <summary>World-space wrapper over ShipBody.ApplyImpulseAtWorldPoint,
+        /// for callers (e.g. a projectile-hit handler) that only have Unity
+        /// Vector2/float2-agnostic types.</summary>
+        public void ApplyImpulse(Vector2 worldPoint, Vector2 impulse)
+            => ship.ApplyImpulseAtWorldPoint(new float2(worldPoint.x, worldPoint.y),
+                                              new float2(impulse.x, impulse.y));
+
+        /// <summary>World-space wrapper over ShipBody.ApplyDamageAtWorldPoint.</summary>
+        public void ApplyDamage(Vector2 worldPoint, byte damage)
+            => ship.ApplyDamageAtWorldPoint(new float2(worldPoint.x, worldPoint.y), damage, out _);
+
         void OnDrawGizmosSelected()
         {
             Gizmos.color = Color.cyan;
