@@ -188,5 +188,17 @@ namespace Hullbreach.Builder.Tests
             Assert.AreEqual(BuilderState.Idle, session.State);
             Assert.AreEqual(6, session.BlockCount);
         }
+
+        // frob:tests Hullbreach.Builder.Tests.BuilderSessionTests.ExternalGrid_PlacementsLandOnCallersGrid
+        [Test]
+        public void ExternalGrid_PlacementsLandOnCallersGrid()
+        {
+            var grid = new BlockGrid();
+            var session = new BuilderSession(grid);
+
+            Assert.AreSame(grid, session.Grid, "the session must edit the caller's grid, not a private one");
+            Assert.IsTrue(session.Click(BlockKey.Pack(0, 0)));
+            Assert.IsTrue(grid.Contains(BlockKey.Pack(0, 0)), "placements must be visible on the external grid");
+        }
     }
 }
