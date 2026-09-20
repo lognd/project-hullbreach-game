@@ -31,13 +31,117 @@ namespace Hullbreach.Structure
         /// with ship size -- it is the scaling wall, made visible.</summary>
         public int LastIterationCount { get; private set; }
 
-        // TODO [C5]: Standard PCG with M = diag(K). Warm-start from the `u`
-        //            passed in rather than zeroing it.
-        //
-        //            Because K is singular, re-project the residual onto the
-        //            complement of the rigid-body modes periodically, or
-        //            rounding will slowly excite them.
+        /// <summary>
+        /// Orthonormalizes `modes` in place via Gram-Schmidt, so they can be
+        /// used to repeatedly project a vector onto their complement.
+        /// </summary>
+        static void Orthonormalize(float[][] modes)
+        {
+            for (int i = 0; i < modes.Length; i++)
+            {
+                var mi = modes[i];
+                for (int j = 0; j < i; j++)
+                {
+                    var mj = modes[j];
+                    float dot = Dot(mi, mj);
+                    for (int k = 0; k < mi.Length; k++)
+                        mi[k] -= dot * mj[k];
+                }
+
+                float norm = (float)Math.Sqrt(Dot(mi, mi));
+                if (norm > 1e-8f)
+                {
+                    for (int k = 0; k < mi.Length; k++)
+                        mi[k] /= norm;
+                }
+            }
+        }
+
+        static float Dot(float[] a, float[] b)
+        {
+            float s = 0f;
+            for (int i = 0; i < a.Length; i++) s += a[i] * b[i];
+            return s;
+        }
+
+        /// <summary>Removes the component of `v` along each of the (assumed
+        /// orthonormal) `modes`, in place.</summary>
+        static void Project(float[] v, float[][] modes)
+        {
+            foreach (var m in modes)
+            {
+                float dot = Dot(v, m);
+                for (int i = 0; i < v.Length; i++)
+                    v[i] -= dot * m[i];
+            }
+        }
+
+        /// <summary>
+        /// Standard PCG with M = diag(K). Warm-starts from the `u` passed in.
+        /// Because K is singular, the residual (and the initial load) are
+        /// re-projected onto the complement of the rigid-body modes every
+        /// iteration, so rounding cannot slowly excite them -- Gram-Schmidt
+        /// every iteration is affordable at this problem size.
+        /// </summary>
         public void Solve(StiffnessAssembly k, float[] f, float[] u, float[][] rigidModes)
-            => throw new NotImplementedException();
+        {
+            int n = k.DofCount;
+
+            // Work on copies of the modes so we can orthonormalize without
+            // mutating the caller's arrays.
+            var modes = new float[rigidModes.Length][];
+            for (int i = 0; i < rigidModes.Length; i++)
+                modes[i] = (float[])rigidModes[i].Clone();
+            Orthonormalize(modes);
+
+            var diag = new float[n];
+            k.Diagonal(diag);
+
+            var r = new float[n];
+            var kp = new float[n];
+            var z = new float[n];
+            var p = new float[n];
+
+            k.Multiply(u, kp);
+            for (int i = 0; i < n; i++) r[i] = f[i] - kp[i];
+            Project(r, modes);
+
+            for (int i = 0; i < n; i++)
+                z[i] = diag[i] > 1e-12f ? r[i] / diag[i] : r[i];
+            Array.Copy(z, p, n);
+
+            float rzOld = Dot(r, z);
+            float fNorm = (float)Math.Sqrt(Dot(f, f));
+            float tolAbs = Tolerance * Math.Max(1f, fNorm);
+
+            int iter = 0;
+            for (; iter < MaxIterations; iter++)
+            {
+                float rNorm = (float)Math.Sqrt(Dot(r, r));
+                if (rNorm <= tolAbs) break;
+
+                k.Multiply(p, kp);
+                float pkp = Dot(p, kp);
+                if (Math.Abs(pkp) < 1e-20f) break;
+
+                float alpha = rzOld / pkp;
+                for (int i = 0; i < n; i++) u[i] += alpha * p[i];
+                for (int i = 0; i < n; i++) r[i] -= alpha * kp[i];
+                Project(r, modes);
+
+                float rNormAfter = (float)Math.Sqrt(Dot(r, r));
+                if (rNormAfter <= tolAbs) { iter++; break; }
+
+                for (int i = 0; i < n; i++)
+                    z[i] = diag[i] > 1e-12f ? r[i] / diag[i] : r[i];
+
+                float rzNew = Dot(r, z);
+                float beta = rzNew / rzOld;
+                for (int i = 0; i < n; i++) p[i] = z[i] + beta * p[i];
+                rzOld = rzNew;
+            }
+
+            LastIterationCount = iter;
+        }
     }
 }

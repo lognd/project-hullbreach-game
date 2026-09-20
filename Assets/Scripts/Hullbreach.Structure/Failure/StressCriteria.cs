@@ -22,27 +22,41 @@ namespace Hullbreach.Structure
     /// </summary>
     public static class StressCriteria
     {
-        // TODO [C6]: von Mises, plane stress:
-        //   sqrt(sxx^2 - sxx*syy + syy^2 + 3*txy^2)
+        /// <summary>Von Mises equivalent stress, plane stress.</summary>
         public static float VonMises(float sxx, float syy, float txy)
-            => throw new NotImplementedException();
+        {
+            float v2 = sxx * sxx - sxx * syy + syy * syy + 3f * txy * txy;
+            return (float)Math.Sqrt(Math.Max(0.0, v2));
+        }
 
-        // TODO [C6]: Principal stresses:
-        //   s1,s2 = (sxx+syy)/2 +- sqrt(((sxx-syy)/2)^2 + txy^2)
-        //   Return the larger in `major`, the smaller in `minor`.
+        /// <summary>
+        /// Principal stresses. Returns the larger in `major`, the smaller in
+        /// `minor`.
+        /// </summary>
         public static void Principal(float sxx, float syy, float txy,
                                      out float major, out float minor)
-            => throw new NotImplementedException();
+        {
+            float avg = (sxx + syy) / 2f;
+            float diff = (sxx - syy) / 2f;
+            float radius = (float)Math.Sqrt(diff * diff + txy * txy);
+            major = avg + radius;
+            minor = avg - radius;
+        }
 
         /// <summary>
         /// Ductile utilization: von Mises over the (damage-reduced) yield
         /// stress. Drives the S37 green-to-red tint. 1.0 means failing.
+        /// The denominator shrinks with damage (floored via DamageModel's
+        /// softening curve) so a damaged block is STRUCTURALLY weaker --
+        /// sustained fire then eventually causes a structural failure rather
+        /// than only an HP kill.
         /// </summary>
-        // TODO [D4]: Fold damage into the denominator so a damaged block is
-        //            STRUCTURALLY weaker -- sustained fire then eventually
-        //            causes a structural failure rather than only an HP kill.
         public static float DuctileRatio(float vonMises, float yieldStress, float damage)
-            => throw new NotImplementedException();
+        {
+            float effectiveYield = yieldStress * (1f - 0.5f * damage);
+            effectiveYield = Math.Max(effectiveYield, 0.05f * yieldStress);
+            return vonMises / effectiveYield;
+        }
 
         /// <summary>
         /// Brittle utilization from the impulsive load case. Uses max TENSILE
@@ -50,9 +64,12 @@ namespace Hullbreach.Structure
         /// compressive limit separately -- that asymmetry is most of what makes
         /// armor feel like armor.
         /// </summary>
-        // TODO [D6]
         public static float BrittleRatio(float major, float minor,
                                          float spallStress, float compressiveStress)
-            => throw new NotImplementedException();
+        {
+            float tensileRatio = Math.Max(major, 0f) / spallStress;
+            float compressiveRatio = Math.Max(-minor, 0f) / compressiveStress;
+            return Math.Max(tensileRatio, compressiveRatio);
+        }
     }
 }
