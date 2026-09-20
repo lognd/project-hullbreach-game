@@ -295,5 +295,27 @@ namespace Hullbreach.Ship.Tests
             Assert.Greater(ship.Throttle(retro), 0f, "retro must start ramping up independently");
             Assert.Less(ship.Throttle(retro), 0.2f, "retro's own (slower) rate must not jump to full in one tick");
         }
+
+        // frob:tests Hullbreach.Ship.Tests.ShipBodyTests.Step_RecordsOneAppliedForcePerThruster
+        [Test]
+        public void Step_RecordsOneAppliedForcePerThruster()
+        {
+            var ship = new ShipBody();
+            ship.Grid.TryAdd(BlockKey.Pack(0, 0), new Block(BlockTypes.Core));
+            ship.Grid.TryAdd(BlockKey.Pack(-1, -1), new Block(BlockTypes.Thruster));
+            ship.Grid.TryAdd(BlockKey.Pack(1, -1), new Block(BlockTypes.Thruster));
+
+            // Ramp fully up first so throttle is not zero (a zero-throttle
+            // thruster records no entry -- see StepThrusters).
+            for (int i = 0; i < 60; i++) ship.Step(new ShipInput(1f, 0f, false), 1f / 60f);
+
+            Assert.AreEqual(2, ship.AppliedForcesThisStep.Count,
+                "one AppliedForcesThisStep entry per fully-throttled thruster");
+            foreach (var (_, force) in ship.AppliedForcesThisStep)
+            {
+                Assert.Greater(force.y, 0f, "a forward thruster pushes ship-local +y");
+                Assert.AreEqual(0f, force.x, Tol, "a forward thruster has no fixed facing sideways component");
+            }
+        }
     }
 }
