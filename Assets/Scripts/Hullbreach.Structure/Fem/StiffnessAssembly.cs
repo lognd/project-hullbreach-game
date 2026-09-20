@@ -35,6 +35,23 @@ namespace Hullbreach.Structure
         public int DofCount { get; private set; }
 
         /// <summary>
+        /// The CSR row pointers of K, exposed read-only so a second matrix
+        /// with the SAME sparsity pattern (GeometricStiffness) can be built
+        /// without re-deriving the pattern from the grid. Chosen over
+        /// duplicating StiffnessAssembly's element-loop/BuildCsr machinery
+        /// or making the element matrix pluggable -- the sparsity pattern of
+        /// K and K_G is identical (both come from the same node connectivity),
+        /// so sharing the pattern and scattering only values is the smaller,
+        /// more obviously-correct surface. Callers must not mutate this array.
+        /// </summary>
+        public int[] RowPointers => _rowPtr;
+
+        /// <summary>Column indices parallel to <see cref="RowPointers"/>, sorted
+        /// ascending within each row -- callers may binary-search a row's
+        /// range. See <see cref="RowPointers"/> for why this is shared.</summary>
+        public int[] ColumnIndices => _colIndex;
+
+        /// <summary>
         /// Build sparse K for the whole grid, from scratch. Rebuild only when
         /// topology is dirty (or after a stiffness-affecting damage change,
         /// since this recomputes everything rather than rescaling in place --
@@ -83,8 +100,15 @@ namespace Hullbreach.Structure
                     {
                         int col = dofs[j];
                         float v = e * kHat[i, j];
-                        if (v == 0f) continue;
 
+                        // Every (row,col) pair that shares an element is kept
+                        // in the pattern even when THIS element's value is
+                        // exactly zero (do not skip on v == 0f): the pattern
+                        // must be a superset of every matrix that can ever be
+                        // assembled over the same connectivity, in
+                        // particular GeometricStiffness, whose local 16x16
+                        // is nonzero at some (i,j) where KHat happens to be
+                        // exactly zero. See GeometricStiffness.AttachSparsity.
                         long key = (long)row * DofCount + col;
                         entries.TryGetValue(key, out float prev);
                         entries[key] = prev + v;

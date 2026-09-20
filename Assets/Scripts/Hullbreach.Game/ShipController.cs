@@ -47,7 +47,6 @@ namespace Hullbreach.Game
     ///     outright. Read edge-triggered input in Update, store it, consume it
     ///     in FixedUpdate.
     /// </summary>
-    [DefaultExecutionOrder(-100)]
     [RequireComponent(typeof(Rigidbody2D))]
     public sealed class ShipController : MonoBehaviour
     {
@@ -75,27 +74,8 @@ namespace Hullbreach.Game
 
         ShipBody ship;
 
-        /// <summary>The underlying plain-C# simulation, exposed so the demo
-        /// scene branch can read state (throttle, mass, etc.) without
-        /// ShipController growing pass-through properties for everything.</summary>
-        public ShipBody Ship => ship;
-
-        /// <summary>
-        /// Gate for player input, set by DemoMode when switching to Build
-        /// mode (where BuilderController drives the same grid instead) so a
-        /// frozen ship does not also fight the physics step with stale
-        /// thrust/steer/fire input. Defaults to true so existing scenes
-        /// (RocketScene) behave exactly as before.
-        /// </summary>
-        public bool InputEnabled = true;
-
-        /// <summary>Raised once per PendingShots entry drained in
-        /// FixedUpdate, so the demo scene branch can subscribe and spawn a
-        /// projectile without ShipController knowing about prefabs.</summary>
-        public event Action<ShotRequest> ShotFired;
-
         // Latched input, written in Update and consumed in FixedUpdate.
-        float thrustAxis;
+        bool thrustHeld;
         bool fireLatched;
         float steerAxis;
 
@@ -121,26 +101,12 @@ namespace Hullbreach.Game
 
         void Update()
         {
-            if (!InputEnabled)
-            {
-                // Do not let a stale latched fire from before the ship was
-                // frozen carry over into the next time it flies.
-                thrustAxis = 0f;
-                steerAxis = 0f;
-                fireLatched = false;
-                return;
-            }
-
             // TODO [A5]: Migrate to the new Input System alongside S27
             //            (rebindable keys). activeInputHandler is currently 2
             //            ("Both"), so the legacy calls still work -- but every
             //            one of these lines breaks the moment that changes.
-            // Vertical/Horizontal map W/S and Up/Down, A/D and Left/Right by
-            // default in Unity's Input Manager -- Raw so throttle ramping
-            // (ShipBody's job) is not double-smoothed by Unity's own axis
-            // smoothing on top of it.
-            thrustAxis = Input.GetAxisRaw("Vertical");
-            steerAxis = Input.GetAxisRaw("Horizontal");
+            thrustHeld = Input.GetButton("Jump");
+            steerAxis = Input.GetAxis("Horizontal");
 
             // Level-triggered input can be read directly; EDGE-triggered input
             // must be latched or FixedUpdate will miss it.
@@ -149,20 +115,10 @@ namespace Hullbreach.Game
 
         void FixedUpdate()
         {
-            var input = InputEnabled ? new ShipInput(thrustAxis, steerAxis, fireLatched) : new ShipInput(0f, 0f, false);
+            var input = new ShipInput(thrustHeld, steerAxis, fireLatched);
             fireLatched = false;   // consume exactly once
 
             ship.Step(input, Time.fixedDeltaTime);
-
-            // Drain PendingShots: ShipBody only records intent and applies
-            // its own recoil, so spawning the actual projectile is the
-            // caller's job. Cleared every tick regardless of subscribers, so
-            // an un-observed ship cannot leak memory into the list.
-            for (int i = 0; i < ship.PendingShots.Count; i++)
-            {
-                ShotFired?.Invoke(ship.PendingShots[i]);
-            }
-            ship.PendingShots.Clear();
 
             // Push mass properties from the grid accumulators every tick:
             // adding/removing a block (combat damage, later builder edits)
@@ -194,49 +150,6 @@ namespace Hullbreach.Game
         /// plus the current center of mass, so the ship is visible in the
         /// editor without needing sprites yet.
         /// </summary>
-        /// <summary>World-space wrapper over ShipBody.ApplyImpulseAtWorldPoint,
-        /// for callers (e.g. a projectile-hit handler) that only have Unity
-        /// Vector2/float2-agnostic types.</summary>
-        public void ApplyImpulse(Vector2 worldPoint, Vector2 impulse)
-            => ship.ApplyImpulseAtWorldPoint(new float2(worldPoint.x, worldPoint.y),
-                                              new float2(impulse.x, impulse.y));
-
-        /// <summary>World-space wrapper over ShipBody.ApplyDamageAtWorldPoint.</summary>
-        public void ApplyDamage(Vector2 worldPoint, byte damage)
-            => ship.ApplyDamageAtWorldPoint(new float2(worldPoint.x, worldPoint.y), damage, out _);
-
-        /// <summary>
-        /// Latches a fire request for the next FixedUpdate, exactly as if
-        /// Input.GetButtonDown("Fire1") had fired this frame. Lets a caller
-        /// (DemoMode) bind fire to a key that is not guaranteed to be wired
-        /// to the "Fire1" virtual axis in the Input Manager, e.g. Space.
-        /// </summary>
-        public void RequestFire()
-        {
-            if (InputEnabled) fireLatched = true;
-        }
-
-        /// <summary>
-        /// Resets the ship to rest at the world origin: zeroed position,
-        /// rotation and both velocities. Used by DemoMode's R key so a
-        /// mangled or drifted ship can be brought back for another pass.
-        /// </summary>
-        public void ResetToOrigin()
-        {
-            ship.Position = float2.zero;
-            ship.Rotation = 0f;
-            ship.Velocity = float2.zero;
-            ship.AngularVelocity = 0f;
-
-            if (body != null)
-            {
-                body.linearVelocity = Vector2.zero;
-                body.angularVelocity = 0f;
-                body.MovePosition(Vector2.zero);
-                body.MoveRotation(0f);
-            }
-        }
-
         void OnDrawGizmosSelected()
         {
             Gizmos.color = Color.cyan;
