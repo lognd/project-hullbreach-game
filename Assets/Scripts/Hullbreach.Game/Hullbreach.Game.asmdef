@@ -1,0 +1,21 @@
+{
+    "name": "Hullbreach.Game",
+    "rootNamespace": "Hullbreach.Game",
+    "references": [
+        "Hullbreach.Core",
+        "Hullbreach.Structure",
+        "Hullbreach.Ship",
+        "Hullbreach.Builder",
+        "Hullbreach.Net",
+        "Unity.Mathematics"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

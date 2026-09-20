@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- The engine-free simulation assemblies (Core, Ship, Structure, Builder,
+       Net) compiled with the stock .NET SDK. Anything that needs UnityEngine
+       lives in Hullbreach.Game and is deliberately NOT included here. -->
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <LangVersion>9.0</LangVersion>
+    <Nullable>disable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <NoWarn>CS1591;CS0618;CS0169;CS0649</NoWarn>
+    <AssemblyName>Hullbreach.Plain</AssemblyName>
+    <RootNamespace>Hullbreach</RootNamespace>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../../Assets/Scripts/Hullbreach.Core/**/*.cs" />
+    <Compile Include="../../../Assets/Scripts/Hullbreach.Ship/**/*.cs" />
+    <Compile Include="../../../Assets/Scripts/Hullbreach.Structure/**/*.cs" />
+    <Compile Include="../../../Assets/Scripts/Hullbreach.Builder/**/*.cs" />
+    <Compile Include="../../../Assets/Scripts/Hullbreach.Net/**/*.cs" />
+    <Compile Include="../.deps/um/src/Unity.Mathematics/**/*.cs" />
+    <Compile Remove="../.deps/um/src/Unity.Mathematics/math_unity_conversion.cs" />
+    <Compile Remove="../.deps/um/src/Unity.Mathematics/PropertyAttributes.cs" />
+    <Compile Remove="../.deps/um/src/Unity.Mathematics/Editor/**" />
+    <Compile Remove="../.deps/um/src/Unity.Mathematics/Properties/**" />
+    <Compile Remove="../.deps/um/**/obj/**" />
+  </ItemGroup>
+</Project>

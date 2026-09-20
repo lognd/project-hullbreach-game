@@ -32,6 +32,12 @@
 *.shadergraph           unity-json
 *.shadersubgraph        unity-json
 
+# Project Hullbreach: plain *.json had no rule at all, so with
+# core.autocrlf=true a Windows checkout rewrote ProjectSettings/*.json and
+# Packages/*.json to CRLF and they read as permanently modified with an
+# empty diff. Unity writes these LF; pin them LF everywhere.
+*.json                  unity-json
+
 # Unity UI Toolkit files
 *.tss                   text diff=css linguist-language=css
 *.uss                   text diff=css linguist-language=css
@@ -171,3 +177,6 @@ Packages/packages-lock.json linguist-generated
 
 # Exceptions for .asset files such as lightning pre-baking
 LightingData.asset     binary
+
+# Shell scripts must stay LF or bash on WSL/Linux sees "bash\r".
+*.sh                    text eol=lf

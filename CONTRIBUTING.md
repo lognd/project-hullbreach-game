@@ -60,3 +60,11 @@ explains why, not what -- the diff already says what.
 No API keys, service credentials, or platform tokens in the repo. Unity
 Gaming Services are linked per developer in the editor, and the server's
 platform credentials arrive through the environment at deploy time.
+
+## Running the simulation tests without Unity
+
+Everything under `Assets/Scripts` except `Hullbreach.Game` is plain C#,
+so it compiles with the stock .NET SDK. `tools/plaincs/run_tests.sh`
+builds those assemblies plus the edit-mode NUnit tests and runs them;
+CI runs the same script. Unity's Test Runner runs the identical sources
+inside the editor.
