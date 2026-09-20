@@ -13,10 +13,14 @@ namespace Hullbreach.Builder
         /// <summary>The hovered cell.</summary>
         public readonly int Key;
 
-        public HoverState(bool valid, int key)
+        /// <summary>Why Valid is what it is; PlacementVerdict.Ok when Valid is true.</summary>
+        public readonly PlacementVerdict Verdict;
+
+        public HoverState(bool valid, int key, PlacementVerdict verdict)
         {
             Valid = valid;
             Key = key;
+            Verdict = verdict;
         }
     }
 
@@ -74,20 +78,22 @@ namespace Hullbreach.Builder
         /// <summary>
         /// Preview what would happen at `key` right now: while Idle, whether it
         /// is a legal placement for the selected type; while Orienting, the
-        /// facing that would be committed and whether committing there is
-        /// legal (always true once a first cell is chosen, since only the
-        /// facing changes).
+        /// cell hovered snaps the pending facing towards it, and the returned
+        /// verdict re-validates the pending cell with that candidate facing --
+        /// an orientation that would block its own exhaust/muzzle/fin
+        /// clearance, or lacks a fin's hull anchor, previews as invalid.
         /// </summary>
         public HoverState Hover(int key)
         {
             if (State == BuilderState.Orienting)
             {
                 PendingModifiers = FacingTowards(PendingKey, key);
-                return new HoverState(true, key);
+                bool candidateValid = PlacementRules.CanPlace(Grid, PendingKey, SelectedTypeId, PendingModifiers, out PlacementVerdict candidateWhy);
+                return new HoverState(candidateValid, key, candidateWhy);
             }
 
-            bool valid = PlacementRules.CanPlace(Grid, key, SelectedTypeId);
-            return new HoverState(valid, key);
+            bool valid = PlacementRules.CanPlace(Grid, key, SelectedTypeId, 0, out PlacementVerdict why);
+            return new HoverState(valid, key, why);
         }
 
         /// <summary>
@@ -102,17 +108,37 @@ namespace Hullbreach.Builder
                 return CommitPending();
             }
 
-            if (!PlacementRules.CanPlace(Grid, key, SelectedTypeId)) return false;
-
             if (BlockPalette.IsSymmetric(SelectedTypeId))
             {
+                if (!PlacementRules.CanPlace(Grid, key, SelectedTypeId, 0, out _)) return false;
                 return Place(key, 0);
             }
+
+            // The facing is not chosen yet, so the cell only needs to admit
+            // SOME facing (any of the four cardinals) -- the exact one is
+            // picked by Hover and re-validated for real when the second
+            // click commits it.
+            if (!CanPlaceAnyFacing(key, SelectedTypeId)) return false;
 
             PendingKey = key;
             PendingModifiers = 0;
             State = BuilderState.Orienting;
             return true;
+        }
+
+        /// <summary>
+        /// True when at least one of the four cardinal facings would make
+        /// `typeId` placeable at `key` right now. Used only to decide whether
+        /// a cell is even worth entering Orienting over, since the actual
+        /// facing has not been chosen yet.
+        /// </summary>
+        bool CanPlaceAnyFacing(int key, byte typeId)
+        {
+            for (byte modifiers = 0; modifiers < 4; modifiers++)
+            {
+                if (PlacementRules.CanPlace(Grid, key, typeId, modifiers, out _)) return true;
+            }
+            return false;
         }
 
         /// <summary>Abandon the pending orientation without placing anything.</summary>
@@ -172,13 +198,20 @@ namespace Hullbreach.Builder
         {
             int key = PendingKey;
             byte modifiers = PendingModifiers;
+
+            // Validate BEFORE leaving Orienting: an invalid facing (e.g. one
+            // that blocks its own exhaust/muzzle/fin clearance) must refuse
+            // the commit and leave the pending placement in place, not
+            // silently cancel it.
+            if (!PlacementRules.CanPlace(Grid, key, SelectedTypeId, modifiers, out _)) return false;
+
             Cancel();
             return Place(key, modifiers);
         }
 
         bool Place(int key, byte modifiers)
         {
-            if (!PlacementRules.CanPlace(Grid, key, SelectedTypeId)) return false;
+            if (!PlacementRules.CanPlace(Grid, key, SelectedTypeId, modifiers, out _)) return false;
 
             var block = new Block(SelectedTypeId, modifiers);
             if (!Grid.TryAdd(key, block)) return false;
@@ -187,6 +220,23 @@ namespace Hullbreach.Builder
             Changed?.Invoke();
             return true;
         }
+
+        /// <summary>Short human text for the HUD explaining why a hovered cell is invalid.</summary>
+        public static string DescribeVerdict(PlacementVerdict verdict) => verdict switch
+        {
+            PlacementVerdict.Ok => "ok",
+            PlacementVerdict.OutOfRange => "outside the buildable area",
+            PlacementVerdict.Occupied => "already occupied",
+            PlacementVerdict.NotAdjacent => "must touch an existing block",
+            PlacementVerdict.NeedsEmptyGrid => "the first block must be a core",
+            PlacementVerdict.CoreAlreadyPlaced => "a core is already placed",
+            PlacementVerdict.BlocksExhaust => "blocks the thruster exhaust",
+            PlacementVerdict.BlocksMuzzle => "blocks the cannon's muzzle",
+            PlacementVerdict.BlocksFin => "blocks the fin's clearance",
+            PlacementVerdict.FinNeedsHull => "a fin needs a hull behind it",
+            PlacementVerdict.InsideReservedCell => "sits inside another block's reserved space",
+            _ => "invalid",
+        };
 
         /// <summary>
         /// Snap the direction from `from` to `to` onto the nearest of the four
