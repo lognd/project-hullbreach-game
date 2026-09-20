@@ -31,9 +31,21 @@ have=$(sed -n 's/^m_EditorVersion: //p' ProjectSettings/ProjectVersion.txt | tr 
 [ "$have" = "$want" ] || fail "ProjectVersion.txt says $have, expected $want (update this script if the upgrade is deliberate)"
 
 # 4. The package manifest and every asmdef parse as JSON.
-for j in Packages/manifest.json $(git ls-files 'Assets/*.asmdef'); do
-    python3 -c "import json,sys; json.load(open(sys.argv[1]))" "$j" 2>/dev/null || fail "invalid JSON: $j"
+#    Git Bash on Windows ships `python`, not `python3`, so resolve whichever
+#    exists. Do not swallow the interpreter's own errors: hiding them turned
+#    "python3 not found" into "invalid JSON: Packages/manifest.json" and sent
+#    people hunting a syntax error that was not there.
+py=""
+for candidate in python3 python py; do
+    if command -v "$candidate" >/dev/null 2>&1; then py="$candidate"; break; fi
 done
+if [ -z "$py" ]; then
+    fail "no python interpreter found (tried python3, python, py); cannot validate JSON"
+else
+    for j in Packages/manifest.json $(git ls-files 'Assets/*.asmdef'); do
+        "$py" -c "import json,sys; json.load(open(sys.argv[1]))" "$j" || fail "invalid JSON: $j"
+    done
+fi
 
 # 5. Nothing that looks like a credential.
 if git grep -nIE '(api[_-]?key|secret|password|token)\s*[:=]\s*"[A-Za-z0-9_\-]{16,}"' -- Assets ProjectSettings Packages >/dev/null 2>&1; then

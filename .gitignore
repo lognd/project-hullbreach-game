@@ -116,3 +116,52 @@ InitTestScene*.unity*
 # frob local state (frob does not gate this repo yet, but it may be run here)
 .frob/
 FROBLEMS.md
+
+# ---------------------------------------------------------------------------
+# Project Hullbreach additions to the upstream template.
+#
+# The template header above says to pull editor and OS rules in from
+# github/gitignore Global/ as needed. These are the ones this team needs: we
+# are split across Windows and macOS, and the README offers VS Code, Visual
+# Studio, and Rider as editor choices.
+# ---------------------------------------------------------------------------
+
+# macOS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+desktop.ini
+$RECYCLE.BIN/
+*.stackdump
+
+# JetBrains Rider. The generated project files are already covered by the
+# *.csproj / *.sln rules above; this is the IDE's own state folder.
+.idea/
+
+# Vim / Emacs swap and backup files, for anyone editing shaders or YAML
+# outside their IDE.
+*.swp
+*.swo
+*~
+\#*\#
+
+# Unity regenerates .vsconfig from the modules the project needs, and it
+# reappears as an untracked file for everyone who opens the editor. Our
+# README makes Visual Studio optional, so it is per-machine noise here.
+# If the team would rather everyone be prompted to install the same VS
+# workloads, delete this line and commit the file instead.
+.vsconfig
+
+# Test Runner output. `Unity.exe -runTests -testResults <file>` drops its
+# NUnit XML wherever you point it, and the repo root is the easy default.
+TestResults.xml
+*.TestResults.xml
+/[Tt]est[Rr]esults/

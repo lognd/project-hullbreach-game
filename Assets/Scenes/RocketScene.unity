@@ -1728,16 +1728,36 @@ MonoBehaviour:
   m_GameObject: {fileID: 1778639499}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c994c957b4a49d5409abdfec0cc7a5e4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  thrusters:
-  - {fileID: 930015528}
-  - {fileID: 560466935}
-  speedPerThruster: 10
-  turrets:
-  - {fileID: 1077467665}
-  speedPerTurret: 1000
+  m_Script: {fileID: 11500000, guid: ff41aba1d1f046bb8011b61633e351b1, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  body: {fileID: 1778639501}
+  thrusterMounts: []
+  blocks:
+  - x: 0
+    y: 0
+    typeId: 0
+    modifiers: 0
+  - x: 0
+    y: 1
+    typeId: 1
+    modifiers: 0
+  - x: 0
+    y: -1
+    typeId: 1
+    modifiers: 0
+  - x: -1
+    y: -1
+    typeId: 3
+    modifiers: 0
+  - x: 1
+    y: -1
+    typeId: 3
+    modifiers: 0
+  - x: 0
+    y: 2
+    typeId: 4
+    modifiers: 0
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

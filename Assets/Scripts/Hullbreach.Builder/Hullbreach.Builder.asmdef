@@ -1,0 +1,17 @@
+{
+    "name": "Hullbreach.Builder",
+    "rootNamespace": "Hullbreach.Builder",
+    "references": [
+        "Hullbreach.Core",
+        "Unity.Mathematics"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
