@@ -81,7 +81,7 @@ namespace Hullbreach.Game
             if (targetController == null) return;
 
             Vector2 hitPoint = transform.position;
-            Vector2 direction = ((Rigidbody2D)GetComponent<Rigidbody2D>()).linearVelocity.normalized;
+            Vector2 direction = GetComponent<Rigidbody2D>().linearVelocity.normalized;
 
             targetController.ApplyImpulse(hitPoint, direction * _spec.Impulse);
             targetController.ApplyDamage(hitPoint, _spec.Damage);
