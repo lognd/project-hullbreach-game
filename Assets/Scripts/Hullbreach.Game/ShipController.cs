@@ -47,6 +47,7 @@ namespace Hullbreach.Game
     ///     outright. Read edge-triggered input in Update, store it, consume it
     ///     in FixedUpdate.
     /// </summary>
+    [DefaultExecutionOrder(-100)]
     [RequireComponent(typeof(Rigidbody2D))]
     public sealed class ShipController : MonoBehaviour
     {
@@ -78,6 +79,15 @@ namespace Hullbreach.Game
         /// scene branch can read state (throttle, mass, etc.) without
         /// ShipController growing pass-through properties for everything.</summary>
         public ShipBody Ship => ship;
+
+        /// <summary>
+        /// Gate for player input, set by DemoMode when switching to Build
+        /// mode (where BuilderController drives the same grid instead) so a
+        /// frozen ship does not also fight the physics step with stale
+        /// thrust/steer/fire input. Defaults to true so existing scenes
+        /// (RocketScene) behave exactly as before.
+        /// </summary>
+        public bool InputEnabled = true;
 
         /// <summary>Raised once per PendingShots entry drained in
         /// FixedUpdate, so the demo scene branch can subscribe and spawn a
@@ -111,6 +121,16 @@ namespace Hullbreach.Game
 
         void Update()
         {
+            if (!InputEnabled)
+            {
+                // Do not let a stale latched fire from before the ship was
+                // frozen carry over into the next time it flies.
+                thrustAxis = 0f;
+                steerAxis = 0f;
+                fireLatched = false;
+                return;
+            }
+
             // TODO [A5]: Migrate to the new Input System alongside S27
             //            (rebindable keys). activeInputHandler is currently 2
             //            ("Both"), so the legacy calls still work -- but every
@@ -129,7 +149,7 @@ namespace Hullbreach.Game
 
         void FixedUpdate()
         {
-            var input = new ShipInput(thrustAxis, steerAxis, fireLatched);
+            var input = InputEnabled ? new ShipInput(thrustAxis, steerAxis, fireLatched) : new ShipInput(0f, 0f, false);
             fireLatched = false;   // consume exactly once
 
             ship.Step(input, Time.fixedDeltaTime);
@@ -184,6 +204,38 @@ namespace Hullbreach.Game
         /// <summary>World-space wrapper over ShipBody.ApplyDamageAtWorldPoint.</summary>
         public void ApplyDamage(Vector2 worldPoint, byte damage)
             => ship.ApplyDamageAtWorldPoint(new float2(worldPoint.x, worldPoint.y), damage, out _);
+
+        /// <summary>
+        /// Latches a fire request for the next FixedUpdate, exactly as if
+        /// Input.GetButtonDown("Fire1") had fired this frame. Lets a caller
+        /// (DemoMode) bind fire to a key that is not guaranteed to be wired
+        /// to the "Fire1" virtual axis in the Input Manager, e.g. Space.
+        /// </summary>
+        public void RequestFire()
+        {
+            if (InputEnabled) fireLatched = true;
+        }
+
+        /// <summary>
+        /// Resets the ship to rest at the world origin: zeroed position,
+        /// rotation and both velocities. Used by DemoMode's R key so a
+        /// mangled or drifted ship can be brought back for another pass.
+        /// </summary>
+        public void ResetToOrigin()
+        {
+            ship.Position = float2.zero;
+            ship.Rotation = 0f;
+            ship.Velocity = float2.zero;
+            ship.AngularVelocity = 0f;
+
+            if (body != null)
+            {
+                body.linearVelocity = Vector2.zero;
+                body.angularVelocity = 0f;
+                body.MovePosition(Vector2.zero);
+                body.MoveRotation(0f);
+            }
+        }
 
         void OnDrawGizmosSelected()
         {

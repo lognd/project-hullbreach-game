@@ -21,7 +21,7 @@ namespace Hullbreach.Game
             var session = controller.Session;
 
             GUILayout.BeginArea(new Rect(10, 10, 260, 400), GUI.skin.box);
-            GUILayout.Label("Palette (keys 1-5)");
+            GUILayout.Label("Palette (keys 1-7)");
 
             foreach (var entry in BlockPalette.All())
             {
@@ -34,6 +34,10 @@ namespace Hullbreach.Game
             GUILayout.Label($"Total mass: {session.TotalMass:0.0}");
             GUILayout.Label($"Block count: {session.BlockCount}");
             GUILayout.Label($"State: {session.State}");
+            if (!string.IsNullOrEmpty(controller.HoverVerdictText))
+            {
+                GUILayout.Label($"Hover: {controller.HoverVerdictText}");
+            }
             GUILayout.EndArea();
         }
     }
