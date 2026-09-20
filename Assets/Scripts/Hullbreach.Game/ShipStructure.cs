@@ -21,6 +21,28 @@ namespace Hullbreach.Game
         [SerializeField] ShipController controller;
         [SerializeField] ShipRenderer renderer_;
 
+        /// <summary>Bounds how often the solver re-runs the linearized
+        /// buckling subspace iteration; forwarded to Solver in Awake so it
+        /// can be tuned per-ship without editing StructuralSolver's default.
+        /// See StructuralSolver.BucklingEveryNTicks for why this must stay
+        /// bounded (the eigen-solve is not free every FixedUpdate).</summary>
+        [SerializeField] int bucklingEveryNTicks = 4;
+
+        /// <summary>Number of buckling modes the subspace iteration tracks;
+        /// forwarded to Solver in Awake. See StructuralSolver.BucklingModeCount.</summary>
+        [SerializeField] int bucklingModeCount = 4;
+
+        /// <summary>
+        /// Only the authoritative simulation may act on Solver.BuckledBlocks
+        /// by detaching blocks -- the FE solve is not bit-identical across
+        /// machines, so a client independently detaching from BuckledBlocks
+        /// can desync from the server (see StructuralSolver.BuckledBlocks).
+        /// Non-authoritative instances (clients) still tint BucklingRatio via
+        /// ShipRenderer but skip the break here; they act only on explicit
+        /// block-died events broadcast by the server (see NetMessages.cs).
+        /// </summary>
+        public bool Authoritative = true;
+
         /// <summary>The underlying solver, exposed so ShipRenderer's Stress
         /// overlay (and diagnostics) can read BlockStresses directly.</summary>
         public StructuralSolver Solver { get; } = new StructuralSolver();
@@ -34,8 +56,21 @@ namespace Hullbreach.Game
             if (controller == null) controller = GetComponent<ShipController>();
             if (renderer_ == null) renderer_ = GetComponent<ShipRenderer>();
             if (controller == null) Debug.LogError("ShipStructure requires a ShipController on the same GameObject.");
-            if (renderer_ != null) renderer_.Solver = Solver;
+            if (renderer_ != null)
+            {
+                renderer_.Solver = Solver;
+                renderer_.ExtraRatioSource = BucklingRatioFor;
+            }
+            Solver.BucklingEveryNTicks = bucklingEveryNTicks;
+            Solver.BucklingModeCount = bucklingModeCount;
         }
+
+        /// <summary>Reads BlockStress.BucklingRatio for one block, 0 if the
+        /// solver has no stress recorded for it yet; wired into ShipRenderer
+        /// as the ExtraRatioSource for the Stress overlay's max(...) and used
+        /// directly by the Buckling overlay.</summary>
+        float BucklingRatioFor(int key)
+            => Solver.BlockStresses.TryGetValue(key, out var stress) ? stress.BucklingRatio : 0f;
 
         void FixedUpdate()
         {
@@ -82,11 +117,25 @@ namespace Hullbreach.Game
 
             _toDamage.Clear();
             _toDetach.Clear();
+
+            if (Authoritative && Solver.BuckledBlocks.Count > 0)
+            {
+                DetachAndCleanUp(grid, Solver.BuckledBlocks);
+            }
         }
 
-        void DetachAndCleanUp(BlockGrid grid)
+        void DetachAndCleanUp(BlockGrid grid) => DetachAndCleanUp(grid, _toDetach);
+
+        /// <summary>
+        /// Same break path as the ductile/brittle stress failure above,
+        /// reused for buckled blocks: remove the given keys, then remove
+        /// whatever that stranded, rebuild derived views and mark the
+        /// renderer/collider dirty. Only called for BuckledBlocks when
+        /// Authoritative -- see the Authoritative doc comment.
+        /// </summary>
+        void DetachAndCleanUp(BlockGrid grid, IReadOnlyList<int> keys)
         {
-            foreach (int key in _toDetach)
+            foreach (int key in keys)
             {
                 grid.TryRemove(key);
                 _failing.Remove(key);
