@@ -383,17 +383,26 @@ time to switch between Build and Fly.
   (green-to-red by how close a block is to structural failure) ->
   **LoadBearing** (magenta on articulation points -- the blocks whose loss
   would split the ship) -> **Damage** (white-to-black by accumulated hit
-  damage) -> back to None.
+  damage) -> **Buckling** (blue-to-red by how close the ship is to folding
+  along its weakest buckling mode) -> back to None.
 - **R** resets the player ship to rest at the world origin.
 
 The always-on panel in the corner shows the current mode, its controls,
-the current overlay, total mass, block count, and (in Fly mode) speed and
-angular speed.
+the current overlay, total mass, block count, and (in Fly mode) speed,
+angular speed, and the critical load factor ("inf" when the ship is nowhere
+near buckling).
 
 Shooting the `TargetShip` knocks it back and tints it under the Damage
 overlay; sustained fire on the same block will eventually push its
 Stress ratio past 1 and detach it (and anything only connected through
 it) from the target.
+
+A ship also folds under its own loads without being shot at all: once the
+critical load factor drops below 1, the weakest buckling mode's blocks
+detach the same way a stress failure does. The Buckling overlay shows this
+coming before it happens -- it tints purely on buckling risk, so a hull
+that looks fine under Stress can still show red under Buckling if a long,
+thin section is about to fold.
 
 ## Making a change
 
