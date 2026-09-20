@@ -22,13 +22,14 @@ namespace Hullbreach.Builder.Tests
         }
 
         [Test]
-        public void Symmetric_IsFalseOnlyForThrusterAndCannon()
+        public void Symmetric_IsFalseOnlyForDirectionalBlocks()
         {
             Assert.IsTrue(BlockPalette.IsSymmetric(BlockTypes.Core));
             Assert.IsTrue(BlockPalette.IsSymmetric(BlockTypes.Hull));
             Assert.IsTrue(BlockPalette.IsSymmetric(BlockTypes.Armor));
             Assert.IsFalse(BlockPalette.IsSymmetric(BlockTypes.Thruster));
             Assert.IsFalse(BlockPalette.IsSymmetric(BlockTypes.Cannon));
+            Assert.IsFalse(BlockPalette.IsSymmetric(BlockTypes.Fin));
         }
 
         [Test]

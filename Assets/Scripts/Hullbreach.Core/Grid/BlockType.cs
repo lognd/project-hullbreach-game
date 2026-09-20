@@ -68,6 +68,7 @@ namespace Hullbreach.Core
         public const byte Armor = 2;
         public const byte Thruster = 3;
         public const byte Cannon = 4;
+        public const byte Fin = 5;
 
         // Normalized against Hull.YieldStress = 1.0.
         //
@@ -84,6 +85,10 @@ namespace Hullbreach.Core
         //             machinery packed inside.
         //   Cannon:   same idea as Thruster -- hull-like structurally, a
         //             little heavier for its mechanism.
+        //   Fin:      light control surface -- cheap mass so placement is
+        //             about leverage, not weight, and slightly weaker than
+        //             hull since it is a thin surface rather than a hull
+        //             plate.
         static readonly BlockType[] Table =
         {
             //             name         mass   E     nu#  yield  spall  compress
@@ -92,6 +97,7 @@ namespace Hullbreach.Core
             new BlockType("Armor",      2.0f,  1.4f, 0,   0.7f,  2.5f,  4.0f),
             new BlockType("Thruster",   1.2f,  1.0f, 0,   1.0f,  1.0f,  1.0f),
             new BlockType("Cannon",     1.3f,  1.0f, 0,   1.0f,  1.0f,  1.0f),
+            new BlockType("Fin",        0.6f,  0.9f, 0,   0.9f,  0.9f,  0.9f),
         };
 
         public static BlockType Get(byte typeId) => Table[typeId];
