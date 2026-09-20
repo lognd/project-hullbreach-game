@@ -1,4 +1,5 @@
 using Unity.Mathematics;
+using Hullbreach.Core;
 
 namespace Hullbreach.Ship
 {
@@ -14,20 +15,14 @@ namespace Hullbreach.Ship
     public static class BlockFacing
     {
         /// <summary>Bit mask isolating the facing field within Modifiers.</summary>
-        public const byte Mask = 0b11;
+        public const byte Mask = Hullbreach.Core.Facing.Mask;
 
-        /// <summary>Unit ship-local direction for the given modifiers byte.
-        /// Only the low 2 bits are consulted; higher bits are reserved for
-        /// other upgrades and ignored here.</summary>
+        /// <summary>
+        /// Thin alias for Hullbreach.Core.Facing.Direction, kept here so
+        /// existing Ship-side callers (thrust application, muzzle direction,
+        /// gizmo drawing) do not need to change their using directives.
+        /// </summary>
         public static float2 FromModifiers(byte modifiers)
-        {
-            switch (modifiers & Mask)
-            {
-                case 0: return new float2(0f, 1f);
-                case 1: return new float2(1f, 0f);
-                case 2: return new float2(0f, -1f);
-                default: return new float2(-1f, 0f);
-            }
-        }
+            => Hullbreach.Core.Facing.Direction(modifiers);
     }
 }

@@ -49,15 +49,16 @@ namespace Hullbreach.Builder
             3, // Armor
             4, // Thruster
             5, // Cannon
+            2, // Fin
         };
 
         /// <summary>
-        /// True when a block type has no facing to orient. Thruster and Cannon
-        /// point somewhere and so require the second click; every other type
-        /// commits on the first click.
+        /// True when a block type has no facing to orient. Thruster, Cannon
+        /// and Fin point somewhere and so require the second click; every
+        /// other type commits on the first click.
         /// </summary>
         public static bool IsSymmetric(byte typeId)
-            => typeId != BlockTypes.Thruster && typeId != BlockTypes.Cannon;
+            => typeId != BlockTypes.Thruster && typeId != BlockTypes.Cannon && typeId != BlockTypes.Fin;
 
         /// <summary>Every palette entry, in BlockTypes table order.</summary>
         public static IEnumerable<PaletteEntry> All()
