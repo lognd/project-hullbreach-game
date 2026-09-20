@@ -35,7 +35,9 @@ namespace Hullbreach.Structure
         /// Orthonormalizes `modes` in place via Gram-Schmidt, so they can be
         /// used to repeatedly project a vector onto their complement.
         /// </summary>
-        static void Orthonormalize(float[][] modes)
+        /// <summary>Internal (not private) so BucklingAnalysis can reuse the same
+        /// Gram-Schmidt routine for its subspace block, per NO-DUPLICATION.</summary>
+        internal static void Orthonormalize(float[][] modes)
         {
             for (int i = 0; i < modes.Length; i++)
             {
@@ -57,7 +59,9 @@ namespace Hullbreach.Structure
             }
         }
 
-        static float Dot(float[] a, float[] b)
+        /// <summary>Euclidean dot product, shared with BucklingAnalysis's
+        /// Rayleigh-Ritz projection.</summary>
+        internal static float Dot(float[] a, float[] b)
         {
             float s = 0f;
             for (int i = 0; i < a.Length; i++) s += a[i] * b[i];
@@ -66,7 +70,10 @@ namespace Hullbreach.Structure
 
         /// <summary>Removes the component of `v` along each of the (assumed
         /// orthonormal) `modes`, in place.</summary>
-        static void Project(float[] v, float[][] modes)
+        /// <summary>Shared with BucklingAnalysis: every subspace vector and
+        /// right-hand side must stay off the rigid modes for the same reason
+        /// CG's residual does.</summary>
+        internal static void Project(float[] v, float[][] modes)
         {
             foreach (var m in modes)
             {
@@ -136,7 +143,14 @@ namespace Hullbreach.Structure
                     z[i] = diag[i] > 1e-12f ? r[i] / diag[i] : r[i];
 
                 float rzNew = Dot(r, z);
-                float beta = rzNew / rzOld;
+                // Guard against an exactly-annihilated residual (rzOld == 0
+                // without rNorm having already tripped the convergence check
+                // above -- possible when the right-hand side itself is
+                // exactly zero, e.g. BucklingAnalysis solving K*y = -K_G*v
+                // for a v the current, nearly-uncompressed K_G maps to
+                // machine-zero). 0/0 would otherwise be NaN and corrupt
+                // every later use of p and u.
+                float beta = Math.Abs(rzOld) > 1e-30f ? rzNew / rzOld : 0f;
                 for (int i = 0; i < n; i++) p[i] = z[i] + beta * p[i];
                 rzOld = rzNew;
             }
