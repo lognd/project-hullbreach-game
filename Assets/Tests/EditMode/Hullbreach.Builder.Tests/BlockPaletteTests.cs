@@ -22,12 +22,13 @@ namespace Hullbreach.Builder.Tests
         }
 
         [Test]
-        public void Symmetric_IsFalseOnlyForDirectionalBlocks()
+        public void Symmetric_IsFalseOnlyForFacingBlocks()
         {
             Assert.IsTrue(BlockPalette.IsSymmetric(BlockTypes.Core));
             Assert.IsTrue(BlockPalette.IsSymmetric(BlockTypes.Hull));
             Assert.IsTrue(BlockPalette.IsSymmetric(BlockTypes.Armor));
-            Assert.IsFalse(BlockPalette.IsSymmetric(BlockTypes.Thruster));
+            Assert.IsTrue(BlockPalette.IsSymmetric(BlockTypes.Thruster), "thruster always pushes +y; it has no facing to orient");
+            Assert.IsTrue(BlockPalette.IsSymmetric(BlockTypes.RetroThruster), "retro thruster always pushes -y; it has no facing to orient");
             Assert.IsFalse(BlockPalette.IsSymmetric(BlockTypes.Cannon));
             Assert.IsFalse(BlockPalette.IsSymmetric(BlockTypes.Fin));
         }
