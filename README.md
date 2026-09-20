@@ -347,6 +347,54 @@ GitHub issues mirrored from Jira.
   Keep `core.autocrlf=true` on Windows; `.gitattributes` normalizes line
   endings on commit.
 
+## Playing the demo
+
+Open `Assets/Scenes/DemoScene.unity` and press Play. It is registered as
+the first scene in `ProjectSettings/EditorBuildSettings.asset`, alongside
+`RocketScene`.
+
+The scene starts in **Build** mode with the player ship frozen at the
+origin and a stationary `TargetShip` 12 units up. Press **Tab** at any
+time to switch between Build and Fly.
+
+**Build mode:**
+
+- **1-7** select a palette entry (Core, Hull, Armor, Thruster, Cannon,
+  Fin, RetroThruster, in `BlockTypes` order). The ship already has a core,
+  so selecting Core again is harmless (it will just refuse to place a
+  second one).
+- Hover a cell to preview it: **green** means the current selection can be
+  placed there right now, **red** means it cannot, and the HUD's `Hover:`
+  line explains why (e.g. "must touch an existing block", "blocks the
+  cannon's muzzle").
+- **Left click** places the hovered/oriented block; directional blocks
+  (Cannon, Fin) take a second click to choose a facing after the first.
+  **Right click** removes a block (this can strand and remove other
+  blocks too, if they were only connected through it).
+- **Ctrl+Z** undoes the last placement or removal; **Ctrl+Shift+Z** redoes
+  it. **Esc** cancels an in-progress facing choice.
+
+**Fly mode:**
+
+- **W/S** or **Up/Down** fire the forward thrusters / retro thrusters.
+- **A/D** or **Left/Right** steer via the fins.
+- **Space** fires every cannon that is off cooldown.
+- **O** cycles the overlay: **None** (plain per-type colors) -> **Stress**
+  (green-to-red by how close a block is to structural failure) ->
+  **LoadBearing** (magenta on articulation points -- the blocks whose loss
+  would split the ship) -> **Damage** (white-to-black by accumulated hit
+  damage) -> back to None.
+- **R** resets the player ship to rest at the world origin.
+
+The always-on panel in the corner shows the current mode, its controls,
+the current overlay, total mass, block count, and (in Fly mode) speed and
+angular speed.
+
+Shooting the `TargetShip` knocks it back and tints it under the Damage
+overlay; sustained fire on the same block will eventually push its
+Stress ratio past 1 and detach it (and anything only connected through
+it) from the target.
+
 ## Making a change
 
 Same as platform. `main` is protected; every change is a branch, a PR,

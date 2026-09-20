@@ -69,6 +69,13 @@ namespace Hullbreach.Ship
         /// its own recoil.</summary>
         public readonly List<ShotRequest> PendingShots = new List<ShotRequest>();
 
+        /// <summary>Every continuous force applied via AddForceAtPoint this
+        /// Step (thrusters, retros, fins), in SHIP-LOCAL coordinates. Cleared
+        /// at the start of every Step. A later structural system (ShipStructure)
+        /// feeds these straight into StructuralSolver.Tick without ShipBody
+        /// needing to know StructuralSolver exists.</summary>
+        public readonly List<(float2 point, float2 force)> AppliedForcesThisStep = new List<(float2, float2)>();
+
         /// <summary>Linear acceleration computed by the last Step, in world
         /// space. Exposed (not just consumed internally) because the FE
         /// inertia-relief work on another branch needs the same a = F/M this
@@ -177,6 +184,7 @@ namespace Hullbreach.Ship
         {
             if (Grid.TopologyDirty) RebuildDerivedViews();
 
+            AppliedForcesThisStep.Clear();
             FireRequested = input.FirePressed;
 
             float mass = Grid.Mass.Total;
@@ -352,6 +360,7 @@ namespace Hullbreach.Ship
             _forceAccum += force;
             float2 r = shipLocalPoint - Grid.Mass.CenterOfMass;
             _torqueAccum += r.x * force.y - r.y * force.x;
+            AppliedForcesThisStep.Add((shipLocalPoint, force));
         }
 
         /// <summary>

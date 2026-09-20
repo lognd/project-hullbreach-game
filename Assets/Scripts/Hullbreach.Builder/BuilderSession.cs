@@ -45,7 +45,24 @@ namespace Hullbreach.Builder
         readonly UndoStack _undo = new UndoStack();
 
         /// <summary>The ship under construction.</summary>
-        public BlockGrid Grid { get; } = new BlockGrid();
+        public BlockGrid Grid { get; }
+
+        /// <summary>Owns a brand-new grid -- the original behavior, used by
+        /// standalone builder tests and any caller with no existing ship.</summary>
+        public BuilderSession() : this(new BlockGrid())
+        {
+        }
+
+        /// <summary>
+        /// Build over an EXTERNAL grid instead of a private one, so the demo
+        /// scene's builder can edit the very same BlockGrid a ShipBody is
+        /// simulating -- otherwise placements would land in a grid nobody
+        /// flies. Ownership stays with the caller; this session only mutates it.
+        /// </summary>
+        public BuilderSession(BlockGrid grid)
+        {
+            Grid = grid ?? throw new ArgumentNullException(nameof(grid));
+        }
 
         /// <summary>Currently selected palette type, defaults to Core so the very first click can seed the grid.</summary>
         public byte SelectedTypeId { get; private set; } = BlockTypes.Core;
