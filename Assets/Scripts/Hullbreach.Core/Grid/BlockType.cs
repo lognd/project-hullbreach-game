@@ -69,6 +69,9 @@ namespace Hullbreach.Core
         public const byte Thruster = 3;
         public const byte Cannon = 4;
         public const byte Fin = 5;
+        /// <summary>Retro thruster: pushes the ship BACKWARD via two small
+        /// side nozzles that exhaust forward. Fires on the reverse key.</summary>
+        public const byte RetroThruster = 6;
 
         // Normalized against Hull.YieldStress = 1.0.
         //
@@ -98,6 +101,7 @@ namespace Hullbreach.Core
             new BlockType("Thruster",   1.2f,  1.0f, 0,   1.0f,  1.0f,  1.0f),
             new BlockType("Cannon",     1.3f,  1.0f, 0,   1.0f,  1.0f,  1.0f),
             new BlockType("Fin",        0.6f,  0.9f, 0,   0.9f,  0.9f,  0.9f),
+            new BlockType("Retro",      0.9f,  1.0f, 0,   1.0f,  1.0f,  1.0f),
         };
 
         public static BlockType Get(byte typeId) => Table[typeId];

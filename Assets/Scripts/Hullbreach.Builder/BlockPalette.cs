@@ -50,6 +50,7 @@ namespace Hullbreach.Builder
             4, // Thruster
             5, // Cannon
             2, // Fin
+            3, // RetroThruster
         };
 
         /// <summary>
