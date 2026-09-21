@@ -1,0 +1,29 @@
+{
+    "name": "Hullbreach.Demo.Tests",
+    "rootNamespace": "Hullbreach.Demo.Tests",
+    "references": [
+        "Hullbreach.Core",
+        "Hullbreach.Ship",
+        "Hullbreach.World",
+        "Hullbreach.Structure",
+        "Hullbreach.Builder",
+        "Hullbreach.Net",
+        "Hullbreach.Game",
+        "Unity.Mathematics",
+        "UnityEngine.TestRunner",
+        "UnityEditor.TestRunner"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

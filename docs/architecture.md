@@ -166,21 +166,6 @@ server's own tick loop). In order:
    gravity torque-correct (a lopsided ship spins under a tidal gradient)
    and why gravity shows up in `AppliedForcesThisStep` exactly like any
    other applied force: the structural solver does not special-case it.
-   `GravityField.AccelerationAt` softens the raw `Mu / r^2` law rather
-   than using it as-is: each `GravityBody` has a `SoftRadius` (default
-   `max(Radius * 1.5, 2)` units, so even a small gravity-gun well
-   softens over a perceptible distance) inside which the acceleration
-   scales linearly from the `Mu / SoftRadius^2` value at `SoftRadius`
-   down to zero at the exact center, continuous at the boundary; this is
-   a gameplay choice over physical realism, made so two things passing
-   close together (a ship and a planet, or two overlapping wells) never
-   see the inverse-square law diverge toward infinity. The summed
-   acceleration is additionally clamped to `GravityField.MaxAcceleration`
-   (40 units/s^2 default) by magnitude, so several overlapping strong
-   wells cannot stack past that same ceiling. `OrbitHelper` uses the
-   identical softened law (`GravityField.AccelerationMagnitude`) so a
-   requested circular orbit is still consistent even when it dips inside
-   `SoftRadius`.
 7. **Integrate**: compute `worldForce / mass` and `torque / inertia`,
    then **semi-implicit (symplectic) Euler**: velocity updates first,
    then position uses the *new* velocity. Chosen because it is what Box2D

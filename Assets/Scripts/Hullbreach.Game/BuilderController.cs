@@ -78,6 +78,39 @@ namespace Hullbreach.Game
             if (shipController != null && shipController.Ship != null) shipController.Ship.RebuildDerivedViews();
         }
 
+        /// <summary>
+        /// Places the currently selected block at `key`, exactly as a left
+        /// click over that cell would. Public because mouse position cannot
+        /// be synthesised in a play-mode test, and a builder that is only
+        /// reachable through the mouse is a builder that cannot be proven to
+        /// work. Returns whether the placement was accepted.
+        /// </summary>
+        public bool TryPlaceAt(int key) => Session != null && Session.Click(key);
+
+        /// <summary>Removes the block at `key`, exactly as a right click over
+        /// that cell would. See <see cref="TryPlaceAt"/>.</summary>
+        public bool TryRemoveAt(int key) => Session != null && Session.Remove(key);
+
+        /// <summary>The placement verdict for `key` with the current
+        /// selection, without clicking: what the hover preview would show.</summary>
+        public Hullbreach.Builder.PlacementVerdict VerdictAt(int key)
+            => Session != null ? Session.Hover(key).Verdict : Hullbreach.Builder.PlacementVerdict.OutOfRange;
+
+        /// <summary>
+        /// Pins the hover preview to `key` instead of following the mouse,
+        /// so a screenshot test can show the green/red placement indicator
+        /// (there is no way to move the OS cursor from a play-mode test).
+        /// Pass null to hand the hover back to the mouse.
+        /// </summary>
+        public void PreviewHoverAt(int? key) => _hoverOverride = key;
+
+        int? _hoverOverride;
+
+        /// <summary>The runtime hover preview quad, or null before the first
+        /// Update built it; exposed so a play-mode test can assert what it is
+        /// doing.</summary>
+        public GameObject HoverIndicator => _hoverIndicator != null ? _hoverIndicator.gameObject : null;
+
         void Update()
         {
             // TODO [A5]: migrate to the new Input System alongside S27; the
@@ -91,7 +124,15 @@ namespace Hullbreach.Game
                 }
             }
 
-            if (TryGetHoveredKey(out int key))
+            if (_hoverOverride.HasValue)
+            {
+                _hasHover = true;
+                _hoverKey = _hoverOverride.Value;
+                var pinned = Session.Hover(_hoverKey);
+                _hoverValid = pinned.Valid;
+                _hoverVerdict = pinned.Verdict;
+            }
+            else if (TryGetHoveredKey(out int key))
             {
                 _hasHover = true;
                 _hoverKey = key;

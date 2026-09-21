@@ -19,25 +19,12 @@ namespace Hullbreach.Game
         public float radius;
         public Color color;
 
-        [Tooltip("How many multiples of Radius the pull stays softened " +
-                 "(no blow-up near the center) before falling back to the " +
-                 "ordinary inverse-square law. The actual soft radius is " +
-                 "also floored at GravityBody.MinSoftRadius (2 units), so " +
-                 "small wells still soften over a perceptible distance.")]
-        public float softRadiusFactor;
-
         public PlanetSpec(Vector2 position, float mu, float radius, Color color)
-            : this(position, mu, radius, color, Hullbreach.World.GravityBody.DefaultSoftRadiusFactor)
-        {
-        }
-
-        public PlanetSpec(Vector2 position, float mu, float radius, Color color, float softRadiusFactor)
         {
             this.position = position;
             this.mu = mu;
             this.radius = radius;
             this.color = color;
-            this.softRadiusFactor = softRadiusFactor;
         }
     }
 
@@ -73,16 +60,8 @@ namespace Hullbreach.Game
             var field = new GravityField();
             foreach (var planet in planets)
             {
-                // A freshly-resized Inspector array serializes softRadiusFactor
-                // as 0, not the constructor's default, so treat <= 0 as "use
-                // the default factor" rather than a literal zero soft radius.
-                float factor = planet.softRadiusFactor > 0f
-                    ? planet.softRadiusFactor
-                    : GravityBody.DefaultSoftRadiusFactor;
-                float softRadius = math.max(planet.radius * factor, GravityBody.MinSoftRadius);
-
                 field.Add(new GravityBody(new float2(planet.position.x, planet.position.y),
-                                           planet.mu, planet.radius, surfaceRestitution, softRadius));
+                                           planet.mu, planet.radius, surfaceRestitution));
                 SpawnDisc(planet);
             }
             Field = field;

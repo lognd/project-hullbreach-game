@@ -203,6 +203,44 @@ namespace Hullbreach.Ship
         /// renderer to animate the control surface.</summary>
         public float SteerThrottle(int key) => _throttleByKey.TryGetValue(key, out var t) ? t : 0f;
 
+        /// <summary>Mean throttle 0..1 across every forward thruster after
+        /// the last Step. One aggregate read by BOTH the HUD bars and the
+        /// play-mode tests, so what a player sees and what a test asserts on
+        /// can never drift apart. Zero when the ship has no thrusters.</summary>
+        public float ForwardThrottleMean { get; private set; }
+
+        /// <summary>Mean throttle 0..1 across every retro thruster after the
+        /// last Step. See <see cref="ForwardThrottleMean"/>.</summary>
+        public float ReverseThrottleMean { get; private set; }
+
+        /// <summary>Mean steer throttle -1..1 across every fin after the last
+        /// Step. See <see cref="ForwardThrottleMean"/>.</summary>
+        public float SteerThrottleMean { get; private set; }
+
+        /// <summary>
+        /// Recomputes the three control-channel means from the per-key
+        /// throttles the behaviours just ramped. Allocation-free: it walks
+        /// the already-built key arrays and the dictionary, so this runs on
+        /// the hot path without adding GC pressure.
+        /// </summary>
+        void RecomputeThrottleMeans()
+        {
+            ForwardThrottleMean = MeanThrottle(ThrusterKeys);
+            ReverseThrottleMean = MeanThrottle(RetroKeys);
+            SteerThrottleMean = MeanThrottle(FinKeys);
+        }
+
+        float MeanThrottle(int[] keys)
+        {
+            if (keys.Length == 0) return 0f;
+            float sum = 0f;
+            for (int i = 0; i < keys.Length; i++)
+            {
+                if (_throttleByKey.TryGetValue(keys[i], out float t)) sum += t;
+            }
+            return sum / keys.Length;
+        }
+
         /// <summary>
         /// Advance one FIXED timestep. Never call this from Update: the physics
         /// step runs on a fixed timer, and applying force per rendered frame
@@ -236,6 +274,9 @@ namespace Hullbreach.Ship
                 // entirely rather than divide by zero.
                 LastLinearAcceleration = float2.zero;
                 LastAngularAcceleration = 0f;
+                ForwardThrottleMean = 0f;
+                ReverseThrottleMean = 0f;
+                SteerThrottleMean = 0f;
                 return;
             }
 
@@ -245,6 +286,13 @@ namespace Hullbreach.Ship
             StepBehaviours(RetroKeys, input, dt);
             StepBehaviours(FinKeys, input, dt);
             StepBehaviours(WeaponKeys, input, dt);
+
+            // After the behaviours have ramped their per-block throttles and
+            // before anything reads them, so the HUD bars and the play-mode
+            // tests both see THIS tick's control state rather than last
+            // tick's.
+            RecomputeThrottleMeans();
+
             ApplyGravityForces();
 
             float inertia = Grid.Mass.InertiaAboutCenterOfMass;

@@ -43,6 +43,91 @@ namespace Hullbreach.Game
         /// <summary>Current mode, Build until the player presses Tab.</summary>
         public DemoState State { get; private set; } = DemoState.Build;
 
+        /// <summary>
+        /// Where player intent comes from. Defaults to the legacy Input
+        /// Manager bindings; a play-mode test swaps in a ScriptedDemoInput.
+        /// Assigning this also pushes the same source onto the player's
+        /// ShipController, so a test only has to wire one object.
+        /// </summary>
+        public IDemoInput InputSource
+        {
+            get => _inputSource;
+            set
+            {
+                _inputSource = value ?? LegacyDemoInput.Instance;
+                if (playerShip != null) playerShip.InputSource = _inputSource;
+            }
+        }
+
+        IDemoInput _inputSource = LegacyDemoInput.Instance;
+
+        /// <summary>The player's ShipController, exposed so play-mode tests
+        /// (and any future HUD) can reach the live ship without a scene
+        /// search that depends on GameObject names.</summary>
+        public ShipController PlayerShip => playerShip;
+
+        /// <summary>The player's ShipRenderer; see <see cref="PlayerShip"/>.</summary>
+        public ShipRenderer PlayerRenderer => playerRenderer;
+
+        /// <summary>The player's ShipStructure; see <see cref="PlayerShip"/>.</summary>
+        public ShipStructure PlayerStructure => playerStructure;
+
+        /// <summary>The scene's BuilderController; see <see cref="PlayerShip"/>.</summary>
+        public BuilderController Builder => builder;
+
+        /// <summary>Where R sends the ship when startInOrbit is set.</summary>
+        public Vector2 OrbitStartPosition => orbitStartPosition;
+
+        /// <summary>Whether this scene starts the player on a circular orbit.</summary>
+        public bool StartsInOrbit => startInOrbit;
+
+        /// <summary>
+        /// Switches mode and applies it. Public so a play-mode test can drive
+        /// the toggle without synthesising a Tab key press.
+        /// </summary>
+        public void SetState(DemoState state)
+        {
+            State = state;
+            ApplyState();
+        }
+
+        /// <summary>Toggles Build and Fly, exactly as pressing Tab does.</summary>
+        public void ToggleState() => SetState(State == DemoState.Build ? DemoState.Fly : DemoState.Build);
+
+        /// <summary>
+        /// Puts the player back on the start state: the preset circular orbit
+        /// when startInOrbit is set (velocity derived from the position, so
+        /// the two can never disagree), otherwise dead rest at the origin.
+        /// </summary>
+        public void ResetPlayer()
+        {
+            if (playerShip == null) return;
+
+            var field = GravityWorld.Field;
+            if (startInOrbit && field != null)
+            {
+                playerShip.ResetTo(orbitStartPosition, OrbitStartVelocity());
+            }
+            else
+            {
+                playerShip.ResetToOrigin();
+            }
+        }
+
+        /// <summary>The circular-orbit velocity implied by orbitStartPosition,
+        /// or zero when this scene has no gravity field. Exposed so a test can
+        /// assert the reset lands on exactly this velocity rather than
+        /// recomputing the formula itself.</summary>
+        public Vector2 OrbitStartVelocity()
+        {
+            var field = GravityWorld.Field;
+            if (!startInOrbit || field == null) return Vector2.zero;
+
+            var worldPos = new Unity.Mathematics.float2(orbitStartPosition.x, orbitStartPosition.y);
+            var v = OrbitHelper.CircularOrbitVelocity(field, orbitBodyIndex, worldPos);
+            return new Vector2(v.x, v.y);
+        }
+
         void Awake()
         {
             if (playerShip == null) Debug.LogError("DemoMode requires a player ShipController.");
@@ -50,6 +135,7 @@ namespace Hullbreach.Game
             if (builder == null) Debug.LogError("DemoMode requires a BuilderController.");
             if (playerRenderer == null && playerShip != null) playerRenderer = playerShip.GetComponent<ShipRenderer>();
             if (playerStructure == null && playerShip != null) playerStructure = playerShip.GetComponent<ShipStructure>();
+            if (playerShip != null) playerShip.InputSource = _inputSource;
         }
 
         void Start()
@@ -59,35 +145,18 @@ namespace Hullbreach.Game
 
         void Update()
         {
-            if (Input.GetKeyDown(KeyCode.Tab))
-            {
-                State = State == DemoState.Build ? DemoState.Fly : DemoState.Build;
-                ApplyState();
-            }
+            var input = _inputSource ?? LegacyDemoInput.Instance;
+
+            if (input.TogglePressed) ToggleState();
 
             if (State == DemoState.Fly)
             {
-                if (Input.GetKeyDown(KeyCode.Space) && playerShip != null) playerShip.RequestFire();
-
-                if (Input.GetKeyDown(KeyCode.O) && playerRenderer != null)
+                if (input.FirePressed && playerShip != null) playerShip.RequestFire();
+                if (input.OverlayPressed && playerRenderer != null)
                 {
                     playerRenderer.Overlay = NextOverlay(playerRenderer.Overlay);
                 }
-
-                if (Input.GetKeyDown(KeyCode.R) && playerShip != null)
-                {
-                    var field = GravityWorld.Field;
-                    if (startInOrbit && field != null)
-                    {
-                        var worldPos = new Unity.Mathematics.float2(orbitStartPosition.x, orbitStartPosition.y);
-                        var orbitVelocity = OrbitHelper.CircularOrbitVelocity(field, orbitBodyIndex, worldPos);
-                        playerShip.ResetTo(orbitStartPosition, new Vector2(orbitVelocity.x, orbitVelocity.y));
-                    }
-                    else
-                    {
-                        playerShip.ResetToOrigin();
-                    }
-                }
+                if (input.ResetPressed) ResetPlayer();
             }
         }
 
