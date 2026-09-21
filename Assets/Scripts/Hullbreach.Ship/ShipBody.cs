@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Unity.Mathematics;
 using Hullbreach.Core;
 using Hullbreach.World;
+using Hullbreach.Ship.Behaviours;
 
 namespace Hullbreach.Ship
 {
@@ -49,6 +50,13 @@ namespace Hullbreach.Ship
         /// (ShipController.Awake) rather than owned here, so the same
         /// ShipBody can be dropped into a field-less test without a stub.</summary>
         public GravityField Gravity;
+
+        /// <summary>The game-side sink block behaviours use for spawning
+        /// projectiles, dropping temporary gravity, and finding targets.
+        /// Defaults to NullWorldSink so a ShipBody built by a test (or the
+        /// headless server with no game layer wired up yet) never needs a
+        /// null check to Step. Set by the caller (ShipController.Awake).</summary>
+        public IWorldSink World = NullWorldSink.Instance;
 
         /// <summary>Relative contact speed (m/s) above which a planet impact
         /// starts dealing damage; below this, a landing is "soft" and does
@@ -120,17 +128,13 @@ namespace Hullbreach.Ship
         float2 _forceAccum;
         float _torqueAccum;
 
-        /// <summary>Per-thruster/retro throttle 0..1, ramped toward the
-        /// forward/reverse channel target at that block's own upgrade rate.
-        /// Keyed by grid key since Thruster and RetroThruster keys never
-        /// collide (one block per cell).</summary>
+        /// <summary>Per-block ramped throttle, shared by every ramped-channel
+        /// behaviour (forward/retro thrust 0..1, fin steer -1..1, seeking
+        /// thrust 0..1), ramped toward that channel's target at the block's
+        /// own upgrade rate. Keyed by grid key: a cell has exactly one block
+        /// and therefore exactly one behaviour, so keys never collide across
+        /// behaviours.</summary>
         readonly Dictionary<int, float> _throttleByKey = new Dictionary<int, float>();
-
-        /// <summary>Per-fin steer throttle -1..1, ramped toward the steer
-        /// channel target at that fin's own upgrade rate. Its SIGN (not the
-        /// raw Steer input) decides which way the fin pushes, so torque
-        /// fades out after the key is released instead of cutting instantly.</summary>
-        readonly Dictionary<int, float> _finThrottleByKey = new Dictionary<int, float>();
 
         /// <summary>Seconds remaining before each cannon can fire again.</summary>
         readonly Dictionary<int, float> _cannonCooldownByKey = new Dictionary<int, float>();
@@ -139,6 +143,12 @@ namespace Hullbreach.Ship
         /// keys into deterministic order in ResolvePlanetContacts, so the
         /// per-tick contact pass never allocates a fresh list.</summary>
         readonly List<int> _contactKeyScratch = new List<int>();
+
+        /// <summary>Seconds remaining before each temporarily-transformed
+        /// block (see ApplyPowerup) reverts to its base variant. Ticked down
+        /// every Step; a block reverts (variant bits cleared) once its entry
+        /// hits zero.</summary>
+        readonly Dictionary<int, float> _powerupExpiryByKey = new Dictionary<int, float>();
 
         /// <summary>
         /// Rebuild ThrusterKeys/RetroKeys/FinKeys/WeaponKeys from the grid.
@@ -169,8 +179,7 @@ namespace Hullbreach.Ship
             FinKeys = fins.ToArray();
             WeaponKeys = weapons.ToArray();
 
-            PruneStale(_throttleByKey, ThrusterKeys, RetroKeys);
-            PruneStale(_finThrottleByKey, FinKeys);
+            PruneStale(_throttleByKey, ThrusterKeys, RetroKeys, FinKeys);
             PruneStale(_cannonCooldownByKey, WeaponKeys);
 
             Grid.ClearDirty();
@@ -197,7 +206,7 @@ namespace Hullbreach.Ship
 
         /// <summary>Current steer throttle -1..1 of the fin at `key`, for the
         /// renderer to animate the control surface.</summary>
-        public float SteerThrottle(int key) => _finThrottleByKey.TryGetValue(key, out var t) ? t : 0f;
+        public float SteerThrottle(int key) => _throttleByKey.TryGetValue(key, out var t) ? t : 0f;
 
         /// <summary>
         /// Advance one FIXED timestep. Never call this from Update: the physics
@@ -235,16 +244,12 @@ namespace Hullbreach.Ship
                 return;
             }
 
-            float2 com = Grid.Mass.CenterOfMass;
+            TickPowerups(dt);
 
-            float forwardTarget = input.ThrustAxis > 0f ? 1f : 0f;
-            float reverseTarget = input.ThrustAxis < 0f ? 1f : 0f;
-            float steerTarget = math.clamp(input.Steer, -1f, 1f);
-
-            StepThrusters(ThrusterKeys, forwardTarget, new float2(0f, 1f), ThrustPerBlock, dt);
-            StepThrusters(RetroKeys, reverseTarget, new float2(0f, -1f), RetroThrustPerBlock, dt);
-            StepFins(steerTarget, com, dt);
-            StepCannons(input.FirePressed, dt);
+            StepBehaviours(ThrusterKeys, input, dt);
+            StepBehaviours(RetroKeys, input, dt);
+            StepBehaviours(FinKeys, input, dt);
+            StepBehaviours(WeaponKeys, input, dt);
             ApplyGravityForces();
 
             float inertia = Grid.Mass.InertiaAboutCenterOfMass;
@@ -395,90 +400,75 @@ namespace Hullbreach.Ship
         }
 
         /// <summary>
-        /// Forward/retro thrusters have NO facing -- a forward thruster
-        /// always pushes ship-local +y and a retro always pushes ship-local
-        /// -y, regardless of Modifiers. `localDirection` carries that fixed
-        /// direction; only the throttle ramps.
+        /// Steps every block in `keys` through its resolved IBlockBehaviour
+        /// (BehaviourRegistry.Resolve), building one BlockContext per block.
+        /// This is the entire dispatch: a new weapon or thruster variant
+        /// needs no change here, only a new IBlockBehaviour class and a
+        /// BehaviourRegistry.Register call. Keys with no resolved behaviour
+        /// (should not happen for ThrusterKeys/RetroKeys/FinKeys/WeaponKeys,
+        /// which are only ever populated with types that have one) are
+        /// skipped rather than throwing, so a mid-migration gap fails soft.
         /// </summary>
-        void StepThrusters(int[] keys, float target, float2 localDirection, float forcePerBlock, float dt)
+        void StepBehaviours(int[] keys, in ShipInput input, float dt)
         {
             foreach (int key in keys)
             {
                 if (!Grid.TryGet(key, out var block)) continue;
-                float rate = ThrusterUpgrades.RampRate(block.Modifiers);
-                float current = _throttleByKey.TryGetValue(key, out var t) ? t : 0f;
-                float updated = RampToward(current, target, rate, dt);
-                _throttleByKey[key] = updated;
-                if (updated == 0f) continue;
-                AddForceAtPoint(BlockGrid.CenterOf(key), localDirection * updated * forcePerBlock);
-            }
-        }
+                var behaviour = BehaviourRegistry.Resolve(block);
+                if (behaviour == null) continue;
 
-        /// <summary>
-        /// Each fin ramps its own throttle toward `steerTarget`, then pushes
-        /// perpendicular to its facing with a sign chosen so the resulting
-        /// torque about the center of mass matches the sign of that fin's
-        /// CURRENT ramped throttle (not the raw target) -- this is what lets
-        /// torque fade out smoothly after the steer key is released instead
-        /// of cutting the instant Steer returns to zero.
-        /// </summary>
-        void StepFins(float steerTarget, float2 com, float dt)
-        {
-            foreach (int key in FinKeys)
-            {
-                if (!Grid.TryGet(key, out var block)) continue;
-                float rate = ThrusterUpgrades.RampRate(block.Modifiers);
-                float current = _finThrottleByKey.TryGetValue(key, out var t) ? t : 0f;
-                float updated = RampToward(current, steerTarget, rate, dt);
-                _finThrottleByKey[key] = updated;
-                if (updated == 0f) continue;
-
-                float2 perp = Hullbreach.Core.Facing.Perpendicular(block.Modifiers);
-                float2 center = BlockGrid.CenterOf(key);
-                float2 r = center - com;
-                float crossRPerp = r.x * perp.y - r.y * perp.x;
-
-                // Force = perp * mag gives torque = mag * crossRPerp. Flip
-                // perp's sign when that disagrees with the throttle's sign so
-                // every fin helps turn the requested way.
-                float2 direction = (crossRPerp >= 0f) == (updated >= 0f) ? perp : -perp;
-                float2 force = direction * math.abs(updated) * FinForce;
-                AddForceAtPoint(center, force);
-            }
-        }
-
-        /// <summary>
-        /// Ticks every cannon's cooldown down by dt, and on FirePressed fires
-        /// every cannon that is ready: records a ShotRequest for the caller
-        /// to spawn and applies the recoil impulse to this ship immediately.
-        /// </summary>
-        void StepCannons(bool firePressed, float dt)
-        {
-            foreach (int key in WeaponKeys)
-            {
-                float remaining = _cannonCooldownByKey.TryGetValue(key, out var rem) ? rem : 0f;
-                remaining = math.max(0f, remaining - dt);
-
-                if (firePressed && remaining <= 0f)
+                float2 localCenter = BlockGrid.CenterOf(key);
+                var ctx = new BlockContext
                 {
-                    if (!Grid.TryGet(key, out var block)) { _cannonCooldownByKey[key] = remaining; continue; }
-
-                    float2 facing = BlockFacing.FromModifiers(block.Modifiers);
-                    float2 muzzleLocal = BlockGrid.CenterOf(key) + facing * 0.6f;
-                    float2 worldDirection = RotateByRotation(facing);
-                    float2 worldOrigin = LocalToWorld(muzzleLocal);
-
-                    PendingShots.Add(new ShotRequest(key, worldOrigin, worldDirection, Projectile));
-
-                    float2 mountWorld = LocalToWorld(BlockGrid.CenterOf(key));
-                    ApplyImpulseAtWorldPoint(mountWorld, -worldDirection * Projectile.Impulse);
-
-                    remaining = CannonCooldown;
-                }
-
-                _cannonCooldownByKey[key] = remaining;
+                    Ship = this,
+                    Key = key,
+                    Block = block,
+                    LocalCenter = localCenter,
+                    WorldCenter = LocalToWorld(localCenter),
+                    Facing = Hullbreach.Core.Facing.Direction(block.Modifiers),
+                    Dt = dt,
+                    Input = input,
+                    World = World ?? NullWorldSink.Instance,
+                };
+                behaviour.Step(ref ctx);
             }
         }
+
+        /// <summary>Ramps `key`'s stored throttle toward `target` at the rate
+        /// implied by `modifiers`' ramp-upgrade bits, stores, and returns the
+        /// updated value. Shared by every ramped-throttle behaviour
+        /// (forward/retro thrust, fin steer, seeking thrust) -- one block
+        /// belongs to exactly one behaviour, so keys never collide.</summary>
+        public float RampThrottleFor(int key, byte modifiers, float target, float dt)
+        {
+            float rate = ThrusterUpgrades.RampRate(modifiers);
+            float current = _throttleByKey.TryGetValue(key, out var t) ? t : 0f;
+            float updated = RampToward(current, target, rate, dt);
+            _throttleByKey[key] = updated;
+            return updated;
+        }
+
+        /// <summary>Ticks `key`'s stored cooldown down by `dt` (floored at
+        /// zero), stores, and returns the seconds remaining.</summary>
+        public float TickCooldownFor(int key, float dt)
+        {
+            float remaining = _cannonCooldownByKey.TryGetValue(key, out var rem) ? rem : 0f;
+            remaining = math.max(0f, remaining - dt);
+            _cannonCooldownByKey[key] = remaining;
+            return remaining;
+        }
+
+        /// <summary>Sets `key`'s stored cooldown to `seconds`, e.g. right
+        /// after firing.</summary>
+        public void SetCooldownFor(int key, float seconds) => _cannonCooldownByKey[key] = seconds;
+
+        /// <summary>
+        /// Rotates a ship-local free vector into world space (no
+        /// translation), for behaviours that compute a world-space muzzle
+        /// direction from a ship-local facing. Thin public wrapper over the
+        /// private rotation helper the rest of Step already uses.
+        /// </summary>
+        public float2 RotateLocalToWorld(float2 v) => RotateByRotation(v);
 
         /// <summary>Ramp `current` toward `target` by at most `ratePerSecond
         /// * dt`, landing exactly on target rather than overshooting.</summary>
@@ -488,6 +478,93 @@ namespace Hullbreach.Ship
             float diff = target - current;
             if (math.abs(diff) <= maxDelta) return target;
             return current + math.sign(diff) * maxDelta;
+        }
+
+        /// <summary>
+        /// Finds the nearest block of `baseTypeId` (base variant or already
+        /// transformed, ties broken by lowest key for determinism) to
+        /// `worldPoint`, sets its variant bits to `variant`, and records that
+        /// it should revert to variant 0 after `seconds` of further Step
+        /// calls. No-op if no block of that type exists. This is the whole
+        /// "temporary transform" mechanism a powerup pickup drives.
+        /// </summary>
+        public bool ApplyPowerup(byte variant, byte baseTypeId, float2 worldPoint, float seconds)
+        {
+            float2 localPoint = WorldToLocal(worldPoint);
+
+            int bestKey = -1;
+            float bestDistSq = float.PositiveInfinity;
+            var candidateKeys = new List<int>();
+            foreach (var kv in Grid.All)
+            {
+                if (kv.Value.TypeId != baseTypeId) continue;
+                candidateKeys.Add(kv.Key);
+            }
+            candidateKeys.Sort();
+
+            foreach (int key in candidateKeys)
+            {
+                float2 center = BlockGrid.CenterOf(key);
+                float distSq = math.distancesq(center, localPoint);
+                if (distSq < bestDistSq)
+                {
+                    bestDistSq = distSq;
+                    bestKey = key;
+                }
+            }
+
+            if (bestKey == -1) return false;
+            if (!Grid.TryGet(bestKey, out var block)) return false;
+
+            byte newModifiers = BlockVariants.With(block.Modifiers, variant);
+            if (!Grid.TrySet(bestKey, block.WithModifiers(newModifiers))) return false;
+
+            _powerupExpiryByKey[bestKey] = seconds;
+            return true;
+        }
+
+        /// <summary>Seconds remaining before the temporary variant at `key`
+        /// reverts to base, or 0 if that key has no active powerup.</summary>
+        public float VariantTimeLeft(int key)
+            => _powerupExpiryByKey.TryGetValue(key, out var remaining) ? remaining : 0f;
+
+        /// <summary>
+        /// Ticks every active powerup's expiry down by `dt` and reverts any
+        /// block whose timer has run out back to variant 0, clearing only
+        /// the variant bits so facing and ramp-upgrade bits are untouched.
+        /// Allocation-free aside from the small scratch list of expired
+        /// keys, sized to how many powerups actually expire this Step (almost
+        /// always zero).
+        /// </summary>
+        void TickPowerups(float dt)
+        {
+            if (_powerupExpiryByKey.Count == 0) return;
+
+            List<int> expired = null;
+            var keys = new List<int>(_powerupExpiryByKey.Keys);
+            foreach (int key in keys)
+            {
+                float remaining = _powerupExpiryByKey[key] - dt;
+                if (remaining <= 0f)
+                {
+                    (expired ??= new List<int>()).Add(key);
+                }
+                else
+                {
+                    _powerupExpiryByKey[key] = remaining;
+                }
+            }
+
+            if (expired == null) return;
+            foreach (int key in expired)
+            {
+                _powerupExpiryByKey.Remove(key);
+                if (Grid.TryGet(key, out var block))
+                {
+                    byte revertedModifiers = BlockVariants.With(block.Modifiers, 0);
+                    Grid.TrySet(key, block.WithModifiers(revertedModifiers));
+                }
+            }
         }
 
         float2 RotateByRotation(float2 v)
@@ -514,8 +591,10 @@ namespace Hullbreach.Ship
         /// <summary>Rotates a world-space free VECTOR (force, direction --
         /// no translation) into ship-local space; the vector counterpart of
         /// WorldToLocal, used to fold a world-space gravity force into the
-        /// ship-local force accumulator that AddForceAtPoint expects.</summary>
-        float2 WorldVectorToLocal(float2 worldVector)
+        /// ship-local force accumulator that AddForceAtPoint expects, and by
+        /// the seeking thruster to turn a world-space "toward the enemy"
+        /// direction into a ship-local force direction.</summary>
+        public float2 WorldVectorToLocal(float2 worldVector)
         {
             float s = math.sin(-Rotation);
             float c = math.cos(-Rotation);
