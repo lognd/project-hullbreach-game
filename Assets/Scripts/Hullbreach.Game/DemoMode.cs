@@ -1,4 +1,5 @@
 using UnityEngine;
+using Hullbreach.World;
 
 namespace Hullbreach.Game
 {
@@ -21,6 +22,22 @@ namespace Hullbreach.Game
         [SerializeField] BuilderHud builderHud;
         [SerializeField] ShipRenderer playerRenderer;
         [SerializeField] ShipStructure playerStructure;
+
+        /// <summary>When set, the R key resets the player onto a preset
+        /// circular orbit (orbitStartPosition around orbitBodyIndex) instead
+        /// of dead rest at the origin. Off by default so scenes without a
+        /// GravityWorld (RocketScene) behave exactly as before.</summary>
+        [SerializeField] bool startInOrbit = false;
+
+        /// <summary>World-space position the R key resets the player to
+        /// when startInOrbit is set; the orbital velocity is computed from
+        /// this position, not authored separately, so moving the start point
+        /// in the Inspector can never leave a mismatched velocity behind.</summary>
+        [SerializeField] Vector2 orbitStartPosition = Vector2.zero;
+
+        /// <summary>Index (in GravityWorld's planet list / add order) of the
+        /// body the orbit start position orbits.</summary>
+        [SerializeField] int orbitBodyIndex = 0;
 
         /// <summary>Current mode, Build until the player presses Tab.</summary>
         public DemoState State { get; private set; } = DemoState.Build;
@@ -58,7 +75,17 @@ namespace Hullbreach.Game
 
                 if (Input.GetKeyDown(KeyCode.R) && playerShip != null)
                 {
-                    playerShip.ResetToOrigin();
+                    var field = GravityWorld.Field;
+                    if (startInOrbit && field != null)
+                    {
+                        var worldPos = new Unity.Mathematics.float2(orbitStartPosition.x, orbitStartPosition.y);
+                        var orbitVelocity = OrbitHelper.CircularOrbitVelocity(field, orbitBodyIndex, worldPos);
+                        playerShip.ResetTo(orbitStartPosition, new Vector2(orbitVelocity.x, orbitVelocity.y));
+                    }
+                    else
+                    {
+                        playerShip.ResetToOrigin();
+                    }
                 }
             }
         }

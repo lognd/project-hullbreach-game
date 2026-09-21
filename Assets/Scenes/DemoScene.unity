@@ -322,6 +322,10 @@ MonoBehaviour:
   builder: {fileID: 2002008}
   builderHud: {fileID: 2001005}
   playerRenderer: {fileID: 2002005}
+  playerStructure: {fileID: 2002007}
+  startInOrbit: 1
+  orbitStartPosition: {x: 0, y: -30}
+  orbitBodyIndex: 0
 --- !u!114 &2001004
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -556,7 +560,7 @@ Transform:
   m_GameObject: {fileID: 2003001}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 12, z: 0}
+  m_LocalPosition: {x: 0, y: 24, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -682,6 +686,60 @@ MonoBehaviour:
   m_EditorClassIdentifier:
   controller: {fileID: 2003004}
   renderer_: {fileID: 2003005}
+--- !u!1 &2004001
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2004002}
+  - component: {fileID: 2004003}
+  m_Layer: 0
+  m_Name: Gravity
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2004002
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2004001}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2004003
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2004001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e293dd821eb45aabe0a3be395ecdb79, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  planets:
+  - position: {x: 0, y: -60}
+    mu: 900
+    radius: 18
+    color: {r: 0.6, g: 0.45, b: 0.25, a: 1}
+  - position: {x: 45, y: 20}
+    mu: 120
+    radius: 6
+    color: {r: 0.55, g: 0.55, b: 0.6, a: 1}
+  surfaceRestitution: 0.2
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -690,3 +748,4 @@ SceneRoots:
   - {fileID: 2001002}
   - {fileID: 2002002}
   - {fileID: 2003002}
+  - {fileID: 2004002}

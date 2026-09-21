@@ -1,5 +1,7 @@
 using UnityEngine;
+using Unity.Mathematics;
 using Hullbreach.Ship;
+using Hullbreach.World;
 
 namespace Hullbreach.Game
 {
@@ -66,6 +68,32 @@ namespace Hullbreach.Game
         {
             if (!_configured) return;
             if (Time.time >= _deathTime) Destroy(gameObject);
+        }
+
+        /// <summary>
+        /// Applies the ambient gravity field's acceleration to this
+        /// projectile's own velocity each physics step (velocity += a * dt),
+        /// exactly like any other free body in the field, and destroys the
+        /// projectile the instant it reaches a planet's surface -- a round
+        /// that hits a planet does not bounce or linger, it is gone.
+        /// </summary>
+        void FixedUpdate()
+        {
+            if (!_configured) return;
+
+            var field = GravityWorld.Field;
+            if (field == null) return;
+
+            var body = GetComponent<Rigidbody2D>();
+            Vector2 position = transform.position;
+            float2 worldPos = new float2(position.x, position.y);
+            float2 accel = field.AccelerationAt(worldPos);
+            body.linearVelocity += new Vector2(accel.x, accel.y) * Time.fixedDeltaTime;
+
+            if (field.TryContact(worldPos, _spec.Radius, out _, out _, out _))
+            {
+                Destroy(gameObject);
+            }
         }
 
         void OnTriggerEnter2D(Collider2D other)

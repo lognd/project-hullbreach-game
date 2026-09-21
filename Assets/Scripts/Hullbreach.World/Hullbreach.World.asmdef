@@ -1,13 +1,8 @@
 {
-    "name": "Hullbreach.Game",
-    "rootNamespace": "Hullbreach.Game",
+    "name": "Hullbreach.World",
+    "rootNamespace": "Hullbreach.World",
     "references": [
         "Hullbreach.Core",
-        "Hullbreach.Structure",
-        "Hullbreach.Ship",
-        "Hullbreach.Builder",
-        "Hullbreach.Net",
-        "Hullbreach.World",
         "Unity.Mathematics"
     ],
     "includePlatforms": [],
