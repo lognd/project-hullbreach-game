@@ -54,6 +54,21 @@ namespace Hullbreach.Structure
     /// explicitly asks via MarkTopologyChanged, this rebuilds. This avoids
     /// ever mutating state owned by another module while still not
     /// re-assembling every tick.
+    ///
+    /// PER-TICK CONVERGENCE BUDGET: <see cref="MaxCgIterationsPerTick"/>
+    /// bounds how much CG work one Tick call may spend on the quasi-static
+    /// solve. A ship large enough that CG cannot reach tolerance within the
+    /// budget (see CgSolver's doc on iterations scaling with ship width)
+    /// keeps its PARTIAL displacement as next tick's warm start rather than
+    /// blocking the frame or discarding progress, so <see cref="Converged"/>
+    /// can be false for several ticks in a row while the solve slowly
+    /// catches up as the warm start improves. Stress and damage decisions
+    /// (<see cref="BlockStresses"/>) always use whatever displacement is
+    /// available, so on an unconverged tick they LAG the true quasi-static
+    /// answer by however far the residual still is from tolerance; this is
+    /// deliberate (better a slightly stale stress field than a stalled
+    /// frame) and is why buckling (which depends on that same stress field
+    /// for its geometric stiffness) only runs when <see cref="Converged"/>.
     /// </summary>
     public sealed class StructuralSolver
     {
@@ -64,6 +79,33 @@ namespace Hullbreach.Structure
         bool _forceRebuild = true;
 
         float[] _displacement = Array.Empty<float>();
+
+        /// <summary>Per-tick CG iteration budget: the quasi-static solve is
+        /// warm-started from whatever displacement the previous tick left,
+        /// so a ship too large to fully converge within one frame keeps
+        /// making progress across ticks instead of either blocking the
+        /// frame or silently returning nonsense (the pre-budget behavior
+        /// was an unconditional 4000-iteration cap inside CgSolver, cheap
+        /// for a plain mat-vec but not bounded to a frame budget). 400 is a
+        /// starting point, not a measured number: see SolverBenchmarks for
+        /// per-tick ms at a few ship sizes to retune it.</summary>
+        public int MaxCgIterationsPerTick = 400;
+
+        /// <summary>True when the most recent Tick's quasi-static solve met
+        /// CgSolver's tolerance within <see cref="MaxCgIterationsPerTick"/>.
+        /// False means <see cref="BlockStresses"/> reflects a partially
+        /// converged displacement field (see the class remarks on lag) and
+        /// buckling was skipped this tick (see RunBuckling).</summary>
+        public bool Converged { get; private set; }
+
+        /// <summary>CgSolver.LastResidualNorm from the most recent Tick's
+        /// quasi-static solve, for callers that want to log/plot the
+        /// convergence trend rather than just a bool.</summary>
+        public float ResidualNorm { get; private set; }
+
+        /// <summary>CgSolver.LastIterationCount from the most recent Tick:
+        /// how much of MaxCgIterationsPerTick this tick actually spent.</summary>
+        public int IterationsThisTick { get; private set; }
 
         /// <summary>Call when the caller knows topology changed but the block
         /// count happens to be unchanged (e.g. a block swapped for a
@@ -106,10 +148,25 @@ namespace Hullbreach.Structure
             modes[2] = new float[_assembly.DofCount];
             LoadVector.RigidBodyModes(_assembly.NodeRestPositions, modes);
 
+            _solver.MaxIterations = MaxCgIterationsPerTick;
             _solver.Solve(_assembly, f, _displacement, modes);
+            Converged = _solver.Converged;
+            ResidualNorm = _solver.LastResidualNorm;
+            IterationsThisTick = _solver.LastIterationCount;
 
+            // Stress and damage decisions use whatever displacement is
+            // available, converged or not: see the class remarks on lag.
             ComputeBlockStress(grid);
-            RunBuckling(grid);
+
+            // Buckling's geometric stiffness is built FROM this tick's
+            // element stresses (see GeometricStiffness.Rebuild), so an
+            // under-converged solve would feed it a stress field that has
+            // not settled yet and can bias the Rayleigh quotients the same
+            // way an under-converged CG cap used to (see CgSolver's
+            // MaxIterations doc): skip the sweep entirely rather than
+            // spend it on stale input, and let the previously published
+            // modes stand until a later tick converges.
+            if (Converged) RunBuckling(grid);
             _tickIndex++;
         }
 

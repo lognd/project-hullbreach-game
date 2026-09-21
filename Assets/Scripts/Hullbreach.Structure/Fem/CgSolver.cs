@@ -42,6 +42,20 @@ namespace Hullbreach.Structure
         /// with ship size: it is the scaling wall, made visible.</summary>
         public int LastIterationCount { get; private set; }
 
+        /// <summary>Euclidean norm of the (rigid-mode-projected) residual
+        /// after the last Solve returned, whether or not it met Tolerance:
+        /// StructuralSolver uses this to decide whether a tick's partial
+        /// solve is trustworthy enough to run buckling against (see
+        /// StructuralSolver.MaxCgIterationsPerTick).</summary>
+        public float LastResidualNorm { get; private set; }
+
+        /// <summary>True when the last Solve's LastResidualNorm actually met
+        /// Tolerance (relative to |f|, see Solve's tolAbs) before hitting
+        /// MaxIterations; false means the returned `u` is a partial,
+        /// still-improving warm start, not a converged displacement
+        /// field.</summary>
+        public bool Converged { get; private set; }
+
         /// <summary>
         /// Orthonormalizes `modes` in place via Gram-Schmidt, so they can be
         /// used to repeatedly project a vector onto their complement.
@@ -186,6 +200,8 @@ namespace Hullbreach.Structure
             }
 
             LastIterationCount = iter;
+            LastResidualNorm = (float)Math.Sqrt(Dot(r, r));
+            Converged = LastResidualNorm <= tolAbs;
         }
     }
 }
