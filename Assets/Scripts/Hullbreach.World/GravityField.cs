@@ -16,6 +16,14 @@ namespace Hullbreach.World
     /// </summary>
     public sealed class GravityField
     {
+        /// <summary>Ceiling on the SUMMED acceleration magnitude returned by
+        /// AccelerationAt, applied after every body's contribution is added
+        /// so overlapping strong wells cannot stack past a playable pull
+        /// (gameplay choice: a ship should never get yanked harder than
+        /// this regardless of how many wells overlap it). Units/s^2.</summary>
+        public float MaxAcceleration = 40f;
+
+
         /// <summary>One temporary body plus the seconds remaining before it expires.</summary>
         struct TemporaryEntry
         {
@@ -93,10 +101,11 @@ namespace Hullbreach.World
 
         /// <summary>
         /// Net gravitational acceleration at `worldPoint`: sum over every
-        /// body of -Mu * r / |r|^3 toward that body, with |r| floored at
-        /// Radius so a point inside (or exactly on) a body reads the same
-        /// acceleration as its surface rather than diverging to infinity.
-        /// Allocation-free: iterates the two lists directly.
+        /// body of its softened pull toward that body (see
+        /// GravityBody.SoftRadius and AccelerationMagnitude), then clamped
+        /// to MaxAcceleration in magnitude so stacked wells cannot exceed
+        /// the same cap a single strong one would. Allocation-free:
+        /// iterates the two lists directly.
         /// </summary>
         public float2 AccelerationAt(float2 worldPoint)
         {
@@ -108,6 +117,12 @@ namespace Hullbreach.World
             for (int i = 0; i < _temporary.Count; i++)
             {
                 total += AccelerationFrom(_temporary[i].Body, worldPoint);
+            }
+
+            float totalMag = math.length(total);
+            if (totalMag > MaxAcceleration && totalMag > 1e-6f)
+            {
+                total = total / totalMag * MaxAcceleration;
             }
             return total;
         }
@@ -123,10 +138,28 @@ namespace Hullbreach.World
                 return float2.zero;
             }
 
-            float clampedDist = math.max(dist, body.Radius);
             float2 direction = r / dist;
-            float magnitude = body.Mu / (clampedDist * clampedDist);
+            float magnitude = AccelerationMagnitude(body, dist);
             return -direction * magnitude;
+        }
+
+        /// <summary>
+        /// Softened inverse-square law shared by GravityField and
+        /// OrbitHelper: Mu / r^2 at and beyond SoftRadius; inside it, scales
+        /// LINEARLY from that same value at SoftRadius down to zero at the
+        /// center (dist == 0), so the pull is continuous at SoftRadius and
+        /// never diverges. `dist` must be &gt;= 0.
+        /// </summary>
+        public static float AccelerationMagnitude(in GravityBody body, float dist)
+        {
+            float softRadius = body.SoftRadius;
+            if (dist >= softRadius)
+            {
+                return body.Mu / (dist * dist);
+            }
+
+            float edgeMagnitude = body.Mu / (softRadius * softRadius);
+            return edgeMagnitude * (dist / softRadius);
         }
 
         /// <summary>
