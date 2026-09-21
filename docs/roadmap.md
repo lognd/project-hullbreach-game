@@ -82,3 +82,81 @@ of Sprint-2 groundwork landed early.
   so a fully-undamaged ship pays the same softening-lookup cost as a
   heavily damaged one. Noted as a placeholder in `BlockTypes.cs`'s `TODO
   [D3]` comment on the floor value.
+
+## Performance (perf/solver, 2026-09-20)
+
+`SolverBenchmarks` (`Assets/Tests/EditMode/Hullbreach.Structure.Tests/SolverBenchmarks.cs`)
+builds a wide plate-plus-slender-arm ship (the arm makes CG's width
+scaling visible without a plate alone hiding it) and reports DOF count,
+CG iterations/tick, ms/tick and buckling sweeps to `TestContext` for
+every default `run_tests.sh` run; a 2000-block case is
+`[Category("Slow")]` and excluded from the default filter (run it with
+`tools/plaincs/run_tests.sh --filter "TestCategory=Slow"`).
+
+Measured (plate + arm, thruster load, `MaxCgIterationsPerTick` at the
+production default of 400, plain Jacobi PCG):
+
+| Ship          | DOF  | CG iterations/tick (capped) | ms/tick |
+|---------------|------|------------------------------|---------|
+| 100 blocks    | 810  | 400 (not converged)          | ~75     |
+| 500 blocks    | 3850 | 400 (not converged)          | ~365    |
+| 2000 blocks   | ~15k | 400 (not converged)          | seconds |
+
+Even the 100-block case (a plate plus a long, 1-wide arm) does not reach
+`CgSolver.Tolerance` within the 400-iteration per-tick budget under plain
+Jacobi: the slender arm is exactly the pathological case `CgSolver`'s own
+doc describes (iterations scale with the longest path information has to
+cross, i.e. the arm's length in elements, not the ship's block count).
+`MaxCgIterationsPerTick` (see the previous section) keeps this from ever
+blocking a frame -- an under-budget tick just lags one more tick behind
+convergence -- but it does not fix the underlying iteration count.
+
+**Attempted and reverted**: a two-level (Jacobi + Galerkin coarse-grid,
+rigid-body-mode prolongation over 4x4-block aggregates) preconditioner
+was implemented on this branch and found to be numerically unsound as
+written: the coarse operator's own rigid modes can coincide closely with
+K's global rigid modes when the ship spans few aggregates (in the limit
+of a single aggregate, exactly so), and even a scale-relative Cholesky
+pivot floor was not enough to stop the coarse correction from amplifying
+residual into NaN within a handful of CG iterations on several existing
+BucklingTests grids (reverted rather than merged broken; see the
+`perf/solver` branch history around 2026-09-20 for the attempt). Doing
+this correctly needs either a proper null-space deflation of the coarse
+operator (explicitly projecting the aggregate-level rigid modes out of
+K_c before factoring it, not just flooring pivots) or a documented
+minimum-aggregate-count guard before the coarse term is trusted; either
+is a deliberate follow-up, not something to retry opportunistically.
+
+**Remaining steps, roughly in order of expected payoff**:
+1. Get the two-level preconditioner right (see above) -- this is the
+   actual fix for the width-scaling wall; everything else here is
+   secondary until iterations stop growing with ship size.
+2. Port the hot path (`StiffnessAssembly`, `CgSolver`, `GeometricStiffness`)
+   to Burst/`NativeArray`: the current managed-array implementation is
+   deliberately simple-first (see `NodeLattice`'s and `StructuralSolver`'s
+   docs), and every array here is already allocation-free per tick after
+   this branch's caching work, which is the prerequisite for a mechanical
+   Burst port (Burst cannot compile against managed arrays/Dictionary).
+3. A mesh renderer instead of per-block GameObjects: `ShipRenderer`
+   currently instantiates one GameObject per block (see the assembly
+   graph in `docs/architecture.md`), which does not scale independently
+   of the solver at all; a combined mesh with per-vertex color (for the
+   Stress/Buckling tints) would cut draw calls and GC pressure from
+   transform churn on a damaged, frequently-changing ship.
+4. Chunked solves: `CgSolver`'s own doc already names this as the
+   eventual fix once a single global CG stops being adequate even with a
+   good preconditioner -- solve a coarse, homogenized global problem (few,
+   large elements) and refine per chunk with cached factorizations, reusing
+   a chunk's factorization across ticks where that chunk's topology did
+   not change. The two-level preconditioner above is a step toward this
+   (it already needs a coarse operator), not a separate piece of work.
+
+**This branch's allocation work** (independent of the preconditioner):
+`CgSolver.Solve` and `StructuralSolver.ComputeBlockStress`/`RunBuckling`
+used to allocate several n-sized arrays per call; a 500-block ship's
+steady-state `Tick` went from measuring ~11.8 MB/tick (mostly this, once
+a test-harness bug that left `BlockGrid.TopologyDirty` permanently set
+was also fixed, forcing a full K rebuild every tick) down to under 500
+bytes/tick, all from `BlockGrid.All`'s boxed `IEnumerable` enumerator
+(`Hullbreach.Core`, out of this ticket's scope: a concrete enumerator
+struct there would close this out entirely).
