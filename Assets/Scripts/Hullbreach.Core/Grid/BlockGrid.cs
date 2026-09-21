@@ -19,6 +19,24 @@ namespace Hullbreach.Core
         readonly Dictionary<int, Block> _blocks = new Dictionary<int, Block>();
 
         /// <summary>
+        /// Sorted snapshot of `_blocks.Keys`, rebuilt lazily whenever
+        /// `_keysVersion` no longer matches `_structureVersion`. TryAdd and
+        /// TryRemove bump `_structureVersion` (they change the key set);
+        /// TrySet does not (it only rewrites a value in place), so damage
+        /// accumulation never pays for a resort.
+        /// </summary>
+        int[] _sortedKeys = Array.Empty<int>();
+
+        /// <summary>Count of keys currently reflected in `_sortedKeys`.</summary>
+        int _sortedKeyCount;
+
+        /// <summary>Bumped by every structural edit (add/remove).</summary>
+        int _structureVersion;
+
+        /// <summary>`_structureVersion` as of the last `_sortedKeys` rebuild.</summary>
+        int _keysVersion = -1;
+
+        /// <summary>
         /// Packed key of the core, or null when this grid is debris.
         /// A fragment that breaks off has NO core, so connectivity has no root
         /// and simply does not run for it. This is why the core is nullable
@@ -38,7 +56,97 @@ namespace Hullbreach.Core
         /// </summary>
         public bool TopologyDirty { get; private set; }
 
-        public IEnumerable<KeyValuePair<int, Block>> All => _blocks;
+        /// <summary>
+        /// Every (key, block) pair, in the dictionary's own iteration order
+        /// (unspecified; use SortedKeys/KeyAt for deterministic order). A
+        /// struct enumerable so `foreach (var kv in grid.All)` boxes nothing:
+        /// it hands out `Dictionary&lt;int,Block&gt;.Enumerator` directly.
+        /// </summary>
+        public BlockEnumerable All => new BlockEnumerable(_blocks);
+
+        /// <summary>
+        /// Thin struct wrapper around `Dictionary&lt;int,Block&gt;.Enumerator`
+        /// so foreach over `BlockGrid.All` never boxes the enumerator (a
+        /// plain `IEnumerable&lt;T&gt;` return type would box it on every
+        /// foreach, once per Step per grid).
+        /// </summary>
+        public readonly struct BlockEnumerable : IEnumerable<KeyValuePair<int, Block>>
+        {
+            readonly Dictionary<int, Block> _blocks;
+
+            /// <summary>Wrap the dictionary whose entries this enumerates.</summary>
+            public BlockEnumerable(Dictionary<int, Block> blocks) => _blocks = blocks;
+
+            /// <summary>Struct enumerator; the foreach pattern-match target
+            /// (the compiler prefers this over the interface methods below,
+            /// so a plain `foreach (var kv in grid.All)` never boxes).</summary>
+            public Dictionary<int, Block>.Enumerator GetEnumerator() => _blocks.GetEnumerator();
+
+            /// <summary>Interface fallback for LINQ (e.g. `.Select`) and any
+            /// other IEnumerable-typed consumer; boxes the enumerator, same
+            /// as before this change, but only for callers that need the
+            /// interface rather than a bare foreach.</summary>
+            IEnumerator<KeyValuePair<int, Block>> IEnumerable<KeyValuePair<int, Block>>.GetEnumerator() => _blocks.GetEnumerator();
+
+            /// <summary>Non-generic IEnumerable fallback.</summary>
+            System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => _blocks.GetEnumerator();
+        }
+
+        /// <summary>
+        /// Number of keys in the sorted key view (equal to Count). Rebuilds
+        /// the sorted view first if a structural edit happened since the
+        /// last rebuild.
+        /// </summary>
+        public int KeyCount
+        {
+            get
+            {
+                EnsureSortedKeys();
+                return _sortedKeyCount;
+            }
+        }
+
+        /// <summary>
+        /// The i-th smallest key, 0 &lt;= i &lt; KeyCount. Rebuilds the sorted
+        /// view first if a structural edit happened since the last rebuild.
+        /// </summary>
+        public int KeyAt(int i)
+        {
+            EnsureSortedKeys();
+            return _sortedKeys[i];
+        }
+
+        /// <summary>
+        /// All keys in ascending order as a span, for allocation-free,
+        /// deterministic iteration over the key set (no values). Rebuilds
+        /// the sorted view first if a structural edit happened since the
+        /// last rebuild. The span is only valid until the next structural
+        /// edit (TryAdd/TryRemove), same as any other cached view.
+        /// </summary>
+        public ReadOnlySpan<int> SortedKeys
+        {
+            get
+            {
+                EnsureSortedKeys();
+                return new ReadOnlySpan<int>(_sortedKeys, 0, _sortedKeyCount);
+            }
+        }
+
+        /// <summary>Rebuild `_sortedKeys` from `_blocks` if stale.</summary>
+        void EnsureSortedKeys()
+        {
+            if (_keysVersion == _structureVersion) return;
+
+            if (_sortedKeys.Length < _blocks.Count)
+                _sortedKeys = new int[_blocks.Count];
+
+            int i = 0;
+            foreach (int key in _blocks.Keys) _sortedKeys[i++] = key;
+            Array.Sort(_sortedKeys, 0, i);
+
+            _sortedKeyCount = i;
+            _keysVersion = _structureVersion;
+        }
 
         public bool TryAdd(int key, Block block)
         {
@@ -53,6 +161,7 @@ namespace Hullbreach.Core
             }
 
             _blocks.Add(key, block);
+            _structureVersion++;
 
             // Required to recalculate mass and moment of inertia of ship to maintain O(1) invariant.
             float2 center = CenterOf(key);
@@ -82,6 +191,7 @@ namespace Hullbreach.Core
                 // would let it keep occupying the cell and double-count mass
                 // on any later Add at the same key.
                 _blocks.Remove(key);
+                _structureVersion++;
 
                 // Mark topology for recomp.
                 TopologyDirty = true;

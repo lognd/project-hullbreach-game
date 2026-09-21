@@ -48,9 +48,10 @@ namespace Hullbreach.Core
             var low = new Dictionary<int, int>();
             int timer = 0;
 
-            foreach (var kvp in grid.All)
+            var rootKeys = grid.SortedKeys;
+            for (int rootIndex = 0; rootIndex < rootKeys.Length; rootIndex++)
             {
-                int root = kvp.Key;
+                int root = rootKeys[rootIndex];
                 if (disc.ContainsKey(root)) continue;
 
                 // -1 is a safe "no parent" sentinel: packed keys are always
