@@ -224,11 +224,19 @@ namespace Hullbreach.Game
             // adding/removing a block (combat damage, later builder edits)
             // changes these, and TopologyDirty already gates the expensive
             // part (RebuildDerivedViews) inside Step, so this is cheap insurance.
-            var mass = ship.Grid.Mass;
-            body.mass = mass.Total;
-            var com = mass.CenterOfMass;
-            body.centerOfMass = new Vector2(com.x, com.y);
-            body.inertia = mass.InertiaAboutCenterOfMass;
+            // Only meaningful on a DYNAMIC body. Ship bodies are kinematic
+            // (ShipBody integrates them, and ShipContacts resolves ship-ship
+            // overlap) precisely so Box2D never solves for them, so pushing
+            // mass properties at a kinematic body would be writing numbers
+            // nothing reads.
+            if (body.bodyType == RigidbodyType2D.Dynamic)
+            {
+                var mass = ship.Grid.Mass;
+                body.mass = mass.Total;
+                var com = mass.CenterOfMass;
+                body.centerOfMass = new Vector2(com.x, com.y);
+                body.inertia = mass.InertiaAboutCenterOfMass;
+            }
 
             // ShipBody is authoritative for ship motion: it is the plain C#
             // sim that the headless server (S47) will run too, so the
