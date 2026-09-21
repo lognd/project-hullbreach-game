@@ -31,6 +31,25 @@ work lives here instead of in tickets.
       near-zero-pivot doc already gestures at (reject a slot whose Kr
       pivot is near-singular RELATIVE to the matrix's own scale, not just
       "stable"), which is a second, separate piece of numerical work.
+- [ ] Structure: `CgSolver.Solve` restarts its Krylov subspace (`r`/`p`)
+      from scratch every `Tick` call, warm-starting only the displacement
+      `u`. This is the suspected reason the 500- and 2000-block
+      plate+arm `SolverBenchmarks` cases plateau (residual oscillates
+      instead of trending toward zero across ticks) instead of eventually
+      converging under `MaxCgIterationsPerTick`'s carried-over budget, even
+      with `CoarsePreconditioner`'s deflated coarse correction in place
+      (perf/preconditioner branch, 2026-09-20; see docs/roadmap.md's
+      Performance section). Preserving `r`/`p`/`rzOld` across ticks
+      (re-validated against the current `f`, since the load can change
+      tick to tick) is the next thing to try before reaching for a bigger
+      iteration cap or a wall-clock budget.
+- [ ] Structure: `SolverBenchmarks.Benchmark_100Blocks` shows a periodic
+      per-tick spike (~370-460ms every `BucklingEveryNTicks`-th tick vs.
+      ~19-40ms otherwise) even though the benchmark's load never puts
+      anything into compression, so `RunBuckling` should be hitting its
+      cheap early-out on every one of those ticks, not the subspace
+      machinery. Suspected GC pause, not confirmed (perf/preconditioner
+      branch, 2026-09-20; see docs/roadmap.md's Performance section).
 - [ ] frob: add a C# check stage so `frob check` gates this repo the way
       it gates platform. Tracked in frob itself.
 - [ ] Replace the template's FPS gameplay (weapons, character, spectator)

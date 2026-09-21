@@ -215,7 +215,18 @@ directly: Structure has no dependency on Ship (see the assembly graph).
 3. **Solve with PCG, under a per-tick budget**: `CgSolver.Solve`, using the
    three rigid-body modes (`LoadVector.RigidBodyModes`) so the singular
    (free-floating) stiffness matrix still has a well-defined particular
-   solution. `StructuralSolver.MaxCgIterationsPerTick` (default 400) caps
+   solution, preconditioned by plain Jacobi plus (when
+   `StructuralSolver.UseCoarseCorrection`, default on) `CoarsePreconditioner`'s
+   deflated coarse correction: a rigid-body-mode prolongation over
+   4x4-block aggregates and a pseudo-inverted coarse operator, letting
+   information cross the ship in O(1) preconditioner applications instead
+   of one CG iteration per element of width (see `CoarsePreconditioner`'s
+   doc and `docs/roadmap.md`'s Performance section for the numbers and the
+   remaining gap on wide ships). The quasi-static stress pass uses
+   `CgSolver.Tolerance = 1e-3` (relative); buckling's own internal
+   `CgSolver` instance keeps the tighter `1e-5` default, since its
+   Rayleigh quotients are far more sensitive to residual displacement
+   error. `StructuralSolver.MaxCgIterationsPerTick` (default 400) caps
    how much CG work one `Tick` may spend; when a ship is too wide for that
    budget (see `CgSolver`'s doc: iterations scale with the ship's width in
    elements), the PARTIAL displacement is kept as the next tick's warm
