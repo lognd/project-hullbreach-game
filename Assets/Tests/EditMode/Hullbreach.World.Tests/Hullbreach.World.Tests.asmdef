@@ -1,10 +1,10 @@
 {
-    "name": "Hullbreach.Ship.Tests",
-    "rootNamespace": "Hullbreach.Ship.Tests",
+    "name": "Hullbreach.World.Tests",
+    "rootNamespace": "Hullbreach.World.Tests",
     "references": [
         "Hullbreach.Core",
-        "Hullbreach.Ship",
         "Hullbreach.World",
+        "Hullbreach.Ship",
         "Unity.Mathematics",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner"
