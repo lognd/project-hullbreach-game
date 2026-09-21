@@ -192,6 +192,52 @@ namespace Hullbreach.Structure
         public Dictionary<int, BlockStress> BlockStresses { get; } = new Dictionary<int, BlockStress>();
 
         /// <summary>
+        /// Converts GAMEPLAY force units into the solver's normalized
+        /// material units before the solve.
+        ///
+        /// BlockType deliberately normalizes materials (hull yield = 1.0,
+        /// E = 1.0) for conditioning, while thrust and gravity are authored
+        /// in whatever units make the ship fly nicely (ThrustPerBlock 10,
+        /// planet mu 900). Those two scales have no reason to agree, and
+        /// they did not: the demo ship's own thrusters put every block far
+        /// past yield on the first tick, so the ship disintegrated the
+        /// instant play mode started.
+        ///
+        /// The fix is one honest conversion factor, not a disabled failure
+        /// check: the whole load vector (applied forces AND the inertia
+        /// relief that balances them) is multiplied by this, so the solve
+        /// stays linear, stresses scale exactly with it, and the geometric
+        /// stiffness that buckling is built from scales consistently too.
+        /// Calibrated so the stock demo ship at full thrust sits around 0.3
+        /// of yield while a long unsupported arm still fails.
+        /// </summary>
+        public float LoadScale = 1f;
+
+        /// <summary>
+        /// Ratio of real Young's modulus to yield stress that BlockType's
+        /// normalized material table leaves out, applied to the published
+        /// buckling load factors.
+        ///
+        /// BlockType normalizes hull to E = 1.0 AND yield = 1.0, i.e. a
+        /// material that yields at unit strain. Real structural metals yield
+        /// nearer 0.1% strain: E/yield is several hundred. That omission is
+        /// harmless for STRESS, which for a given self-equilibrated load is
+        /// independent of E (strain scales as 1/E, stress as E times strain),
+        /// which is why the stress ratios calibrate cleanly on their own.
+        /// It is NOT harmless for BUCKLING: the critical load factor is the
+        /// ratio of elastic to geometric stiffness, so it scales directly
+        /// with E. Left at 1, the demo's 9-block ship read as buckling at 13%
+        /// of its own thrust, and ShipStructure detached the blocks that
+        /// "buckled": a rubber ship folding up, not a metal one.
+        ///
+        /// Scaling the published load factors is exactly equivalent to
+        /// solving with E multiplied by this and leaving everything else
+        /// alone, and it keeps the default at 1 so every existing
+        /// BucklingTests case (all calibrated against E = 1) is untouched.
+        /// </summary>
+        public float MaterialStiffnessScale = 1f;
+
+        /// <summary>
         /// Runs one structural solve: rebuilds K if topology changed, applies
         /// the given point forces plus inertia relief, solves for
         /// displacement, and fills <see cref="BlockStresses"/>.
@@ -253,6 +299,14 @@ namespace Hullbreach.Structure
                 _loadVector.AddPointForce(f, point, force);
 
             _loadVector.ApplyInertiaRelief(f, grid, out _, out _);
+
+            // Applied AFTER inertia relief so the self-equilibrated load set
+            // is scaled as a whole: scaling only the applied forces would
+            // leave the relief unbalanced and inject a spurious net load.
+            if (LoadScale != 1f)
+            {
+                for (int i = 0; i < f.Length; i++) f[i] *= LoadScale;
+            }
 
             _solver.MaxIterations = MaxCgIterationsPerTick;
             _solver.Solve(_assembly, f, _displacement, _rigidModes, UseCoarseCorrection ? _coarse : null, _cgState);
@@ -532,7 +586,15 @@ namespace Hullbreach.Structure
 
             var modes = _buckling.ExtractModes(grid, _assembly, _kg, BucklingModeCount);
             _bucklingModes.Clear();
-            _bucklingModes.AddRange(modes);
+            // Applied here, before anything reads a load factor, so
+            // BuckledBlocks' lambda <= 1 test and BucklingRatio's 1/lambda
+            // tint both see the same corrected numbers.
+            for (int i = 0; i < modes.Count; i++)
+            {
+                var mode = modes[i];
+                mode.LoadFactor *= MaterialStiffnessScale;
+                _bucklingModes.Add(mode);
+            }
             CriticalLoadFactor = _bucklingModes.Count > 0 ? _bucklingModes[0].LoadFactor : float.PositiveInfinity;
 
             RecomputeBuckledBlocks();

@@ -284,6 +284,7 @@ GameObject:
   - component: {fileID: 2001004}
   - component: {fileID: 2001005}
   - component: {fileID: 2001006}
+  - component: {fileID: 2001007}
   m_Layer: 0
   m_Name: Demo
   m_TagString: Untagged
@@ -370,6 +371,18 @@ MonoBehaviour:
   m_Name:
   m_EditorClassIdentifier:
   spawner: {fileID: 2001004}
+--- !u!114 &2001007
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2001001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ab70efbf4249490784a6efb1e23a165e, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
 --- !u!1 &2002001
 GameObject:
   m_ObjectHideFlags: 0
@@ -415,9 +428,9 @@ Rigidbody2D:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2002001}
-  m_BodyType: 0
+  m_BodyType: 1
   m_Simulated: 1
-  m_UseFullKinematicContacts: 0
+  m_UseFullKinematicContacts: 1
   m_UseAutoMass: 0
   m_Mass: 1
   m_LinearDamping: 0
@@ -558,6 +571,7 @@ GameObject:
   - component: {fileID: 2003005}
   - component: {fileID: 2003006}
   - component: {fileID: 2003007}
+  - component: {fileID: 2003008}
   m_Layer: 0
   m_Name: TargetShip
   m_TagString: Untagged
@@ -574,7 +588,7 @@ Transform:
   m_GameObject: {fileID: 2003001}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 24, z: 0}
+  m_LocalPosition: {x: -10.26, y: -31.8, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -588,9 +602,9 @@ Rigidbody2D:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2003001}
-  m_BodyType: 0
+  m_BodyType: 1
   m_Simulated: 1
-  m_UseFullKinematicContacts: 0
+  m_UseFullKinematicContacts: 1
   m_UseAutoMass: 0
   m_Mass: 1
   m_LinearDamping: 0
@@ -700,6 +714,20 @@ MonoBehaviour:
   m_EditorClassIdentifier:
   controller: {fileID: 2003004}
   renderer_: {fileID: 2003005}
+--- !u!114 &2003008
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2003001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4aeb2bb3d19a491a82bdf30a471e8900, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  ship: {fileID: 2003004}
+  bodyIndex: 0
 --- !u!1 &2004001
 GameObject:
   m_ObjectHideFlags: 0

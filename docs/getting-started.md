@@ -225,6 +225,7 @@ do not like it.
 | `Planets` list, `Mu` (per planet) | How strongly that planet pulls things toward it (its "mass," in the units this game's gravity math uses). Bigger numbers mean a stronger pull and tighter orbits. | 50 to 2000 for a moon-to-large-planet range; the demo's big planet and small moon differ by about 10x. |
 | `Planets` list, `Radius` (per planet) | How big the planet is drawn, and how far from its center a ship or projectile starts colliding with its surface. | 4 to 25. |
 | `Planets` list, `Color` | The planet's color. | Any color. |
+| `Planets` list, `Soft Radius Factor` (per planet) | How far out (as a multiple of `Radius`) the pull stays softened near the center instead of following the raw inverse-square law, so a close pass never blows up. `0` (an unset row) falls back to the default `1.5`; the soft radius is always at least 2 units even for a small well. | 1 to 3 (or leave at 0 for the default). |
 | `Surface Restitution` | How bouncy every planet's surface is on impact (higher bounces the ship away harder; lower feels sticky). | 0.0 (no bounce) to 1.0 (perfectly bouncy). |
 
 ### `Powerups` GameObject, `PowerupSpawner` component
