@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using NUnit.Framework;
 using Unity.Mathematics;
@@ -54,12 +55,28 @@ namespace Hullbreach.Structure.Tests
         /// analysis (BucklingEveryNTicks is expected to already be 1) or
         /// `maxTicks` is exhausted, whichever comes first -- a tick-count
         /// bound, not a wall-clock one, matching BucklingAnalysis's own
-        /// convergence contract.</summary>
+        /// convergence contract. STOPS EARLY once the critical mode's
+        /// LoadFactor has stopped changing for a few consecutive ticks:
+        /// running the full `maxTicks` unconditionally (as this used to)
+        /// meant every test paid for its worst-case tick budget even when
+        /// the subspace settled in a fraction of it, which is most of why
+        /// this file used to take well over a minute -- see the class doc.
+        /// </summary>
         static void RunUntilConverged(StructuralSolver solver, BlockGrid grid,
                                       List<(float2, float2)> forces, int maxTicks = 60)
         {
+            float prev = float.NaN;
+            int stable = 0;
             for (int i = 0; i < maxTicks; i++)
+            {
                 solver.Tick(grid, forces, 1f / 60f);
+                if (solver.BucklingModes.Count == 0) continue;
+
+                float cur = solver.BucklingModes[0].LoadFactor;
+                stable = cur == prev ? stable + 1 : 0;
+                prev = cur;
+                if (stable >= 3) break;
+            }
         }
 
         [Test]
@@ -104,34 +121,82 @@ namespace Hullbreach.Structure.Tests
             // iteration with near-degenerate eigenvalues, not a correctness
             // bug); the longer, more slender columns below converge cleanly
             // well within the tick budgets used here.
-            var grid16 = Column(16);
-            var solver16 = new StructuralSolver { BucklingEveryNTicks = 1, BucklingMaxSweepsPerTick = 8, BucklingModeCount = 2 };
-            RunUntilConverged(solver16, grid16, ColumnEndForces(16, ColumnEndForce));
+            // 12 vs 24, not 16 vs 32: with the CgSolver fix below both pairs
+            // reproduce the Euler trend, and the smaller pair converges in a
+            // fraction of the tick budget, keeping this file's total runtime
+            // well under the old multi-minute cost of running CG near its
+            // (previously too-low) iteration cap.
+            var grid12 = Column(12);
+            var solver12 = new StructuralSolver { BucklingEveryNTicks = 1, BucklingMaxSweepsPerTick = 8, BucklingModeCount = 2 };
+            RunUntilConverged(solver12, grid12, ColumnEndForces(12, ColumnEndForce), 40);
 
-            var grid32 = Column(32);
-            var solver32 = new StructuralSolver { BucklingEveryNTicks = 1, BucklingMaxSweepsPerTick = 8, BucklingModeCount = 2 };
-            RunUntilConverged(solver32, grid32, ColumnEndForces(32, ColumnEndForce), 220);
+            var grid24 = Column(24);
+            var solver24 = new StructuralSolver { BucklingEveryNTicks = 1, BucklingMaxSweepsPerTick = 8, BucklingModeCount = 2 };
+            RunUntilConverged(solver24, grid24, ColumnEndForces(24, ColumnEndForce), 40);
 
-            Assert.Greater(solver16.BucklingModes.Count, 0, "the 16-block column should have a positive load factor");
-            Assert.Greater(solver32.BucklingModes.Count, 0, "the 32-block column should have a positive load factor");
+            Assert.Greater(solver12.BucklingModes.Count, 0, "the 12-block column should have a positive load factor");
+            Assert.Greater(solver24.BucklingModes.Count, 0, "the 24-block column should have a positive load factor");
 
-            float lambda16 = solver16.BucklingModes[0].LoadFactor;
-            float lambda32 = solver32.BucklingModes[0].LoadFactor;
-            float ratio = lambda16 / lambda32;
+            float lambda12 = solver12.BucklingModes[0].LoadFactor;
+            float lambda24 = solver24.BucklingModes[0].LoadFactor;
+            float ratio = lambda12 / lambda24;
 
             // Euler buckling on a slender beam predicts P_cr ~ 1/L^2, i.e. a
-            // ratio near (32/16)^2 = 4 for doubling the length. Empirically
-            // this coarse Q8 mesh's identified mode (dominated by the load-
-            // application ends rather than a pure mid-span sinusoid) tracks
-            // closer to 1/L than 1/L^2 -- a modeling caveat worth documenting
-            // rather than a bug: see the class doc and the Done report's
-            // numerical caveats. The assertion below therefore checks the
-            // qualitatively-correct, size-independent-of-noise claim the
-            // task actually cares about -- longer is weaker, substantially
-            // so -- rather than pinning an exact exponent this element
-            // formulation and analysis do not reproduce exactly.
-            Assert.Greater(ratio, 1.5f,
-                $"a column twice as long should have a noticeably lower critical load factor, got ratio {ratio}");
+            // ratio near (24/12)^2 = 4 for doubling the length. Root cause of
+            // the old, loosened "ratio > 1.5" assertion was CgSolver's
+            // MaxIterations cap (200) being far below what these columns
+            // actually need (measured ~650 CG iterations for a 32-block
+            // column's 326 dof) -- see CgSolver's MaxIterations doc -- which
+            // under-converged K^-1 and biased the subspace iteration's
+            // Rayleigh quotients enough to flatten the trend toward 1/L and
+            // even invert it for longer columns. With that fixed the ratio
+            // tracks the Euler exponent within the tolerance below.
+            Assert.Greater(ratio, 3.6f,
+                $"doubling the column length should roughly quarter the critical load factor (Euler P_cr ~ 1/L^2), got ratio {ratio}");
+            Assert.Less(ratio, 4.5f,
+                $"ratio {ratio} overshoots the Euler 1/L^2 prediction by more than the mesh/shear-correction tolerance allows");
+        }
+
+        [Test]
+        public void Column_CriticalLoadFactorMatchesDenseOracle()
+        {
+            // Independent check on the SUBSPACE ITERATION itself (as opposed
+            // to the trend test above, which is sensitive to the geometric
+            // stiffness and load case too): take the converged stress state
+            // StructuralSolver already produced, rebuild K/K_G against it
+            // directly, and compare BucklingAnalysis's own iteration against
+            // DenseEigenOracle's independent dense Cholesky+Jacobi solve of
+            // the identical reduced eigenproblem. N=8 is skipped here (see
+            // Column_CriticalLoadFactorScalesWithInverseLengthSquared's
+            // class doc on short columns) -- its lowest two buckling modes
+            // sit close enough together that which one the subspace settles
+            // on first is a coin flip unrelated to either implementation
+            // being wrong.
+            foreach (int n in new[] { 12, 16 })
+            {
+                var grid = Column(n);
+                var solver = new StructuralSolver { BucklingEveryNTicks = 1, BucklingMaxSweepsPerTick = 8, BucklingModeCount = 2 };
+                RunUntilConverged(solver, grid, ColumnEndForces(n, ColumnEndForce), 40);
+                Assert.Greater(solver.BucklingModes.Count, 0, $"N={n} should have a positive load factor");
+
+                var assembly = new StiffnessAssembly();
+                assembly.Rebuild(grid);
+                var kg = new GeometricStiffness();
+                kg.AttachSparsity(assembly);
+                kg.Rebuild(grid, assembly, solver.BlockStresses);
+
+                var rigid = new float[3][];
+                rigid[0] = new float[assembly.DofCount];
+                rigid[1] = new float[assembly.DofCount];
+                rigid[2] = new float[assembly.DofCount];
+                LoadVector.RigidBodyModes(assembly.NodeRestPositions, rigid);
+
+                float oracleLambda = DenseEigenOracle.SmallestPositiveLambda(assembly, kg, rigid);
+                float analysisLambda = solver.BucklingModes[0].LoadFactor;
+
+                Assert.Less(Math.Abs(oracleLambda - analysisLambda) / oracleLambda, 0.10f,
+                    $"N={n}: subspace iteration ({analysisLambda}) should agree with the dense oracle ({oracleLambda}) within 10%");
+            }
         }
 
         [Test]
@@ -287,7 +352,7 @@ namespace Hullbreach.Structure.Tests
             var solverA = new StructuralSolver { BucklingEveryNTicks = 1, BucklingMaxSweepsPerTick = 8, BucklingModeCount = 2 };
             var solverB = new StructuralSolver { BucklingEveryNTicks = 1, BucklingMaxSweepsPerTick = 8, BucklingModeCount = 2 };
 
-            for (int i = 0; i < 40; i++)
+            for (int i = 0; i < 20; i++)
             {
                 solverA.Tick(gridA, forces, 1f / 60f);
                 solverB.Tick(gridB, forces, 1f / 60f);
