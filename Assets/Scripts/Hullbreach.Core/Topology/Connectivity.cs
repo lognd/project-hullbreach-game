@@ -59,11 +59,9 @@ namespace Hullbreach.Core
             var reachable = new HashSet<int>();
             ReachableFromCore(grid, reachable);
 
-            var keys = grid.SortedKeys;
-            for (int i = 0; i < keys.Length; i++)
+            foreach (var kvp in grid.All)
             {
-                int key = keys[i];
-                if (!reachable.Contains(key)) detached.Add(key);
+                if (!reachable.Contains(kvp.Key)) detached.Add(kvp.Key);
             }
         }
 

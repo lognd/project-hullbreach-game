@@ -139,6 +139,11 @@ namespace Hullbreach.Ship
         /// <summary>Seconds remaining before each cannon can fire again.</summary>
         readonly Dictionary<int, float> _cannonCooldownByKey = new Dictionary<int, float>();
 
+        /// <summary>Reusable scratch buffer for sorting contacting block
+        /// keys into deterministic order in ResolvePlanetContacts, so the
+        /// per-tick contact pass never allocates a fresh list.</summary>
+        readonly List<int> _contactKeyScratch = new List<int>();
+
         /// <summary>Seconds remaining before each temporarily-transformed
         /// block (see ApplyPowerup) reverts to its base variant. Ticked down
         /// every Step; a block reverts (variant bits cleared) once its entry
@@ -284,19 +289,12 @@ namespace Hullbreach.Ship
         {
             if (Gravity == null) return;
 
-            // Sorted key order (not Grid.All) so per-block force application
-            // is deterministic regardless of the grid's internal dictionary
-            // layout, and so this loop shares the same allocation-free key
-            // view as ResolvePlanetContacts.
-            var keys = Grid.SortedKeys;
-            for (int i = 0; i < keys.Length; i++)
+            foreach (var kv in Grid.All)
             {
-                int key = keys[i];
-                if (!Grid.TryGet(key, out Block block)) continue;
-                float2 localCenter = BlockGrid.CenterOf(key);
+                float2 localCenter = BlockGrid.CenterOf(kv.Key);
                 float2 worldCenter = LocalToWorld(localCenter);
                 float2 accel = Gravity.AccelerationAt(worldCenter);
-                float blockMass = BlockTypes.Get(block.TypeId).Mass;
+                float blockMass = BlockTypes.Get(kv.Value.TypeId).Mass;
                 float2 worldForce = accel * blockMass;
                 float2 localForce = WorldVectorToLocal(worldForce);
                 AddForceAtPoint(localCenter, localForce);
@@ -319,11 +317,9 @@ namespace Hullbreach.Ship
             ContactsThisStep.Clear();
             if (Gravity == null || Grid.Mass.Total <= 0f) return;
 
-            // Grid.SortedKeys is already the deterministic, allocation-free
-            // key view BlockGrid maintains, so there is nothing left for the
-            // per-step scratch list to do; ContactKeys is kept below only
-            // as a scratch buffer for anything that still needs a List<int>.
-            var keys = Grid.SortedKeys;
+            _contactKeyScratch.Clear();
+            foreach (var kv in Grid.All) _contactKeyScratch.Add(kv.Key);
+            _contactKeyScratch.Sort();
 
             // Pass 1: find the single deepest penetration across all
             // contacting blocks and push the whole ship out along that
@@ -333,9 +329,9 @@ namespace Hullbreach.Ship
             float2 deepestNormal = float2.zero;
             bool anyContact = false;
 
-            for (int i = 0; i < keys.Length; i++)
+            for (int i = 0; i < _contactKeyScratch.Count; i++)
             {
-                int key = keys[i];
+                int key = _contactKeyScratch[i];
                 float2 worldCenter = LocalToWorld(BlockGrid.CenterOf(key));
                 if (!Gravity.TryContact(worldCenter, ContactClearance, out _, out var normal, out var penetration)) continue;
                 anyContact = true;
@@ -356,9 +352,9 @@ namespace Hullbreach.Ship
             float mass = Grid.Mass.Total;
             float inertia = Grid.Mass.InertiaAboutCenterOfMass;
 
-            for (int i = 0; i < keys.Length; i++)
+            for (int i = 0; i < _contactKeyScratch.Count; i++)
             {
-                int key = keys[i];
+                int key = _contactKeyScratch[i];
                 float2 worldCenter = LocalToWorld(BlockGrid.CenterOf(key));
                 if (!Gravity.TryContact(worldCenter, ContactClearance, out int bodyIndex, out var normal, out _)) continue;
 
