@@ -36,6 +36,25 @@ namespace Hullbreach.Structure
         /// and CG still exits the moment Tolerance is met, so this only
         /// matters for the cases that actually needed more room.</summary>
         public int MaxIterations = 4000;
+
+        /// <summary>Stopping criterion, RELATIVE to |f|: Solve exits once
+        /// |r| &lt;= Tolerance * |f|. It used to be
+        /// Tolerance * max(1, |f|), which is the same thing only for ships
+        /// loaded past |f| = 1 and an ABSOLUTE bound of 1e-5 below that.
+        /// Every buckling test drives a self-equilibrated end load with
+        /// |f| on the order of 0.04, so that floor let CG stop at ~2.5e-4
+        /// relative residual while still reporting Converged, and the
+        /// displacement error left at that point is preconditioner-
+        /// dependent: with CoarsePreconditioner attached it landed
+        /// differently than under plain Jacobi, fed a different element
+        /// stress field into GeometricStiffness, and moved a 12-block
+        /// column's critical load factor to 0.008 against the dense
+        /// oracle's 0.149. A relative criterion means Tolerance means the
+        /// same thing at every load scale, which is what the callers that
+        /// reason about it (StructuralSolver.Converged gating buckling,
+        /// BucklingAnalysis's own inverse iteration) already assume.
+        /// |f| = 0 is still handled: the initial residual is then 0 too,
+        /// so the first check passes immediately.</summary>
         public float Tolerance = 1e-5f;
 
         /// <summary>Iterations the last Solve actually took. Watch this grow
@@ -182,7 +201,7 @@ namespace Hullbreach.Structure
 
             float rzOld = Dot(r, z);
             float fNorm = (float)Math.Sqrt(Dot(f, f));
-            float tolAbs = Tolerance * Math.Max(1f, fNorm);
+            float tolAbs = Tolerance * fNorm;
 
             // STAGNATION GUARD: tracks the best (smallest) residual norm seen
             // and how long ago it improved. A right-hand side that is
@@ -257,30 +276,23 @@ namespace Hullbreach.Structure
         /// is attached. Shared between the initial residual and every
         /// iteration's preconditioning step so the two never drift apart.
         ///
-        /// Re-projects `z` onto the complement of `modes` afterward: Kc^+'s
-        /// pseudo-inverse floor (see CoarsePreconditioner's doc) drops
-        /// EIGENVALUES below a relative threshold, not an exact analytic
-        /// null-space projection, so on a small ship (few aggregates, Kc's
-        /// null space is a large fraction of its whole space) float
-        /// rounding can leave a tiny but nonzero rigid-mode component in
-        /// the coarse correction. Directly measured: without this
-        /// re-projection, that leaked component fed through `z` into `p`
-        /// and then into `u` every iteration (only `r` was ever
-        /// re-projected, not `p`/`u`), silently drifting `u` off the
-        /// physical solution manifold on tiny test grids and corrupting
-        /// three BucklingTests' Rayleigh quotients despite CG reporting
-        /// ordinary Tolerance-level convergence (the residual itself is
-        /// insensitive to a component K already annihilates, so it never
-        /// caught this).</summary>
+        /// NO EXTRA PROJECTION OF `z` HERE: the rigid-mode leak this used
+        /// to mop up (the coarse correction is only approximately zero on
+        /// K's null space when Kc^+ is built from an eigenvalue floor) is
+        /// now removed at its source, inside
+        /// CoarsePreconditioner.ApplyAdditive, which projects both its
+        /// input and its output. Projecting `z` here as well would only
+        /// re-project the JACOBI term, which the plain-Jacobi path
+        /// deliberately does not do (D^-1 cannot introduce a rigid
+        /// component orthonormal `modes` did not already put in `r`), and
+        /// would make the two paths' M^-1 differ for no benefit.
+        /// `modes` is still taken so the coarse path and the plain path
+        /// share one signature.</summary>
         static void ApplyPreconditioner(float[] diag, float[] r, float[] z, int n, CoarsePreconditioner coarse, float[][] modes)
         {
             for (int i = 0; i < n; i++)
                 z[i] = diag[i] > 1e-12f ? r[i] / diag[i] : r[i];
-            if (coarse != null)
-            {
-                coarse.ApplyAdditive(r, z);
-                Project(z, modes);
-            }
+            if (coarse != null) coarse.ApplyAdditive(r, z);
         }
     }
 }

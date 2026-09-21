@@ -79,6 +79,16 @@ namespace Hullbreach.Structure
         float[] _coarseSol = Array.Empty<float>();
         float[] _kcol = Array.Empty<float>();
 
+        // The ship's three GLOBAL rigid-body modes, orthonormalized once per
+        // Rebuild, plus the two dof-sized scratch vectors ApplyAdditive uses
+        // to sandwich the coarse solve between projections onto their
+        // complement (see ApplyAdditive's doc for why that sandwich, and not
+        // a single one-sided projection, is what makes the correction both
+        // exactly rigid-mode-free AND still symmetric).
+        float[][] _globalRigid = new float[3][] { Array.Empty<float>(), Array.Empty<float>(), Array.Empty<float>() };
+        float[] _rProjected = Array.Empty<float>();
+        float[] _coarseExpanded = Array.Empty<float>();
+
         /// <summary>Number of aggregates in the most recent Rebuild, exposed
         /// for tests/logging (Kc is 3x this).</summary>
         public int AggregateCount => _aggregateCount;
@@ -146,6 +156,20 @@ namespace Hullbreach.Structure
             }
 
             if (_kcol.Length != dof) _kcol = new float[dof];
+
+            if (_rProjected.Length != dof)
+            {
+                _rProjected = new float[dof];
+                _coarseExpanded = new float[dof];
+                for (int i = 0; i < 3; i++) _globalRigid[i] = new float[dof];
+            }
+
+            // Same three modes CgSolver and BucklingAnalysis project
+            // against, built from the same NodeRestPositions, so the
+            // subspace this preconditioner annihilates is bit-for-bit the
+            // one the rest of the solver stack treats as K's null space.
+            LoadVector.RigidBodyModes(pos, _globalRigid);
+            CgSolver.Orthonormalize(_globalRigid);
 
             BuildKc(k);
             SolvePseudoInverse();
@@ -353,14 +377,38 @@ namespace Hullbreach.Structure
         }
 
         /// <summary>
-        /// Adds the coarse correction P Kc^+ P^T r into `z` (in place, `z`
-        /// already expected to hold the Jacobi term D^-1 r): the combined
-        /// M^-1 = D^-1 + P Kc^+ P^T is what CgSolver applies as its
-        /// preconditioner when a CoarsePreconditioner is attached.
+        /// Adds the coarse correction (I-Q) P Kc^+ P^T (I-Q) r into `z` (in
+        /// place, `z` already expected to hold the Jacobi term D^-1 r),
+        /// where Q projects onto the ship's three global rigid-body modes:
+        /// the combined M^-1 = D^-1 + (I-Q) P Kc^+ P^T (I-Q) is what
+        /// CgSolver applies as its preconditioner when a
+        /// CoarsePreconditioner is attached.
+        ///
+        /// WHY BOTH SIDES ARE PROJECTED, not just the output: Kc^+'s
+        /// eigenvalue floor (see SolvePseudoInverse) drops Kc's null space
+        /// only to within DenseJacobiEigen's rounding, so the raw
+        /// correction leaks a small rigid-body component, which CG cannot
+        /// see (K annihilates it, so it never reaches the residual) but
+        /// which accumulates in `p` and `u` every iteration and destroys
+        /// the cancellation in the B*u strain evaluation downstream: that
+        /// is what corrupted three BucklingTests' geometric stiffness
+        /// under Mono, whose float rounding differs from .NET's. Making
+        /// the correction EXACTLY rigid-mode-free by construction removes
+        /// the leak at its source instead of mopping it up in CgSolver.
+        /// The projection is applied on the INPUT too, not only the
+        /// output, because (I-Q) M0 is not a symmetric operator while
+        /// (I-Q) M0 (I-Q) is (Q is a symmetric projector, Kc^+ is
+        /// symmetric), and PCG's convergence theory needs M^-1 symmetric:
+        /// see CoarsePreconditionerTests.CombinedPreconditioner_IsSymmetric.
         /// </summary>
         public void ApplyAdditive(float[] r, float[] z)
         {
-            ProjectToCoarse(r, _coarseRhs);
+            // INPUT PROJECTION: strip the global rigid modes off the
+            // residual before it ever reaches the coarse space.
+            Array.Copy(r, _rProjected, _dof);
+            CgSolver.Project(_rProjected, _globalRigid);
+
+            ProjectToCoarse(_rProjected, _coarseRhs);
 
             int m = _coarseRhs.Length;
             for (int i = 0; i < m; i++)
@@ -371,7 +419,13 @@ namespace Hullbreach.Structure
                 _coarseSol[i] = sum;
             }
 
-            ExpandFromCoarseAdditive(_coarseSol, z);
+            // OUTPUT PROJECTION: strip them off the correction as well,
+            // then add the result into `z`.
+            Array.Clear(_coarseExpanded, 0, _dof);
+            ExpandFromCoarseAdditive(_coarseSol, _coarseExpanded);
+            CgSolver.Project(_coarseExpanded, _globalRigid);
+
+            for (int i = 0; i < _dof; i++) z[i] += _coarseExpanded[i];
         }
     }
 }

@@ -95,13 +95,19 @@ namespace Hullbreach.Structure.Tests
                 float maxAbs = 0f;
                 for (int i = 0; i < n; i++) maxAbs = Math.Max(maxAbs, Math.Abs(z[i]));
 
-                // Scale-relative: a rigid mode is exactly in Kc's dropped
-                // null space by construction (see the class doc), so the
-                // coarse correction of it should be zero up to float
-                // rounding, not merely small in absolute terms.
+                // Scale-relative, and TIGHT: the correction now projects
+                // its own input and output onto the complement of these
+                // exact modes (see ApplyAdditive), so a rigid mode maps to
+                // zero by construction rather than by Kc^+'s eigenvalue
+                // floor happening to drop the right directions. The old
+                // 5e-3 bound was a data-dependent accommodation of that
+                // floor's leftovers and sat only a few percent above what
+                // Mono actually produced (0.0496 measured against a 0.0456
+                // effective threshold on this grid); 1e-4 relative is a
+                // real assertion about the construction instead.
                 float modeNorm = (float)Math.Sqrt(Dot(mode, mode));
-                Assert.Less(maxAbs, 5e-3f * Math.Max(1f, modeNorm),
-                    "coarse correction of a rigid mode should be ~0: Kc^+ must drop Kc's null space");
+                Assert.Less(maxAbs, 1e-4f * Math.Max(1f, modeNorm),
+                    "coarse correction of a rigid mode should be ~0: it must be projected off them by construction");
             }
         }
 
