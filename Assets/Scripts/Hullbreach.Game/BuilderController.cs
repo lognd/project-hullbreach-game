@@ -68,6 +68,26 @@ namespace Hullbreach.Game
             if (Session != null) Session.Changed -= OnSessionChanged;
         }
 
+        /// <summary>
+        /// Hides the hover preview and drops any half-finished two-click
+        /// placement when the builder is switched off. Without this the
+        /// red/green cell outline stayed on screen through the whole of Fly
+        /// mode (Update stops running, so nothing ever cleared it) and a
+        /// pending Orienting state came back the next time Build opened.
+        /// </summary>
+        void OnDisable()
+        {
+            _hasHover = false;
+            _hoverOverride = null;
+            if (_hoverIndicator != null) _hoverIndicator.gameObject.SetActive(false);
+            Session?.Cancel();
+        }
+
+        /// <summary>The runtime hover preview quad, or null before the first
+        /// Update built it; exposed so a play-mode test can assert it is
+        /// hidden in Fly mode.</summary>
+        public GameObject HoverIndicator => _hoverIndicator != null ? _hoverIndicator.gameObject : null;
+
         /// <summary>Propagates any grid mutation to the renderer/collider and
         /// re-derives ShipBody's thruster/fin/weapon key lists, since a
         /// placed or removed block can add or remove any of those.</summary>
@@ -105,11 +125,6 @@ namespace Hullbreach.Game
         public void PreviewHoverAt(int? key) => _hoverOverride = key;
 
         int? _hoverOverride;
-
-        /// <summary>The runtime hover preview quad, or null before the first
-        /// Update built it; exposed so a play-mode test can assert what it is
-        /// doing.</summary>
-        public GameObject HoverIndicator => _hoverIndicator != null ? _hoverIndicator.gameObject : null;
 
         void Update()
         {

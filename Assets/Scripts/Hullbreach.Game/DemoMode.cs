@@ -24,9 +24,9 @@ namespace Hullbreach.Game
         [SerializeField] ShipRenderer playerRenderer;
         [SerializeField] ShipStructure playerStructure;
 
-        /// <summary>When set, the R key resets the player onto a preset
-        /// circular orbit (orbitStartPosition around orbitBodyIndex) instead
-        /// of dead rest at the origin. Off by default so scenes without a
+        /// <summary>When set, the ship STARTS on (and the R key returns it
+        /// to) a preset circular orbit (orbitStartPosition around
+        /// orbitBodyIndex) instead of dead rest at the origin. Off by default so scenes without a
         /// GravityWorld (RocketScene) behave exactly as before.</summary>
         [SerializeField] bool startInOrbit = false;
 
@@ -83,7 +83,8 @@ namespace Hullbreach.Game
 
         /// <summary>
         /// Switches mode and applies it. Public so a play-mode test can drive
-        /// the toggle without synthesising a Tab key press.
+        /// the toggle without synthesising a Tab key press. Switching modes
+        /// never moves the ship: Build pauses it in place, Fly resumes it.
         /// </summary>
         public void SetState(DemoState state)
         {
@@ -140,6 +141,11 @@ namespace Hullbreach.Game
 
         void Start()
         {
+            // Put the ship where it is meant to fly BEFORE the first physics
+            // step. Previously the scene authored the ship at the origin and
+            // only R ever moved it onto the orbit, so the demo opened with
+            // the ship falling straight at the planet.
+            ResetPlayer();
             ApplyState();
         }
 
@@ -198,14 +204,38 @@ namespace Hullbreach.Game
             _ => OverlayMode.None,
         };
 
+        /// <summary>
+        /// Applies the current mode. Build freezes the ship IN PLACE: the
+        /// plain-C# simulation stops stepping AND the Rigidbody2D stops
+        /// simulating, so neither can drift away from the other while the
+        /// player is editing. Fly resumes both from exactly that state.
+        /// </summary>
         void ApplyState()
         {
             bool building = State == DemoState.Build;
 
-            if (playerShip != null) playerShip.InputEnabled = !building;
+            // Disable the builder FIRST when leaving Build: its OnDisable is
+            // what hides the hover preview and cancels a pending placement,
+            // and doing it before flight resumes means no frame ever renders
+            // the build cursor over a flying ship.
+            if (!building)
+            {
+                if (builder != null) builder.enabled = false;
+                if (builderHud != null) builderHud.enabled = false;
+            }
+
+            if (playerShip != null)
+            {
+                playerShip.InputEnabled = !building;
+                playerShip.SimulationEnabled = !building;
+            }
             if (playerBody != null) playerBody.simulated = !building;
-            if (builder != null) builder.enabled = building;
-            if (builderHud != null) builderHud.enabled = building;
+
+            if (building)
+            {
+                if (builder != null) builder.enabled = true;
+                if (builderHud != null) builderHud.enabled = true;
+            }
         }
 
         void OnGUI()
@@ -222,7 +252,7 @@ namespace Hullbreach.Game
             else
             {
                 GUILayout.Label("W/S or Up/Down: thrust/reverse   A/D or Left/Right: steer");
-                GUILayout.Label("Space: fire   O: cycle overlay   R: reset to origin");
+                GUILayout.Label("Space: fire   O: cycle overlay   R: reset to start");
                 string overlay = playerRenderer != null ? playerRenderer.Overlay.ToString() : "n/a";
                 GUILayout.Label($"Overlay: {overlay}");
             }

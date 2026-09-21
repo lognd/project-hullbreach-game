@@ -104,6 +104,20 @@ namespace Hullbreach.Game
         public bool InputEnabled = true;
 
         /// <summary>
+        /// Gate for the SIMULATION itself, distinct from InputEnabled. While
+        /// false, FixedUpdate steps nothing and writes nothing to the
+        /// Rigidbody2D, so the ship is genuinely paused where it stands.
+        ///
+        /// This is what Build mode needs. Merely clearing input still let
+        /// ShipBody integrate gravity every tick while Rigidbody2D.simulated
+        /// was false, so MovePosition was a no-op and the transform stayed
+        /// put while ShipBody drifted; the first Fly-mode FixedUpdate then
+        /// snapped the transform onto the drifted position. That snap is the
+        /// "Tab teleports me" bug.
+        /// </summary>
+        public bool SimulationEnabled = true;
+
+        /// <summary>
         /// Where player intent comes from. Defaults to the legacy Input
         /// Manager bindings; a play-mode test swaps in a ScriptedDemoInput,
         /// since UnityEngine.Input cannot be driven from a test.
@@ -180,6 +194,14 @@ namespace Hullbreach.Game
 
         void FixedUpdate()
         {
+            if (!SimulationEnabled)
+            {
+                // Paused (Build mode): do not integrate and do not touch the
+                // Rigidbody2D, so resuming is exactly where we left off.
+                fireLatched = false;
+                return;
+            }
+
             var input = InputEnabled ? new ShipInput(thrustAxis, steerAxis, fireLatched) : new ShipInput(0f, 0f, false);
             fireLatched = false;   // consume exactly once
 
