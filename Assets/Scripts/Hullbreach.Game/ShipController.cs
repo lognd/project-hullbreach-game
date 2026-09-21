@@ -71,6 +71,8 @@ namespace Hullbreach.Game
         [SerializeField] float finForce = 6f;
         [Tooltip("Seconds a cannon waits between shots.")]
         [SerializeField] float cannonCooldown = 0.35f;
+        [Tooltip("Per-second exponential decay on spin, so releasing steer settles the ship.")]
+        [SerializeField] float angularDamping = 1.5f;
 
         /// <summary>The ship's blocks, authored in the Inspector until the
         /// builder (Hullbreach.Builder) can construct ships at runtime. The
@@ -149,6 +151,7 @@ namespace Hullbreach.Game
                 RetroThrustPerBlock = retroThrustPerBlock,
                 FinForce = finForce,
                 CannonCooldown = cannonCooldown,
+                AngularDamping = angularDamping,
             };
             foreach (var b in blocks)
             {

@@ -72,6 +72,19 @@ namespace Hullbreach.Ship
         /// ground friction without a full friction-cone solve.</summary>
         public float Friction = 2f;
 
+        /// <summary>
+        /// Exponential decay rate (per second) applied to AngularVelocity
+        /// every Step. Without it nothing ever stops a ship spinning: fins
+        /// apply a torque, and when the player lets go the ship keeps the
+        /// rotation rate it reached forever, so aiming means counter-steering
+        /// exactly, which is what made the demo feel uncontrollable.
+        ///
+        /// Defaults to 0 so ShipBody's own unit tests (and any caller that
+        /// wants pure Newtonian rotation) are unaffected; the demo's
+        /// ShipController sets it from the Inspector.
+        /// </summary>
+        public float AngularDamping = 0f;
+
         /// <summary>Clearance (world units) added to a planet's Radius when
         /// testing block contact, so a block's own half-extent does not sink
         /// visibly into the surface before contact registers.</summary>
@@ -311,6 +324,14 @@ namespace Hullbreach.Ship
             // physics feels once handed to Rigidbody2D.
             Velocity += a * dt;
             AngularVelocity += alpha * dt;
+
+            // Applied to the NEW angular velocity, as an exponential decay
+            // rather than a subtraction, so it is stable at any dt and can
+            // never drive the spin through zero and back the other way.
+            if (AngularDamping > 0f)
+            {
+                AngularVelocity *= 1f / (1f + AngularDamping * dt);
+            }
             Position += Velocity * dt;
             Rotation += AngularVelocity * dt;
 
