@@ -355,9 +355,11 @@ Open `Assets/Scenes/DemoScene.unity` and press Play. It is registered as
 the first scene in `ProjectSettings/EditorBuildSettings.asset`, alongside
 `RocketScene`.
 
-The scene starts in **Build** mode with the player ship frozen at the
-origin and a stationary `TargetShip` 12 units up. Press **Tab** at any
-time to switch between Build and Fly.
+The scene starts in **Build** mode with the player ship paused on a
+circular orbit around the big planet, and a `TargetShip` flying the same
+orbit about ten units ahead. Press **Tab** at any time to switch between
+Build and Fly. Tab only pauses and resumes: it never moves the ship, and
+**R** is the only control that repositions anything.
 
 **Build mode:**
 
@@ -392,10 +394,33 @@ time to switch between Build and Fly.
   preset circular orbit around the big planet instead of dead rest at the
   origin; otherwise it resets to rest at the world origin.
 
+Forward thrusters burn **red** out the back, with a particle trail left
+behind in world space; retro thrusters burn **green** out two nozzles
+pointing forward. Flame size and particle rate both follow that
+thruster's actual throttle, so you can read the ramp on the ship as well
+as on the bars.
+
 The always-on panel in the corner shows the current mode, its controls,
 the current overlay, total mass, block count, and (in Fly mode) speed,
-angular speed, and the critical load factor ("inf" when the ship is nowhere
-near buckling).
+angular speed and three live control bars: **Thrust** 0-100% in red,
+**Reverse** 0-100% in green, and **Steer** -100 to +100% in white
+filling left or right from center. All three ramp over about a second
+for stock parts rather than snapping to full, so the bars show what the
+ship is actually doing, not what you asked for.
+
+A separate readout sits top-center in Fly mode: **`Hull: OK`** in green,
+**`Hull: STRAIN`** in yellow once the most loaded block passes half its
+yield, and a flashing red **`Hull: CRITICAL`** past 0.8 or when the ship
+gets near its buckling load, with how many blocks are in the red and a
+one-line hint. Any block in the red also pulses red on the ship itself,
+whatever overlay you are in, so you can see where the problem is without
+switching to the Stress overlay.
+
+The stock ship cannot break itself: full thrust, full reverse, full
+steer and every combination of them peak at 0.40 of yield with a
+critical load factor above 13 (measured, see `docs/demo-scene.md`).
+Structural failure is something you build your way into, by hanging mass
+off a long unsupported arm.
 
 Shooting the `TargetShip` knocks it back and tints it under the Damage
 overlay; sustained fire on the same block will eventually push its

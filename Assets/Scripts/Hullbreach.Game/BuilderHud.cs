@@ -20,7 +20,13 @@ namespace Hullbreach.Game
             if (controller == null || controller.Session == null) return;
             var session = controller.Session;
 
-            GUILayout.BeginArea(new Rect(10, 10, 260, 400), GUI.skin.box);
+            // Clamped to the space DemoMode's bottom-left panel leaves, so
+            // the palette and the status panel never draw over each other on
+            // a short window (they did at 341 px tall, which is what a
+            // batch-mode screenshot run produces).
+            float available = Screen.height - DemoMode.StatusPanelHeight(true) - 20f;
+            float height = Mathf.Clamp(available, 120f, 400f);
+            GUILayout.BeginArea(new Rect(10, 10, 260, height), GUI.skin.box);
             GUILayout.Label("Palette (keys 1-7)");
 
             foreach (var entry in BlockPalette.All())
