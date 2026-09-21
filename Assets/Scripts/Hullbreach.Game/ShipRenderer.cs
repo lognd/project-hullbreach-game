@@ -80,6 +80,8 @@ namespace Hullbreach.Game
             public SpriteRenderer Nose;
             public SpriteRenderer Flame;
             public SpriteRenderer Flame2;
+            public ParticleSystem Exhaust;
+            public ParticleSystem Exhaust2;
             public byte TypeId;
             public byte Modifiers;
         }
@@ -213,19 +215,147 @@ namespace Hullbreach.Game
 
             if (block.TypeId == BlockTypes.Thruster)
             {
-                visual.Flame = BuildFlame(root.transform, new Vector3(0f, -0.5f, 0f), new Color(1f, 0.5f, 0.1f));
+                // Forward thrust exhausts ship-local -y, so that is where the
+                // red flame and its particle trail go.
+                visual.Flame = BuildFlame(root.transform, new Vector3(0f, -0.5f, 0f), ForwardFlameColor);
+                visual.Exhaust = BuildExhaust(root.transform, new Vector3(0f, -0.55f, 0f),
+                                              new Vector2(0f, -1f), ForwardFlameColor);
             }
             else if (block.TypeId == BlockTypes.RetroThruster)
             {
-                visual.Flame = BuildFlame(root.transform, new Vector3(0.5f, 0f, 0f), new Color(0.4f, 0.8f, 1f));
-                visual.Flame2 = BuildFlame(root.transform, new Vector3(-0.5f, 0f, 0f), new Color(0.4f, 0.8f, 1f));
+                // A retro thruster pushes the ship backward by exhausting
+                // FORWARD out two SIDE nozzles, so both plumes point +y but
+                // sit outboard at the block's own +x/-x edges. Straight
+                // above the block is where the hull it is bolted to lives
+                // (that is what makes it a retro), so a plume centered there
+                // would be drawn underneath solid hull and never seen;
+                // Clearance reserves the two side cells precisely so these
+                // nozzles have somewhere to fire.
+                visual.Flame = BuildFlame(root.transform, new Vector3(0.5f, 0.25f, 0f), RetroFlameColor);
+                visual.Flame2 = BuildFlame(root.transform, new Vector3(-0.5f, 0.25f, 0f), RetroFlameColor);
+                visual.Exhaust = BuildExhaust(root.transform, new Vector3(0.5f, 0.5f, 0f),
+                                              new Vector2(0f, 1f), RetroFlameColor);
+                visual.Exhaust2 = BuildExhaust(root.transform, new Vector3(-0.5f, 0.5f, 0f),
+                                               new Vector2(0f, 1f), RetroFlameColor);
             }
             else if (block.TypeId == BlockTypes.Fin)
             {
                 visual.Flame = BuildFlame(root.transform, new Vector3(0f, -0.3f, 0f), new Color(0.7f, 0.95f, 0.7f));
+                visual.Exhaust = BuildExhaust(root.transform, new Vector3(0f, -0.3f, 0f),
+                                              new Vector2(0f, -1f), Color.white);
             }
 
             return visual;
+        }
+
+        /// <summary>Forward thrusters read RED: the main drive is the loud,
+        /// hot one, and it must be unmistakable from the retro plumes.</summary>
+        public static readonly Color ForwardFlameColor = new Color(1f, 0.22f, 0.06f);
+
+        /// <summary>Retro thrusters read GREEN, the opposite channel to the
+        /// forward drive's red, so which way the ship is pushing is readable
+        /// at a glance without looking at the HUD.</summary>
+        public static readonly Color RetroFlameColor = new Color(0.15f, 1f, 0.35f);
+
+        /// <summary>Particles per second at full throttle.</summary>
+        const float ExhaustRateAtFullThrottle = 60f;
+
+        /// <summary>Particles per second for a fin's steering puff at full
+        /// deflection; much thinner than a thruster plume, since a control
+        /// surface is not a rocket.</summary>
+        const float FinPuffRateAtFullSteer = 18f;
+
+        static Material _particleMaterial;
+
+        /// <summary>
+        /// Builds the one shared unlit sprite material every exhaust plume
+        /// renders with, from the same runtime white texture the blocks use.
+        /// Returns null (and the caller skips particles entirely) if the
+        /// Sprites/Default shader is not present in the build, which is the
+        /// one way this can fail on a stripped player.
+        /// </summary>
+        static Material ParticleMaterial()
+        {
+            if (_particleMaterial != null) return _particleMaterial;
+
+            var shader = Shader.Find("Sprites/Default");
+            if (shader == null)
+            {
+                Debug.LogWarning("Sprites/Default shader is missing; thruster particles are disabled.");
+                return null;
+            }
+
+            _particleMaterial = new Material(shader) { mainTexture = MakeSprite().texture };
+            _particleMaterial.name = "HullbreachExhaustParticles";
+            return _particleMaterial;
+        }
+
+        /// <summary>
+        /// Creates one thruster exhaust plume: a world-space ParticleSystem
+        /// aimed down `localDirection`, idle until UpdateFlames raises its
+        /// emission rate. Simulation space is World deliberately, so the
+        /// trail is left BEHIND a moving ship instead of riding along with
+        /// it, which is most of what makes thrust read as thrust.
+        /// </summary>
+        static ParticleSystem BuildExhaust(Transform parent, Vector3 localPos, Vector2 localDirection, Color color)
+        {
+            var material = ParticleMaterial();
+            if (material == null) return null;
+
+            var go = new GameObject("Exhaust");
+            go.transform.SetParent(parent, false);
+            go.transform.localPosition = localPos;
+            // A cone emits along its local +Z, so point +Z down the nozzle.
+            go.transform.localRotation = Quaternion.LookRotation(
+                new Vector3(localDirection.x, localDirection.y, 0f), Vector3.forward);
+
+            var system = go.AddComponent<ParticleSystem>();
+            var main = system.main;
+            main.simulationSpace = ParticleSystemSimulationSpace.World;
+            main.startLifetime = new ParticleSystem.MinMaxCurve(0.3f, 0.5f);
+            main.startSpeed = new ParticleSystem.MinMaxCurve(3f, 6f);
+            main.startSize = new ParticleSystem.MinMaxCurve(0.15f, 0.3f);
+            main.startColor = color;
+            main.playOnAwake = false;
+            main.maxParticles = 200;
+
+            var emission = system.emission;
+            emission.enabled = true;
+            emission.rateOverTime = 0f;
+
+            var shape = system.shape;
+            shape.enabled = true;
+            shape.shapeType = ParticleSystemShapeType.Cone;
+            shape.angle = 10f;
+            shape.radius = 0.06f;
+
+            // Fade to transparent over the particle's life so the plume has
+            // a soft tail rather than a hard edge.
+            var colorOverLifetime = system.colorOverLifetime;
+            colorOverLifetime.enabled = true;
+            var gradient = new Gradient();
+            gradient.SetKeys(
+                new[] { new GradientColorKey(color, 0f), new GradientColorKey(color, 1f) },
+                new[] { new GradientAlphaKey(1f, 0f), new GradientAlphaKey(0f, 1f) });
+            colorOverLifetime.color = new ParticleSystem.MinMaxGradient(gradient);
+
+            var particleRenderer = system.GetComponent<ParticleSystemRenderer>();
+            particleRenderer.material = material;
+            particleRenderer.renderMode = ParticleSystemRenderMode.Billboard;
+            particleRenderer.sortingOrder = -2;
+
+            system.Play();
+            return system;
+        }
+
+        /// <summary>Sets a plume's emission rate from a 0..1 throttle,
+        /// stopping emission entirely at idle so a coasting ship leaves no
+        /// trail.</summary>
+        static void SetExhaustRate(ParticleSystem system, float throttle01, float rateAtFull)
+        {
+            if (system == null) return;
+            var emission = system.emission;
+            emission.rateOverTime = Mathf.Clamp01(throttle01) * rateAtFull;
         }
 
         static SpriteRenderer BuildFlame(Transform parent, Vector3 localPos, Color color)
@@ -249,6 +379,8 @@ namespace Hullbreach.Game
             {
                 float t = ship.Throttle(key);
                 bool visible = t >= 0.02f;
+                SetExhaustRate(v.Exhaust, t, ExhaustRateAtFullThrottle);
+                SetExhaustRate(v.Exhaust2, t, ExhaustRateAtFullThrottle);
                 if (v.Flame != null)
                 {
                     v.Flame.gameObject.SetActive(visible);
@@ -272,6 +404,7 @@ namespace Hullbreach.Game
             {
                 float steer = ship.SteerThrottle(key);
                 bool visible = Mathf.Abs(steer) >= 0.02f;
+                SetExhaustRate(v.Exhaust, Mathf.Abs(steer), FinPuffRateAtFullSteer);
                 if (v.Flame == null) return;
                 v.Flame.gameObject.SetActive(visible);
                 if (!visible) return;
