@@ -3,6 +3,15 @@
 #   tools/plaincs/run_tests.sh [extra dotnet test args]
 # Resolves dotnet from PATH, falling back to the Windows SDK under WSL.
 #
+# BUILD CONFIGURATION: Release, always. `dotnet test` defaults to Debug,
+# and a Debug build of this solver is not merely "a bit slower": the
+# per-tick numbers SolverBenchmarks reports came out 5-8x worse than
+# Release (a shipped Unity player is Release-equivalent), so the Debug
+# numbers were an upper bound nobody could compare against a frame
+# budget. Override for a debugging session with:
+#   tools/plaincs/run_tests.sh -c Debug
+# (a later -c on the command line wins, since dotnet takes the last one).
+#
 # Excludes [Category("Slow")] tests (currently just
 # SolverBenchmarks.Benchmark_2000Blocks, a multi-second 2000-block CG/
 # buckling run) by default so the ~30s default run stays fast; run the
@@ -18,8 +27,9 @@ for c in dotnet "/mnt/c/Program Files/dotnet/dotnet.exe"; do
     if command -v "$c" >/dev/null 2>&1; then dn="$c"; break; fi
 done
 [ -n "$dn" ] || { echo "dotnet SDK not found"; exit 2; }
+proj=Hullbreach.Plain.Tests/Hullbreach.Plain.Tests.csproj
 if printf '%s\n' "$@" | grep -q -- '--filter'; then
-    "$dn" test Hullbreach.Plain.Tests/Hullbreach.Plain.Tests.csproj --nologo -v q "$@"
+    "$dn" test "$proj" --nologo -v q -c Release "$@"
 else
-    "$dn" test Hullbreach.Plain.Tests/Hullbreach.Plain.Tests.csproj --nologo -v q --filter "TestCategory!=Slow" "$@"
+    "$dn" test "$proj" --nologo -v q -c Release --filter "TestCategory!=Slow" "$@"
 fi
