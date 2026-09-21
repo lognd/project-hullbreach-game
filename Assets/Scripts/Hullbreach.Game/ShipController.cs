@@ -122,6 +122,12 @@ namespace Hullbreach.Game
             // leaves this null, and ShipBody.Step already treats a null
             // Gravity as "no gravity" rather than requiring a stub.
             ship.Gravity = GravityWorld.Field;
+
+            // WorldSink.Instance is set by its own Awake, which must run
+            // before this one -- see [DefaultExecutionOrder(-150)] there vs
+            // -100 here. Falls back to NullWorldSink's default (already set
+            // by ShipBody's field initializer) in a scene with no WorldSink.
+            if (WorldSink.Instance != null) ship.World = WorldSink.Instance;
         }
 
         void Update()

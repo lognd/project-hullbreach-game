@@ -283,6 +283,7 @@ GameObject:
   - component: {fileID: 2001003}
   - component: {fileID: 2001004}
   - component: {fileID: 2001005}
+  - component: {fileID: 2001006}
   m_Layer: 0
   m_Name: Demo
   m_TagString: Untagged
@@ -356,6 +357,19 @@ MonoBehaviour:
   m_Name:
   m_EditorClassIdentifier:
   controller: {fileID: 2002008}
+--- !u!114 &2001006
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2001001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c53064f7b7f64bc2afdf170364cfaf43, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  spawner: {fileID: 2001004}
 --- !u!1 &2002001
 GameObject:
   m_ObjectHideFlags: 0
@@ -740,6 +754,73 @@ MonoBehaviour:
     radius: 6
     color: {r: 0.55, g: 0.55, b: 0.6, a: 1}
   surfaceRestitution: 0.2
+--- !u!1 &2005001
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2005002}
+  - component: {fileID: 2005003}
+  m_Layer: 0
+  m_Name: Powerups
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2005002
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2005001}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2005003
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2005001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 59c431646dad4980a3a198ca353b005f, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  presets:
+  - position: {x: -6, y: -30}
+    variant: 1
+    baseTypeId: 4
+    seconds: 8
+    color: {r: 0.55, g: 0.25, b: 1, a: 1}
+    displayName: Gravity gun
+    radius: 0.6
+  - position: {x: 0, y: -26}
+    variant: 2
+    baseTypeId: 4
+    seconds: 8
+    color: {r: 1, g: 0.35, b: 0.35, a: 1}
+    displayName: Anti-gravity gun
+    radius: 0.6
+  - position: {x: 6, y: -30}
+    variant: 1
+    baseTypeId: 3
+    seconds: 8
+    color: {r: 0.3, g: 1, b: 0.5, a: 1}
+    displayName: Seeking thruster
+    radius: 0.6
+  respawnSeconds: 10
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -749,3 +830,4 @@ SceneRoots:
   - {fileID: 2002002}
   - {fileID: 2003002}
   - {fileID: 2004002}
+  - {fileID: 2005002}

@@ -1,4 +1,5 @@
 using UnityEngine;
+using Hullbreach.Core;
 using Hullbreach.World;
 
 namespace Hullbreach.Game
@@ -90,6 +91,35 @@ namespace Hullbreach.Game
             }
         }
 
+        /// <summary>Lists every block on `ship` with an active (nonzero,
+        /// unexpired) powerup variant, one HUD line each, e.g.
+        /// "Cannon (2,0): Gravity gun 7.3 s".</summary>
+        static void DrawActivePowerups(Hullbreach.Ship.ShipBody ship)
+        {
+            foreach (var kv in ship.Grid.All)
+            {
+                byte variant = BlockVariants.Get(kv.Value.Modifiers);
+                if (variant == 0) continue;
+                float timeLeft = ship.VariantTimeLeft(kv.Key);
+                if (timeLeft <= 0f) continue;
+
+                BlockKey.Unpack(kv.Key, out int x, out int y);
+                string typeName = BlockTypes.Get(kv.Value.TypeId).Name;
+                GUILayout.Label($"{typeName} ({x},{y}): {VariantLabel(kv.Value.TypeId, variant)} {timeLeft:0.0} s");
+            }
+        }
+
+        /// <summary>Human-readable name for a (TypeId, variant) pair, for
+        /// the HUD; falls back to a generic "variant N" for anything not
+        /// explicitly named here.</summary>
+        static string VariantLabel(byte typeId, byte variant)
+        {
+            if (typeId == BlockTypes.Cannon && variant == 1) return "Gravity gun";
+            if (typeId == BlockTypes.Cannon && variant == 2) return "Anti-gravity gun";
+            if (typeId == BlockTypes.Thruster && variant == 1) return "Seeking thruster";
+            return $"variant {variant}";
+        }
+
         static OverlayMode NextOverlay(OverlayMode current) => current switch
         {
             OverlayMode.None => OverlayMode.Stress,
@@ -143,6 +173,8 @@ namespace Hullbreach.Game
                         string clfText = float.IsInfinity(clf) ? "inf" : clf.ToString("0.00");
                         GUILayout.Label($"Critical load factor: {clfText}");
                     }
+
+                    DrawActivePowerups(ship);
                 }
             }
             GUILayout.EndArea();

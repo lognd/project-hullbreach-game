@@ -407,6 +407,29 @@ coming before it happens -- it tints purely on buckling risk, so a hull
 that looks fine under Stress can still show red under Buckling if a long,
 thin section is about to fold.
 
+## Powerups
+
+Three pickups float near the player's orbit start, around `(0, -30)`: a
+purple **gravity gun**, a red **anti-gravity gun**, and a green **seeking
+thruster**. Flying (or falling) into one transforms the nearest block of
+the matching type on your ship into that variant for 8 seconds, tinted
+with a slow white pulse so it reads at a glance, and lists the block, the
+variant, and the time remaining in the HUD (e.g. "Cannon (0,2): Gravity
+gun 6.2 s"). The transform reverts to the block's plain behaviour on its
+own once the timer runs out, and the pickup respawns in the same spot 10
+seconds after being collected.
+
+- The **gravity gun** (turns a Cannon into a gravity gun) fires a round
+  that, on impact, drops a short-lived gravitating well at the hit point
+  -- anything nearby (including your own ship) gets pulled toward it
+  until it expires.
+- The **anti-gravity gun** is the same idea with the sign flipped: its
+  well pushes things away instead of pulling them in.
+- The **seeking thruster** (turns a Thruster into a seeking thruster) is
+  an "inconvenient" upgrade: while thrusting forward it drags the ship
+  toward the nearest enemy ship instead of pushing straight ahead, so it
+  is a downside as often as an advantage depending on where you want to go.
+
 ## Planets and gravity
 
 The scene's `Gravity` object holds a `GravityWorld` (plain-C#
