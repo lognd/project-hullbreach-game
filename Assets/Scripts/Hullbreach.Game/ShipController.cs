@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using Unity.Mathematics;
 using Hullbreach.Core;
@@ -70,6 +71,8 @@ namespace Hullbreach.Game
         [SerializeField] float finForce = 6f;
         [Tooltip("Seconds a cannon waits between shots.")]
         [SerializeField] float cannonCooldown = 0.35f;
+        [Tooltip("Per-second exponential decay on spin, so releasing steer settles the ship.")]
+        [SerializeField] float angularDamping = 1.5f;
 
         /// <summary>The ship's blocks, authored in the Inspector until the
         /// builder (Hullbreach.Builder) can construct ships at runtime. The
@@ -102,6 +105,27 @@ namespace Hullbreach.Game
         /// </summary>
         public bool InputEnabled = true;
 
+        /// <summary>
+        /// Gate for the SIMULATION itself, distinct from InputEnabled. While
+        /// false, FixedUpdate steps nothing and writes nothing to the
+        /// Rigidbody2D, so the ship is genuinely paused where it stands.
+        ///
+        /// This is what Build mode needs. Merely clearing input still let
+        /// ShipBody integrate gravity every tick while Rigidbody2D.simulated
+        /// was false, so MovePosition was a no-op and the transform stayed
+        /// put while ShipBody drifted; the first Fly-mode FixedUpdate then
+        /// snapped the transform onto the drifted position. That snap is the
+        /// "Tab teleports me" bug.
+        /// </summary>
+        public bool SimulationEnabled = true;
+
+        /// <summary>
+        /// Where player intent comes from. Defaults to the legacy Input
+        /// Manager bindings; a play-mode test swaps in a ScriptedDemoInput,
+        /// since UnityEngine.Input cannot be driven from a test.
+        /// </summary>
+        public IDemoInput InputSource = LegacyDemoInput.Instance;
+
         /// <summary>Raised once per PendingShots entry drained in
         /// FixedUpdate, so the demo scene branch can subscribe and spawn a
         /// projectile without ShipController knowing about prefabs.</summary>
@@ -127,6 +151,7 @@ namespace Hullbreach.Game
                 RetroThrustPerBlock = retroThrustPerBlock,
                 FinForce = finForce,
                 CannonCooldown = cannonCooldown,
+                AngularDamping = angularDamping,
             };
             foreach (var b in blocks)
             {
@@ -161,24 +186,25 @@ namespace Hullbreach.Game
                 return;
             }
 
-            // TODO [A5]: Migrate to the new Input System alongside S27
-            //            (rebindable keys). activeInputHandler is currently 2
-            //            ("Both"), so the legacy calls still work, but every
-            //            one of these lines breaks the moment that changes.
-            // Vertical/Horizontal map W/S and Up/Down, A/D and Left/Right by
-            // default in Unity's Input Manager: Raw so throttle ramping
-            // (ShipBody's job) is not double-smoothed by Unity's own axis
-            // smoothing on top of it.
-            thrustAxis = Input.GetAxisRaw("Vertical");
-            steerAxis = Input.GetAxisRaw("Horizontal");
+            var input = InputSource ?? LegacyDemoInput.Instance;
 
-            // Level-triggered input can be read directly; EDGE-triggered input
-            // must be latched or FixedUpdate will miss it.
-            if (Input.GetButtonDown("Fire1")) fireLatched = true;
+            // Level-triggered axes can be read straight through; EDGE-
+            // triggered input must be latched or FixedUpdate will miss it.
+            thrustAxis = input.ThrustAxis;
+            steerAxis = input.Steer;
+            if (input.FirePressed) fireLatched = true;
         }
 
         void FixedUpdate()
         {
+            if (!SimulationEnabled)
+            {
+                // Paused (Build mode): do not integrate and do not touch the
+                // Rigidbody2D, so resuming is exactly where we left off.
+                fireLatched = false;
+                return;
+            }
+
             var input = InputEnabled ? new ShipInput(thrustAxis, steerAxis, fireLatched) : new ShipInput(0f, 0f, false);
             fireLatched = false;   // consume exactly once
 
@@ -198,11 +224,19 @@ namespace Hullbreach.Game
             // adding/removing a block (combat damage, later builder edits)
             // changes these, and TopologyDirty already gates the expensive
             // part (RebuildDerivedViews) inside Step, so this is cheap insurance.
-            var mass = ship.Grid.Mass;
-            body.mass = mass.Total;
-            var com = mass.CenterOfMass;
-            body.centerOfMass = new Vector2(com.x, com.y);
-            body.inertia = mass.InertiaAboutCenterOfMass;
+            // Only meaningful on a DYNAMIC body. Ship bodies are kinematic
+            // (ShipBody integrates them, and ShipContacts resolves ship-ship
+            // overlap) precisely so Box2D never solves for them, so pushing
+            // mass properties at a kinematic body would be writing numbers
+            // nothing reads.
+            if (body.bodyType == RigidbodyType2D.Dynamic)
+            {
+                var mass = ship.Grid.Mass;
+                body.mass = mass.Total;
+                var com = mass.CenterOfMass;
+                body.centerOfMass = new Vector2(com.x, com.y);
+                body.inertia = mass.InertiaAboutCenterOfMass;
+            }
 
             // ShipBody is authoritative for ship motion: it is the plain C#
             // sim that the headless server (S47) will run too, so the
@@ -234,6 +268,42 @@ namespace Hullbreach.Game
         /// <summary>World-space wrapper over ShipBody.ApplyDamageAtWorldPoint.</summary>
         public void ApplyDamage(Vector2 worldPoint, byte damage)
             => ship.ApplyDamageAtWorldPoint(new float2(worldPoint.x, worldPoint.y), damage, out _);
+
+        /// <summary>
+        /// Replaces the ship's entire grid with `newBlocks` and rebuilds
+        /// everything derived from it (mass, behaviour key lists, visuals,
+        /// colliders, the structural solver's stiffness matrix).
+        ///
+        /// Exists so a play-mode test can fly a SHAPE the demo scene does not
+        /// author: the structural calibration has two ends to prove (a small
+        /// ship must never break itself, a long unsupported arm must break)
+        /// and only one of them can be the scene's default ship.
+        ///
+        /// The core is preserved: BlockGrid refuses to remove it and refuses
+        /// a second one, so `newBlocks` must put its own core where the
+        /// existing one already is.
+        /// </summary>
+        public void ReplaceBlocks(IReadOnlyList<AuthoredBlock> newBlocks)
+        {
+            var existing = new List<int>();
+            var live = ship.Grid.SortedKeys;
+            for (int i = 0; i < live.Length; i++) existing.Add(live[i]);
+            foreach (int key in existing) ship.Grid.TryRemove(key);
+
+            for (int i = 0; i < newBlocks.Count; i++)
+            {
+                var b = newBlocks[i];
+                ship.Grid.TryAdd(BlockKey.Pack(b.x, b.y), new Block(b.typeId, b.modifiers));
+            }
+            ship.RebuildDerivedViews();
+
+            var shipRenderer = GetComponent<ShipRenderer>();
+            if (shipRenderer != null) shipRenderer.MarkDirty();
+            var shipCollider = GetComponent<ShipCollider>();
+            if (shipCollider != null) shipCollider.MarkDirty();
+            var structure = GetComponent<ShipStructure>();
+            if (structure != null) structure.Solver.MarkTopologyChanged();
+        }
 
         /// <summary>
         /// Latches a fire request for the next FixedUpdate, exactly as if

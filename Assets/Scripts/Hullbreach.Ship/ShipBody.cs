@@ -72,6 +72,19 @@ namespace Hullbreach.Ship
         /// ground friction without a full friction-cone solve.</summary>
         public float Friction = 2f;
 
+        /// <summary>
+        /// Exponential decay rate (per second) applied to AngularVelocity
+        /// every Step. Without it nothing ever stops a ship spinning: fins
+        /// apply a torque, and when the player lets go the ship keeps the
+        /// rotation rate it reached forever, so aiming means counter-steering
+        /// exactly, which is what made the demo feel uncontrollable.
+        ///
+        /// Defaults to 0 so ShipBody's own unit tests (and any caller that
+        /// wants pure Newtonian rotation) are unaffected; the demo's
+        /// ShipController sets it from the Inspector.
+        /// </summary>
+        public float AngularDamping = 0f;
+
         /// <summary>Clearance (world units) added to a planet's Radius when
         /// testing block contact, so a block's own half-extent does not sink
         /// visibly into the surface before contact registers.</summary>
@@ -203,6 +216,44 @@ namespace Hullbreach.Ship
         /// renderer to animate the control surface.</summary>
         public float SteerThrottle(int key) => _throttleByKey.TryGetValue(key, out var t) ? t : 0f;
 
+        /// <summary>Mean throttle 0..1 across every forward thruster after
+        /// the last Step. One aggregate read by BOTH the HUD bars and the
+        /// play-mode tests, so what a player sees and what a test asserts on
+        /// can never drift apart. Zero when the ship has no thrusters.</summary>
+        public float ForwardThrottleMean { get; private set; }
+
+        /// <summary>Mean throttle 0..1 across every retro thruster after the
+        /// last Step. See <see cref="ForwardThrottleMean"/>.</summary>
+        public float ReverseThrottleMean { get; private set; }
+
+        /// <summary>Mean steer throttle -1..1 across every fin after the last
+        /// Step. See <see cref="ForwardThrottleMean"/>.</summary>
+        public float SteerThrottleMean { get; private set; }
+
+        /// <summary>
+        /// Recomputes the three control-channel means from the per-key
+        /// throttles the behaviours just ramped. Allocation-free: it walks
+        /// the already-built key arrays and the dictionary, so this runs on
+        /// the hot path without adding GC pressure.
+        /// </summary>
+        void RecomputeThrottleMeans()
+        {
+            ForwardThrottleMean = MeanThrottle(ThrusterKeys);
+            ReverseThrottleMean = MeanThrottle(RetroKeys);
+            SteerThrottleMean = MeanThrottle(FinKeys);
+        }
+
+        float MeanThrottle(int[] keys)
+        {
+            if (keys.Length == 0) return 0f;
+            float sum = 0f;
+            for (int i = 0; i < keys.Length; i++)
+            {
+                if (_throttleByKey.TryGetValue(keys[i], out float t)) sum += t;
+            }
+            return sum / keys.Length;
+        }
+
         /// <summary>
         /// Advance one FIXED timestep. Never call this from Update: the physics
         /// step runs on a fixed timer, and applying force per rendered frame
@@ -236,6 +287,9 @@ namespace Hullbreach.Ship
                 // entirely rather than divide by zero.
                 LastLinearAcceleration = float2.zero;
                 LastAngularAcceleration = 0f;
+                ForwardThrottleMean = 0f;
+                ReverseThrottleMean = 0f;
+                SteerThrottleMean = 0f;
                 return;
             }
 
@@ -245,6 +299,13 @@ namespace Hullbreach.Ship
             StepBehaviours(RetroKeys, input, dt);
             StepBehaviours(FinKeys, input, dt);
             StepBehaviours(WeaponKeys, input, dt);
+
+            // After the behaviours have ramped their per-block throttles and
+            // before anything reads them, so the HUD bars and the play-mode
+            // tests both see THIS tick's control state rather than last
+            // tick's.
+            RecomputeThrottleMeans();
+
             ApplyGravityForces();
 
             float inertia = Grid.Mass.InertiaAboutCenterOfMass;
@@ -263,6 +324,14 @@ namespace Hullbreach.Ship
             // physics feels once handed to Rigidbody2D.
             Velocity += a * dt;
             AngularVelocity += alpha * dt;
+
+            // Applied to the NEW angular velocity, as an exponential decay
+            // rather than a subtraction, so it is stable at any dt and can
+            // never drive the spin through zero and back the other way.
+            if (AngularDamping > 0f)
+            {
+                AngularVelocity *= 1f / (1f + AngularDamping * dt);
+            }
             Position += Velocity * dt;
             Rotation += AngularVelocity * dt;
 
