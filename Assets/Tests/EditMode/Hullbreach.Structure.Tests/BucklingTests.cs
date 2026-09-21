@@ -107,8 +107,20 @@ namespace Hullbreach.Structure.Tests
 
             RunUntilConverged(solver, grid, forces, 60);
 
+
+            // 10, not the 20 this used to assert: with load factors now
+            // published as direct Rayleigh quotients of a rigid-mode-free
+            // shape (see BucklingAnalysis.ExtractModes), this blob reads
+            // 14.036202 against DenseEigenOracle's independent
+            // 14.036202 on the identical K/K_G pair -- the analysis is
+            // exact here, and 20 was a threshold calibrated against the
+            // OLD, inflated number from the reduced eigenproblem's
+            // rounding path, not against the physics. The property under
+            // test is unchanged and still comfortably held: a stubby blob's
+            // critical load factor is an order of magnitude above the
+            // combat-scale loads that reach 1.
             foreach (var mode in solver.BucklingModes)
-                Assert.Greater(mode.LoadFactor, 20f, "a stubby blob should not read as buckling-prone");
+                Assert.Greater(mode.LoadFactor, 10f, "a stubby blob should not read as buckling-prone");
         }
 
         [Test]
@@ -194,6 +206,7 @@ namespace Hullbreach.Structure.Tests
                 float oracleLambda = DenseEigenOracle.SmallestPositiveLambda(assembly, kg, rigid);
                 float analysisLambda = solver.BucklingModes[0].LoadFactor;
 
+
                 Assert.Less(Math.Abs(oracleLambda - analysisLambda) / oracleLambda, 0.10f,
                     $"N={n}: subspace iteration ({analysisLambda}) should agree with the dense oracle ({oracleLambda}) within 10%");
             }
@@ -248,6 +261,7 @@ namespace Hullbreach.Structure.Tests
             var solver = new StructuralSolver { BucklingEveryNTicks = 1, BucklingMaxSweepsPerTick = 8, BucklingModeCount = 4 };
             RunUntilConverged(solver, grid, forces, 80);
 
+
             var subCritical = new List<BucklingMode>();
             foreach (var mode in solver.BucklingModes)
                 if (mode.LoadFactor <= 1f) subCritical.Add(mode);
@@ -255,26 +269,36 @@ namespace Hullbreach.Structure.Tests
             Assert.GreaterOrEqual(subCritical.Count, 2,
                 "two independently slender arms under enough compression should give at least two sub-critical modes");
 
-            static int TopBlock(BucklingMode m)
+            // WHICH ARM each sub-critical mode's TOP block sits on is NOT a
+            // valid assertion here, and this test used to make it: the two
+            // arms are geometrically identical and identically loaded, so
+            // this ship is symmetric under reflection about the diagonal
+            // and every buckling eigenvalue has multiplicity 2. Any
+            // rotation within a degenerate 2-dimensional eigenspace is an
+            // equally correct eigenvector, and the subspace iteration in
+            // fact returns the symmetric/antisymmetric combinations:
+            // measured directly, every published mode splits its strain
+            // energy 0.479/0.479, 0.499/0.499, 0.481/0.481, 0.496/0.496
+            // between arm A and arm B. Which arm then holds the single
+            // largest block is decided by float rounding alone, so the old
+            // assertion was a coin flip that happened to be landing heads.
+            //
+            // What IS true, runtime-independent, and what this test
+            // actually cares about ("a ship can fold in two places at once
+            // and both must break"): the blocks the analysis marks as
+            // buckled span BOTH arms.
+            static bool OnArmA(int key) { BlockKey.Unpack(key, out int x, out int y); return x == 0 && y > 0; }
+            static bool OnArmB(int key) { BlockKey.Unpack(key, out int x, out int y); return y == 0 && x > 0; }
+
+            bool anyOnA = false, anyOnB = false;
+            foreach (int key in solver.BuckledBlocks)
             {
-                int best = 0;
-                float bestFrac = -1f;
-                foreach (var kvp in m.BlockParticipation)
-                    if (kvp.Value > bestFrac) { bestFrac = kvp.Value; best = kvp.Key; }
-                return best;
+                if (OnArmA(key)) anyOnA = true;
+                if (OnArmB(key)) anyOnB = true;
             }
 
-            static bool OnArmA(int key) { BlockKey.Unpack(key, out int x, out _); return x == 0; }
-
-            int topA = TopBlock(subCritical[0]);
-            int topB = TopBlock(subCritical[1]);
-
-            // "On different arms" is exactly "on arm A" disagreeing between
-            // the two: the core block (0,0) is on both by these
-            // definitions, but a mode's TOP block is never the joint itself.
-            bool oneOnEachArm = OnArmA(topA) != OnArmA(topB);
-            Assert.IsTrue(oneOnEachArm,
-                $"expected the two sub-critical modes' top blocks on different arms, got {topA} and {topB}");
+            Assert.IsTrue(anyOnA && anyOnB,
+                $"expected sub-critical folds on both arms, got {solver.BuckledBlocks.Count} buckled blocks with armA={anyOnA} armB={anyOnB}");
         }
 
         [Test]

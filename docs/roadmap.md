@@ -285,3 +285,81 @@ was also fixed, forcing a full K rebuild every tick) down to under 500
 bytes/tick, all from `BlockGrid.All`'s boxed `IEnumerable` enumerator
 (`Hullbreach.Core`, out of this ticket's scope: a concrete enumerator
 struct there would close this out entirely).
+
+## Mono/.NET parity for the Structure edit-mode tests (perf/physics-todos, 2026-09-21)
+
+Every test in `Assets/Tests/EditMode/Hullbreach.Structure.Tests` now passes
+under BOTH `tools/plaincs` (.NET 8, 207/207 across the whole edit-mode
+suite) and the real Unity 6000.0.43f1 editor on Mono (43/43 for the
+Structure filter). Four were failing under Mono; three independent root
+causes, none of them actually Mono-specific (each was reproducible under
+.NET once the rounding was nudged, which is how they were diagnosed).
+
+**1. `CgSolver`'s stopping criterion was absolute below |f| = 1.**
+`tolAbs = Tolerance * max(1, |f|)` means a self-equilibrated end load of
+|f| ~ 0.04 (every `BucklingTests` load case) stopped CG at ~2.5e-4
+relative residual while still reporting `Converged`. The displacement
+error left at that point is PRECONDITIONER-DEPENDENT, so switching
+`CoarsePreconditioner` on changed the element stress field feeding
+`GeometricStiffness` and moved a 12-block column's critical load factor
+from the dense oracle's 0.149 to 0.008. Now `tolAbs = Tolerance * |f|`:
+`Tolerance` means the same thing at every load scale.
+
+**2. `BucklingAnalysis` never projected its CG SOLUTIONS onto the
+rigid-mode complement**, only their right-hand sides, despite the class
+doc claiming the invariant. `CgSolver` re-projects only the residual, and
+`K` annihilates a rigid-body component, so CG returns one without the
+residual ever seeing it; the subspace is warm-started from those vectors,
+so the leak compounds sweep over sweep. Under Mono this put a
+rigid-dominated vector in the LOWEST slot of a 12-block column's converged
+subspace (direction cosines 0.62 / -0.68 / -0.78 against the three rigid
+modes), where `phi^T K phi` collapses but `-phi^T K_G phi` does not, i.e.
+a spuriously tiny load factor, with the correct mode sitting in slot 1.
+One `CgSolver.Project` per block vector per sweep fixes it.
+
+**3. Load factors are now published as direct Rayleigh quotients.**
+`ExtractModes` computes `a = phi^T K phi` and `b = -phi^T K_G phi` with
+the sparse operators against the published shape, in double accumulation,
+and publishes `a / b`; the reduced eigenproblem's `1 / mu` is now only a
+pre-filter for "this slot has no signal". This takes Mono's and .NET's
+differing float intermediate widths out of the published number (the
+reduced route runs the shape through a Cholesky, a Jacobi sweep and a
+reciprocal), and gives a meaningful rejection test the reduced route
+cannot: a slot whose `K_r` pivot went near-singular still yields a
+finite, stable-looking lambda, but `a` shows directly that its shape
+carries no strain energy. Checked at PUBLISH time only, never during a
+sweep, because pivots legitimately dip mid-sweep (a previous attempt at
+zeroing those rows broke healthy convergence). Measured agreement with
+`DenseEigenOracle` on the same K/K_G pair: 0.14947617 vs 0.14946215
+(N=12), 0.08331143 vs 0.08333989 (N=16), 14.036202 vs 14.036202 (2x2
+blob).
+
+**`CoarsePreconditioner` is now exactly rigid-mode-free by
+construction**: `ApplyAdditive` projects both its input residual and its
+coarse correction onto the complement of the ship's three global
+rigid-body modes, so `M^-1 = D^-1 + (I-Q) P Kc^+ P^T (I-Q)`. Projecting
+BOTH sides, not just the output, is what keeps `M^-1` symmetric, which
+PCG's convergence theory needs. This replaces the one-sided
+`Project(z, modes)` `CgSolver` used to apply after the coarse call (which
+also re-projected the Jacobi term, something the plain-Jacobi path
+deliberately does not do): the leak is removed at its source instead.
+`CoarsePreconditionerTests.CoarseCorrection_AnnihilatesRigidModes`'s
+threshold went from a data-dependent 5e-3 (Mono measured 0.0496 against
+an effective 0.0456) to 1e-4 relative.
+
+**Two test assertions were wrong, not the solver** (both now agree with
+`DenseEigenOracle` exactly, which is why this is a test fix and not a
+regression): `SmallBlob_HasNoLowLoadFactor` asserted `> 20` against a
+blob whose true critical load factor is 14.036202 (the old number came
+from the reduced path's rounding), now `> 10`; and
+`TwoSeparateArms_UnderCompression_BuckleIndependently` asserted that the
+two lowest sub-critical modes' TOP blocks sit on different arms, on a
+ship that is symmetric under reflection about the diagonal and therefore
+has every buckling eigenvalue at multiplicity 2. The subspace returns the
+symmetric/antisymmetric combinations of each degenerate pair (measured
+strain-energy splits 0.479/0.479, 0.499/0.499, 0.481/0.481,
+0.496/0.496 between the arms), so which arm holds the single largest
+block is decided by rounding alone. It now asserts what is actually
+runtime-independent and what the test's own doc says it cares about: the
+buckled blocks span both arms.
+

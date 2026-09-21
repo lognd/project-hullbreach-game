@@ -100,7 +100,35 @@ namespace Hullbreach.Structure
         /// which the subspace last converged and modes were published.</summary>
         public int LastConvergedTick { get; private set; } = -1;
 
+        /// <summary>This analysis's OWN inverse-iteration solver, and
+        /// deliberately its own: it is never handed a
+        /// <see cref="CoarsePreconditioner"/>, so it always runs plain
+        /// Jacobi PCG at CgSolver's tight default tolerance regardless of
+        /// what StructuralSolver.UseCoarseCorrection is set to. Precision
+        /// matters more than speed on this path (the subspace's Rayleigh
+        /// quotients amplify any residual error in K^-1; see
+        /// CgSolver.MaxIterations' doc), and the coarse correction buys
+        /// iteration count at the cost of a different, preconditioner-
+        /// dependent error distribution in the returned displacement.</summary>
         readonly CgSolver _cg = new CgSolver();
+
+        /// <summary>Strain-energy floor for publishing a mode, relative to
+        /// max(diag K) * |phi|^2 (the natural scale of phi^T K phi for a
+        /// shape of phi's size). A Ritz slot whose reduced-K pivot went
+        /// near-singular carries essentially no strain energy: its
+        /// a = phi^T K phi falls orders of magnitude below this, and the
+        /// load factor a/b it would publish is pure rounding. Applied ONLY
+        /// here at publish time, never during a sweep: pivots legitimately
+        /// dip mid-sweep and zeroing those rows (a previous attempt) broke
+        /// healthy convergence.</summary>
+        public float MinStrainEnergyFraction = 1e-7f;
+
+        /// <summary>Compression floor for publishing a mode: b = -phi^T K_G
+        /// phi must exceed this fraction of a = phi^T K phi, i.e. the load
+        /// factor a/b must stay below 1/this. Below it the shape carries no
+        /// meaningful compression and there is no instability to report
+        /// along it.</summary>
+        public float MinCompressionFraction = 1e-9f;
 
         int _dof = -1;
         int _m;
@@ -197,6 +225,20 @@ namespace Hullbreach.Structure
         /// TODO.md's note on the Mono-only mu oscillation this fixes, and
         /// _hasPublishedSnapshot's doc for the case where no such sweep has
         /// ever happened yet.</summary>
+        // Publish-time Rayleigh-quotient scratch (see ExtractModes): K*phi,
+        // -K_G*phi and diag(K), all dof-sized, allocated once per Reset so
+        // the publish path stays allocation-free like the sweep path.
+        float[] _rqKPhi = Array.Empty<float>();
+        float[] _rqKgPhi = Array.Empty<float>();
+        float[] _rqDiag = Array.Empty<float>();
+
+        /// <summary>Orthonormalized copy of the rigid-body modes handed to
+        /// <see cref="Reset"/>, kept so <see cref="ExtractModes"/> can clean
+        /// a published shape without the caller having to pass them again
+        /// (they only change when the dof count does, i.e. on the same
+        /// event that forces a Reset).</summary>
+        float[][] _rigid = Array.Empty<float[]>();
+
         float[][] _publishedV;
         float[] _publishedLambda;
 
@@ -246,7 +288,14 @@ namespace Hullbreach.Structure
                 _order = new int[m];
                 _publishedV = Alloc(m, dof);
                 _publishedLambda = new float[m];
+                _rqKPhi = new float[dof];
+                _rqKgPhi = new float[dof];
+                _rqDiag = new float[dof];
+                _rigid = Alloc(rigidModes.Length, dof);
             }
+
+            for (int i = 0; i < rigidModes.Length; i++) Array.Copy(rigidModes[i], _rigid[i], dof);
+            CgSolver.Orthonormalize(_rigid);
 
             SeedBlock(rigidModes, 0);
 
@@ -323,6 +372,28 @@ namespace Hullbreach.Structure
                     // whole point of carrying _v across sweeps/ticks.
                     Array.Copy(_v[j], _y[j], _dof);
                     _cg.Solve(k, _rhs[j], _y[j], rigidModes);
+
+                    // PROJECT THE CG SOLUTION, not just its right-hand
+                    // side. CgSolver re-projects only its RESIDUAL, never
+                    // the solution it returns (K annihilates a rigid-body
+                    // component, so `r` is blind to one and CG reports
+                    // ordinary convergence while carrying it), and this
+                    // block is warm-started from `_v`, so whatever leaks in
+                    // is fed straight back in as the next sweep's starting
+                    // point and compounds. That violates the invariant this
+                    // class's own doc states ("every vector and every CG
+                    // right-hand side is projected onto their complement")
+                    // and it is what put a rigid-dominated vector in the
+                    // LOWEST slot of a 12-block column's converged subspace
+                    // under Mono (direction cosines 0.62/-0.68/-0.78
+                    // against the three rigid modes): K annihilates that
+                    // component so phi^T K phi collapses while -phi^T K_G
+                    // phi does not, and the slot published a load factor
+                    // 17x below the true one (0.0086 against the dense
+                    // oracle's 0.149) while the correct mode sat in slot 1.
+                    // Three dots and three axpys per block vector per
+                    // sweep, against a CG solve: free.
+                    CgSolver.Project(_y[j], _rigid);
                 }
 
                 CgSolver.Orthonormalize(_y);
@@ -643,16 +714,29 @@ namespace Hullbreach.Structure
         /// <summary>
         /// Reads the requested number of positive, sub-threshold-safe modes
         /// out of the converged subspace (call only when <see cref="Step"/>
-        /// last returned true). Non-positive lambda (tension-stabilized or
-        /// numerical rigid leakage) are skipped, not returned, per the task's
-        /// buckling definition. Blocks are visited in ascending key order so
+        /// last returned true), ascending by load factor. Each published
+        /// load factor is the DIRECT Rayleigh quotient (phi^T K phi) /
+        /// (-phi^T K_G phi) of that mode's own shape against `assembly` and
+        /// `kg`, not the reduced eigenproblem's 1/mu, and a slot failing
+        /// either the strain-energy or the compression floor (see
+        /// <see cref="MinStrainEnergyFraction"/> and
+        /// <see cref="MinCompressionFraction"/>) is rejected outright: see
+        /// the quotient block below for both reasons. Non-positive lambda
+        /// (tension-stabilized or numerical rigid leakage) are skipped, not
+        /// returned, per the task's buckling definition. Blocks are visited in ascending key order so
         /// the resulting BlockParticipation dictionaries are built
         /// deterministically (their contents do not depend on iteration
         /// order, but the summation that produces the floats does).
         /// </summary>
-        public List<BucklingMode> ExtractModes(Hullbreach.Core.BlockGrid grid, StiffnessAssembly assembly, int modeCount)
+        public List<BucklingMode> ExtractModes(Hullbreach.Core.BlockGrid grid, StiffnessAssembly assembly, GeometricStiffness kg, int modeCount)
         {
             var result = new List<BucklingMode>();
+
+            // Scale for the strain-energy floor below: the largest diagonal
+            // entry of K, i.e. the stiffest single dof in the ship.
+            assembly.Diagonal(_rqDiag);
+            double maxDiag = 0.0;
+            for (int i = 0; i < _dof; i++) maxDiag = Math.Max(maxDiag, Math.Abs(_rqDiag[i]));
 
             var keys = grid.All.Select(kvp => kvp.Key).ToList();
             keys.Sort();
@@ -664,21 +748,70 @@ namespace Hullbreach.Structure
 
             for (int idx = 0; idx < _m && result.Count < modeCount; idx++)
             {
-                float lambda = _publishedLambda[idx];
-                // Skip non-positive lambda (tension-stabilized / rigid
-                // leakage, see the class doc) AND non-finite ones: +Infinity
-                // means "no coupling found on this Ritz direction" (mu ~ 0),
-                // which ForceConvergeAfterSweeps can still hand back for a
-                // slot that has not developed real signal yet: that is not
-                // a mode, it is an empty seat, and reporting it as one with
-                // an infinite load factor would be actively misleading.
-                if (!(lambda > 1e-6f) || float.IsInfinity(lambda)) continue;
+                // Skip a slot the reduced eigenproblem already called
+                // meaningless (non-positive or non-finite lambda:
+                // tension-stabilized, rigid leakage, or "no coupling found
+                // on this Ritz direction yet", mu ~ 0). That is a cheap
+                // pre-filter only; the load factor actually published comes
+                // from the direct Rayleigh quotients below, not from here.
+                float reducedLambda = _publishedLambda[idx];
+                if (!(reducedLambda > 1e-6f) || float.IsInfinity(reducedLambda)) continue;
 
                 var shape = (float[])_publishedV[idx].Clone();
+                // Belt and braces with the sweep-time projection above: the
+                // Rayleigh quotients below are only meaningful on a shape
+                // free of the modes K annihilates, so clean it here too
+                // rather than trust every upstream path to have done so.
+                CgSolver.Project(shape, _rigid);
                 float maxAbs = 0f;
                 for (int i = 0; i < _dof; i++) maxAbs = Math.Max(maxAbs, Math.Abs(shape[i]));
                 if (maxAbs > 1e-12f)
                     for (int i = 0; i < _dof; i++) shape[i] /= maxAbs;
+
+                // PUBLISH-TIME RAYLEIGH QUOTIENTS. The load factor handed
+                // out is a / b with a = phi^T K phi and b = -phi^T K_G phi,
+                // evaluated with the SPARSE operators against this exact
+                // published shape (two matvecs, into pre-sized scratch), in
+                // double accumulation. Two reasons, both load-bearing:
+                //
+                // 1. It makes the number independent of the reduced
+                //    problem's rounding path. The reduced route runs the
+                //    shape through Cholesky of K_r, a Jacobi rotation
+                //    sweep, and a 1/mu reciprocal; Mono and .NET keep float
+                //    intermediates at different widths, and on a slender
+                //    column those three stages together diverged far enough
+                //    that Mono published 0.0086 where the dense oracle (and
+                //    .NET) read 0.149, a 17x error on an otherwise sane
+                //    mode shape. The Rayleigh quotient of the SAME shape is
+                //    two dot products and a divide, in double, and both
+                //    runtimes agree on it.
+                // 2. It gives a meaningful rejection test, which the
+                //    reduced route cannot: a Ritz slot whose K_r pivot went
+                //    near-singular still yields a finite, positive,
+                //    perfectly stable-looking lambda, but its shape carries
+                //    essentially no strain energy, which `a` measures
+                //    directly. That is the Mono-only tiny-load-factor
+                //    SmallBlob failure this replaces (see TODO.md).
+                assembly.Multiply(shape, _rqKPhi);
+                kg.Multiply(shape, _rqKgPhi);
+
+                double a = 0.0, b = 0.0, phiSq = 0.0;
+                for (int i = 0; i < _dof; i++)
+                {
+                    double si = shape[i];
+                    a += si * _rqKPhi[i];
+                    b -= si * _rqKgPhi[i];
+                    phiSq += si * si;
+                }
+
+                // No strain energy along this shape relative to K's own
+                // scale: a near-singular reduced pivot, not a mode.
+                if (a < MinStrainEnergyFraction * maxDiag * phiSq) continue;
+                // No meaningful compression along it: nothing to buckle.
+                if (b <= MinCompressionFraction * a) continue;
+
+                float lambda = (float)(a / b);
+                if (!(lambda > 1e-6f) || float.IsInfinity(lambda)) continue;
 
                 var participation = new Dictionary<int, float>();
                 var energies = new List<(int key, float energy)>();
@@ -731,6 +864,26 @@ namespace Hullbreach.Structure
                     Shape = shape,
                     BlockParticipation = participation,
                 });
+            }
+
+            // The subspace hands slots over already sorted by the REDUCED
+            // lambda, but the published load factors are now the direct
+            // Rayleigh quotients (above), which can reorder two nearly
+            // degenerate slots. Callers documented as getting ascending
+            // load factors (StructuralSolver.CriticalLoadFactor reads
+            // element 0) so re-sort on the number actually published;
+            // stable, because the comparison only ever moves a strictly
+            // smaller load factor forward.
+            for (int i = 1; i < result.Count; i++)
+            {
+                var item = result[i];
+                int j = i - 1;
+                while (j >= 0 && result[j].LoadFactor > item.LoadFactor)
+                {
+                    result[j + 1] = result[j];
+                    j--;
+                }
+                result[j + 1] = item;
             }
 
             return result;

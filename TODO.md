@@ -12,25 +12,6 @@ work lives here instead of in tickets.
       Add the job to `.github/workflows/ci.yml` and to the `gate` job's
       needs list.
 - [ ] CI: headless Linux dedicated-server build on every PR.
-- [ ] Structure: `BucklingTests.SmallBlob_HasNoLowLoadFactor` still fails
-      under the real Unity/Mono editor (passes under `tools/plaincs`/.NET).
-      `BucklingAnalysis` now publishes modes from a snapshot taken only on
-      a sweep that satisfies the ordinary tolerance check (perf/solver
-      branch, 2026-09-20: the "published vs. working copy of _v/_lambda"
-      refactor this entry used to ask for), which fixed 6 of the 7
-      Structure tests that used to fail under Mono (Analysis_IsBitDeterministic,
-      both Column_* tests, ModeShape_IsOrthogonalToRigidBodyModes,
-      SolverHook_PopulatesModesUnderHighLoadAndNotUnderLowLoad,
-      TwoSeparateArms_UnderCompression_BuckleIndependently). SmallBlob still
-      fails, but with a DIFFERENT symptom now: Mono's run settles (passes
-      the ordinary tolerance check, not a force-publish) on a small-but-
-      nonzero load factor (~1e-4) where .NET settles on one comfortably
-      above the test's threshold (20). Both runs are "stably converged" by
-      BucklingAnalysis's own check, so the snapshot fix cannot distinguish
-      them; this needs the Rayleigh-quotient-denominator check the
-      near-zero-pivot doc already gestures at (reject a slot whose Kr
-      pivot is near-singular RELATIVE to the matrix's own scale, not just
-      "stable"), which is a second, separate piece of numerical work.
 - [ ] Structure: `CgSolver.Solve` restarts its Krylov subspace (`r`/`p`)
       from scratch every `Tick` call, warm-starting only the displacement
       `u`. This is the suspected reason the 500- and 2000-block
