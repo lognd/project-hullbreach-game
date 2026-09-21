@@ -385,7 +385,10 @@ time to switch between Build and Fly.
   would split the ship) -> **Damage** (white-to-black by accumulated hit
   damage) -> **Buckling** (blue-to-red by how close the ship is to folding
   along its weakest buckling mode) -> back to None.
-- **R** resets the player ship to rest at the world origin.
+- **R** resets the player ship. If the scene's DemoMode has `startInOrbit`
+  set (the shipped DemoScene does), this drops the player back onto its
+  preset circular orbit around the big planet instead of dead rest at the
+  origin; otherwise it resets to rest at the world origin.
 
 The always-on panel in the corner shows the current mode, its controls,
 the current overlay, total mass, block count, and (in Fly mode) speed,
@@ -403,6 +406,22 @@ detach the same way a stress failure does. The Buckling overlay shows this
 coming before it happens -- it tints purely on buckling risk, so a hull
 that looks fine under Stress can still show red under Buckling if a long,
 thin section is about to fold.
+
+## Planets and gravity
+
+The scene's `Gravity` object holds a `GravityWorld` (plain-C#
+`Hullbreach.World.GravityField` underneath) with two bodies: a big planet
+at `(0, -60)` and a small moon at `(45, 20)`, between which the
+`TargetShip` sits at `(0, 24)`. Every ship's blocks feel gravity as a
+per-block body force -- torque-correct, so a lopsided ship spins under a
+strong tidal gradient near the moon -- and cannon rounds fall the same
+way. Pressing **R** in Fly mode drops the player back onto a preset
+circular orbit around the big planet (see `startInOrbit` on `DemoMode`).
+
+Flying (or falling) into a planet's surface stops the ship at the surface
+and bounces it along the surface normal with that planet's restitution;
+landing too hard (above `ShipBody.ContactDamageSpeed`, 3 m/s by default)
+damages whichever block hit first, exactly like a projectile impact.
 
 ## Making a change
 
