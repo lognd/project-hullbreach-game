@@ -1,5 +1,7 @@
 # Project Hullbreach: Game
 
+New here? Start with [docs/getting-started.md](docs/getting-started.md).
+
 This is the game half of Hullbreach: the Unity client and the dedicated
 server, built from one project. Players build a spaceship out of blocks
 and try to breach each other's hull. Accounts, ELO, match history, and the
