@@ -54,6 +54,21 @@ namespace Hullbreach.Structure
     /// explicitly asks via MarkTopologyChanged, this rebuilds. This avoids
     /// ever mutating state owned by another module while still not
     /// re-assembling every tick.
+    ///
+    /// PER-TICK CONVERGENCE BUDGET: <see cref="MaxCgIterationsPerTick"/>
+    /// bounds how much CG work one Tick call may spend on the quasi-static
+    /// solve. A ship large enough that CG cannot reach tolerance within the
+    /// budget (see CgSolver's doc on iterations scaling with ship width)
+    /// keeps its PARTIAL displacement as next tick's warm start rather than
+    /// blocking the frame or discarding progress, so <see cref="Converged"/>
+    /// can be false for several ticks in a row while the solve slowly
+    /// catches up as the warm start improves. Stress and damage decisions
+    /// (<see cref="BlockStresses"/>) always use whatever displacement is
+    /// available, so on an unconverged tick they LAG the true quasi-static
+    /// answer by however far the residual still is from tolerance; this is
+    /// deliberate (better a slightly stale stress field than a stalled
+    /// frame) and is why buckling (which depends on that same stress field
+    /// for its geometric stiffness) only runs when <see cref="Converged"/>.
     /// </summary>
     public sealed class StructuralSolver
     {
@@ -64,6 +79,56 @@ namespace Hullbreach.Structure
         bool _forceRebuild = true;
 
         float[] _displacement = Array.Empty<float>();
+
+        // Reused across ticks so a converged, steady-state ship (unchanged
+        // topology) never allocates in its per-tick hot path: see
+        // SolverBenchmarks' zero-allocation assertion. All are re-sized (the
+        // only place they may allocate) in the same needsRebuild branch that
+        // already resizes _displacement.
+        readonly LoadVector _loadVector;
+        float[] _loadBuffer = Array.Empty<float>();
+        float[][] _rigidModes = new float[3][] { Array.Empty<float>(), Array.Empty<float>(), Array.Empty<float>() };
+
+        /// <summary>Per-tick CG iteration budget: the quasi-static solve is
+        /// warm-started from whatever displacement the previous tick left,
+        /// so a ship too large to fully converge within one frame keeps
+        /// making progress across ticks instead of either blocking the
+        /// frame or silently returning nonsense (the pre-budget behavior
+        /// was an unconditional 4000-iteration cap inside CgSolver, cheap
+        /// for a plain mat-vec but not bounded to a frame budget). 400 is a
+        /// starting point, not a measured number: see SolverBenchmarks for
+        /// per-tick ms at a few ship sizes to retune it.</summary>
+        public int MaxCgIterationsPerTick = 400;
+
+        /// <summary>True when the most recent Tick's quasi-static solve met
+        /// CgSolver's tolerance within <see cref="MaxCgIterationsPerTick"/>.
+        /// False means <see cref="BlockStresses"/> reflects a partially
+        /// converged displacement field (see the class remarks on lag) and
+        /// buckling was skipped this tick (see RunBuckling).</summary>
+        public bool Converged { get; private set; }
+
+        /// <summary>CgSolver.LastResidualNorm from the most recent Tick's
+        /// quasi-static solve, for callers that want to log/plot the
+        /// convergence trend rather than just a bool.</summary>
+        public float ResidualNorm { get; private set; }
+
+        /// <summary>CgSolver.LastIterationCount from the most recent Tick:
+        /// how much of MaxCgIterationsPerTick this tick actually spent.</summary>
+        public int IterationsThisTick { get; private set; }
+
+        /// <summary>Degrees of freedom in the current assembly (2 per node),
+        /// exposed read-only for callers (e.g. SolverBenchmarks) that want
+        /// to report problem size alongside iteration counts.</summary>
+        public int DofCount => _assembly.DofCount;
+
+        /// <summary>Wires the cached LoadVector to this instance's
+        /// StiffnessAssembly once: LoadVector.Rebuild mutates that same
+        /// StiffnessAssembly instance in place, so the reference stays
+        /// valid across every future topology rebuild.</summary>
+        public StructuralSolver()
+        {
+            _loadVector = new LoadVector(_assembly);
+        }
 
         /// <summary>Call when the caller knows topology changed but the block
         /// count happens to be unchanged (e.g. a block swapped for a
@@ -88,42 +153,75 @@ namespace Hullbreach.Structure
                 _forceRebuild = false;
 
                 if (_displacement.Length != _assembly.DofCount)
+                {
                     _displacement = new float[_assembly.DofCount];
+                    _loadBuffer = new float[_assembly.DofCount];
+                    _rigidModes[0] = new float[_assembly.DofCount];
+                    _rigidModes[1] = new float[_assembly.DofCount];
+                    _rigidModes[2] = new float[_assembly.DofCount];
+                }
+
+                // Rigid modes depend only on NodeRestPositions, which only
+                // changes on a topology rebuild, so recomputing them here
+                // (instead of every Tick or every RunBuckling call) is what
+                // keeps a steady-state ship's hot path allocation-free.
+                LoadVector.RigidBodyModes(_assembly.NodeRestPositions, _rigidModes);
             }
 
-            var loads = new LoadVector(_assembly);
-            var f = new float[_assembly.DofCount];
-            loads.QuasiStatic = f;
+            var f = _loadBuffer;
+            Array.Clear(f, 0, f.Length);
+            _loadVector.QuasiStatic = f;
 
             foreach (var (point, force) in appliedForces)
-                loads.AddPointForce(f, point, force);
+                _loadVector.AddPointForce(f, point, force);
 
-            loads.ApplyInertiaRelief(f, grid, out _, out _);
+            _loadVector.ApplyInertiaRelief(f, grid, out _, out _);
 
-            var modes = new float[3][];
-            modes[0] = new float[_assembly.DofCount];
-            modes[1] = new float[_assembly.DofCount];
-            modes[2] = new float[_assembly.DofCount];
-            LoadVector.RigidBodyModes(_assembly.NodeRestPositions, modes);
+            _solver.MaxIterations = MaxCgIterationsPerTick;
+            _solver.Solve(_assembly, f, _displacement, _rigidModes);
+            Converged = _solver.Converged;
+            ResidualNorm = _solver.LastResidualNorm;
+            IterationsThisTick = _solver.LastIterationCount;
 
-            _solver.Solve(_assembly, f, _displacement, modes);
-
+            // Stress and damage decisions use whatever displacement is
+            // available, converged or not: see the class remarks on lag.
             ComputeBlockStress(grid);
-            RunBuckling(grid);
+
+            // Buckling's geometric stiffness is built FROM this tick's
+            // element stresses (see GeometricStiffness.Rebuild), so an
+            // under-converged solve would feed it a stress field that has
+            // not settled yet and can bias the Rayleigh quotients the same
+            // way an under-converged CG cap used to (see CgSolver's
+            // MaxIterations doc): skip the sweep entirely rather than
+            // spend it on stale input, and let the previously published
+            // modes stand until a later tick converges.
+            if (Converged) RunBuckling(grid);
             _tickIndex++;
         }
 
         /// <summary>Reduces the solved displacement field to a per-block
         /// stress, evaluated at the element center (xi = eta = 0).</summary>
+        // Scratch for ComputeBlockStress, reused across every block of
+        // every tick (see the class's per-tick allocation remarks): `_b`
+        // is filled once per Tick call since it does not depend on the
+        // element (constant xi=eta=0 sampling on a uniform mesh); `_strain`
+        // and `_dHat` are overwritten fresh for each block and never read
+        // across iterations, so reuse is safe despite varying PoissonClass.
+        readonly float[,] _strainB = new float[3, Q8Element.DofCount];
+        readonly int[] _stressNodeIds = new int[NodeLattice.NodesPerElement];
+        readonly float[] _stressUe = new float[Q8Element.DofCount];
+        readonly float[] _strainScratch = new float[3];
+        readonly float[,] _dHatScratch = new float[3, 3];
+
         void ComputeBlockStress(Hullbreach.Core.BlockGrid grid)
         {
             BlockStresses.Clear();
 
-            var b = new float[3, Q8Element.DofCount];
+            var b = _strainB;
             Q8Element.StrainDisplacement(0f, 0f, Hullbreach.Core.BlockType.Width, b);
 
-            var nodeIds = new int[NodeLattice.NodesPerElement];
-            var ue = new float[Q8Element.DofCount];
+            var nodeIds = _stressNodeIds;
+            var ue = _stressUe;
 
             foreach (var kvp in grid.All)
             {
@@ -138,7 +236,7 @@ namespace Hullbreach.Structure
                 }
 
                 // strain = B * u_e
-                var strain = new float[3];
+                var strain = _strainScratch;
                 for (int r = 0; r < 3; r++)
                 {
                     float sum = 0f;
@@ -151,7 +249,7 @@ namespace Hullbreach.Structure
                 var type = Hullbreach.Core.BlockTypes.Get(block.TypeId);
                 float e = Hullbreach.Core.BlockTypes.EffectiveStiffness(block);
 
-                var dHat = new float[3, 3];
+                var dHat = _dHatScratch;
                 Q8Element.ConstitutiveUnit(Q8Element.NuFor(type.PoissonClass), dHat);
 
                 float sxx = e * (dHat[0, 0] * strain[0] + dHat[0, 1] * strain[1] + dHat[0, 2] * strain[2]);
@@ -297,26 +395,17 @@ namespace Hullbreach.Structure
             if (_bucklingDof != _assembly.DofCount)
             {
                 _kg.AttachSparsity(_assembly);
-
-                var rigid = new float[3][];
-                rigid[0] = new float[_assembly.DofCount];
-                rigid[1] = new float[_assembly.DofCount];
-                rigid[2] = new float[_assembly.DofCount];
-                LoadVector.RigidBodyModes(_assembly.NodeRestPositions, rigid);
-
-                _buckling.Reset(_assembly.DofCount, BucklingModeCount, rigid);
+                // _rigidModes was already (re)computed this Tick by the
+                // needsRebuild branch above, for the same DofCount: reuse it
+                // instead of allocating a second identical set (see the
+                // class's per-tick allocation remarks).
+                _buckling.Reset(_assembly.DofCount, BucklingModeCount, _rigidModes);
                 _bucklingDof = _assembly.DofCount;
             }
 
             _kg.Rebuild(grid, _assembly, BlockStresses);
 
-            var modes3 = new float[3][];
-            modes3[0] = new float[_assembly.DofCount];
-            modes3[1] = new float[_assembly.DofCount];
-            modes3[2] = new float[_assembly.DofCount];
-            LoadVector.RigidBodyModes(_assembly.NodeRestPositions, modes3);
-
-            bool converged = _buckling.Step(_assembly, _kg, modes3, _tickIndex);
+            bool converged = _buckling.Step(_assembly, _kg, _rigidModes, _tickIndex);
             if (!converged) return;
 
             var modes = _buckling.ExtractModes(grid, _assembly, BucklingModeCount);

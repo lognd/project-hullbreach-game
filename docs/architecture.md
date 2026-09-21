@@ -212,11 +212,25 @@ directly: Structure has no dependency on Ship (see the assembly graph).
    the whole FE mesh rigidly with no way to reach static equilibrium;
    inertia relief subtracts out exactly the rigid-body-consistent inertial
    load so the solve becomes a well-posed quasi-static problem.
-3. **Solve with PCG**: `CgSolver.Solve`, using the three rigid-body modes
-   (`LoadVector.RigidBodyModes`) so the singular (free-floating) stiffness
-   matrix still has a well-defined particular solution. See
-   `docs/roadmap.md` for the known debt here (iteration cap, per-tick
-   cost).
+3. **Solve with PCG, under a per-tick budget**: `CgSolver.Solve`, using the
+   three rigid-body modes (`LoadVector.RigidBodyModes`) so the singular
+   (free-floating) stiffness matrix still has a well-defined particular
+   solution. `StructuralSolver.MaxCgIterationsPerTick` (default 400) caps
+   how much CG work one `Tick` may spend; when a ship is too wide for that
+   budget (see `CgSolver`'s doc: iterations scale with the ship's width in
+   elements), the PARTIAL displacement is kept as the next tick's warm
+   start rather than blocking the frame, and `StructuralSolver.Converged`
+   is false until a later tick's warm start finally gets under
+   `CgSolver.Tolerance` (relative to `|f|`, with an absolute floor via
+   `Tolerance * Math.Max(1, |f|)`, so a near-zero load never burns
+   iterations chasing noise). "Converged", concretely, means the tick's
+   `BlockStresses` reflect a displacement field within `Tolerance` of the
+   true quasi-static solution for that tick's load; a false `Converged`
+   means they LAG the true answer by however far the residual still is.
+   Buckling (step 7) only runs on a converged tick, since its geometric
+   stiffness is built from that same, possibly-still-settling stress
+   field. See `docs/roadmap.md`'s Performance section for measured
+   iteration counts and the preconditioner debt.
 4. **Reduce to per-block stress** (`ComputeBlockStress`): evaluates strain
    at each Q8 element's center (`xi = eta = 0`, i.e. the block's own
    center, not a proper stress-recovery/extrapolation to nodes (an

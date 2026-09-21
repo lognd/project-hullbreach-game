@@ -14,25 +14,23 @@ work lives here instead of in tickets.
 - [ ] CI: headless Linux dedicated-server build on every PR.
 - [ ] Structure: `BucklingTests.SmallBlob_HasNoLowLoadFactor` still fails
       under the real Unity/Mono editor (passes under `tools/plaincs`/.NET).
-      Root cause (confirmed via a captured Mono log): `BucklingAnalysis`'s
-      Rayleigh-Ritz mu for a tracked slot can oscillate, sweep to sweep,
-      between a normal value and a huge-but-finite one (a divide by a
-      near-zero Cholesky pivot landing on ~1e4-1e6 instead of the intended
-      near-zero/near-infinity sentinel; last-bit rounding differences
-      between CLRs change which side of the pivot floor a given sweep lands
-      on). Because `ForceConvergeAfterSweeps` eventually force-publishes
-      whatever the CURRENT sweep computed regardless of this instability,
-      the test's tick loop lands on the tail value of that oscillation.
-      A magnitude cap on mu (tried, see `git log` on this file around
-      2026-09-20) fixes this case but regresses
-      `SolverHookHigh`/`ModeShape_IsOrthogonalToRigidBodyModes`, which
-      legitimately produce large-but-STABLE mu for some sweeps; the two
-      symptoms are only distinguishable by whether mu is stable or
-      oscillating sweep to sweep, which needs `ForceConvergeAfterSweeps` to
-      publish a snapshot from the last sweep that actually satisfied the
-      ordinary tolerance check, not whatever the triggering sweep computed.
-      That is a bigger refactor (a published vs. working copy of
-      _v/_lambda) than fits opportunistically; do it deliberately.
+      `BucklingAnalysis` now publishes modes from a snapshot taken only on
+      a sweep that satisfies the ordinary tolerance check (perf/solver
+      branch, 2026-09-20: the "published vs. working copy of _v/_lambda"
+      refactor this entry used to ask for), which fixed 6 of the 7
+      Structure tests that used to fail under Mono (Analysis_IsBitDeterministic,
+      both Column_* tests, ModeShape_IsOrthogonalToRigidBodyModes,
+      SolverHook_PopulatesModesUnderHighLoadAndNotUnderLowLoad,
+      TwoSeparateArms_UnderCompression_BuckleIndependently). SmallBlob still
+      fails, but with a DIFFERENT symptom now: Mono's run settles (passes
+      the ordinary tolerance check, not a force-publish) on a small-but-
+      nonzero load factor (~1e-4) where .NET settles on one comfortably
+      above the test's threshold (20). Both runs are "stably converged" by
+      BucklingAnalysis's own check, so the snapshot fix cannot distinguish
+      them; this needs the Rayleigh-quotient-denominator check the
+      near-zero-pivot doc already gestures at (reject a slot whose Kr
+      pivot is near-singular RELATIVE to the matrix's own scale, not just
+      "stable"), which is a second, separate piece of numerical work.
 - [ ] frob: add a C# check stage so `frob check` gates this repo the way
       it gates platform. Tracked in frob itself.
 - [ ] Replace the template's FPS gameplay (weapons, character, spectator)

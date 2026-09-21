@@ -188,6 +188,26 @@ namespace Hullbreach.Structure
         float[] _lambdaPrev; // 1/mu, previous sweep
         int[] _order;        // ascending-lambda permutation
 
+        /// <summary>Last snapshot of _v/_lambda taken on a sweep that
+        /// satisfied the ORDINARY tolerance check (i.e. NOT merely because
+        /// ForceConvergeAfterSweeps ran out of patience). ExtractModes reads
+        /// from this, never from the raw working _v/_lambda, so a force-
+        /// publish never hands out a mid-oscillation value from whatever
+        /// sweep happened to be in flight when the sweep cap fired: see
+        /// TODO.md's note on the Mono-only mu oscillation this fixes, and
+        /// _hasPublishedSnapshot's doc for the case where no such sweep has
+        /// ever happened yet.</summary>
+        float[][] _publishedV;
+        float[] _publishedLambda;
+
+        /// <summary>True once at least one sweep since the last Reset has
+        /// satisfied the ordinary tolerance check and _publishedV/_publishedLambda
+        /// hold a trustworthy snapshot. A force-publish before this is ever
+        /// true has nothing stable to fall back on, so it does NOT publish
+        /// (see the force-publish branch below): better to keep iterating a
+        /// few more sweeps than to hand out an admittedly-unstable value.</summary>
+        bool _hasPublishedSnapshot;
+
         /// <summary>True once the last Step call converged and
         /// <see cref="ExtractModes"/> is safe to call against the current
         /// subspace.</summary>
@@ -224,6 +244,8 @@ namespace Hullbreach.Structure
                 _lambda = new float[m];
                 _lambdaPrev = new float[m];
                 _order = new int[m];
+                _publishedV = Alloc(m, dof);
+                _publishedLambda = new float[m];
             }
 
             SeedBlock(rigidModes, 0);
@@ -238,6 +260,7 @@ namespace Hullbreach.Structure
             _sweepsSinceReset = 0;
             _stuckSweeps = 0;
             _sawNonzeroMu = false;
+            _hasPublishedSnapshot = false;
             Converged = false;
             LastSweepCount = 0;
             LastConvergedTick = -1;
@@ -459,8 +482,28 @@ namespace Hullbreach.Structure
                 if (allZero && _sawNonzeroMu) converged = false;
 
                 if (_sweepsSinceReset < MinSweepsBeforeConvergence) converged = false;
-                else if (!converged && _sweepsSinceReset >= ForceConvergeAfterSweeps)
-                    converged = true; // force-publish: see ForceConvergeAfterSweeps.
+
+                // PUBLISHED SNAPSHOT: only a sweep that satisfies the
+                // ordinary tolerance check (converged, at this point) is
+                // trustworthy enough for ExtractModes to read; see
+                // _publishedV's doc and TODO.md's Mono note on why a
+                // force-publish must never hand out whichever sweep
+                // happened to be in flight when ForceConvergeAfterSweeps
+                // fired instead.
+                if (converged)
+                {
+                    for (int i = 0; i < _m; i++) Array.Copy(_v[i], _publishedV[i], _dof);
+                    Array.Copy(_lambda, _publishedLambda, _m);
+                    _hasPublishedSnapshot = true;
+                }
+                else if (_sweepsSinceReset >= ForceConvergeAfterSweeps)
+                {
+                    // Force-publish, but only the last snapshot that was
+                    // actually stable: if none exists yet, there is nothing
+                    // safe to hand out, so this keeps iterating instead
+                    // (see ForceConvergeAfterSweeps' doc).
+                    converged = _hasPublishedSnapshot;
+                }
 
                 if (converged) break;
             }
@@ -685,7 +728,7 @@ namespace Hullbreach.Structure
 
             for (int idx = 0; idx < _m && result.Count < modeCount; idx++)
             {
-                float lambda = _lambda[idx];
+                float lambda = _publishedLambda[idx];
                 // Skip non-positive lambda (tension-stabilized / rigid
                 // leakage, see the class doc) AND non-finite ones: +Infinity
                 // means "no coupling found on this Ritz direction" (mu ~ 0),
@@ -695,7 +738,7 @@ namespace Hullbreach.Structure
                 // an infinite load factor would be actively misleading.
                 if (!(lambda > 1e-6f) || float.IsInfinity(lambda)) continue;
 
-                var shape = (float[])_v[idx].Clone();
+                var shape = (float[])_publishedV[idx].Clone();
                 float maxAbs = 0f;
                 for (int i = 0; i < _dof; i++) maxAbs = Math.Max(maxAbs, Math.Abs(shape[i]));
                 if (maxAbs > 1e-12f)
