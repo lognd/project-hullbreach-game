@@ -20,7 +20,6 @@ namespace Hullbreach.Game
         [SerializeField] BuilderController builder;
         [SerializeField] BuilderHud builderHud;
         [SerializeField] ShipRenderer playerRenderer;
-        [SerializeField] ShipStructure playerStructure;
 
         /// <summary>Current mode, Build until the player presses Tab.</summary>
         public DemoState State { get; private set; } = DemoState.Build;
@@ -31,7 +30,6 @@ namespace Hullbreach.Game
             if (playerBody == null && playerShip != null) playerBody = playerShip.GetComponent<Rigidbody2D>();
             if (builder == null) Debug.LogError("DemoMode requires a BuilderController.");
             if (playerRenderer == null && playerShip != null) playerRenderer = playerShip.GetComponent<ShipRenderer>();
-            if (playerStructure == null && playerShip != null) playerStructure = playerShip.GetComponent<ShipStructure>();
         }
 
         void Start()
@@ -68,7 +66,6 @@ namespace Hullbreach.Game
             OverlayMode.None => OverlayMode.Stress,
             OverlayMode.Stress => OverlayMode.LoadBearing,
             OverlayMode.LoadBearing => OverlayMode.Damage,
-            OverlayMode.Damage => OverlayMode.Buckling,
             _ => OverlayMode.None,
         };
 
@@ -84,7 +81,7 @@ namespace Hullbreach.Game
 
         void OnGUI()
         {
-            GUILayout.BeginArea(new Rect(10, Screen.height - 170, 420, 160), GUI.skin.box);
+            GUILayout.BeginArea(new Rect(10, Screen.height - 150, 420, 140), GUI.skin.box);
             GUILayout.Label($"Mode: {State}  (Tab to switch)");
 
             if (State == DemoState.Build)
@@ -109,13 +106,6 @@ namespace Hullbreach.Game
                 {
                     float speed = Mathf.Sqrt(ship.Velocity.x * ship.Velocity.x + ship.Velocity.y * ship.Velocity.y);
                     GUILayout.Label($"Speed: {speed:0.0}   Angular speed: {Mathf.Abs(ship.AngularVelocity):0.00}");
-
-                    if (playerStructure != null)
-                    {
-                        float clf = playerStructure.Solver.CriticalLoadFactor;
-                        string clfText = float.IsInfinity(clf) ? "inf" : clf.ToString("0.00");
-                        GUILayout.Label($"Critical load factor: {clfText}");
-                    }
                 }
             }
             GUILayout.EndArea();

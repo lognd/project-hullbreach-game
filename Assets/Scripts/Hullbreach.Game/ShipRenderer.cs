@@ -19,10 +19,6 @@ namespace Hullbreach.Game
         LoadBearing,
         /// <summary>White (undamaged) to black (fully damaged) by DamageFraction.</summary>
         Damage,
-        /// <summary>Blue (0) to red (>=1) by BlockStress.BucklingRatio alone
-        /// (via ExtraRatioSource), so a player can see where the ship would
-        /// fold independent of ordinary ductile/brittle stress.</summary>
-        Buckling,
     }
 
     /// <summary>
@@ -301,11 +297,6 @@ namespace Hullbreach.Game
                     if (ExtraRatioSource != null) ratio = Mathf.Max(ratio, ExtraRatioSource(key));
                     v.Body.color = StressColor(ratio);
                     break;
-
-                case OverlayMode.Buckling:
-                    float buckling = ExtraRatioSource != null ? ExtraRatioSource(key) : 0f;
-                    v.Body.color = BucklingColor(buckling);
-                    break;
             }
         }
 
@@ -315,14 +306,6 @@ namespace Hullbreach.Game
             return ratio < 0.5f
                 ? Color.Lerp(Color.green, Color.yellow, ratio * 2f)
                 : Color.Lerp(Color.yellow, Color.red, (ratio - 0.5f) * 2f);
-        }
-
-        /// <summary>Blue (no buckling risk) to red (ratio >= 1, i.e. at or
-        /// past the critical load factor) for the Buckling overlay.</summary>
-        static Color BucklingColor(float ratio)
-        {
-            ratio = Mathf.Clamp01(ratio);
-            return Color.Lerp(Color.blue, Color.red, ratio);
         }
     }
 }
