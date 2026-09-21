@@ -30,7 +30,7 @@ namespace Hullbreach.Ship.Tests
             Assert.Greater(math.length(ship.LastLinearAcceleration), 0f,
                 "an off-center thruster still pushes the whole ship");
             Assert.AreNotEqual(0f, ship.LastAngularAcceleration,
-                "a thruster not on the CoM must produce torque -- S39 criterion 1");
+                "a thruster not on the CoM must produce torque: S39 criterion 1");
         }
 
         [Test]
@@ -306,7 +306,7 @@ namespace Hullbreach.Ship.Tests
             ship.Grid.TryAdd(BlockKey.Pack(1, -1), new Block(BlockTypes.Thruster));
 
             // Ramp fully up first so throttle is not zero (a zero-throttle
-            // thruster records no entry -- see StepThrusters).
+            // thruster records no entry: see StepThrusters).
             for (int i = 0; i < 60; i++) ship.Step(new ShipInput(1f, 0f, false), 1f / 60f);
 
             Assert.AreEqual(2, ship.AppliedForcesThisStep.Count,

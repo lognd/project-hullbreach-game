@@ -52,7 +52,7 @@ namespace Hullbreach.Structure.Tests
         {
             // THE WHOLE POINT of running both criteria. Pure compression at -S
             // has the same von Mises as tension at +S (pressure-insensitive),
-            // but its max principal is 0 -- so a brittle block shrugs it off
+            // but its max principal is 0, so a brittle block shrugs it off
             // while a ductile one yields exactly as it would in tension.
             Assert.AreEqual(StressCriteria.VonMises(S, 0f, 0f),
                             StressCriteria.VonMises(-S, 0f, 0f), Tol);

@@ -11,7 +11,7 @@ namespace Hullbreach.Structure.Tests
     /// Coverage for GeometricStiffness + BucklingAnalysis + the
     /// StructuralSolver hook. Grids are kept small (a handful to a few dozen
     /// blocks) so the whole file runs in a couple of seconds even though
-    /// buckling needs many ticks of subspace iteration to converge --
+    /// buckling needs many ticks of subspace iteration to converge:
     /// BucklingEveryNTicks is set to 1 throughout so each Tick call spends
     /// its (default) 2 sweeps, instead of waiting out the production
     /// default of one attempt every 4 ticks.
@@ -53,14 +53,14 @@ namespace Hullbreach.Structure.Tests
 
         /// <summary>Ticks `solver` until it publishes a converged buckling
         /// analysis (BucklingEveryNTicks is expected to already be 1) or
-        /// `maxTicks` is exhausted, whichever comes first -- a tick-count
+        /// `maxTicks` is exhausted, whichever comes first: a tick-count
         /// bound, not a wall-clock one, matching BucklingAnalysis's own
         /// convergence contract. STOPS EARLY once the critical mode's
         /// LoadFactor has stopped changing for a few consecutive ticks:
         /// running the full `maxTicks` unconditionally (as this used to)
         /// meant every test paid for its worst-case tick budget even when
         /// the subspace settled in a fraction of it, which is most of why
-        /// this file used to take well over a minute -- see the class doc.
+        /// this file used to take well over a minute: see the class doc.
         /// </summary>
         static void RunUntilConverged(StructuralSolver solver, BlockGrid grid,
                                       List<(float2, float2)> forces, int maxTicks = 60)
@@ -82,7 +82,7 @@ namespace Hullbreach.Structure.Tests
         [Test]
         public void SmallBlob_HasNoLowLoadFactor()
         {
-            // A 2x2 blob has no slender member to buckle -- any positive
+            // A 2x2 blob has no slender member to buckle: any positive
             // load factor should be large, not something combat-scale loads
             // would ever cross. Forces are spread over whole opposite edges
             // (not a single diagonal corner-to-corner point pair) so the
@@ -146,7 +146,7 @@ namespace Hullbreach.Structure.Tests
             // the old, loosened "ratio > 1.5" assertion was CgSolver's
             // MaxIterations cap (200) being far below what these columns
             // actually need (measured ~650 CG iterations for a 32-block
-            // column's 326 dof) -- see CgSolver's MaxIterations doc -- which
+            // column's 326 dof; see CgSolver's MaxIterations doc), which
             // under-converged K^-1 and biased the subspace iteration's
             // Rayleigh quotients enough to flatten the trend toward 1/L and
             // even invert it for longer columns. With that fixed the ratio
@@ -168,7 +168,7 @@ namespace Hullbreach.Structure.Tests
             // DenseEigenOracle's independent dense Cholesky+Jacobi solve of
             // the identical reduced eigenproblem. N=8 is skipped here (see
             // Column_CriticalLoadFactorScalesWithInverseLengthSquared's
-            // class doc on short columns) -- its lowest two buckling modes
+            // class doc on short columns): its lowest two buckling modes
             // sit close enough together that which one the subspace settles
             // on first is a coin flip unrelated to either implementation
             // being wrong.
@@ -218,7 +218,7 @@ namespace Hullbreach.Structure.Tests
         {
             // A core with two slender single-wide arms going in different
             // directions. Both are compressed hard enough that each folds on
-            // its own -- the ship should read at least two sub-critical
+            // its own: the ship should read at least two sub-critical
             // modes, and their top-participation blocks should land on
             // different arms (a ship folding in two places at once).
             const int armLength = 8;
@@ -270,7 +270,7 @@ namespace Hullbreach.Structure.Tests
             int topB = TopBlock(subCritical[1]);
 
             // "On different arms" is exactly "on arm A" disagreeing between
-            // the two -- the core block (0,0) is on both by these
+            // the two: the core block (0,0) is on both by these
             // definitions, but a mode's TOP block is never the joint itself.
             bool oneOnEachArm = OnArmA(topA) != OnArmA(topB);
             Assert.IsTrue(oneOnEachArm,

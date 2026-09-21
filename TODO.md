@@ -19,28 +19,23 @@ work lives here instead of in tickets.
 - [ ] Server: report match results to the platform API over HTTPS.
 - [ ] Decide on Unity Gaming Services vs. our own relay for matchmaking.
 
-## Sprint 1 status (as of 2026-09-20, branch physics-model)
+## Sprint status (as of 2026-09-20, branch physics-model)
 
-Done, with edit-mode tests under `Assets/Tests/EditMode`:
+Full detail, per-story pointers into the code, and known engineering debt
+live in [docs/roadmap.md](docs/roadmap.md); this is the short version.
 
-- S32 build around a core, S30 two-click placement, S31 remove and undo,
-  S33 block palette: `Hullbreach.Builder` (PlacementRules, UndoStack,
-  BuilderSession, BlockPalette) plus BuilderController and BuilderHud in
-  `Hullbreach.Game`. Decision on S31: removing a block that strands others
-  detaches the stranded blocks too; undo restores them as one action.
-- S39 fly a ship that handles like it was built: `Hullbreach.Ship`
-  (ShipBody, SteeringModel, BlockFacing) and ShipController, which
-  replaces PlayerSingle in RocketScene. Decision on S39: fins are
-  reaction-wheel style, so a drifting ship can still aim.
-- Sprint-2 groundwork landed early: `Hullbreach.Structure` (Q8 FE,
-  inertia relief, PCG, stress criteria, damage hysteresis, S36/S37 API).
+Done: S30-S33 (ship builder), S39 (flight), S36-S38 (structural sim,
+Sprint-2 work landed early), S40 (gravity fields), S42 (basic cannon),
+S43-S44 (gravity gun / anti-gravity gun / seeking thruster powerups,
+Sprint-2/3 work landed early).
 
-Open for the rest of sprint 1:
+Partially done: S28/S47 (NetMessages and Quantization exist; no transport
+or serializer yet).
 
-- [ ] S26 title screen and S27 settings (needs a UI scene).
-- [ ] S42 basic cannon: ShipBody records FireRequested; no projectile yet.
-- [ ] S46 win by breaching the core: no match state machine yet.
-- [ ] S28 LAN match and S47 authoritative server: NetMessages and
-      Quantization exist; no transport is wired up.
-- [ ] Open RocketScene in Unity and confirm the hand-edited ShipController
-      and BuilderController wiring, then commit the regenerated metas.
+Not started: S26/S27 (needs a UI scene), S29/S35/S49 (need the platform
+repo), S34 (build during a fight), S41 (arena bounds), S45 (hazards),
+S46 (win by breaching the core), S48, and the E14 stretch goals.
+
+- [ ] Open RocketScene and DemoScene in Unity and confirm the hand-edited
+      ShipController/BuilderController wiring, then commit the
+      regenerated metas: see docs/demo-scene.md's checklist.

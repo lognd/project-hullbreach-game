@@ -30,7 +30,7 @@ namespace Hullbreach.Net
         //
         //   ShipState { u16 netId; i16 px,py; u16 rot; i16 vx,vy; u16 av }
 
-        // TODO: Events, reliable and ORDERED -- destruction must apply in the
+        // TODO: Events, reliable and ORDERED: destruction must apply in the
         //       same order on both sides or the derived split diverges. Carry a
         //       sequence number.
         //

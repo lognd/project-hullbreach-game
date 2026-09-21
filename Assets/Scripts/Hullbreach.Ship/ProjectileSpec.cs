@@ -96,7 +96,7 @@ namespace Hullbreach.Ship
                                    lifetimeSeconds: 3f, radius: 0.1f);
 
         /// <summary>Returns a copy of this spec with Kind = GravityWell and
-        /// the given well parameters attached, everything else unchanged --
+        /// the given well parameters attached, everything else unchanged:
         /// used by the gravity-gun/anti-gravity-gun variants to reuse the
         /// ship's own ballistic numbers (speed, damage, lifetime, radius)
         /// while swapping only the impact payload.</summary>

@@ -18,7 +18,7 @@ namespace Hullbreach.Builder
         /// Fin reserve the cell Facing.Ahead of them, and RetroThruster
         /// reserves its +x and -x neighbors. Plain blocks (Core/Hull/Armor)
         /// reserve nothing, so `cells` comes back empty. A reserved direction
-        /// that falls outside BlockKey's range is simply omitted -- there is
+        /// that falls outside BlockKey's range is simply omitted: there is
         /// no cell there to ever be occupied, so it is vacuously satisfied.
         /// Always returns true; the bool return exists so a caller can read
         /// this as "the reservation set was computed" without special-casing
@@ -57,7 +57,7 @@ namespace Hullbreach.Builder
         /// <summary>
         /// True when `typeId` requires an anchoring block on some fixed side
         /// of it, with `anchorKey` set to that cell (only Fin, whose anchor is
-        /// Facing.Behind -- the hull it mounts on). False, with `anchorKey`
+        /// Facing.Behind, the hull it mounts on). False, with `anchorKey`
         /// set to -1, for every other type. When the anchor direction itself
         /// falls outside BlockKey's range, `anchorKey` is -1 even though the
         /// return value is true, so the caller sees "there is nowhere for the

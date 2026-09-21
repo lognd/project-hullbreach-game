@@ -7,7 +7,7 @@ namespace Hullbreach.Core
     /// <summary>
     /// The authoritative sparse block map. Everything else in the simulation is
     /// a derived view rebuilt from this, so MUTABLE per-block state (damage,
-    /// upgrades) must live here and nowhere else -- a derived view that holds
+    /// upgrades) must live here and nowhere else: a derived view that holds
     /// state silently loses it on the next rebuild.
     ///
     /// NOTE: a managed Dictionary on purpose. Get it correct first; swapping to

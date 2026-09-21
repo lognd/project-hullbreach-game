@@ -11,7 +11,7 @@ namespace Hullbreach.Structure
     /// blocks are joined precisely because they write into the same rows.
     ///
     /// K comes out symmetric positive SEMI-definite. It is singular, by three,
-    /// because a free-floating ship has three rigid-body modes -- see
+    /// because a free-floating ship has three rigid-body modes: see
     /// LoadVector for how that is handled rather than papered over.
     /// </summary>
     public sealed class StiffnessAssembly
@@ -39,7 +39,7 @@ namespace Hullbreach.Structure
         /// with the SAME sparsity pattern (GeometricStiffness) can be built
         /// without re-deriving the pattern from the grid. Chosen over
         /// duplicating StiffnessAssembly's element-loop/BuildCsr machinery
-        /// or making the element matrix pluggable -- the sparsity pattern of
+        /// or making the element matrix pluggable: the sparsity pattern of
         /// K and K_G is identical (both come from the same node connectivity),
         /// so sharing the pattern and scattering only values is the smaller,
         /// more obviously-correct surface. Callers must not mutate this array.
@@ -47,14 +47,14 @@ namespace Hullbreach.Structure
         public int[] RowPointers => _rowPtr;
 
         /// <summary>Column indices parallel to <see cref="RowPointers"/>, sorted
-        /// ascending within each row -- callers may binary-search a row's
+        /// ascending within each row: callers may binary-search a row's
         /// range. See <see cref="RowPointers"/> for why this is shared.</summary>
         public int[] ColumnIndices => _colIndex;
 
         /// <summary>
         /// Build sparse K for the whole grid, from scratch. Rebuild only when
         /// topology is dirty (or after a stiffness-affecting damage change,
-        /// since this recomputes everything rather than rescaling in place --
+        /// since this recomputes everything rather than rescaling in place:
         /// simplicity over the incremental-rescale optimization the TODO
         /// mentions, since assembly at this scale is cheap).
         /// </summary>

@@ -39,7 +39,7 @@ namespace Hullbreach.Builder
     {
         /// <summary>
         /// Per-type builder cost. Kept here, not in Core, because cost is
-        /// build economy rather than physics -- Core only knows mass and
+        /// build economy rather than physics: Core only knows mass and
         /// structural properties.
         /// </summary>
         static readonly int[] Cost =

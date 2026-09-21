@@ -27,7 +27,7 @@ namespace Hullbreach.Ship.Behaviours
         public float2 WorldCenter;
 
         /// <summary>Ship-local facing direction decoded from Block.Modifiers,
-        /// for directional blocks (Cannon/Fin). Thrusters ignore this -- they
+        /// for directional blocks (Cannon/Fin). Thrusters ignore this: they
         /// have a fixed direction of their own.</summary>
         public float2 Facing;
 

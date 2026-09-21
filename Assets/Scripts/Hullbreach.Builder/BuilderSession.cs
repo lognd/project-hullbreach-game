@@ -36,7 +36,7 @@ namespace Hullbreach.Builder
     /// <summary>
     /// Owns the grid plus the click-driven state machine that turns palette
     /// selection and cell clicks into placements, orientations, removals and
-    /// undo/redo. Pure C# -- no UnityEngine dependency -- so it is exercised
+    /// undo/redo. Pure C#, with no UnityEngine dependency, so it is exercised
     /// directly in edit-mode tests; BuilderController in Hullbreach.Game is
     /// the thin MonoBehaviour that feeds it mouse input.
     /// </summary>
@@ -47,7 +47,7 @@ namespace Hullbreach.Builder
         /// <summary>The ship under construction.</summary>
         public BlockGrid Grid { get; }
 
-        /// <summary>Owns a brand-new grid -- the original behavior, used by
+        /// <summary>Owns a brand-new grid: the original behavior, used by
         /// standalone builder tests and any caller with no existing ship.</summary>
         public BuilderSession() : this(new BlockGrid())
         {
@@ -56,7 +56,7 @@ namespace Hullbreach.Builder
         /// <summary>
         /// Build over an EXTERNAL grid instead of a private one, so the demo
         /// scene's builder can edit the very same BlockGrid a ShipBody is
-        /// simulating -- otherwise placements would land in a grid nobody
+        /// simulating. Otherwise placements would land in a grid nobody
         /// flies. Ownership stays with the caller; this session only mutates it.
         /// </summary>
         public BuilderSession(BlockGrid grid)
@@ -96,7 +96,7 @@ namespace Hullbreach.Builder
         /// Preview what would happen at `key` right now: while Idle, whether it
         /// is a legal placement for the selected type; while Orienting, the
         /// cell hovered snaps the pending facing towards it, and the returned
-        /// verdict re-validates the pending cell with that candidate facing --
+        /// verdict re-validates the pending cell with that candidate facing:
         /// an orientation that would block its own exhaust/muzzle/fin
         /// clearance, or lacks a fin's hull anchor, previews as invalid.
         /// </summary>
@@ -132,7 +132,7 @@ namespace Hullbreach.Builder
             }
 
             // The facing is not chosen yet, so the cell only needs to admit
-            // SOME facing (any of the four cardinals) -- the exact one is
+            // SOME facing (any of the four cardinals); the exact one is
             // picked by Hover and re-validated for real when the second
             // click commits it.
             if (!CanPlaceAnyFacing(key, SelectedTypeId)) return false;

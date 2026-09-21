@@ -9,7 +9,7 @@ namespace Hullbreach.Game
     /// <summary>
     /// One powerup pickup authored in the Inspector: where it floats, which
     /// variant it applies to which block type, how long the transform lasts,
-    /// and its color/label -- the disc itself is generated at runtime
+    /// and its color/label: the disc itself is generated at runtime
     /// (ShipRenderer.MakeSprite), same convention as GravityWorld's planets.
     /// </summary>
     [Serializable]
@@ -39,7 +39,7 @@ namespace Hullbreach.Game
     /// <summary>
     /// Spawns every authored PowerupPreset as a Powerup GameObject on Start,
     /// and respawns one at the same place after respawnSeconds once it is
-    /// collected -- lets the demo scene keep a fixed lineup of pickups
+    /// collected: this lets the demo scene keep a fixed lineup of pickups
     /// visible near the player's orbit start without hand-placing prefabs.
     /// </summary>
     public sealed class PowerupSpawner : MonoBehaviour

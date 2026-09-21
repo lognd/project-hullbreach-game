@@ -33,7 +33,7 @@ namespace Hullbreach.Core
 
         /// <summary>
         /// Tarjan's algorithm, O(V + E), once per topology change. Uses an
-        /// ITERATIVE DFS -- a recursive one would blow the stack on a large
+        /// ITERATIVE DFS: a recursive one would blow the stack on a large
         /// ship. Works with no core (any block can serve as the DFS root,
         /// since articulation points are a property of the adjacency graph
         /// alone) and correctly reports no articulation points for a single

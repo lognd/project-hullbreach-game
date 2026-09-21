@@ -23,7 +23,7 @@ namespace Hullbreach.Ship.Behaviours
         }
 
         /// <summary>Registers `behaviour` for the exact (typeId, variant)
-        /// pair, overwriting whatever was registered there before -- tests
+        /// pair, overwriting whatever was registered there before: tests
         /// use that to swap in stubs.</summary>
         public static void Register(byte typeId, byte variant, IBlockBehaviour behaviour)
         {
@@ -33,7 +33,7 @@ namespace Hullbreach.Ship.Behaviours
         /// <summary>
         /// Looks up the behaviour for `block`'s (TypeId, variant bits),
         /// falling back to that type's variant 0 (its base behaviour) when
-        /// the specific variant is not registered -- an unrecognized variant
+        /// the specific variant is not registered: an unrecognized variant
         /// id behaves like the plain block rather than doing nothing. Null
         /// when even variant 0 has nothing registered (e.g. Core/Hull/Armor,
         /// which have no per-Step behaviour at all).

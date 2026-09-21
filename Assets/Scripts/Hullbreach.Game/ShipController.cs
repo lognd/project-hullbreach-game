@@ -30,7 +30,7 @@ namespace Hullbreach.Game
     }
 
     /// <summary>
-    /// The MonoBehaviour adapter. Lifecycle and Inspector wiring ONLY -- every
+    /// The MonoBehaviour adapter. Lifecycle and Inspector wiring ONLY: every
     /// line of actual simulation belongs in ShipBody, which has no UnityEngine
     /// dependency and is therefore testable in edit mode, Burst-compilable, and
     /// runnable on the headless server.
@@ -55,7 +55,7 @@ namespace Hullbreach.Game
 
         // [SerializeField] on a private field is the idiomatic choice: visible
         // and editable in the Inspector without becoming public API. Note Unity
-        // serializes FIELDS only -- a property would not show up at all.
+        // serializes FIELDS only: a property would not show up at all.
         [SerializeField] Transform[] thrusterMounts;
 
         /// <summary>The ship's blocks, authored in the Inspector until the
@@ -124,7 +124,7 @@ namespace Hullbreach.Game
             ship.Gravity = GravityWorld.Field;
 
             // WorldSink.Instance is set by its own Awake, which must run
-            // before this one -- see [DefaultExecutionOrder(-150)] there vs
+            // before this one: see [DefaultExecutionOrder(-150)] there vs
             // -100 here. Falls back to NullWorldSink's default (already set
             // by ShipBody's field initializer) in a scene with no WorldSink.
             if (WorldSink.Instance != null) ship.World = WorldSink.Instance;
@@ -144,10 +144,10 @@ namespace Hullbreach.Game
 
             // TODO [A5]: Migrate to the new Input System alongside S27
             //            (rebindable keys). activeInputHandler is currently 2
-            //            ("Both"), so the legacy calls still work -- but every
+            //            ("Both"), so the legacy calls still work, but every
             //            one of these lines breaks the moment that changes.
             // Vertical/Horizontal map W/S and Up/Down, A/D and Left/Right by
-            // default in Unity's Input Manager -- Raw so throttle ramping
+            // default in Unity's Input Manager: Raw so throttle ramping
             // (ShipBody's job) is not double-smoothed by Unity's own axis
             // smoothing on top of it.
             thrustAxis = Input.GetAxisRaw("Vertical");

@@ -61,8 +61,8 @@ namespace Hullbreach.Ship.Tests
 
             // Same two blocks, but oriented so the line between them IS
             // radial (straight out from the body): no tidal torque. Both
-            // block centers land exactly on y=0 -- a line straight through
-            // the body at the origin -- once the -0.5 offset (block centers
+            // block centers land exactly on y=0 (a line straight through
+            // the body at the origin) once the -0.5 offset (block centers
             // sit at local y=0.5) is folded into Position.
             var onAxis = new ShipBody();
             onAxis.Grid.TryAdd(BlockKey.Pack(0, 0), new Block(BlockTypes.Core, 0));

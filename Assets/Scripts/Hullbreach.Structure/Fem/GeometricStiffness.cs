@@ -8,12 +8,12 @@ namespace Hullbreach.Structure
     /// The geometric (initial-stress) stiffness K_G: the part of the tangent
     /// stiffness that comes from stress already in the structure rather than
     /// from material response. It is what makes a compressed member go
-    /// unstable -- K_G is (locally) negative-definite along a compressive
+    /// unstable: K_G is (locally) negative-definite along a compressive
     /// principal direction, so K + lambda*K_G loses positive-definiteness as
     /// the load factor lambda grows. That crossing point is buckling.
     ///
     /// PER-ELEMENT G AND S: at a Gauss point, G is the 4x16 matrix of
-    /// displacement-gradient rows (not strain -- gradients, so shear does not
+    /// displacement-gradient rows (not strain, gradients, so shear does not
     /// get the usual engineering factor of 2):
     ///     row 0: dN/dx for u   row 1: dN/dy for u
     ///     row 2: dN/dx for v   row 3: dN/dy for v
@@ -24,7 +24,7 @@ namespace Hullbreach.Structure
     /// CONSTANT-STRESS SIMPLIFICATION: this uses ONE stress tensor per
     /// element (the element-CENTER stress StructuralSolver already computes
     /// for BlockStress), not the true Gauss-point stress, which varies over
-    /// the element. That is an approximation -- a per-Gauss-point stress,
+    /// the element. That is an approximation: a per-Gauss-point stress,
     /// recovered the same way BlockStress recovers the center stress but at
     /// each of the 9 points, would be more accurate. It is deliberately not
     /// done here: it would 9x the per-tick stress recovery cost for a
@@ -49,7 +49,7 @@ namespace Hullbreach.Structure
         /// StiffnessAssembly so callers can size DOF-length work vectors.</summary>
         public int DofCount { get; private set; }
 
-        // Fixed-size scratch reused across every element in Rebuild -- sizes
+        // Fixed-size scratch reused across every element in Rebuild: sizes
         // are compile-time constants (8 nodes, 16 dofs), so these allocate
         // exactly once per GeometricStiffness instance, never per tick.
         readonly float[] _dNdXi = new float[Q8Element.NodeCount];
@@ -65,8 +65,8 @@ namespace Hullbreach.Structure
 
         /// <summary>
         /// Adopts `assembly`'s current CSR row/column pattern by reference
-        /// (StiffnessAssembly does not mutate those arrays in place -- Rebuild
-        /// always allocates fresh ones -- so holding a reference across ticks
+        /// (StiffnessAssembly does not mutate those arrays in place; Rebuild
+        /// always allocates fresh ones), so holding a reference across ticks
         /// is safe until the next topology Rebuild, at which point the caller
         /// must call AttachSparsity again). Resizes the value array only when
         /// the pattern's nnz actually changed.
@@ -86,7 +86,7 @@ namespace Hullbreach.Structure
         /// clearing and re-filling the preallocated `_values` array plus the
         /// fixed-size scratch above. Blocks are visited in ascending key
         /// order (matching NodeLattice.BuildNodeMap) so float accumulation at
-        /// shared nodes happens in the same order every time -- required for
+        /// shared nodes happens in the same order every time: required for
         /// the determinism the buckling analysis promises.
         /// </summary>
         public void Rebuild(Hullbreach.Core.BlockGrid grid, StiffnessAssembly assembly,
@@ -132,10 +132,10 @@ namespace Hullbreach.Structure
             }
         }
 
-        /// <summary>Binary search for `col` within colIndex[start,end) -- the
+        /// <summary>Binary search for `col` within colIndex[start,end): the
         /// row's slice is sorted ascending by StiffnessAssembly.BuildCsr.
         /// Throws (via the unhandled -1) if the pattern does not contain the
-        /// entry, which would mean K and K_G disagree on sparsity -- a
+        /// entry, which would mean K and K_G disagree on sparsity: a
         /// programmer bug, not a runtime condition to handle gracefully.</summary>
         int FindColumn(int start, int end, int col)
         {

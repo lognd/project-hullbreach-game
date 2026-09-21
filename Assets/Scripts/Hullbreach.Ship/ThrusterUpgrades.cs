@@ -2,7 +2,7 @@ namespace Hullbreach.Ship
 {
     /// <summary>
     /// Decodes Modifiers bits 2-3 (mask 0b1100) into a throttle ramp rate for
-    /// thrusters, retro thrusters and fins alike -- all three ramp their
+    /// thrusters, retro thrusters and fins alike: all three ramp their
     /// control value toward a target rather than snapping to it, and all
     /// three share the same upgrade encoding so one block-modifier byte can
     /// carry both facing (low 2 bits) and ramp level (next 2 bits).

@@ -34,7 +34,7 @@ namespace Hullbreach.Game
 
         /// <summary>
         /// Only the authoritative simulation may act on Solver.BuckledBlocks
-        /// by detaching blocks -- the FE solve is not bit-identical across
+        /// by detaching blocks: the FE solve is not bit-identical across
         /// machines, so a client independently detaching from BuckledBlocks
         /// can desync from the server (see StructuralSolver.BuckledBlocks).
         /// Non-authoritative instances (clients) still tint BucklingRatio via
@@ -131,7 +131,7 @@ namespace Hullbreach.Game
         /// reused for buckled blocks: remove the given keys, then remove
         /// whatever that stranded, rebuild derived views and mark the
         /// renderer/collider dirty. Only called for BuckledBlocks when
-        /// Authoritative -- see the Authoritative doc comment.
+        /// Authoritative: see the Authoritative doc comment.
         /// </summary>
         void DetachAndCleanUp(BlockGrid grid, IReadOnlyList<int> keys)
         {

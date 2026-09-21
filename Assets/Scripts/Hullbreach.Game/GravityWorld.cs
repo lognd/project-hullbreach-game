@@ -36,7 +36,7 @@ namespace Hullbreach.Game
     ///
     /// "Singleton-ish": Field is null until some GravityWorld's Awake has
     /// run, and DemoMode/ShipController read it lazily (null-safe) rather
-    /// than requiring load order -- there is exactly one GravityWorld in
+    /// than requiring load order: there is exactly one GravityWorld in
     /// any scene that uses gravity, same convention as the rest of the demo.
     /// </summary>
     [DefaultExecutionOrder(-200)]

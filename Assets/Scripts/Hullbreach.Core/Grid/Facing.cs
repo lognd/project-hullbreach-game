@@ -4,8 +4,8 @@ namespace Hullbreach.Core
 {
     /// <summary>
     /// Decodes the low 2 bits of Block.Modifiers into a ship-local facing.
-    /// Lives in Core (rather than Ship) so builder placement rules -- which
-    /// need to know what is "ahead of" or "behind" a directional block --
+    /// Lives in Core (rather than Ship) so builder placement rules (which
+    /// need to know what is "ahead of" or "behind" a directional block)
     /// can use the same encoding without depending on Hullbreach.Ship.
     ///
     /// Encoding: 0 = +y ("up"), 1 = +x, 2 = -y, 3 = -x, all in ship-local

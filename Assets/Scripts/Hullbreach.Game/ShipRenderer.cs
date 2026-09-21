@@ -29,11 +29,11 @@ namespace Hullbreach.Game
     /// Builds and maintains one child GameObject per block on a ship's
     /// BlockGrid, using a runtime-generated 1x1 white sprite tinted per type,
     /// plus small nose/flame children for directional blocks. No prefabs, no
-    /// asset dependencies -- every visual here is code-generated so the demo
+    /// asset dependencies: every visual here is code-generated so the demo
     /// scene needs nothing baked in the Editor.
     ///
     /// Rebuild is driven by <see cref="MarkDirty"/>, called by whatever
-    /// mutates the grid (BuilderController, ShipStructure after a detach) --
+    /// mutates the grid (BuilderController, ShipStructure after a detach);
     /// this class does not poll BlockGrid.TopologyDirty itself since that
     /// flag is owned by ShipBody's own Step/RebuildDerivedViews lifecycle and
     /// gets cleared before a renderer polling on its own schedule could see it.

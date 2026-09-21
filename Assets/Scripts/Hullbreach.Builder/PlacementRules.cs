@@ -56,7 +56,7 @@ namespace Hullbreach.Builder
 
         /// <summary>
         /// Full placement check: range, the core-seeding rule, occupancy,
-        /// adjacency, then clearance -- the new block's own reserved cells
+        /// adjacency, then clearance: the new block's own reserved cells
         /// (Clearance.TryReservedCells) must be empty, the new block must not
         /// sit inside any EXISTING block's reserved cell, and a Fin's anchor
         /// cell (Clearance.RequiredAnchor) must hold a non-Fin block. `why`
@@ -76,7 +76,7 @@ namespace Hullbreach.Builder
             if (grid.Count == 0)
             {
                 // Only a core may seed an empty grid, and it may go anywhere
-                // in range -- there is nothing yet to be adjacent to.
+                // in range: there is nothing yet to be adjacent to.
                 if (!isCore)
                 {
                     why = PlacementVerdict.NeedsEmptyGrid;
@@ -116,7 +116,7 @@ namespace Hullbreach.Builder
             // fin, or beside a retro thruster). Every reserved-cell relation
             // is exactly one orthogonal step, so the 4-connected neighbors of
             // `key` are the complete set of cells that could possibly reserve
-            // it -- no need to walk the whole grid.
+            // it, so there is no need to walk the whole grid.
             for (int i = 0; i < 4; i++)
             {
                 int neighborKey = Neighbors[i];
@@ -182,7 +182,7 @@ namespace Hullbreach.Builder
         /// <summary>
         /// A block can be removed when it is present and is not the core.
         /// DECISION (S31's open question): a removal that would strand other
-        /// blocks is ALLOWED, not refused -- the stranded blocks detach along
+        /// blocks is ALLOWED, not refused: the stranded blocks detach along
         /// with it (see <see cref="Detach"/>). This keeps single-click removal
         /// always available instead of silently failing near a bottleneck.
         /// </summary>

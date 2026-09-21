@@ -9,7 +9,7 @@ namespace Hullbreach.Game
     /// A single spawned cannon round: a small yellow circle with a
     /// Rigidbody2D carrying it in a straight line, that applies the firing
     /// ship's own recoil-free hit (impulse + damage) to whatever ShipCollider
-    /// it touches, then destroys itself. Spawned only by ProjectileSpawner --
+    /// it touches, then destroys itself. Spawned only by ProjectileSpawner:
     /// never construct one directly, since Configure must run before the
     /// first FixedUpdate.
     /// </summary>
@@ -74,7 +74,7 @@ namespace Hullbreach.Game
         /// Applies the ambient gravity field's acceleration to this
         /// projectile's own velocity each physics step (velocity += a * dt),
         /// exactly like any other free body in the field, and destroys the
-        /// projectile the instant it reaches a planet's surface -- a round
+        /// projectile the instant it reaches a planet's surface: a round
         /// that hits a planet does not bounce or linger, it is gone.
         /// </summary>
         void FixedUpdate()
