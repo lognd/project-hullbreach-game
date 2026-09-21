@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Unity.Mathematics;
 using Hullbreach.Core;
+using Hullbreach.World;
 
 namespace Hullbreach.Ship
 {
@@ -42,6 +43,37 @@ namespace Hullbreach.Ship
 
         /// <summary>Projectile parameters every cannon on this ship fires.</summary>
         public ProjectileSpec Projectile = ProjectileSpec.Default;
+
+        /// <summary>The gravity field this ship falls in, or null for none
+        /// (e.g. RocketScene, which never wires one up). Set by the caller
+        /// (ShipController.Awake) rather than owned here, so the same
+        /// ShipBody can be dropped into a field-less test without a stub.</summary>
+        public GravityField Gravity;
+
+        /// <summary>Relative contact speed (m/s) above which a planet impact
+        /// starts dealing damage; below this, a landing is "soft" and does
+        /// no damage at all.</summary>
+        public float ContactDamageSpeed = 3f;
+
+        /// <summary>Damage points per m/s of contact speed above
+        /// ContactDamageSpeed.</summary>
+        public float ContactDamagePerSpeed = 12f;
+
+        /// <summary>Fraction of tangential contact velocity removed per
+        /// second while a block is touching a planet's surface, approximating
+        /// ground friction without a full friction-cone solve.</summary>
+        public float Friction = 2f;
+
+        /// <summary>Clearance (world units) added to a planet's Radius when
+        /// testing block contact, so a block's own half-extent does not sink
+        /// visibly into the surface before contact registers.</summary>
+        public float ContactClearance = 0.5f;
+
+        /// <summary>Every planet contact resolved this Step: which block
+        /// (grid key), the surface normal at that block, and the impact
+        /// speed along that normal. Cleared and repopulated every Step, for
+        /// the renderer/audio to react to.</summary>
+        public readonly List<(int key, float2 normal, float speed)> ContactsThisStep = new List<(int, float2, float)>();
 
         /// <summary>Thruster block keys, rebuilt when topology is dirty.
         /// A dense typed list, because systems iterate "all thrusters" rather
@@ -102,6 +134,11 @@ namespace Hullbreach.Ship
 
         /// <summary>Seconds remaining before each cannon can fire again.</summary>
         readonly Dictionary<int, float> _cannonCooldownByKey = new Dictionary<int, float>();
+
+        /// <summary>Reusable scratch buffer for sorting contacting block
+        /// keys into deterministic order in ResolvePlanetContacts, so the
+        /// per-tick contact pass never allocates a fresh list.</summary>
+        readonly List<int> _contactKeyScratch = new List<int>();
 
         /// <summary>
         /// Rebuild ThrusterKeys/RetroKeys/FinKeys/WeaponKeys from the grid.
@@ -208,6 +245,7 @@ namespace Hullbreach.Ship
             StepThrusters(RetroKeys, reverseTarget, new float2(0f, -1f), RetroThrustPerBlock, dt);
             StepFins(steerTarget, com, dt);
             StepCannons(input.FirePressed, dt);
+            ApplyGravityForces();
 
             float inertia = Grid.Mass.InertiaAboutCenterOfMass;
 
@@ -230,6 +268,130 @@ namespace Hullbreach.Ship
 
             _forceAccum = float2.zero;
             _torqueAccum = 0f;
+
+            ResolvePlanetContacts(dt);
+        }
+
+        /// <summary>
+        /// Adds gravity as a per-block BODY FORCE, before integration: each
+        /// block's own weight m_i * g(worldCenter_i) is pushed through
+        /// AddForceAtPoint at that block's ship-local center, so it is both
+        /// torque-correct (a lopsided ship spins under a tidal gradient) and
+        /// recorded in AppliedForcesThisStep for the structural solver.
+        /// No-op (and allocation-free either way) when Gravity is unset.
+        /// </summary>
+        void ApplyGravityForces()
+        {
+            if (Gravity == null) return;
+
+            foreach (var kv in Grid.All)
+            {
+                float2 localCenter = BlockGrid.CenterOf(kv.Key);
+                float2 worldCenter = LocalToWorld(localCenter);
+                float2 accel = Gravity.AccelerationAt(worldCenter);
+                float blockMass = BlockTypes.Get(kv.Value.TypeId).Mass;
+                float2 worldForce = accel * blockMass;
+                float2 localForce = WorldVectorToLocal(worldForce);
+                AddForceAtPoint(localCenter, localForce);
+            }
+        }
+
+        /// <summary>
+        /// After integration: tests every block center against Gravity for
+        /// surface contact, pushes the ship out of the deepest single
+        /// penetration once, then resolves each contacting block's normal
+        /// velocity with a restitution impulse (ApplyImpulseAtWorldPoint),
+        /// bleeds tangential velocity by Friction (a simple ground-friction
+        /// approximation), and applies contact damage proportional to the
+        /// impact speed above ContactDamageSpeed. Contacts are processed in
+        /// sorted key order so the result is deterministic regardless of the
+        /// grid's internal dictionary iteration order.
+        /// </summary>
+        void ResolvePlanetContacts(float dt)
+        {
+            ContactsThisStep.Clear();
+            if (Gravity == null || Grid.Mass.Total <= 0f) return;
+
+            _contactKeyScratch.Clear();
+            foreach (var kv in Grid.All) _contactKeyScratch.Add(kv.Key);
+            _contactKeyScratch.Sort();
+
+            // Pass 1: find the single deepest penetration across all
+            // contacting blocks and push the whole ship out along that
+            // normal once, so multiple simultaneously-contacting blocks
+            // (e.g. a flat hull landing) do not get pushed out repeatedly.
+            float deepestPenetration = 0f;
+            float2 deepestNormal = float2.zero;
+            bool anyContact = false;
+
+            for (int i = 0; i < _contactKeyScratch.Count; i++)
+            {
+                int key = _contactKeyScratch[i];
+                float2 worldCenter = LocalToWorld(BlockGrid.CenterOf(key));
+                if (!Gravity.TryContact(worldCenter, ContactClearance, out _, out var normal, out var penetration)) continue;
+                anyContact = true;
+                if (penetration > deepestPenetration)
+                {
+                    deepestPenetration = penetration;
+                    deepestNormal = normal;
+                }
+            }
+
+            if (anyContact && deepestPenetration > 0f)
+            {
+                Position += deepestNormal * deepestPenetration;
+            }
+
+            if (!anyContact) return;
+
+            float mass = Grid.Mass.Total;
+            float inertia = Grid.Mass.InertiaAboutCenterOfMass;
+
+            for (int i = 0; i < _contactKeyScratch.Count; i++)
+            {
+                int key = _contactKeyScratch[i];
+                float2 worldCenter = LocalToWorld(BlockGrid.CenterOf(key));
+                if (!Gravity.TryContact(worldCenter, ContactClearance, out int bodyIndex, out var normal, out _)) continue;
+
+                float2 r = worldCenter - LocalToWorld(Grid.Mass.CenterOfMass);
+                float2 blockVelocity = Velocity + AngularVelocity * new float2(-r.y, r.x);
+                float vn = math.dot(blockVelocity, normal);
+
+                float restitution = Gravity.TryGetPermanent(bodyIndex, out var body) ? body.SurfaceRestitution : 0f;
+
+                if (vn < 0f)
+                {
+                    float crossRN = r.x * normal.y - r.y * normal.x;
+                    float denom = inertia > 0f
+                        ? (1f / mass) + (crossRN * crossRN) / inertia
+                        : (1f / mass);
+                    float impulseMag = -(1f + restitution) * vn / denom;
+                    float2 impulse = normal * impulseMag;
+                    ApplyImpulseAtWorldPoint(worldCenter, impulse);
+                }
+
+                // Ground friction: bleed the tangential component of this
+                // block's velocity, recomputed after the restitution impulse
+                // above so friction acts on the post-bounce state.
+                float2 tangent = new float2(-normal.y, normal.x);
+                float2 postR = worldCenter - LocalToWorld(Grid.Mass.CenterOfMass);
+                float2 postVelocity = Velocity + AngularVelocity * new float2(-postR.y, postR.x);
+                float vt = math.dot(postVelocity, tangent);
+                float frictionImpulseMag = -vt * math.clamp(Friction * dt, 0f, 1f) * mass;
+                if (frictionImpulseMag != 0f)
+                {
+                    ApplyImpulseAtWorldPoint(worldCenter, tangent * frictionImpulseMag);
+                }
+
+                ContactsThisStep.Add((key, normal, math.abs(vn)));
+
+                if (math.abs(vn) > ContactDamageSpeed && Grid.TryGet(key, out var block))
+                {
+                    float damageAmount = math.clamp((math.abs(vn) - ContactDamageSpeed) * ContactDamagePerSpeed, 0f, 255f);
+                    int newDamage = math.min(255, block.Damage + (int)damageAmount);
+                    Grid.TrySet(key, block.WithDamage((byte)newDamage));
+                }
+            }
         }
 
         /// <summary>
@@ -347,6 +509,17 @@ namespace Hullbreach.Ship
             float s = math.sin(-Rotation);
             float c = math.cos(-Rotation);
             return new float2(d.x * c - d.y * s, d.x * s + d.y * c);
+        }
+
+        /// <summary>Rotates a world-space free VECTOR (force, direction --
+        /// no translation) into ship-local space; the vector counterpart of
+        /// WorldToLocal, used to fold a world-space gravity force into the
+        /// ship-local force accumulator that AddForceAtPoint expects.</summary>
+        float2 WorldVectorToLocal(float2 worldVector)
+        {
+            float s = math.sin(-Rotation);
+            float c = math.cos(-Rotation);
+            return new float2(worldVector.x * c - worldVector.y * s, worldVector.x * s + worldVector.y * c);
         }
 
         /// <summary>
