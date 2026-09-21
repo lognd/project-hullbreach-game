@@ -8,11 +8,11 @@ namespace Hullbreach.Structure
     ///
     /// THE PROBLEM: a ship in space has no supports, so K is singular with a
     /// 3-dimensional null space (translate x, translate y, rotate). K u = f has
-    /// a solution only when f is orthogonal to that null space -- which
+    /// a solution only when f is orthogonal to that null space, which
     /// physically means net force zero and net torque zero. An accelerating
     /// ship does not satisfy that.
     ///
-    /// THE WRONG FIX: pin the core. One line, but it is false physics -- the
+    /// THE WRONG FIX: pin the core. One line, but it is false physics: the
     /// pinned node supplies reaction forces, so stress piles up at the core and
     /// a distant thruster reads as a lever against it.
     ///
@@ -105,7 +105,7 @@ namespace Hullbreach.Structure
             float totalMass = grid.Mass.Total;
 
             // Point-mass inertia (mass concentrated at each block's center),
-            // NOT grid.Mass.InertiaAboutCenterOfMass -- that value also folds
+            // NOT grid.Mass.InertiaAboutCenterOfMass: that value also folds
             // in each block's own spin inertia (RectangleInertia), which has
             // no counterpart in this lumped-corner-mass distribution below.
             // Using the wrong I here would make alpha inconsistent with how

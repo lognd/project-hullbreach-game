@@ -14,7 +14,7 @@ namespace Hullbreach.Ship.Behaviours
     public interface IWorldSink
     {
         /// <summary>Spawns whatever object represents `shot` (visual,
-        /// physics, or both -- the sink decides).</summary>
+        /// physics, or both; the sink decides).</summary>
         void SpawnProjectile(in ShotRequest shot);
 
         /// <summary>Adds a temporary gravity well/anti-well to the world's

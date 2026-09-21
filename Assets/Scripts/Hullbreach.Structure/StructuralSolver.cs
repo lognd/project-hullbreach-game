@@ -33,7 +33,7 @@ namespace Hullbreach.Structure
         /// or no sub-critical mode exists. CLIENT-SAFE: unlike
         /// <see cref="StructuralSolver.BuckledBlocks"/>, this is a continuous
         /// float derived the same way on every machine's own solve and is
-        /// meant for a color tint only -- it must never be used to decide
+        /// meant for a color tint only: it must never be used to decide
         /// that a block breaks (see BuckledBlocks doc for why).
         /// </summary>
         public float BucklingRatio;
@@ -44,7 +44,7 @@ namespace Hullbreach.Structure
     /// together for one simulation tick, and reduces the resulting
     /// displacement field to a per-block stress.
     ///
-    /// TOPOLOGY TRACKING: this class does NOT call grid.ClearDirty() -- the
+    /// TOPOLOGY TRACKING: this class does NOT call grid.ClearDirty(); the
     /// ship branch owns that flag's lifecycle (other systems, e.g.
     /// Connectivity/Articulation, also read it). Instead it snapshots
     /// grid.TopologyDirty at the start of Tick and remembers whether it has
@@ -67,7 +67,7 @@ namespace Hullbreach.Structure
 
         /// <summary>Call when the caller knows topology changed but the block
         /// count happens to be unchanged (e.g. a block swapped for a
-        /// different type at the same key) -- Count alone cannot detect that.</summary>
+        /// different type at the same key): Count alone cannot detect that.</summary>
         public void MarkTopologyChanged() => _forceRebuild = true;
 
         /// <summary>Per-block stress results from the most recent Tick.</summary>
@@ -195,7 +195,7 @@ namespace Hullbreach.Structure
         public bool BucklingEnabled = true;
 
         /// <summary>Buckling is attempted at most once every this many ticks
-        /// (a tick-count throttle, not a wall-clock one -- see
+        /// (a tick-count throttle, not a wall-clock one; see
         /// BucklingAnalysis's determinism doc). Between eligible ticks the
         /// previously published modes stand.</summary>
         public int BucklingEveryNTicks = 4;
@@ -203,7 +203,7 @@ namespace Hullbreach.Structure
         /// <summary>Modes requested from the subspace iteration.</summary>
         public int BucklingModeCount = 4;
 
-        /// <summary>Forwards to BucklingAnalysis.MaxSweepsPerTick -- exposed
+        /// <summary>Forwards to BucklingAnalysis.MaxSweepsPerTick: exposed
         /// here so a caller (or a test wanting faster convergence than the
         /// production per-tick budget) can tune the per-tick cost cap without
         /// reaching into StructuralSolver's private analysis instance.</summary>
@@ -216,7 +216,7 @@ namespace Hullbreach.Structure
         /// <summary>
         /// Cumulative strain-energy fraction (descending by block
         /// participation) that defines "the blocks that fold" in a
-        /// sub-critical mode -- e.g. 0.5 means the fewest highest-energy
+        /// sub-critical mode: e.g. 0.5 means the fewest highest-energy
         /// blocks whose participation sums to half the mode's energy.
         /// </summary>
         public float BucklingParticipationThreshold = 0.5f;
@@ -234,7 +234,7 @@ namespace Hullbreach.Structure
         /// <summary>
         /// Union, across every mode with LoadFactor &lt;= 1, of the blocks
         /// making up <see cref="BucklingParticipationThreshold"/> of that
-        /// mode's strain energy -- i.e. every block that some independent
+        /// mode's strain energy: i.e. every block that some independent
         /// sub-critical fold wants to break, combined, because a ship can
         /// fold in two places at once and both must break.
         ///
@@ -250,7 +250,7 @@ namespace Hullbreach.Structure
         /// <summary>Minor-principal-stress floor below which compression
         /// counts as real for the early-out below. Pure tension still leaves
         /// a whisper of local transverse compression at a point-load's
-        /// application node from Poisson coupling -- that is a load-
+        /// application node from Poisson coupling: that is a load-
         /// application artifact, not a structural instability, so it must
         /// not by itself keep the subspace machinery running every tick.</summary>
         const float CompressionFloor = -1e-3f;
@@ -262,7 +262,7 @@ namespace Hullbreach.Structure
         /// converged. Cheap early-out: if no element anywhere is meaningfully
         /// in compression, K_G is positive semidefinite (see
         /// GeometricStiffness' sign convention), so there is no positive
-        /// lambda to find -- skipped without ever touching the subspace
+        /// lambda to find; skipped without ever touching the subspace
         /// machinery.
         /// </summary>
         void RunBuckling(Hullbreach.Core.BlockGrid grid)
@@ -288,7 +288,7 @@ namespace Hullbreach.Structure
             // Reset only on an actual DOF-COUNT change, not merely because K
             // was numerically rebuilt this tick: StructuralSolver rebuilds K
             // whenever grid.TopologyDirty is set, and that flag's lifecycle
-            // belongs to the ship branch (see the class doc) -- it can stay
+            // belongs to the ship branch (see the class doc); it can stay
             // true for many ticks in a row with no real topology change
             // (e.g. in a test harness that never clears it), and discarding
             // a perfectly good warm-started subspace every such tick would
@@ -330,7 +330,7 @@ namespace Hullbreach.Structure
 
         /// <summary>Combines every sub-critical (LoadFactor &lt;= 1) mode's
         /// top-participation blocks (cumulative to BucklingParticipationThreshold)
-        /// into one sorted, de-duplicated list -- see BuckledBlocks' doc for
+        /// into one sorted, de-duplicated list: see BuckledBlocks' doc for
         /// why this is deterministic and server-only.</summary>
         void RecomputeBuckledBlocks()
         {

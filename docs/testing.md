@@ -11,7 +11,7 @@ This is what CI's `plaincs` job runs on every PR
 
 1. Calls `tools/plaincs/fetch_deps.sh`, which shallow-clones
    `Unity-Technologies/Unity.Mathematics` (tag `1.2.5`) into
-   `tools/plaincs/.deps/um` if not already present -- `Unity.Mathematics`
+   `tools/plaincs/.deps/um` if not already present. `Unity.Mathematics`
    is pure C# with no engine dependency, so it compiles standalone.
 2. Resolves a `dotnet` executable, falling back to the Windows SDK path
    under WSL (`/mnt/c/Program Files/dotnet/dotnet.exe`) if `dotnet` is not
@@ -22,10 +22,10 @@ This is what CI's `plaincs` job runs on every PR
 every engine-free assembly from source, directly out of `Assets/Scripts`:
 `Hullbreach.Core`, `.Ship`, `.World`, `.Structure`, `.Builder`, `.Net`,
 plus the fetched `Unity.Mathematics` sources (with its own Editor/
-Properties/attribute files excluded -- those need the actual Unity
+Properties/attribute files excluded: those need the actual Unity
 editor). `Hullbreach.Plain.Tests.csproj` compiles every `.cs` under
 `Assets/Tests/EditMode` against that assembly, using NUnit +
-`Microsoft.NET.Test.Sdk` + `NUnit3TestAdapter` -- **the exact same test
+`Microsoft.NET.Test.Sdk` + `NUnit3TestAdapter`: **the exact same test
 sources Unity's own Test Runner would run**, because Unity Test Framework
 is also NUnit underneath. There is no fork between "the tests we run in
 CI" and "the tests the editor runs"; it is the same files, two different
@@ -41,7 +41,7 @@ tools/plaincs/run_tests.sh --filter FullyQualifiedName~BlockBehaviourTests
 
 `.github/workflows/ci.yml` has three jobs, `tree`, `plaincs`, and `gate`:
 
-- **`tree`**: `scripts/check_unity_tree.sh` -- every asset/`.meta` pairs up
+- **`tree`**: `scripts/check_unity_tree.sh`: every asset/`.meta` pairs up
   correctly, no generated folder (`Library`, `Temp`, `Obj`, `Logs`,
   `UserSettings`, `Build`, `Builds`) is committed, `ProjectVersion.txt`
   still pins `6000.0.43f1`, and `Packages/manifest.json` plus every
@@ -50,7 +50,7 @@ tools/plaincs/run_tests.sh --filter FullyQualifiedName~BlockBehaviourTests
   exit code is the number of problems found, so `0` means clean).
 - **`plaincs`**: the `dotnet test` run described above.
 - **`gate`**: the single required status check branch protection actually
-  looks at ("All checks pass") -- fails if either of the above did not
+  looks at ("All checks pass"): fails if either of the above did not
   succeed.
 
 There is **no Unity editor in CI at all yet**. Editor/play-mode tests and
@@ -60,12 +60,12 @@ a headless dedicated-server build are both tracked as open items in
 
 ## Which assemblies are NOT covered by `tools/plaincs`
 
-**`Hullbreach.Game`** -- the only assembly that references `UnityEngine`
+**`Hullbreach.Game`**: the only assembly that references `UnityEngine`
 (`MonoBehaviour`s: `ShipController`, `BuilderController`, `ShipRenderer`,
 `ShipStructure`, `WorldSink`, `GravityWorld`, `Powerup`/`PowerupSpawner`,
 `Projectile`/`ProjectileSpawner`, `DemoMode`, `BuilderHud`,
 `CameraFollow`). There is no `Hullbreach.Game.Tests` folder under
-`Assets/Tests/EditMode` at all -- notice `Assets/Tests/EditMode` has one
+`Assets/Tests/EditMode` at all. Notice `Assets/Tests/EditMode` has one
 `.Tests` folder per plain assembly (`Hullbreach.Builder.Tests`,
 `Hullbreach.Core.Tests`, `Hullbreach.Net.Tests`, `Hullbreach.Ship.Tests`,
 `Hullbreach.Structure.Tests`, `Hullbreach.World.Tests`) and no
@@ -73,7 +73,7 @@ a headless dedicated-server build are both tracked as open items in
 (scene wiring, `DemoMode`'s state machine, `ShipRenderer`'s actual pixel
 output, `Powerup`'s `OnTriggerEnter2D`) can only be exercised by opening
 the editor and pressing Play, or by a future Unity Test Framework
-play-mode test suite -- neither exists yet. This is also why
+play-mode test suite: neither exists yet. This is also why
 `docs/demo-scene.md`'s "first open in Unity" checklist exists: nothing in
 `Hullbreach.Game` has ever actually run.
 
@@ -83,7 +83,7 @@ Inside the editor, Window -> General -> Test Runner -> EditMode tab lists
 every `[Test]` under `Assets/Tests/EditMode`, grouped by each folder's
 `.asmdef` (e.g. `Hullbreach.Ship.Tests.asmdef`). Unity compiles and runs
 them with its own NUnit host, against the compiled `Hullbreach.Ship` etc.
-assemblies from `Assets/Scripts` -- the identical `.cs` files
+assemblies from `Assets/Scripts`: the identical `.cs` files
 `tools/plaincs` compiles, just through Unity's compiler and test host
 instead of `dotnet test`. There is no separate "editor version" of a test
 to keep in sync; if a test passes under `tools/plaincs/run_tests.sh` and
@@ -96,7 +96,7 @@ own compiler settings), not an expected difference.
 1. **Pick the right assembly's test folder.** One test project per plain
    assembly, matching name: code in `Hullbreach.Ship` gets tests in
    `Assets/Tests/EditMode/Hullbreach.Ship.Tests/`. There is nowhere to put
-   a test for `Hullbreach.Game` code yet (see above) -- if you are adding
+   a test for `Hullbreach.Game` code yet (see above); if you are adding
    one, that is worth raising, not silently working around.
 2. **Add the `.cs` file directly in that folder** (or a new file; NUnit
    discovers `[Test]`/`[TestFixture]` by attribute, not by file name).
@@ -112,7 +112,7 @@ own compiler settings), not an expected difference.
    only need to add a reference if your new test needs a plain assembly
    the existing asmdef does not already reference (e.g. a
    `Hullbreach.Structure` test needing `Hullbreach.World`).
-4. **`.meta` files**: every new `.cs` file needs a matching `.cs.meta` --
+4. **`.meta` files**: every new `.cs` file needs a matching `.cs.meta`.
    Unity generates this automatically the moment the file exists inside
    an open project; if you are editing outside the editor, `git add` the
    `.meta` alongside the `.cs` exactly as `CONTRIBUTING.md`'s Unity rules

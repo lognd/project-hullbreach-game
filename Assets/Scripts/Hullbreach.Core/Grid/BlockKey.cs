@@ -10,7 +10,7 @@ namespace Hullbreach.Core
     /// packed int is also exactly what goes on the wire, so the network
     /// identity and the dictionary key end up being the same thing.
     ///
-    /// GRID CONVENTION -- everything downstream depends on this:
+    /// GRID CONVENTION: everything downstream depends on this:
     ///   Block (x, y) occupies the unit square [x, x+1] x [y, y+1].
     ///   Its center is therefore at (x + 0.5, y + 0.5).
     /// </summary>

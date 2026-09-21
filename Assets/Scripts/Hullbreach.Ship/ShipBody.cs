@@ -8,7 +8,7 @@ using Hullbreach.Ship.Behaviours;
 namespace Hullbreach.Ship
 {
     /// <summary>
-    /// The ship simulation. PLAIN C# ON PURPOSE -- no UnityEngine anywhere in
+    /// The ship simulation. PLAIN C# ON PURPOSE: no UnityEngine anywhere in
     /// this assembly.
     ///
     /// That constraint buys three things: edit-mode tests that run in
@@ -31,7 +31,7 @@ namespace Hullbreach.Ship
         public float ThrustPerBlock = 10f;
 
         /// <summary>Tunable force one fully throttled retro thruster block
-        /// contributes. Defaults to half of ThrustPerBlock -- retros are two
+        /// contributes. Defaults to half of ThrustPerBlock: retros are two
         /// small side nozzles, not a main engine.</summary>
         public float RetroThrustPerBlock = 5f;
 
@@ -105,7 +105,7 @@ namespace Hullbreach.Ship
 
         /// <summary>Shots fired this Step, appended to and left for the
         /// caller (ShipController) to drain and clear. ShipBody never spawns
-        /// projectile objects itself -- it only records intent and applies
+        /// projectile objects itself: it only records intent and applies
         /// its own recoil.</summary>
         public readonly List<ShotRequest> PendingShots = new List<ShotRequest>();
 
@@ -211,12 +211,12 @@ namespace Hullbreach.Ship
         /// <summary>
         /// Advance one FIXED timestep. Never call this from Update: the physics
         /// step runs on a fixed timer, and applying force per rendered frame
-        /// makes a 144 Hz machine fly differently from a 60 Hz one -- and both
+        /// makes a 144 Hz machine fly differently from a 60 Hz one, and both
         /// differently from the headless server.
         ///
         /// Forces/torques are accumulated in SHIP-LOCAL space (thrusters and
         /// fins are fixed to the hull), then the net force is rotated into
-        /// world space before integrating -- torque is a scalar about the
+        /// world space before integrating: torque is a scalar about the
         /// out-of-plane axis and is unaffected by that rotation.
         ///
         /// Three ramped control channels drive everything: forward
@@ -437,7 +437,7 @@ namespace Hullbreach.Ship
         /// <summary>Ramps `key`'s stored throttle toward `target` at the rate
         /// implied by `modifiers`' ramp-upgrade bits, stores, and returns the
         /// updated value. Shared by every ramped-throttle behaviour
-        /// (forward/retro thrust, fin steer, seeking thrust) -- one block
+        /// (forward/retro thrust, fin steer, seeking thrust): one block
         /// belongs to exactly one behaviour, so keys never collide.</summary>
         public float RampThrottleFor(int key, byte modifiers, float target, float dt)
         {
@@ -588,7 +588,7 @@ namespace Hullbreach.Ship
             return new float2(d.x * c - d.y * s, d.x * s + d.y * c);
         }
 
-        /// <summary>Rotates a world-space free VECTOR (force, direction --
+        /// <summary>Rotates a world-space free VECTOR (force, direction,
         /// no translation) into ship-local space; the vector counterpart of
         /// WorldToLocal, used to fold a world-space gravity force into the
         /// ship-local force accumulator that AddForceAtPoint expects, and by

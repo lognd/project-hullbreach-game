@@ -1,14 +1,14 @@
 # Adding a block behaviour
 
 Two recipes: a new **variant** of an existing block type (a new weapon or
-thruster mode -- most powerups and combat additions are this), and a new
+thruster mode: most powerups and combat additions are this), and a new
 block **type** from scratch (a new row in `BlockTypes`).
 
 Read `docs/architecture.md`'s "modifier byte" and "ShipBody.Step" sections
 first; this doc assumes you already know what the facing/ramp/variant bits
 are and where `ShipBody.Step` calls into behaviours.
 
-## Recipe: a new variant (worked example -- Scatter Shot)
+## Recipe: a new variant (worked example: Scatter Shot)
 
 Goal: a fourth Cannon variant that fires three projectiles in a small
 spread instead of one, as a stretch powerup alongside the gravity gun and
@@ -108,7 +108,7 @@ Register(Hullbreach.Core.BlockTypes.Cannon, 3, new ScatterCannonBehaviour());
 
 `PowerupSpawner` on the `Powerups` object in `DemoScene.unity` carries an
 array of `PowerupPreset` (`Assets/Scripts/Hullbreach.Game/PowerupSpawner.cs`)
-authored in the Inspector -- to add a fourth pickup, add one more
+authored in the Inspector. To add a fourth pickup, add one more
 `PowerupPreset` element with `baseTypeId = BlockTypes.Cannon`,
 `variant = 3`, a `seconds` duration, a `color`, and a `displayName`, the
 same shape as the existing gravity-gun/anti-gravity-gun/seeking-thruster
@@ -116,14 +116,14 @@ entries. Since `DemoScene.unity` is hand-authored YAML that no one has
 opened in the actual Unity editor yet (see `docs/demo-scene.md`), adding
 an array element by hand means adding one more `PowerupPreset` struct
 block to the `presets` array in the scene YAML, matching the existing
-entries' field layout exactly -- or, once someone has the editor open,
+entries' field layout exactly, or, once someone has the editor open,
 doing it from the Inspector instead and letting Unity write the YAML.
 
 At runtime a ship picks it up through `Powerup.OnTriggerEnter2D` ->
 `ShipBody.ApplyPowerup(variant, baseTypeId, point, seconds)`, which finds
 the nearest block of `baseTypeId` on that ship, swaps its `Modifiers`'
 variant bits to 3 for `seconds`, and reverts to 0 when `TickPowerups`
-expires it -- no scatter-shot-specific code needed there at all, since the
+expires it: no scatter-shot-specific code needed there at all, since the
 whole mechanism reads the variant bits generically.
 
 ### 5. Give it a renderer tint
@@ -164,7 +164,7 @@ public void ScatterCannon_Shot_FiresThreeProjectiles()
 ```
 
 Add this to `Assets/Tests/EditMode/Hullbreach.Ship.Tests/BlockBehaviourTests.cs`
-(or a new file in that same folder) -- it compiles and runs under
+(or a new file in that same folder); it compiles and runs under
 `tools/plaincs/run_tests.sh` with zero Unity involvement, since
 `Hullbreach.Ship` and its tests are both engine-free. See
 `docs/testing.md` for how to run it and how the asmdef references work.
@@ -183,16 +183,16 @@ files, all in `Core` and `Builder` plus optionally `Ship`/`Game`:
    for how Core/Hull/Armor/etc. were balanced relative to each other).
 2. **`Assets/Scripts/Hullbreach.Builder/BlockPalette.cs`**: add one more
    entry to the `Cost` array (same index as the new `BlockTypes` id) and,
-   if the new type has no facing, nothing else -- `IsSymmetric` already
+   if the new type has no facing, nothing else. `IsSymmetric` already
    defaults to true for everything except Cannon and Fin. If the new type
    *is* directional, add it to the `!=` chain in `IsSymmetric` so the
    two-click facing flow (S30) applies to it.
 3. **`Assets/Scripts/Hullbreach.Builder/Clearance.cs`**: add a `case
    BlockTypes.NewType:` to `TryReservedCells` if the new block needs
-   reserved empty cells (an exhaust, a muzzle, side nozzles -- anything
+   reserved empty cells (an exhaust, a muzzle, side nozzles, anything
    that must stay clear), and/or a branch in `RequiredAnchor` if it must
    sit on a specific existing block the way Fin requires hull behind it.
-   A plain block (like Hull/Armor) needs neither -- `TryReservedCells`
+   A plain block (like Hull/Armor) needs neither: `TryReservedCells`
    already returns an empty list and `RequiredAnchor` already returns
    false for anything not explicitly matched.
 4. **`Assets/Scripts/Hullbreach.Game/ShipRenderer.cs`**: add a `case
@@ -205,7 +205,7 @@ files, all in `Core` and `Builder` plus optionally `Ship`/`Game`:
    `ShipBody`'s cached key groups (like `ThrusterKeys`/`WeaponKeys`), add
    it to `RebuildDerivedViews` in `ShipBody.cs` so `Step` actually calls
    into it every tick. A structural-only block (Hull/Armor-like) needs no
-   behaviour at all -- `BehaviourRegistry.Resolve` already returns `null`
+   behaviour at all: `BehaviourRegistry.Resolve` already returns `null`
    for a type with nothing registered, and `ShipBody.Step` only calls
    behaviours for the key groups it iterates.
 6. **Tests**: extend `Assets/Tests/EditMode/Hullbreach.Core.Tests/BlockTypesTests.cs`

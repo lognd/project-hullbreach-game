@@ -7,7 +7,7 @@ namespace Hullbreach.Game
     /// <summary>
     /// Minimal OnGUI HUD for the builder (S33): lists the palette with mass
     /// and cost, shows total mass and block count, and highlights the current
-    /// selection. Deliberately OnGUI, not a Canvas -- it needs no scene setup
+    /// selection. Deliberately OnGUI, not a Canvas: it needs no scene setup
     /// and is only meant to make the palette/criteria testable by hand.
     /// </summary>
     public sealed class BuilderHud : MonoBehaviour

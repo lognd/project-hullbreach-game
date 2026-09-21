@@ -95,7 +95,7 @@ namespace Hullbreach.Core.Tests
             Assert.IsFalse(g.Contains(k), "the block must actually leave the dictionary");
             Assert.AreEqual(1, g.Count);
 
-            // Re-adding at the same key must succeed -- it would be refused
+            // Re-adding at the same key must succeed: it would be refused
             // if TryRemove left a stale entry behind.
             Assert.IsTrue(g.TryAdd(k, new Block(BlockTypes.Hull)));
         }

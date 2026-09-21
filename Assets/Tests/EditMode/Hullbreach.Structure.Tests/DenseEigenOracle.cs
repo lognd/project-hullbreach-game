@@ -11,7 +11,7 @@ namespace Hullbreach.Structure.Tests
     /// Multiply with unit vectors, projects both onto the orthogonal
     /// complement of the three rigid-body modes (so the reduced K is SPD),
     /// and solves the reduced generalized eigenproblem by Cholesky +
-    /// cyclic Jacobi -- an O(n^3) method, fine at the few-hundred-dof sizes
+    /// cyclic Jacobi: an O(n^3) method, fine at the few-hundred-dof sizes
     /// BucklingTests exercises. Exists so a bug in the geometric stiffness,
     /// the load case, or the subspace iteration can be told apart from one
     /// another: if this oracle and BucklingAnalysis agree, the subspace
@@ -21,7 +21,7 @@ namespace Hullbreach.Structure.Tests
     /// but this oracle's own Gram-Schmidt complement basis (built off the
     /// n standard basis vectors, not a handful of well-separated seeds) is
     /// far more exposed to accumulated rounding at a few hundred dof than
-    /// BucklingAnalysis's own better-conditioned subspace iteration --
+    /// BucklingAnalysis's own better-conditioned subspace iteration:
     /// float arithmetic here measurably manufactured spurious near-zero
     /// generalized eigenvalues (an artifact of losing orthogonality against
     /// the rigid modes, not a real soft mode) that then masqueraded as a
@@ -94,7 +94,7 @@ namespace Hullbreach.Structure.Tests
 
         /// <summary>Orthonormal basis (n x (n - modes.Length)) for the
         /// complement of the given orthonormal `modes`, built by two-pass
-        /// (reorthogonalized) Gram-Schmidt over the standard basis of R^n --
+        /// (reorthogonalized) Gram-Schmidt over the standard basis of R^n:
         /// a single pass loses enough orthogonality against the rigid modes
         /// at a few hundred dof to manufacture a spurious near-zero
         /// generalized eigenvalue later (see the class doc).</summary>
@@ -136,7 +136,7 @@ namespace Hullbreach.Structure.Tests
             return q;
         }
 
-        /// <summary>Gram-Schmidt orthonormalization of `modes` in place --
+        /// <summary>Gram-Schmidt orthonormalization of `modes` in place:
         /// a private reimplementation rather than reusing CgSolver's
         /// internal helper, since this oracle must stay independent of the
         /// production code path it is checking.</summary>

@@ -6,7 +6,7 @@ namespace Hullbreach.Game
 {
     /// <summary>
     /// The MonoBehaviour adapter for BuilderSession (S30-S33). Lifecycle,
-    /// mouse-to-grid conversion and Gizmo drawing ONLY -- every rule about
+    /// mouse-to-grid conversion and Gizmo drawing ONLY: every rule about
     /// what is a legal click lives in BuilderSession/PlacementRules, which
     /// have no UnityEngine dependency and are exercised in edit-mode tests.
     ///
@@ -27,7 +27,7 @@ namespace Hullbreach.Game
 
         /// <summary>Renderer/collider to notify after every mutation, so the
         /// demo scene's ShipRenderer/ShipCollider rebuild without polling.
-        /// Optional -- standalone use (e.g. a future dedicated build scene
+        /// Optional: standalone use (e.g. a future dedicated build scene
         /// with no ShipBody yet) leaves these null.</summary>
         [SerializeField] ShipRenderer shipRenderer;
         [SerializeField] ShipCollider shipCollider;
@@ -51,7 +51,7 @@ namespace Hullbreach.Game
         void Awake()
         {
             // Build over the SAME grid a ShipController is simulating, when
-            // one is wired up -- otherwise the builder and the flying ship
+            // one is wired up. Otherwise the builder and the flying ship
             // would silently diverge onto two different grids. Falls back to
             // a private grid so this component still works standalone.
             Session = shipController != null && shipController.Ship != null

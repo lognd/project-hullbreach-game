@@ -12,7 +12,7 @@ namespace Hullbreach.Core
     /// trees) are wildly out of proportion to the problem.
     ///
     /// DETERMINISM: this is all integer work, so it reproduces bit-exactly on
-    /// every platform -- unlike the float FE solve, which does not. That
+    /// every platform, unlike the float FE solve, which does not. That
     /// asymmetry is what lets the server send only "block (x,y) died" and have
     /// both sides independently derive the same detached components, instead of
     /// ever putting a block list on the wire.
@@ -21,7 +21,7 @@ namespace Hullbreach.Core
     {
         /// <summary>
         /// Flood fill from the core, writing every reachable key into
-        /// `reachable`. Left empty when the grid has no core -- a fragment is
+        /// `reachable`. Left empty when the grid has no core: a fragment is
         /// debris and has nothing to stay attached to.
         /// </summary>
         public static void ReachableFromCore(BlockGrid grid, HashSet<int> reachable)
@@ -50,7 +50,7 @@ namespace Hullbreach.Core
 
         /// <summary>
         /// Everything NOT reachable from the core. In combat, apply every
-        /// destruction for the tick FIRST and then call this once -- one fill
+        /// destruction for the tick FIRST and then call this once: one fill
         /// for the whole batch, never one per block.
         /// </summary>
         public static void FindDetached(BlockGrid grid, List<int> detached)
@@ -68,7 +68,7 @@ namespace Hullbreach.Core
         /// <summary>
         /// Split a detached set into individual connected components, so a
         /// hit that shears off two separate chunks yields two debris bodies
-        /// rather than one. BFS restricted to the given key set only -- same
+        /// rather than one. BFS restricted to the given key set only: same
         /// shape as ReachableFromCore, but bounded to `keys` instead of the
         /// whole grid.
         /// </summary>

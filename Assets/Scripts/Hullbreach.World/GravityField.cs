@@ -10,7 +10,7 @@ namespace Hullbreach.World
     ///
     /// Bodies are kept in one dense list (permanent bodies added via Add,
     /// temporary ones via AddTemporary) so AccelerationAt and TryContact are
-    /// a single allocation-free pass with deterministic (insertion) order --
+    /// a single allocation-free pass with deterministic (insertion) order,
     /// important both for determinism across machines and so ContactsThisStep
     /// on ShipBody is reproducible.
     /// </summary>

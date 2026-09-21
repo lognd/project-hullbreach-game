@@ -17,7 +17,7 @@ namespace Hullbreach.Structure
 
         /// <summary>The mode's DOF displacement vector, normalized so its
         /// largest-magnitude component is exactly 1 (a shape, not a
-        /// physical displacement -- the eigenproblem only fixes it up to
+        /// physical displacement: the eigenproblem only fixes it up to
         /// scale).</summary>
         public float[] Shape;
 
@@ -32,7 +32,7 @@ namespace Hullbreach.Structure
     /// the generalized eigenproblem (K + lambda*K_G) phi = 0, i.e.
     /// K phi = -lambda*K_G phi.
     ///
-    /// METHOD -- block inverse (subspace) iteration, Bathe-style:
+    /// METHOD: block inverse (subspace) iteration, Bathe-style:
     ///   1. iterate y_j = K^-1 * (-K_G * v_j) for every vector in the block
     ///      (CgSolver does the K^-1 apply; K is singular by 3 rigid modes,
     ///      so every vector and every CG right-hand side is projected onto
@@ -44,14 +44,14 @@ namespace Hullbreach.Structure
     ///      via Cholesky + Jacobi (both dense, ~40 lines, fine at m &lt;= ~8);
     ///   4. replace the block with the Ritz vectors (sorted by ascending
     ///      lambda) and repeat.
-    /// The block is m = requested modes + 2 vectors -- the two extras give
+    /// The block is m = requested modes + 2 vectors: the two extras give
     /// the iteration room to sort out near-degenerate modes without losing
     /// one of the ones actually asked for.
     ///
     /// WHY NOT PLAIN POWER ITERATION ON K^-1*(-K_G) DIRECTLY: under uniform
     /// compression -K_G is positive-semidefinite, and repeated K^-1
     /// application makes the block converge to the largest eigenvalues of
-    /// that positive operator, i.e. exactly the smallest positive lambda --
+    /// that positive operator, i.e. exactly the smallest positive lambda:
     /// no shift needed. Mixed tension/compression can still put spurious
     /// large-magnitude negative-lambda directions in the block; the
     /// non-positive ones are filtered out in <see cref="ExtractModes"/>
@@ -62,20 +62,20 @@ namespace Hullbreach.Structure
     /// once by <see cref="Reset"/> (on topology change or mode-count change)
     /// and reused. <see cref="Step"/> runs at most <see cref="MaxSweepsPerTick"/>
     /// sweeps and returns without publishing anything until Ritz values stop
-    /// moving -- the caller (StructuralSolver) keeps calling Step tick after
+    /// moving; the caller (StructuralSolver) keeps calling Step tick after
     /// tick and only reads modes out once it returns true, so the subspace is
     /// warm-started for free across ticks (the load changes smoothly, so
     /// after the first topology change only a sweep or two is normally
     /// needed). Sweep budgets are TICK counts, never wall-clock, and the
     /// only "randomness" is a fixed deterministic seed pattern (no RNG), so
-    /// two runs over identical inputs produce bit-identical output -- see
+    /// two runs over identical inputs produce bit-identical output: see
     /// BucklingTests.Analysis_IsBitDeterministic.
     ///
     /// SERVER-ONLY DECISION, CLIENT-SAFE TINT: the float FE solve is not
     /// guaranteed bit-identical across machines (different CPUs/JIT), so any
     /// THRESHOLD decision made from it (which load factor crossed 1, which
-    /// blocks therefore break) must be made in exactly one place -- the
-    /// authoritative server -- and broadcast as an event, never re-derived
+    /// blocks therefore break) must be made in exactly one place (the
+    /// authoritative server) and broadcast as an event, never re-derived
     /// locally. That is what StructuralSolver.BuckledBlocks is: consume it
     /// only on the authority. Clients may read BlockStress.BucklingRatio (a
     /// continuous tint, not a decision) freely, because a client's own tint
@@ -84,7 +84,7 @@ namespace Hullbreach.Structure
     /// </summary>
     public sealed class BucklingAnalysis
     {
-        /// <summary>Sweeps to run per Step call -- the per-tick cost cap.</summary>
+        /// <summary>Sweeps to run per Step call: the per-tick cost cap.</summary>
         public int MaxSweepsPerTick = 2;
 
         /// <summary>Ritz values are considered converged once every tracked
@@ -92,7 +92,7 @@ namespace Hullbreach.Structure
         /// own magnitude).</summary>
         public float Tolerance = 2e-3f;
 
-        /// <summary>Sweeps actually run by the most recent Step call --
+        /// <summary>Sweeps actually run by the most recent Step call:
         /// mirrors CgSolver.LastIterationCount.</summary>
         public int LastSweepCount { get; private set; }
 
@@ -109,7 +109,7 @@ namespace Hullbreach.Structure
 
         /// <summary>Hard cap, in cumulative sweeps since the last Reset,
         /// after which Step force-publishes whatever the block currently
-        /// holds even if the per-slot tolerance check has not settled --
+        /// holds even if the per-slot tolerance check has not settled:
         /// mirrors CgSolver, which also returns its best estimate at
         /// MaxIterations rather than guaranteeing true convergence. Without
         /// this, rare transient near-linear-dependence among the block's
@@ -149,7 +149,7 @@ namespace Hullbreach.Structure
         /// <summary>
         /// (Re)allocates every work array for `dof` degrees of freedom and a
         /// block of `modeCount` + 2 vectors, and reseeds the subspace with a
-        /// fixed deterministic pattern (never a RNG -- see the class doc on
+        /// fixed deterministic pattern (never a RNG; see the class doc on
         /// determinism). Call whenever the topology (dof count) or the
         /// requested mode count changes; StructuralSolver also calls this
         /// when compression disappears, so a later reappearance starts clean
@@ -238,7 +238,7 @@ namespace Hullbreach.Structure
                     for (int i = 0; i < _dof; i++) _rhs[j][i] = -_rhs[j][i];
                     CgSolver.Project(_rhs[j], rigidModes);
 
-                    // Warm-start CG from the current subspace vector -- the
+                    // Warm-start CG from the current subspace vector: the
                     // whole point of carrying _v across sweeps/ticks.
                     Array.Copy(_v[j], _y[j], _dof);
                     _cg.Solve(k, _rhs[j], _y[j], rigidModes);
@@ -270,7 +270,7 @@ namespace Hullbreach.Structure
                 Array.Sort(_order, (p, q) => _lambda[p].CompareTo(_lambda[q]));
 
                 // New subspace vectors are the Ritz combinations of _y,
-                // reordered by ascending lambda -- written into _v via _rhs
+                // reordered by ascending lambda, written into _v via _rhs
                 // as scratch so we never read a _v slot we are about to
                 // overwrite (Rayleigh-Ritz combines ALL of _y into EVERY
                 // new vector).
@@ -295,19 +295,19 @@ namespace Hullbreach.Structure
                     sortedLambda[outIdx] = _lambda[_order[outIdx]];
 
                 // Only the requested modeCount smallest-lambda slots need to
-                // settle for the analysis to be USABLE -- the 2 spares exist
+                // settle for the analysis to be USABLE: the 2 spares exist
                 // purely to give the iteration room and can wander (or sit at
                 // a degenerate near-mu-zero value) indefinitely without that
                 // ever meaning the requested modes have not converged.
                 // Genuinely meaningless tracked values (near-zero or
-                // infinite lambda -- "no coupling on this Ritz direction
+                // infinite lambda, "no coupling on this Ritz direction
                 // yet") are NOT specially rejected here: CgSolver's own
                 // tolerance puts a noise floor under Tolerance's precision,
                 // so demanding every tracked slot be simultaneously stable
                 // AND finite AND non-negligible before ever declaring
                 // convergence can starve on that noise indefinitely.
                 // ExtractModes is the actual gate against publishing a
-                // meaningless value -- it drops non-positive/non-finite
+                // meaningless value: it drops non-positive/non-finite
                 // lambda outright, so a spurious transient here just yields
                 // fewer modes THIS tick, corrected the moment real
                 // compressive signal (which RunBuckling has already
@@ -337,7 +337,7 @@ namespace Hullbreach.Structure
 
                 if (_sweepsSinceReset < MinSweepsBeforeConvergence) converged = false;
                 else if (!converged && _sweepsSinceReset >= ForceConvergeAfterSweeps)
-                    converged = true; // force-publish -- see ForceConvergeAfterSweeps.
+                    converged = true; // force-publish: see ForceConvergeAfterSweeps.
 
                 if (converged) break;
             }
@@ -410,7 +410,7 @@ namespace Hullbreach.Structure
             // chase the ill-conditioning: a spare slot going non-finite here
             // carries no information the analysis needs (a genuine, well-
             // conditioned mode never produces one), so it is neutralized to
-            // 0 and Jacobi -- which cannot handle non-finite input -- never
+            // 0, and Jacobi (which cannot handle non-finite input) never
             // sees it.
             for (int i = 0; i < _m; i++)
             for (int j = 0; j < _m; j++)
@@ -433,11 +433,11 @@ namespace Hullbreach.Structure
 
             // mu are the Ritz values of A = K^-1*(-K_G) restricted to this
             // subspace (Gr c = mu*Kr c, i.e. the K-inner-product Rayleigh
-            // quotient of A -- see the class doc for why plain power
+            // quotient of A: see the class doc for why plain power
             // iteration on A finds the smallest positive lambda first under
             // uniform compression). A phi = mu*phi with A = K^-1*(-K_G) means
             // -K_G phi = mu*K phi, i.e. K phi = -(1/mu)*K_G phi, so
-            // lambda = 1/mu -- NOT -mu. mu ~ 0 (or negative) means no
+            // lambda = 1/mu, NOT -mu. mu ~ 0 (or negative) means no
             // meaningful positive lambda along that Ritz direction; represent
             // it as a signed infinity so it sorts to the correct end and gets
             // filtered out by ExtractModes without a divide blowing up into
@@ -455,7 +455,7 @@ namespace Hullbreach.Structure
         /// (true here: _kr is K projected onto a subspace already clear of
         /// the rigid modes, and K is positive definite off them). A tiny
         /// diagonal floor guards only against benign rounding, not a real
-        /// indefinite input -- an indefinite _kr would be a programmer bug.</summary>
+        /// indefinite input: an indefinite _kr would be a programmer bug.</summary>
         static void Cholesky(float[,] a, int n, float[,] l)
         {
             for (int i = 0; i < n; i++)
@@ -567,7 +567,7 @@ namespace Hullbreach.Structure
                 // leakage, see the class doc) AND non-finite ones: +Infinity
                 // means "no coupling found on this Ritz direction" (mu ~ 0),
                 // which ForceConvergeAfterSweeps can still hand back for a
-                // slot that has not developed real signal yet -- that is not
+                // slot that has not developed real signal yet: that is not
                 // a mode, it is an empty seat, and reporting it as one with
                 // an infinite load factor would be actively misleading.
                 if (!(lambda > 1e-6f) || float.IsInfinity(lambda)) continue;

@@ -3,7 +3,7 @@
 `Assets/Scenes/DemoScene.unity`, registered as the first
 `EditorBuildSettings` entry alongside `RocketScene`. Hand-authored YAML
 (commit `f680856`, "author DemoScene with a flyable/buildable player
-ship") -- see the checklist at the bottom before you trust anything about
+ship"). See the checklist at the bottom before you trust anything about
 it beyond "it parses and CI's tree check passes".
 
 ## Object / fileID layout
@@ -13,11 +13,11 @@ obvious which object a component belongs to just from its fileID:
 
 | fileID prefix | Object | Components (in order) |
 | --- | --- | --- |
-| `2000xxx` | (camera scaffolding: Transform, Camera, etc. -- `fileID 1` block for the built-in camera setup) | -- |
+| `2000xxx` | (camera scaffolding: Transform, Camera, etc.; `fileID 1` block for the built-in camera setup) | -- |
 | n/a | **Main Camera** (`2000001`) | Transform, Camera, GUILayer/AudioListener, **`CameraFollow`** (target = PlayerShip's Transform, smoothing = 5) |
 | `2001xxx` | **Demo** | Transform, **`DemoMode`**, **`ProjectileSpawner`**, **`BuilderHud`**, **`WorldSink`** |
 | `2002xxx` | **PlayerShip** | Transform, `Rigidbody2D`, **`ShipController`**, **`ShipRenderer`**, **`ShipCollider`**, **`ShipStructure`**, **`BuilderController`** |
-| `2003xxx` | **TargetShip** | Transform, `Rigidbody2D`, **`ShipController`**, **`ShipRenderer`**, **`ShipCollider`**, **`ShipStructure`** (no `BuilderController` -- it is never edited) |
+| `2003xxx` | **TargetShip** | Transform, `Rigidbody2D`, **`ShipController`**, **`ShipRenderer`**, **`ShipCollider`**, **`ShipStructure`** (no `BuilderController`; it is never edited) |
 | `2004xxx` | **Gravity** | Transform, **`GravityWorld`** |
 | `2005xxx` | **Powerups** | Transform, **`PowerupSpawner`** |
 
@@ -28,19 +28,19 @@ fileID reference in its Inspector fields: `playerShip: {fileID: 2002004}`
 (PlayerShip's `BuilderController`), `builderHud: {fileID: 2001005}`
 (Demo's own `BuilderHud`), `playerRenderer: {fileID: 2002005}`,
 `playerStructure: {fileID: 2002007}`. It also carries `startInOrbit: 1`,
-`orbitStartPosition: {x: 0, y: -30}`, `orbitBodyIndex: 0` -- so pressing
+`orbitStartPosition: {x: 0, y: -30}`, `orbitBodyIndex: 0`, so pressing
 **R** in Fly mode drops the player onto a circular orbit around the big
 planet (index 0 in `Gravity`'s `GravityWorld.planets` list) starting at
 `(0, -30)`, rather than resetting to dead rest at the origin.
 
 `WorldSink` (Demo, fileID `2001006`) points `spawner:` at `2001004`, the
-`ProjectileSpawner` on the same object -- this is the concrete
+`ProjectileSpawner` on the same object: this is the concrete
 `IWorldSink` implementation every `ShipBody` on a ship in this scene uses
 (see `docs/architecture.md`'s note on `IWorldSink`/`NullWorldSink`).
 
 `ProjectileSpawner` (Demo, fileID `2001004`) carries the default
 `ProjectileSpec` numbers directly in the Inspector: `speed: 20, impulse:
-2, damage: 25, lifetime: 3, radius: 0.1` -- the same defaults as
+2, damage: 25, lifetime: 3, radius: 0.1`, the same defaults as
 `ProjectileSpec.Default` in code, duplicated here because the scene
 authors its own spawner rather than reading the ship's spec (worth
 noting if the two ever need to diverge on purpose).
@@ -97,7 +97,7 @@ e.g. "Cannon (0,2): Gravity gun 6.2 s").
 ## Resetting
 
 `R` in Fly mode calls `ShipController.ResetTo`/`ResetToOrigin`. This only
-resets the *player* ship's position/velocity/rotation -- it does not
+resets the *player* ship's position/velocity/rotation: it does not
 re-run `BuilderSession` or restore the ship to its as-authored block
 layout, so a ship that lost blocks to combat or a buckling failure stays
 lost after a reset. There is no scene-reset ("restart the whole demo")
@@ -114,37 +114,37 @@ project in Unity 6000.0.43f1 for the first time should walk this list
 before trusting the demo scene or the RocketScene handoff notes:
 
 - [ ] `DemoScene.unity` opens without a "missing script" warning on any
-      of the five root objects or their children -- every `m_Script` GUID
+      of the five root objects or their children: every `m_Script` GUID
       above must resolve to the `.cs` file it names.
   - `frob:todo` equivalent: `TODO.md`'s "Open RocketScene in Unity and
     confirm the hand-edited ShipController and BuilderController wiring,
-    then commit the regenerated metas" -- the same concern applies to
+    then commit the regenerated metas": the same concern applies to
     DemoScene, which is newer and has never been opened at all.
 - [ ] Every fileID cross-reference in `DemoMode`, `WorldSink`, and
       `ProjectileSpawner` resolves to the object it claims to (the table
-      above) -- a typo'd fileID silently becomes a null Inspector
+      above); a typo'd fileID silently becomes a null Inspector
       reference that only shows up as a `Debug.LogError` at Play time or a
       `NullReferenceException`.
 - [ ] `PlayerShip`'s block layout (core/hull/thrusters/retro/cannon/fins,
       per the `f680856` commit body) actually matches what the grid
-      contains once `ShipController.Awake` seeds it -- confirm in the
+      contains once `ShipController.Awake` seeds it: confirm in the
       Scene view, not just by reading YAML.
 - [ ] `Rigidbody2D.simulated` correctly starts `false` on `PlayerShip` in
       Build mode and flips on entering Fly mode (`DemoMode.ApplyState`);
       confirm the ship does not drift or fall during Build.
 - [ ] `EditorBuildSettings.asset` still lists the missing `MainMenu`/
       `GameSceneOld`/`GameResources` scenes alongside `RocketScene` and
-      `DemoScene` (per `README.md`) -- confirm a build actually launches
+      `DemoScene` (per `README.md`); confirm a build actually launches
       `DemoScene` first rather than erroring on a missing scene index.
 - [ ] URP materials/shaders compile cleanly on first import ("everything
       is pink" in `README.md`'s "Things that bite people").
 - [ ] The generated 1x1 white sprite (`ShipRenderer.MakeSprite`) renders
-      correctly under URP 2D -- confirm block colors and the powerup pulse
+      correctly under URP 2D: confirm block colors and the powerup pulse
       actually look like intended tints, not the shader's error magenta.
 - [ ] `PowerupSpawner`'s three presets spawn, are collectible, and respawn
       10 seconds later exactly once confirmed working in-editor (never
       run under Play mode by the authors).
 - [ ] Buckling and stress overlays render a believable gradient on the
-      3x3 `TargetShip` after a few shots -- the FE/buckling pipeline has
+      3x3 `TargetShip` after a few shots: the FE/buckling pipeline has
       only ever been exercised by `Assets/Tests/EditMode` (see
       `docs/testing.md`), never inside a live scene.

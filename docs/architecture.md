@@ -37,14 +37,14 @@ day:
 Corollary: **server authority**. `CONTRIBUTING.md` states the policy
 ("clients send input through ghost commands; anything a client could lie
 about must be validated or recomputed on the server") and the assembly
-split is what makes it possible to actually enforce it later -- the same
+split is what makes it possible to actually enforce it later: the same
 `ShipBody.Step` that runs on a client for local prediction is the exact
 code that will run authoritatively on the server, with `IWorldSink`
 swapped for a server-side implementation instead of `WorldSink`
 (`Hullbreach.Game`). See `StructuralSolver.BuckledBlocks`'s doc comment
 for the concrete instance of this that already exists: it says outright
 that only the server may use it to decide a block breaks, because the
-float FE solve is not guaranteed bit-identical across machines -- "send
+float FE solve is not guaranteed bit-identical across machines: "send
 causes, not effects": broadcast the *event* ("this block died"), never
 let each client independently recompute and risk disagreeing.
 
@@ -75,7 +75,7 @@ Concretely, from each `.asmdef`'s `references`:
 - `Hullbreach.World` -> `Core`. Gravity fields and orbit math; knows about
   blocks only through `Core`, nothing about ships.
 - `Hullbreach.Structure` -> `Core`. The Q8 FE solver, buckling, damage. No
-  dependency on `Ship` -- a ship is "a `BlockGrid` plus applied forces" as
+  dependency on `Ship`: a ship is "a `BlockGrid` plus applied forces" as
   far as structure is concerned; it does not know what a thruster is.
 - `Hullbreach.Ship` -> `Core`, `Structure`, `World`. `ShipBody` is the
   simulation core: it owns a `BlockGrid`, steps block behaviours, applies
@@ -108,7 +108,7 @@ consistent. Grid convention: block `(x, y)` occupies `[x, x+1] x [y, y+1]`,
 so its center is `(x + 0.5, y + 0.5)`.
 
 Every `Block` (`Assets/Scripts/Hullbreach.Core/Grid/Block.cs`) is a
-`readonly struct { byte TypeId; byte Modifiers; byte Damage; }` -- no heap
+`readonly struct { byte TypeId; byte Modifiers; byte Damage; }`: no heap
 allocation, blittable, cache-friendly. Everything shared across all blocks
 of the same type (mass, stiffness, strength) lives in `BlockType`, looked
 up by `TypeId`; that flyweight split is why there is no `Block` subclass
@@ -119,8 +119,8 @@ different piece of code that only touches its own bits:
 
 | Bits | Field | Owner | Meaning |
 | --- | --- | --- | --- |
-| 0-1 | Facing | `Hullbreach.Core.Facing` | `0`=+y, `1`=+x, `2`=-y, `3`=-x, ship-local, before ship `Rotation`. Only Cannon and Fin use this (Thruster/RetroThruster/Core/Hull/Armor ignore it -- they have a fixed or no direction). |
-| 2-3 | Ramp (`ThrusterUpgrades`) | `Hullbreach.Ship.ThrusterUpgrades` | 0..3, indexes `SecondsToFull = {1.0, 0.6, 0.35, 0.15}` -- how fast a thruster/retro/fin ramps its throttle toward a target. Lives in `Ship` (not `Core`) since only Ship's ramped channels care, but the bit position is fixed here so `Facing` and `Variant` can coexist in the same byte. |
+| 0-1 | Facing | `Hullbreach.Core.Facing` | `0`=+y, `1`=+x, `2`=-y, `3`=-x, ship-local, before ship `Rotation`. Only Cannon and Fin use this (Thruster/RetroThruster/Core/Hull/Armor ignore it: they have a fixed or no direction). |
+| 2-3 | Ramp (`ThrusterUpgrades`) | `Hullbreach.Ship.ThrusterUpgrades` | 0..3, indexes `SecondsToFull = {1.0, 0.6, 0.35, 0.15}`: how fast a thruster/retro/fin ramps its throttle toward a target. Lives in `Ship` (not `Core`) since only Ship's ramped channels care, but the bit position is fixed here so `Facing` and `Variant` can coexist in the same byte. |
 | 4-7 | Variant | `Hullbreach.Core.BlockVariants` | 0..15, the behaviour-extension id: variant 0 is always a type's base behaviour (plain Cannon, plain Thruster); nonzero variants are alternates registered against the same `TypeId` in `BehaviourRegistry` (e.g. Cannon variant 1 is the gravity gun). |
 
 `Facing` and `BlockVariants` live in `Core` rather than `Ship` specifically
@@ -143,12 +143,12 @@ server's own tick loop). In order:
    behaviour loops below never have to filter the whole grid by type every
    tick.
 2. **Clear this tick's force log** (`AppliedForcesThisStep`) and latch
-   `FireRequested` from input -- both exist for other systems (structure,
+   `FireRequested` from input; both exist for other systems (structure,
    UI) to read after `Step` returns.
-3. **Bail out if the ship has no mass** (no blocks survived -- even the
+3. **Bail out if the ship has no mass** (no blocks survived; even the
    core can be stripped by cascading detaches): skip integration entirely
    rather than divide by zero.
-4. **`TickPowerups(dt)`** -- counts down every active powerup transform
+4. **`TickPowerups(dt)`**: counts down every active powerup transform
    (see below) and reverts any that expired back to the block's base
    variant, *before* behaviours run so a powerup that just expired this
    tick does not fire.
@@ -160,31 +160,31 @@ server's own tick loop). In order:
    channels" (thrusters/retros/fins) ramp a stored throttle toward a
    target via `ThrusterUpgrades.RampRate`; weapons (cannons and their
    variants) tick a per-block cooldown and fire when pressed and ready.
-6. **`ApplyGravityForces()`** -- per-block body force: for every block,
+6. **`ApplyGravityForces()`**: per-block body force: for every block,
    `Gravity.AccelerationAt(worldCenter) * blockMass`, applied at that
    block's own ship-local center via `AddForceAtPoint`. This is what makes
    gravity torque-correct (a lopsided ship spins under a tidal gradient)
    and why gravity shows up in `AppliedForcesThisStep` exactly like any
-   other applied force -- the structural solver does not special-case it.
+   other applied force: the structural solver does not special-case it.
 7. **Integrate**: compute `worldForce / mass` and `torque / inertia`,
-   then **semi-implicit (symplectic) Euler** -- velocity updates first,
+   then **semi-implicit (symplectic) Euler**: velocity updates first,
    then position uses the *new* velocity. Chosen because it is what Box2D
    itself does, so the plain-C# simulation stays consistent with how
    `Rigidbody2D` will eventually feel if/when the two are reconciled (see
    `docs/roadmap.md`'s engineering-debt note on `Rigidbody2D` being driven,
    not simulated).
 8. **Clear the force/torque accumulators** for the next tick.
-9. **`ResolvePlanetContacts(dt)`** -- after integration: tests every block
+9. **`ResolvePlanetContacts(dt)`**: after integration, tests every block
    center against `Gravity` for surface penetration, pushes the ship out
    of the single deepest penetration, then resolves each contacting
    block's normal velocity with a restitution impulse, bleeds tangential
    velocity by friction, and applies contact damage to whichever block hit
    first if the impact speed exceeded `ShipBody.ContactDamageSpeed` (3 m/s
-   default) -- the same damage path a projectile hit uses.
+   default): the same damage path a projectile hit uses.
 
 Powerup expiry runs before behaviours specifically so "the last tick of a
 powerup" still fires with the powerup's behaviour, and "the tick it
-expires" already fires with the plain one -- there is no tick where a
+expires" already fires with the plain one: there is no tick where a
 timer reads zero but the upgraded behaviour still runs.
 
 ## Structural pipeline: Q8 FE, inertia relief, PCG, stress, damage, buckling
@@ -193,21 +193,21 @@ timer reads zero but the upgraded behaviour still runs.
 called once per tick from the game layer (`ShipStructure`, in
 `Hullbreach.Game`, using `ShipBody.AppliedForcesThisStep` as the force
 list). It is a stress *readout*, not something `ShipBody.Step` calls
-directly -- Structure has no dependency on Ship (see the assembly graph).
+directly: Structure has no dependency on Ship (see the assembly graph).
 
-1. **Rebuild the stiffness matrix `K` if topology changed** -- tracked by
+1. **Rebuild the stiffness matrix `K` if topology changed**: tracked by
    `StructuralSolver`'s own `_lastRebuiltCount` compared against
    `grid.Count`, plus an explicit `MarkTopologyChanged()` for a same-count
    type swap. `StiffnessAssembly.Rebuild` assembles `K` from one **Q8
    element per block** (`Q8Element`, an 8-node quadratic quad on a shared
    `NodeLattice`, so adjacent blocks share edge nodes) using the
-   precomputed `KHat` table indexed by `PoissonClass` -- `K_e = E * KHat`,
+   precomputed `KHat` table indexed by `PoissonClass`: `K_e = E * KHat`,
    so changing a material's `YoungsModulus` never needs re-deriving the
    element stiffness itself.
 2. **Assemble the load vector**: point forces from `appliedForces` (i.e.
    everything `ShipBody` pushed through `AddForceAtPoint` this tick) via
    `LoadVector.AddPointForce`, plus **inertia relief**
-   (`LoadVector.ApplyInertiaRelief`) -- because the ship is not fixed to
+   (`LoadVector.ApplyInertiaRelief`), because the ship is not fixed to
    anything, an unbalanced applied-force set would otherwise accelerate
    the whole FE mesh rigidly with no way to reach static equilibrium;
    inertia relief subtracts out exactly the rigid-body-consistent inertial
@@ -219,17 +219,17 @@ directly -- Structure has no dependency on Ship (see the assembly graph).
    cost).
 4. **Reduce to per-block stress** (`ComputeBlockStress`): evaluates strain
    at each Q8 element's center (`xi = eta = 0`, i.e. the block's own
-   center, not a proper stress-recovery/extrapolation to nodes -- an
+   center, not a proper stress-recovery/extrapolation to nodes (an
    intentional simplification, and the reason buckling below is also
    element-center-based, see `docs/roadmap.md`), applies the constitutive
    relation scaled by `BlockTypes.EffectiveStiffness` (which folds in
-   damage softening -- a yielded block gets less stiff so it sheds load to
+   damage softening: a yielded block gets less stiff so it sheds load to
    its neighbors), and reduces to von Mises plus principal stresses.
 5. **Stress criteria** (`StressCriteria`, `Hullbreach.Structure.Failure`):
    `DuctileRatio` (von Mises vs. `YieldStress`, softened by
    `DamageFraction`) and `BrittleRatio` (max tensile principal vs.
    `SpallStress`, min compressive vs. `CompressiveStress`). Both are
-   **client-safe** -- every machine's solve produces the same ratios given
+   **client-safe**: every machine's solve produces the same ratios given
    the same inputs, so both are fine to use for a color tint
    (`ShipRenderer`'s Stress overlay uses `max(DuctileRatio, BrittleRatio)`)
    or, per the game layer's own decision, to detach a block once a ratio
@@ -247,11 +247,11 @@ directly -- Structure has no dependency on Ship (see the assembly graph).
    meaningful compression, `K_G` is positive semidefinite and there is no
    positive load factor to find, so the whole subspace machinery is
    skipped.
-   - `BlockStress.BucklingRatio` -- **client-safe**: a continuous float
+   - `BlockStress.BucklingRatio`: **client-safe**: a continuous float
      (`1 / CriticalLoadFactor`, scaled by strain-energy participation in
      the single critical mode), the same on every machine's own solve,
      meant only for the Buckling overlay's tint.
-   - `StructuralSolver.BuckledBlocks` -- **server-authoritative, NOT
+   - `StructuralSolver.BuckledBlocks`: **server-authoritative, NOT
      client-safe**: the union of every sub-critical mode's
      highest-participation blocks (cumulative to
      `BucklingParticipationThreshold`). The doc comment on this property is
@@ -259,7 +259,7 @@ directly -- Structure has no dependency on Ship (see the assembly graph).
      guaranteed bit-identical across machines, so only the authoritative
      simulation may use this to decide a block breaks and then *broadcast*
      that as an event. A client that independently reads this and detaches
-     a block itself can disagree with the server and desync -- this is the
+     a block itself can disagree with the server and desync: this is the
      concrete instance of "send causes, not effects" mentioned above.
 
 ## Placement rules: verdicts, clearance, detach
@@ -290,8 +290,8 @@ someone else's footprint" can never drift apart:
 
 | TypeId | Reserved cells |
 | --- | --- |
-| Thruster | fixed ship-local `(x, y-1)` (exhaust), independent of `Modifiers` -- a thruster has no facing of its own |
-| Cannon, Fin | `Facing.Ahead(key, modifiers)` -- one cell, in the block's own facing |
+| Thruster | fixed ship-local `(x, y-1)` (exhaust), independent of `Modifiers`: a thruster has no facing of its own |
+| Cannon, Fin | `Facing.Ahead(key, modifiers)`: one cell, in the block's own facing |
 | RetroThruster | `(x+1, y)` and `(x-1, y)` (its two side nozzles) |
 | Core, Hull, Armor | none |
 

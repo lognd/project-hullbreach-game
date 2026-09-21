@@ -7,7 +7,7 @@ namespace Hullbreach.Ship.Behaviours
     /// The stock control fin: ramps its own throttle toward the steer
     /// channel target, then pushes perpendicular to its facing with a sign
     /// chosen so the resulting torque about the center of mass matches the
-    /// sign of its current ramped throttle -- this is what lets torque fade
+    /// sign of its current ramped throttle: this is what lets torque fade
     /// out smoothly after the steer key is released. Fin variant 0.
     /// </summary>
     public sealed class FinBehaviour : IBlockBehaviour

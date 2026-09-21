@@ -9,7 +9,7 @@ namespace Hullbreach.Core
     ///
     /// UNITS: do not use SI. Steel is E = 200e9 Pa with yield 250e6 Pa, and
     /// running CG on numbers spanning 1e9 throws away float precision and
-    /// wrecks conditioning. Normalize instead -- plain hull has YieldStress
+    /// wrecks conditioning. Normalize instead: plain hull has YieldStress
     /// 1.0 and everything else is relative to it. The solver behaves better
     /// and the numbers stay readable to whoever balances the game.
     /// </summary>
@@ -43,7 +43,7 @@ namespace Hullbreach.Core
         public readonly float SpallStress;
 
         /// <summary>Brittle limit in compression. Much larger than SpallStress
-        /// for armor-like materials -- brittle solids are far stronger in
+        /// for armor-like materials: brittle solids are far stronger in
         /// compression than in tension.</summary>
         public readonly float CompressiveStress;
 
@@ -75,20 +75,20 @@ namespace Hullbreach.Core
 
         // Normalized against Hull.YieldStress = 1.0.
         //
-        //   Core:     the heaviest, toughest block -- it must survive whatever
+        //   Core:     the heaviest, toughest block: it must survive whatever
         //             kills everything around it, so both stresses are the
         //             highest in the table and it is stiffer than hull.
         //   Hull:     the reference. Ductile: ordinary yield, ordinary spall.
         //   Armor:    ~2x hull mass, stiffer (denser lattice), and brittle:
         //             high SpallStress/CompressiveStress (brittle solids take
         //             compression far better than tension) but LOWER
-        //             YieldStress than hull -- it is meant to shatter rather
+        //             YieldStress than hull: it is meant to shatter rather
         //             than bend.
         //   Thruster: hull-like stiffness/strength, a bit heavier for the
         //             machinery packed inside.
-        //   Cannon:   same idea as Thruster -- hull-like structurally, a
+        //   Cannon:   same idea as Thruster: hull-like structurally, a
         //             little heavier for its mechanism.
-        //   Fin:      light control surface -- cheap mass so placement is
+        //   Fin:      light control surface: cheap mass so placement is
         //             about leverage, not weight, and slightly weaker than
         //             hull since it is a thin surface rather than a hull
         //             plate.
@@ -118,7 +118,7 @@ namespace Hullbreach.Core
         //            something that better matches real ductile softening.
         /// <summary>
         /// Fold in damage softening. A yielded block gets less stiff so it
-        /// sheds load to its neighbors -- that shedding is what makes ductile
+        /// sheds load to its neighbors: that shedding is what makes ductile
         /// failure actually read as ductile, without needing a nonlinear
         /// solve. Floored at 5% of nominal E so the stiffness matrix never
         /// goes singular even at full damage.

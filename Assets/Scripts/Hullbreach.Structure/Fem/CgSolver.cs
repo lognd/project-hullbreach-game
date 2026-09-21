@@ -10,7 +10,7 @@ namespace Hullbreach.Structure
     ///
     /// CONVERGENCE, and why this eventually stops scaling: iterations grow like
     /// sqrt(condition number), and for 2D elasticity kappa ~ h^-2, so the count
-    /// grows like the ship's width in elements. The intuition is exact -- each
+    /// grows like the ship's width in elements. The intuition is exact: each
     /// multiply by K propagates information exactly one element further, so
     /// telling the bow that the stern fired takes ~L iterations. Warm-starting
     /// hides this while loads change smoothly, but combat changes topology and
@@ -25,13 +25,13 @@ namespace Hullbreach.Structure
     public sealed class CgSolver
     {
         /// <summary>Iteration cap. WAS 200, which is far below what even a
-        /// modest ship needs -- a 1-wide, 32-block column (326 dof) measured
+        /// modest ship needs: a 1-wide, 32-block column (326 dof) measured
         /// at ~650 iterations to hit Tolerance, so the old cap silently
         /// returned an under-converged (force-imbalanced) displacement field
         /// for anything longer than a stub. That fed wrong element stresses
         /// into GeometricStiffness and biased BucklingAnalysis's Rayleigh
         /// quotients enough to break the Euler P_cr ~ 1/L^2 trend (it read
-        /// closer to 1/L, and non-monotonically at that -- see
+        /// closer to 1/L, and non-monotonically at that; see
         /// BucklingTests). 4000 is cheap per call (a plain sparse mat-vec)
         /// and CG still exits the moment Tolerance is met, so this only
         /// matters for the cases that actually needed more room.</summary>
@@ -39,7 +39,7 @@ namespace Hullbreach.Structure
         public float Tolerance = 1e-5f;
 
         /// <summary>Iterations the last Solve actually took. Watch this grow
-        /// with ship size -- it is the scaling wall, made visible.</summary>
+        /// with ship size: it is the scaling wall, made visible.</summary>
         public int LastIterationCount { get; private set; }
 
         /// <summary>
@@ -98,7 +98,7 @@ namespace Hullbreach.Structure
         /// Standard PCG with M = diag(K). Warm-starts from the `u` passed in.
         /// Because K is singular, the residual (and the initial load) are
         /// re-projected onto the complement of the rigid-body modes every
-        /// iteration, so rounding cannot slowly excite them -- Gram-Schmidt
+        /// iteration, so rounding cannot slowly excite them: Gram-Schmidt
         /// every iteration is affordable at this problem size.
         /// </summary>
         public void Solve(StiffnessAssembly k, float[] f, float[] u, float[][] rigidModes)
@@ -136,12 +136,12 @@ namespace Hullbreach.Structure
             // and how long ago it improved. A right-hand side that is
             // genuinely near machine-zero (e.g. BucklingAnalysis solving
             // K*y = -K_G*v for a v the current, nearly-uncompressed K_G maps
-            // to machine-zero -- see below) cannot be driven under tolAbs by
+            // to machine-zero, see below) cannot be driven under tolAbs by
             // more iterations; without this, raising MaxIterations to cover
             // the large, genuinely slow-converging problems this solver also
             // sees (see MaxIterations' doc) meant every such degenerate call
             // burned the ENTIRE cap chasing round-off noise that was never
-            // going to shrink -- measured turning a small blob's buckling
+            // going to shrink; measured turning a small blob's buckling
             // test from a sub-second run into tens of seconds. StagnationPatience
             // iterations without at least a 0.1% improvement means "this is
             // the best available", not "not done yet".
@@ -175,7 +175,7 @@ namespace Hullbreach.Structure
                 float rzNew = Dot(r, z);
                 // Guard against an exactly-annihilated residual (rzOld == 0
                 // without rNorm having already tripped the convergence check
-                // above -- possible when the right-hand side itself is
+                // above, possible when the right-hand side itself is
                 // exactly zero, e.g. BucklingAnalysis solving K*y = -K_G*v
                 // for a v the current, nearly-uncompressed K_G maps to
                 // machine-zero). 0/0 would otherwise be NaN and corrupt

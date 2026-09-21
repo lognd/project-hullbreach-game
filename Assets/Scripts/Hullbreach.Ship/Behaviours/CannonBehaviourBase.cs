@@ -8,7 +8,7 @@ namespace Hullbreach.Ship.Behaviours
     /// origin/direction, records a ShotRequest with the spec from
     /// <see cref="BuildSpec"/>, applies recoil, and resets the cooldown.
     /// Subclasses only decide WHAT gets fired, never how firing/cooldown
-    /// itself works -- that is the whole point of factoring this out, since
+    /// itself works: that is the whole point of factoring this out, since
     /// the gravity gun and anti-gravity gun differ from the stock cannon only
     /// in the ProjectileSpec they attach to the shot.
     /// </summary>

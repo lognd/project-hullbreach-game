@@ -10,7 +10,7 @@ namespace Hullbreach.Game
     /// Preset.baseTypeId into Preset.variant for Preset.seconds, then
     /// destroys itself (its PowerupSpawner, if any, respawns it after a
     /// delay). Always created by PowerupSpawner.Spawn, which calls
-    /// Configure immediately after AddComponent -- never place one in a
+    /// Configure immediately after AddComponent: never place one in a
     /// scene directly, since it has nothing to show/apply until configured.
     /// </summary>
     [RequireComponent(typeof(CircleCollider2D))]

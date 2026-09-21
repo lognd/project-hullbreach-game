@@ -12,7 +12,7 @@ is busy, not hostile.
 Show up: attend stand-ups and sprint meetings, or say ahead of time that
 you can't. If you are blocked, say so early rather than quietly missing a
 deadline. If you are overloaded by other coursework, tell the Scrum Master
-so the work can be rebalanced -- that is what the role is for.
+so the work can be rebalanced: that is what the role is for.
 
 Keep the repository honest. Don't merge around a red check, don't disable a
 test to make it pass, don't commit secrets, and don't claim work that isn't

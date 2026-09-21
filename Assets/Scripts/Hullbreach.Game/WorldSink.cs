@@ -10,7 +10,7 @@ namespace Hullbreach.Game
     /// <summary>
     /// The game-side IWorldSink: routes block-behaviour requests (spawn a
     /// projectile, drop a temporary gravity well, find the nearest enemy)
-    /// onto the actual scene -- ProjectileSpawner, GravityWorld.Field, and
+    /// onto the actual scene: ProjectileSpawner, GravityWorld.Field, and
     /// every ShipController found in the scene. One instance per scene,
     /// exposed as a static Instance (same convention as GravityWorld.Field)
     /// so ShipController.Awake can wire it up without a scene-graph
