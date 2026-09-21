@@ -47,10 +47,11 @@ namespace Hullbreach.Structure
     /// </summary>
     public sealed class CoarsePreconditioner
     {
-        /// <summary>Aggregate width/height in blocks. 4 matches the ticket's
-        /// spec ("aggregates of 4x4 blocks"): coarse enough that Kc stays a
-        /// few hundred rows even at a few thousand blocks, fine enough that
-        /// the coarse correction still resolves per-aggregate rigid motion.</summary>
+        /// <summary>Aggregate width/height in blocks, before the
+        /// <see cref="MaxAggregates"/> cap may coarsen it. 4 is fine enough
+        /// that the coarse correction resolves per-aggregate rigid motion
+        /// on the ships where that matters (small ones, which never hit the
+        /// cap at all).</summary>
         public int AggregateBlockSpan = 4;
 
         int _dof = -1;
@@ -93,6 +94,39 @@ namespace Hullbreach.Structure
         /// for tests/logging (Kc is 3x this).</summary>
         public int AggregateCount => _aggregateCount;
 
+        /// <summary>Aggregate count above which Rebuild coarsens the
+        /// aggregation (doubling the span) rather than pay a cubic
+        /// eigendecomposition. 64 was measured against 100 and against no
+        /// cap at all: on a 2000-block ship the eigendecomposition went
+        /// 3938 ms (155 aggregates) -> 113 ms (100, span 8) -> 88 ms (64,
+        /// span 8), and on a 500-block ship 254 ms (69 aggregates, no
+        /// coarsening under a 100 cap) -> 17 ms (31, span 8). The coarser
+        /// space did not cost CG anything measurable on either ship; both
+        /// got FASTER per tick as well, because ApplyAdditive's dense
+        /// coarse solve is O(m^2) every iteration.</summary>
+        public int MaxAggregates = 64;
+
+        /// <summary>Ceiling on the automatic coarsening, so a pathological
+        /// ship cannot aggregate itself down to a handful of blocks and a
+        /// coarse space too small to carry a useful correction.</summary>
+        public int MaxAggregateBlockSpan = 16;
+
+        /// <summary>Span the most recent Rebuild actually used, which is
+        /// <see cref="AggregateBlockSpan"/> unless the cap above coarsened
+        /// it. Exposed for tests/logging.</summary>
+        public int LastAggregateBlockSpan { get; private set; }
+
+        /// <summary>Counts the aggregates a given span would produce, with
+        /// no allocation beyond the set it counts into: called at most a
+        /// few times per rebuild (the span doubles each try).</summary>
+        static int CountAggregates(Unity.Mathematics.float2[] pos, int nodeCount, int span)
+        {
+            var seen = new System.Collections.Generic.HashSet<(int, int)>();
+            for (int i = 0; i < nodeCount; i++)
+                seen.Add(((int)Math.Floor(pos[i].x / span), (int)Math.Floor(pos[i].y / span)));
+            return seen.Count;
+        }
+
         /// <summary>
         /// (Re)builds the aggregation, P's local mode coefficients, Kc, and
         /// Kc's pseudo-inverse from `k`'s current sparsity/values. Call
@@ -121,11 +155,28 @@ namespace Hullbreach.Structure
             // ascending (ax,ay) order so a rebuild over an unchanged grid
             // reproduces identical ids (required for the bit-determinism
             // buckling-style guarantees the rest of this module upholds).
+            // AGGREGATE-COUNT CAP: the coarse operator is dense and is
+            // diagonalized once per rebuild, so its cost grows like
+            // (3 * aggregates)^3. At AggregateBlockSpan = 4 a 2000-block
+            // ship produces 155 aggregates, a 465-square Kc, and a 3.94 s
+            // eigendecomposition on a 4.13 s rebuild: a visible hitch the
+            // first time a big ship is touched. Doubling the span quarters
+            // the aggregate count and so cuts that cost ~64x. The coarse
+            // space gets correspondingly coarser, which is a real loss of
+            // preconditioner quality, but a 64x cheaper rebuild is worth
+            // more than a correction that is slightly sharper on a ship
+            // whose per-tick cost is dominated by CG anyway (measured
+            // below; see docs/roadmap.md's Performance section).
+            int span = AggregateBlockSpan;
+            while (span < MaxAggregateBlockSpan && CountAggregates(pos, nodeCount, span) > MaxAggregates)
+                span *= 2;
+            LastAggregateBlockSpan = span;
+
             var coordToNodes = new System.Collections.Generic.SortedDictionary<(int ax, int ay), System.Collections.Generic.List<int>>();
             for (int i = 0; i < nodeCount; i++)
             {
-                int ax = (int)Math.Floor(pos[i].x / AggregateBlockSpan);
-                int ay = (int)Math.Floor(pos[i].y / AggregateBlockSpan);
+                int ax = (int)Math.Floor(pos[i].x / span);
+                int ay = (int)Math.Floor(pos[i].y / span);
                 var key = (ax, ay);
                 if (!coordToNodes.TryGetValue(key, out var list))
                 {
