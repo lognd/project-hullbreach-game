@@ -55,6 +55,15 @@ namespace Hullbreach.Game
         /// Set by ShipStructure once it exists; null draws Stress as all-green.</summary>
         public Hullbreach.Structure.StructuralSolver Solver;
 
+        /// <summary>
+        /// Blocks whose worst stress ratio reaches this threshold pulse
+        /// bright red REGARDLESS of the current overlay, so a player flying
+        /// with overlays off still sees WHERE the ship is about to fail
+        /// instead of only being told THAT it is. Set by DemoMode; zero or
+        /// negative disables the flash entirely.
+        /// </summary>
+        public float FlashRatioThreshold = 0.8f;
+
         static Sprite _unitSprite;
         bool _dirty = true;
         int _builtCount = -1;
@@ -307,6 +316,26 @@ namespace Hullbreach.Game
                     v.Body.color = BucklingColor(buckling);
                     break;
             }
+
+            ApplyCriticalFlash(key, v);
+        }
+
+        /// <summary>Pulses a block's tint toward alarm red when its worst
+        /// ratio is at or above FlashRatioThreshold. Applied on top of
+        /// whatever the overlay just chose, so it is visible in every mode
+        /// including None.</summary>
+        void ApplyCriticalFlash(int key, BlockVisual v)
+        {
+            if (FlashRatioThreshold <= 0f) return;
+
+            float ratio = 0f;
+            if (Solver != null && Solver.BlockStresses.TryGetValue(key, out var stress))
+                ratio = Mathf.Max(stress.DuctileRatio, stress.BrittleRatio);
+            if (ExtraRatioSource != null) ratio = Mathf.Max(ratio, ExtraRatioSource(key));
+            if (ratio < FlashRatioThreshold) return;
+
+            float pulse = 0.5f + 0.5f * Mathf.Sin(Time.unscaledTime * 12f);
+            v.Body.color = Color.Lerp(v.Body.color, new Color(1f, 0.1f, 0.1f), 0.35f + 0.55f * pulse);
         }
 
         /// <summary>Plain per-type color for a base-variant block; for a

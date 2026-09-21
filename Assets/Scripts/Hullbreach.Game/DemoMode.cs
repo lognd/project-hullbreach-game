@@ -7,13 +7,29 @@ namespace Hullbreach.Game
     /// <summary>Which of the two demo scene states is active.</summary>
     public enum DemoState { Build, Fly }
 
+    /// <summary>How close the most loaded block is to failing, as three
+    /// bands the HUD can shout about without the player reading numbers.</summary>
+    public enum HullWarning
+    {
+        /// <summary>Max ratio below 0.5 and buckling comfortably far off.</summary>
+        Ok,
+        /// <summary>Max ratio 0.5 to 0.8: the structure is working hard.</summary>
+        Strain,
+        /// <summary>Max ratio 0.8+, or critical load factor below 1.5:
+        /// something is about to come off.</summary>
+        Critical,
+    }
+
     /// <summary>
-    /// Top-level demo scene conductor: toggles between Build (frozen ship,
-    /// BuilderController editing the live grid) and Fly (physics on, WASD +
-    /// arrows + Space + O + R), and draws the always-on OnGUI status panel.
-    /// Everything it touches (ShipController.InputEnabled, Rigidbody2D.
-    /// simulated, BuilderController.enabled) already exists on those
-    /// components; this class only orchestrates the switch.
+    /// Top-level demo scene conductor: toggles between Build (ship frozen
+    /// exactly where it is, BuilderController editing the live grid) and Fly
+    /// (simulation on, WASD + arrows + Space + O + R), and draws the
+    /// always-on OnGUI status panel including the control-channel bars and
+    /// the structural warning readout.
+    ///
+    /// Build mode PAUSES the ship rather than resetting it: switching modes
+    /// must never move the ship (that was the "Tab teleports me" bug). Only R
+    /// repositions anything.
     /// </summary>
     public sealed class DemoMode : MonoBehaviour
     {
@@ -26,14 +42,16 @@ namespace Hullbreach.Game
 
         /// <summary>When set, the ship STARTS on (and the R key returns it
         /// to) a preset circular orbit (orbitStartPosition around
-        /// orbitBodyIndex) instead of dead rest at the origin. Off by default so scenes without a
-        /// GravityWorld (RocketScene) behave exactly as before.</summary>
+        /// orbitBodyIndex) instead of dead rest at the origin. Off by default
+        /// so scenes without a GravityWorld (RocketScene) behave exactly as
+        /// before.</summary>
         [SerializeField] bool startInOrbit = false;
 
-        /// <summary>World-space position the R key resets the player to
-        /// when startInOrbit is set; the orbital velocity is computed from
-        /// this position, not authored separately, so moving the start point
-        /// in the Inspector can never leave a mismatched velocity behind.</summary>
+        /// <summary>World-space position the ship starts at, and that the R
+        /// key resets to, when startInOrbit is set; the orbital velocity is
+        /// computed from this position, not authored separately, so moving
+        /// the start point in the Inspector can never leave a mismatched
+        /// velocity behind.</summary>
         [SerializeField] Vector2 orbitStartPosition = Vector2.zero;
 
         /// <summary>Index (in GravityWorld's planet list / add order) of the
@@ -81,6 +99,53 @@ namespace Hullbreach.Game
         /// <summary>Whether this scene starts the player on a circular orbit.</summary>
         public bool StartsInOrbit => startInOrbit;
 
+        /// <summary>The structural warning band computed on the most recent
+        /// frame, exposed so a play-mode test can assert the player is warned
+        /// BEFORE blocks start coming off.</summary>
+        public HullWarning Warning { get; private set; } = HullWarning.Ok;
+
+        /// <summary>Max of DuctileRatio/BrittleRatio/BucklingRatio across the
+        /// player's blocks on the most recent frame; the number behind
+        /// <see cref="Warning"/>.</summary>
+        public float MaxStressRatio { get; private set; }
+
+        /// <summary>How many of the player's blocks are above the flashing-red
+        /// threshold (0.8) right now.</summary>
+        public int CriticalBlockCount { get; private set; }
+
+        /// <summary>Ratio at or above which a block is "in the red": flashed
+        /// by ShipRenderer and counted in <see cref="CriticalBlockCount"/>.</summary>
+        public const float CriticalRatio = 0.8f;
+
+        /// <summary>Ratio at or above which the HUD reads STRAIN.</summary>
+        public const float StrainRatio = 0.5f;
+
+        /// <summary>Critical load factor below which buckling alone escalates
+        /// the warning to CRITICAL, however low the stress ratios are.</summary>
+        public const float CriticalLoadFactorFloor = 1.5f;
+
+        string _criticalBlockName = string.Empty;
+
+        void Awake()
+        {
+            if (playerShip == null) Debug.LogError("DemoMode requires a player ShipController.");
+            if (playerBody == null && playerShip != null) playerBody = playerShip.GetComponent<Rigidbody2D>();
+            if (builder == null) Debug.LogError("DemoMode requires a BuilderController.");
+            if (playerRenderer == null && playerShip != null) playerRenderer = playerShip.GetComponent<ShipRenderer>();
+            if (playerStructure == null && playerShip != null) playerStructure = playerShip.GetComponent<ShipStructure>();
+            if (playerShip != null) playerShip.InputSource = _inputSource;
+        }
+
+        void Start()
+        {
+            // Put the ship where it is meant to fly BEFORE the first physics
+            // step. Previously the scene authored the ship at the origin and
+            // only R ever moved it onto the orbit, so the demo opened with
+            // the ship falling straight at the planet.
+            ResetPlayer();
+            ApplyState();
+        }
+
         /// <summary>
         /// Switches mode and applies it. Public so a play-mode test can drive
         /// the toggle without synthesising a Tab key press. Switching modes
@@ -99,6 +164,8 @@ namespace Hullbreach.Game
         /// Puts the player back on the start state: the preset circular orbit
         /// when startInOrbit is set (velocity derived from the position, so
         /// the two can never disagree), otherwise dead rest at the origin.
+        /// This is the ONLY thing that moves the ship without the player
+        /// flying it, and it is bound to R alone.
         /// </summary>
         public void ResetPlayer()
         {
@@ -129,26 +196,6 @@ namespace Hullbreach.Game
             return new Vector2(v.x, v.y);
         }
 
-        void Awake()
-        {
-            if (playerShip == null) Debug.LogError("DemoMode requires a player ShipController.");
-            if (playerBody == null && playerShip != null) playerBody = playerShip.GetComponent<Rigidbody2D>();
-            if (builder == null) Debug.LogError("DemoMode requires a BuilderController.");
-            if (playerRenderer == null && playerShip != null) playerRenderer = playerShip.GetComponent<ShipRenderer>();
-            if (playerStructure == null && playerShip != null) playerStructure = playerShip.GetComponent<ShipStructure>();
-            if (playerShip != null) playerShip.InputSource = _inputSource;
-        }
-
-        void Start()
-        {
-            // Put the ship where it is meant to fly BEFORE the first physics
-            // step. Previously the scene authored the ship at the origin and
-            // only R ever moved it onto the orbit, so the demo opened with
-            // the ship falling straight at the planet.
-            ResetPlayer();
-            ApplyState();
-        }
-
         void Update()
         {
             var input = _inputSource ?? LegacyDemoInput.Instance;
@@ -164,6 +211,50 @@ namespace Hullbreach.Game
                 }
                 if (input.ResetPressed) ResetPlayer();
             }
+
+            UpdateWarning();
+        }
+
+        /// <summary>
+        /// Recomputes the structural warning band from this frame's solve and
+        /// tells ShipRenderer which blocks to flash. Runs every frame in both
+        /// modes so the player is never looking at a stale "OK".
+        /// </summary>
+        void UpdateWarning()
+        {
+            MaxStressRatio = 0f;
+            CriticalBlockCount = 0;
+            _criticalBlockName = string.Empty;
+
+            if (playerStructure == null || playerShip == null || playerShip.Ship == null)
+            {
+                Warning = HullWarning.Ok;
+                return;
+            }
+
+            var grid = playerShip.Ship.Grid;
+            foreach (var kvp in playerStructure.Solver.BlockStresses)
+            {
+                var stress = kvp.Value;
+                float ratio = Mathf.Max(stress.DuctileRatio, Mathf.Max(stress.BrittleRatio, stress.BucklingRatio));
+                if (ratio > MaxStressRatio) MaxStressRatio = ratio;
+                if (ratio < CriticalRatio) continue;
+
+                CriticalBlockCount++;
+                if (_criticalBlockName.Length == 0 && grid.TryGet(kvp.Key, out var block))
+                {
+                    _criticalBlockName = BlockTypes.Get(block.TypeId).Name;
+                }
+            }
+
+            float clf = playerStructure.Solver.CriticalLoadFactor;
+            bool bucklingCritical = !float.IsInfinity(clf) && clf < CriticalLoadFactorFloor;
+
+            Warning = MaxStressRatio >= CriticalRatio || bucklingCritical ? HullWarning.Critical
+                    : MaxStressRatio >= StrainRatio ? HullWarning.Strain
+                    : HullWarning.Ok;
+
+            if (playerRenderer != null) playerRenderer.FlashRatioThreshold = CriticalRatio;
         }
 
         /// <summary>Lists every block on `ship` with an active (nonzero,
@@ -240,7 +331,21 @@ namespace Hullbreach.Game
 
         void OnGUI()
         {
-            GUILayout.BeginArea(new Rect(10, Screen.height - 170, 420, 160), GUI.skin.box);
+            DrawStatusPanel();
+            if (State == DemoState.Fly) DrawHullWarning();
+        }
+
+        /// <summary>Height the bottom-left status panel needs in the current
+        /// mode. Build lists four short lines; Fly adds speed, three control
+        /// bars and a line per active powerup. BuilderHud subtracts this from
+        /// the window height so the two panels can never overlap, which they
+        /// did at small window sizes.</summary>
+        public static float StatusPanelHeight(bool building) => building ? 140f : 250f;
+
+        void DrawStatusPanel()
+        {
+            float height = StatusPanelHeight(State == DemoState.Build);
+            GUILayout.BeginArea(new Rect(10, Screen.height - height, 440, height - 10), GUI.skin.box);
             GUILayout.Label($"Mode: {State}  (Tab to switch)");
 
             if (State == DemoState.Build)
@@ -266,16 +371,123 @@ namespace Hullbreach.Game
                     float speed = Mathf.Sqrt(ship.Velocity.x * ship.Velocity.x + ship.Velocity.y * ship.Velocity.y);
                     GUILayout.Label($"Speed: {speed:0.0}   Angular speed: {Mathf.Abs(ship.AngularVelocity):0.00}");
 
-                    if (playerStructure != null)
-                    {
-                        float clf = playerStructure.Solver.CriticalLoadFactor;
-                        string clfText = float.IsInfinity(clf) ? "inf" : clf.ToString("0.00");
-                        GUILayout.Label($"Critical load factor: {clfText}");
-                    }
+                    DrawChannelBar("Thrust ", ship.ForwardThrottleMean, new Color(0.9f, 0.2f, 0.15f));
+                    DrawChannelBar("Reverse", ship.ReverseThrottleMean, new Color(0.2f, 0.85f, 0.3f));
+                    DrawSteerBar(ship.SteerThrottleMean);
 
                     DrawActivePowerups(ship);
                 }
             }
+            GUILayout.EndArea();
+        }
+
+        /// <summary>One labelled 0..100% bar with a colored fill, used for
+        /// the thrust and reverse channels. Drawn with GUI.DrawTexture over a
+        /// reserved layout rect, which needs no skin assets.</summary>
+        void DrawChannelBar(string label, float value01, Color fill)
+        {
+            value01 = Mathf.Clamp01(value01);
+            GUILayout.BeginHorizontal();
+            GUILayout.Label($"{label} {value01 * 100f:0}%", GUILayout.Width(110));
+            Rect track = GUILayoutUtility.GetRect(240f, 14f);
+            DrawBarTrack(track);
+            var filled = new Rect(track.x, track.y, track.width * value01, track.height);
+            DrawSolid(filled, fill);
+            GUILayout.EndHorizontal();
+        }
+
+        /// <summary>A centered -100..+100% bar that fills left or right from
+        /// the middle, for the steer channel.</summary>
+        void DrawSteerBar(float value)
+        {
+            value = Mathf.Clamp(value, -1f, 1f);
+            GUILayout.BeginHorizontal();
+            GUILayout.Label($"Steer   {value * 100f:+0;-0;0}%", GUILayout.Width(110));
+            Rect track = GUILayoutUtility.GetRect(240f, 14f);
+            DrawBarTrack(track);
+
+            float mid = track.x + track.width * 0.5f;
+            float half = track.width * 0.5f * Mathf.Abs(value);
+            var filled = value >= 0f
+                ? new Rect(mid, track.y, half, track.height)
+                : new Rect(mid - half, track.y, half, track.height);
+            DrawSolid(filled, Color.white);
+            DrawSolid(new Rect(mid - 1f, track.y, 2f, track.height), new Color(0.6f, 0.6f, 0.6f));
+            GUILayout.EndHorizontal();
+        }
+
+        static void DrawBarTrack(Rect track) => DrawSolid(track, new Color(0.1f, 0.1f, 0.12f, 0.9f));
+
+        static Texture2D _barTexture;
+
+        /// <summary>Fills `rect` with `color` using a single shared 1x1 white
+        /// texture, so the HUD needs no imported sprite assets.</summary>
+        static void DrawSolid(Rect rect, Color color)
+        {
+            if (rect.width <= 0f || rect.height <= 0f) return;
+            if (_barTexture == null)
+            {
+                _barTexture = new Texture2D(1, 1);
+                _barTexture.SetPixel(0, 0, Color.white);
+                _barTexture.Apply();
+            }
+            var previous = GUI.color;
+            GUI.color = color;
+            GUI.DrawTexture(rect, _barTexture);
+            GUI.color = previous;
+        }
+
+        /// <summary>
+        /// Top-center structural readout: green OK, yellow STRAIN, flashing
+        /// red CRITICAL, with how many blocks are in the red and one line of
+        /// advice. Deliberately loud and separate from the corner panel: the
+        /// player needs to know the hull is about to fail without reading a
+        /// number or switching overlays.
+        /// </summary>
+        void DrawHullWarning()
+        {
+            string text;
+            string hint;
+            Color color;
+
+            switch (Warning)
+            {
+                case HullWarning.Critical:
+                    text = "Hull: CRITICAL";
+                    hint = _criticalBlockName.Length > 0 && CriticalBlockCount > 1
+                        ? "brace the arm"
+                        : "ease off thrust";
+                    // Flash: alternate between full and dim red a few times a
+                    // second so it reads as an alarm, not a label.
+                    float pulse = 0.55f + 0.45f * Mathf.Sin(Time.unscaledTime * 12f);
+                    color = new Color(1f, 0.15f * pulse, 0.15f * pulse, 1f);
+                    break;
+                case HullWarning.Strain:
+                    text = "Hull: STRAIN";
+                    hint = "ease off thrust";
+                    color = new Color(1f, 0.85f, 0.2f);
+                    break;
+                default:
+                    text = "Hull: OK";
+                    hint = string.Empty;
+                    color = new Color(0.3f, 1f, 0.4f);
+                    break;
+            }
+
+            var area = new Rect(Screen.width * 0.5f - 170f, 10f, 340f, 62f);
+            GUILayout.BeginArea(area, GUI.skin.box);
+            var previous = GUI.contentColor;
+            GUI.contentColor = color;
+            GUILayout.Label($"{text}   (max ratio {MaxStressRatio:0.00})");
+            if (Warning != HullWarning.Ok)
+            {
+                string where = CriticalBlockCount > 0
+                    ? $"{CriticalBlockCount} block(s) in the red, worst: {_criticalBlockName}"
+                    : "load factor low";
+                GUILayout.Label(where);
+                GUILayout.Label(hint);
+            }
+            GUI.contentColor = previous;
             GUILayout.EndArea();
         }
     }
