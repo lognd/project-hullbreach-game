@@ -37,6 +37,74 @@ Run a subset or pass through extra `dotnet test` filters:
 tools/plaincs/run_tests.sh --filter FullyQualifiedName~BlockBehaviourTests
 ```
 
+## Running the play-mode tests (needs Unity)
+
+`Assets/Tests/PlayMode/Hullbreach.Demo.Tests/` holds the demo scene's
+play-mode suite: it loads `DemoScene`, drives it through a scripted
+input source, and asserts the things "is the demo playable" actually
+means. Unlike the edit-mode tests these need a real editor, because they
+need a loaded scene, a running physics step and a renderer.
+
+```
+"/mnt/c/Program Files/Unity/Hub/Editor/6000.0.43f1/Editor/Unity.exe" \
+  -batchmode -burst-disable-compilation \
+  -projectPath "C:\path\to\project-hullbreach-game" \
+  -runTests -testPlatform PlayMode \
+  -testResults "C:\path\to\out\playmode.xml" \
+  -logFile "C:\path\to\out\playmode.log"
+```
+
+Only ONE Unity instance may have a given project folder open, so close
+the editor (or point `-projectPath` at a separate worktree) before
+running this. The first run imports the project and takes several
+minutes; later runs are one to three. Read `playmode.xml` for the
+per-test results (`test-case` elements with `result="Failed"` carry a
+`failure/message`) and `playmode.log` for the `Debug.Log` output each
+test prints, which is where the measured stress ratios, load factors and
+throttle readings live.
+
+### The input seam
+
+`UnityEngine.Input` cannot be driven from a test: there is no supported
+way to synthesise a key press the legacy Input Manager will report. So
+`DemoMode` and `ShipController` read player intent through
+`IDemoInput` (`Assets/Scripts/Hullbreach.Game/DemoInput.cs`) instead of
+calling `Input` directly. `LegacyDemoInput` is the shipping
+implementation; a test assigns `demoMode.InputSource = new
+ScriptedDemoInput()` (which also pushes the same source onto the
+player's `ShipController`) and then sets `Thrust`/`SteerAxis` or calls
+`PressFire()`/`PressToggle()`/`PressReset()`/`PressOverlay()`. The
+`Press*` calls are one-frame pulses, matching `Input.GetKeyDown`'s
+contract, because `ShipController` latches edge-triggered input.
+
+`DemoSceneFixture` is the shared base class: it loads the scene, injects
+the scripted input, and **fails the test if anything logs an error,
+exception or assert** while it runs (`LogAssert.NoUnexpectedReceived`
+plus a `logMessageReceived` handler). A silent `NullReferenceException`
+every frame is exactly how "play mode instantly breaks" hides.
+
+### Screenshots
+
+`DemoScreenshots.CaptureDemoStates` writes PNGs of the demo in each
+state worth looking at (build mode with a placement preview, full
+thrust, reversing, the stress overlay, mid-shot). Point it at a
+directory with `HULLBREACH_SHOTS`; if the variable is unset it falls
+back to `Application.persistentDataPath/hullbreach-shots` and logs where
+it went. From WSL the variable needs `WSLENV` to cross into the Windows
+process:
+
+```
+WSLENV=HULLBREACH_SHOTS/w HULLBREACH_SHOTS='C:\path\to\out\shots' \
+  "/mnt/c/Program Files/Unity/Hub/Editor/6000.0.43f1/Editor/Unity.exe" ...
+```
+
+`ScreenCapture.CaptureScreenshot` needs a real swapchain, so run
+WITHOUT `-nographics`, and note that `-batchmode` on its own is still
+not enough on Windows: a batchmode run reports the capture path but no
+file appears. Run the editor normally (no `-batchmode`) and use the Test
+Runner window, or accept that the numeric assertions are the part CI can
+ever check.
+
 ## What CI checks
 
 `.github/workflows/ci.yml` has three jobs, `tree`, `plaincs`, and `gate`:
@@ -60,7 +128,8 @@ a headless dedicated-server build are both tracked as open items in
 
 ## Which assemblies are NOT covered by `tools/plaincs`
 
-**`Hullbreach.Game`**: the only assembly that references `UnityEngine`
+**`Hullbreach.Game`**, for EDIT-mode purposes: the only assembly that
+references `UnityEngine`
 (`MonoBehaviour`s: `ShipController`, `BuilderController`, `ShipRenderer`,
 `ShipStructure`, `WorldSink`, `GravityWorld`, `Powerup`/`PowerupSpawner`,
 `Projectile`/`ProjectileSpawner`, `DemoMode`, `BuilderHud`,
@@ -73,9 +142,12 @@ a headless dedicated-server build are both tracked as open items in
 (scene wiring, `DemoMode`'s state machine, `ShipRenderer`'s actual pixel
 output, `Powerup`'s `OnTriggerEnter2D`) can only be exercised by opening
 the editor and pressing Play, or by a future Unity Test Framework
-play-mode test suite: neither exists yet. This is also why
-`docs/demo-scene.md`'s "first open in Unity" checklist exists: nothing in
-`Hullbreach.Game` has ever actually run.
+play-mode test suite. The play-mode suite now exists
+(`Assets/Tests/PlayMode/Hullbreach.Demo.Tests/`, see above) and covers
+`DemoMode`'s state machine, the builder's placement API, projectile
+spawning and hits, ship-to-ship contact and the structural calibration;
+what it still does not cover is pixel output, which is what the
+screenshot test exists to put in front of a human.
 
 ## How the Unity Test Runner runs the same sources
 
