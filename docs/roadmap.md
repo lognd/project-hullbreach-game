@@ -83,7 +83,152 @@ of Sprint-2 groundwork landed early.
   heavily damaged one. Noted as a placeholder in `BlockTypes.cs`'s `TODO
   [D3]` comment on the floor value.
 
-## Performance (perf/preconditioner, 2026-09-20)
+## Performance (perf/solver-ticks, 2026-09-21)
+
+All numbers below are **Release** (`tools/plaincs/run_tests.sh` builds
+with `-c Release` as of this branch; `dotnet test` defaults to Debug,
+which is what every earlier revision of this section reported and is
+not what a shipped Unity player runs). Machine: WSL2 on this dev box,
+single-threaded managed code, no Burst. `SolverBenchmarks` now runs 20
+ticks and prints a `TICKMS` line with min/median/max over the
+steady-state ticks plus the tick-0 rebuild on its own, because an
+average is exactly what hid the periodic spike below for two branches.
+
+| Ship | DOF | it/tick (steady) | ms/tick median | ms/tick max | one-time rebuild | converged |
+| --- | --- | --- | --- | --- | --- | --- |
+| 100 blocks | 810 | 0 | 0.17 | 43 (buckling tick) | 95 ms | yes, on tick 1 |
+| 500 blocks | 3850 | 400 (capped) | 100 | 104 | 157 ms | no |
+| 2000 blocks | 10702 | 400 (capped) | 289 | 294 | 571 ms | no |
+
+**What is real-time at 50 Hz (20 ms/tick) on this machine.** A
+100-block ship is, with room to spare: once it converges (tick 1, 127
+CG iterations, 22 ms) a steady tick costs 0.17 ms, because CG continues
+its Krylov subspace across ticks and immediately sees that the residual
+is already under tolerance. Its only cost above that is the buckling
+sweep every 4th tick at 29-49 ms, which is over budget on the tick it
+lands and would need either `BucklingEveryNTicks` raised or the sweep
+split across ticks to hide. 500 blocks is NOT real-time: 100 ms/tick,
+five frames' worth, and it does not converge at all inside a
+400-iteration budget. 2000 blocks is not close: 289 ms/tick, and the
+first tick after any topology change costs an extra 571 ms. In one
+line: **about 100 blocks per ship is what this solver runs in real
+time today; 500 and up needs the Burst/chunking work below, not more
+tuning.**
+
+**Krylov continuation across ticks** (`CgState`, `CgSolver.Solve`'s
+`state` parameter, `StructuralSolver.ContinuedFromLastTick` /
+`TicksSinceRestart`). `Solve` used to rebuild `r` and `p` from the
+warm-started `u` on every call, so every tick was a hard CG restart and
+the per-tick budget never compounded. It now carries `r`, `p` and `rz`
+between ticks and continues whenever the load is the same system
+(`|f_new - f_old| / |f_new| < 1e-6`, one allocation-free fused pass);
+`StructuralSolver` invalidates the state on anything that changes K or
+the preconditioner (topology rebuild, damage rescale, coarse correction
+toggled), which is the invariant `Solve` cannot check for itself.
+Effect at 100 blocks: ~300 iterations and 26-32 ms every tick became 0
+iterations and 0.17 ms. `CgContinuationTests` pins the compounding
+property directly: at a 50-iteration budget the same ship converges in
+415 total iterations over 9 ticks, exactly matching one unbudgeted
+solve's 415.
+
+Guarding it was most of the work, and two obvious designs are wrong.
+Keeping `p` and recomputing `r = f - K u` each tick (residual
+replacement) breaks CG outright, because `p` is conjugate to the
+residual history that produced it: the 100-block case diverged to 1e14
+within two ticks. Gating continuation on agreement between the carried
+recursive residual and the true one refuses every continuation, for a
+reason worth writing down: **at this conditioning in float32 the two
+disagree by ~5% of |f| even within a single tick's solve** (measured at
+810 DOF: recursive 5e-4 against a true `|f - K u|` of 3.4, at |f| =
+58). That is PCG's attainable-accuracy floor, not drift the
+continuation introduced, and it means `Converged` has always meant
+"converged to about 5% relative on this ship", never 1e-5. What works
+instead is judging health by stagnation ACROSS ticks: every tick that
+improves on the best residual since the restart snapshots `u` with it,
+and a continuation that breaks down, blows up past 100x that best, or
+fails to improve it for 3 consecutive ticks is rolled back to the
+snapshot and suspended for 8 ticks. The 500- and 2000-block ships,
+which never converge inside their budget, take exactly one rolled-back
+tick and then behave like the old restart-every-tick solver, never
+publishing a displacement worse than it would have.
+
+**The periodic spike, root-caused.** The 100-block case's ~370-480 ms
+every `BucklingEveryNTicks`-th tick was not GC and not a missed
+early-out, which is what the previous revision of this section and
+TODO.md both guessed. Instrumenting `RunBuckling` showed the early-out
+correctly declining to fire: under the benchmark's thruster load plus
+inertia relief, **98 of 100 blocks are in genuine compression** (minor
+principal stress -217 against a peak von Mises of 374). The claim that
+the load never compresses anything was simply false. The real cause is
+that the buckling path had no per-tick budget at all: one `Step` runs
+`MaxSweepsPerTick` sweeps, each solving one inverse-iteration CG per
+block vector, and each of those could run to `CgSolver`'s own
+4000-iteration cap, i.e. up to 16 unbounded solves on a tick whose
+quasi-static solve is capped at 400 iterations. Two fixes:
+`BucklingAnalysis.MaxCgIterationsPerTick` caps the total CG iterations
+across every solve in a `Step` (200, from `StructuralSolver`), and the
+buckling CG now gets the same `CoarsePreconditioner` as the
+quasi-static solve (it was denied one on precision grounds that predate
+`ApplyAdditive` projecting both sides; all 8 `BucklingTests` including
+the dense-oracle comparison pass unchanged, and that change alone
+halved the tick). Result: 370-480 ms -> 29-49 ms. 200 is the measured
+floor, not a guess: at 100 the tick costs 9 ms but the inverse
+iteration under-converges enough to break
+`Column_CriticalLoadFactorScalesWithInverseLengthSquared` (the Euler
+1/L^2 trend reads 1.18 instead of 4). Also fixed on the way, the
+compression early-out's floor was an absolute -1e-3 on the minor
+principal stress, meaning whatever the load scale made it mean; it is
+now a fraction (1e-3) of the ship's peak von Mises with a 1e-6 absolute
+backstop, so a genuinely tension-only ship early-outs at any load
+scale.
+
+**Coarse-operator rebuild cost.** The 16.4 s (Debug) / 4.13 s
+(Release) one-time rebuild at 2000 blocks was 3.94 s of
+`DenseJacobiEigen` alone, running up to 100 cyclic sweeps over the
+465-square `Kc` that 155 aggregates produce. `Kc` is dense and the
+decomposition is cubic in it, so `CoarsePreconditioner.Rebuild` now
+doubles the aggregate span (4 -> 8 -> 16) until the aggregate count
+fits `MaxAggregates` = 64:
+
+| Ship | aggregates | eigen | rebuild total | ms/tick |
+| --- | --- | --- | --- | --- |
+| 500 blocks | 69 -> 31 (span 8) | 254 ms -> 17 ms | 480 ms -> 157 ms | 142 -> 100 |
+| 2000 blocks | 155 -> 53 (span 8) | 3938 ms -> 88 ms | 3809 ms -> 571 ms | 353 -> 289 |
+
+Both ships got faster per TICK as well, because `ApplyAdditive`'s dense
+coarse solve is O(m^2) on every CG iteration, not just at rebuild, and
+neither ship's residual band moved (60-2600 over 20 ticks, no
+divergence). The other option in the ticket, replacing the
+eigendecomposition with a Cholesky of `Kc` projected onto the
+rigid-mode complement plus a shift, was implemented and measured before
+being dropped: it is cheaper still (35 ms at 2000 blocks) and its
+deflation is exactly right for the EXACT null space (Qc = P^T applied
+to the three global rigid modes, orthonormalized in coarse space,
+projected off both sides), but it diverged the 500- and 2000-block
+benchmarks to NaN. The reason is the same one the eigenvalue floor
+exists for: a 1-block-wide arm's aggregation produces NEAR-null
+directions that are not in the global rigid space at all, and a shift
+only attenuates those (1/(lambda + 3e-4), up to 3300x) where the
+pseudo-inverse's floor drops them outright. A shift large enough to
+bound them would smother the correction itself. Do not re-run this
+experiment without first fixing the aggregation of 1-wide members.
+
+**Still open after this branch**: 500+ block ships do not converge
+inside a 400-iteration budget and are not real-time; `Converged` means
+~5% relative, not `Tolerance`, on any ship this ill-conditioned (a
+double-precision or residual-replacement-with-restart CG would be the
+honest fix); and the buckling tick, while 12x cheaper, still exceeds a
+50 Hz frame on its own at 100 blocks. The next steps below are
+unchanged in order.
+
+## Performance history (perf/preconditioner, 2026-09-20)
+
+Kept for the reasoning, not the numbers: everything below is a **Debug**
+build and predates Krylov continuation, the buckling budget and the
+aggregate cap. Where it disagrees with the section above, the section
+above is current. Two of its conclusions are now known to be wrong and
+are corrected there: the periodic spike was not GC, and the benchmark
+load does compress the ship.
 
 `SolverBenchmarks` (`Assets/Tests/EditMode/Hullbreach.Structure.Tests/SolverBenchmarks.cs`)
 builds a wide plate-plus-slender-arm ship (the arm makes CG's width

@@ -12,25 +12,31 @@ work lives here instead of in tickets.
       Add the job to `.github/workflows/ci.yml` and to the `gate` job's
       needs list.
 - [ ] CI: headless Linux dedicated-server build on every PR.
-- [ ] Structure: `CgSolver.Solve` restarts its Krylov subspace (`r`/`p`)
-      from scratch every `Tick` call, warm-starting only the displacement
-      `u`. This is the suspected reason the 500- and 2000-block
-      plate+arm `SolverBenchmarks` cases plateau (residual oscillates
-      instead of trending toward zero across ticks) instead of eventually
-      converging under `MaxCgIterationsPerTick`'s carried-over budget, even
-      with `CoarsePreconditioner`'s deflated coarse correction in place
-      (perf/preconditioner branch, 2026-09-20; see docs/roadmap.md's
-      Performance section). Preserving `r`/`p`/`rzOld` across ticks
-      (re-validated against the current `f`, since the load can change
-      tick to tick) is the next thing to try before reaching for a bigger
-      iteration cap or a wall-clock budget.
-- [ ] Structure: `SolverBenchmarks.Benchmark_100Blocks` shows a periodic
-      per-tick spike (~370-460ms every `BucklingEveryNTicks`-th tick vs.
-      ~19-40ms otherwise) even though the benchmark's load never puts
-      anything into compression, so `RunBuckling` should be hitting its
-      cheap early-out on every one of those ticks, not the subspace
-      machinery. Suspected GC pause, not confirmed (perf/preconditioner
-      branch, 2026-09-20; see docs/roadmap.md's Performance section).
+- [ ] Structure: a 500-block ship is not real-time. It costs ~100
+      ms/tick (Release, this dev box) and does not converge inside
+      `MaxCgIterationsPerTick` = 400 at all; 2000 blocks costs ~289
+      ms/tick. Krylov continuation, the buckling budget and the coarse
+      aggregate cap (perf/solver-ticks, 2026-09-21) each helped and none
+      of them closes this: the remaining levers are the Burst/NativeArray
+      port of the hot path and chunked solves, in that order. See
+      docs/roadmap.md's Performance section for the measured table.
+- [ ] Structure: `CgSolver.Converged` overstates its accuracy. The
+      residual it reports is the RECURSIVE one (`r -= alpha * K p`), and
+      at 810 dof in float32 it sits ~4 orders of magnitude below the true
+      `|f - K u|` (5e-4 reported against 3.4 actual, at |f| = 58), which
+      is PCG's attainable-accuracy floor at this conditioning. So
+      "converged to 1e-5" has always really meant "converged to about 5%
+      relative". Nothing downstream is obviously wrong because of it (the
+      stress field is accurate to well under 1%), but `Tolerance` does
+      not mean what its doc says. Fixing it honestly means double
+      precision on the residual, or a restart-with-true-residual schedule
+      inside a single solve. Found on perf/solver-ticks, 2026-09-21.
+- [ ] Structure: the buckling tick still exceeds a 50 Hz frame on its
+      own. It is down from 370-480 ms to 29-49 ms at 100 blocks
+      (`BucklingAnalysis.MaxCgIterationsPerTick`), but it lands whole on
+      every `BucklingEveryNTicks`-th tick instead of being spread across
+      them. Splitting one sweep's per-vector solves across consecutive
+      ticks, or raising `BucklingEveryNTicks`, would hide it.
 - [ ] frob: add a C# check stage so `frob check` gates this repo the way
       it gates platform. Tracked in frob itself.
 - [ ] Replace the template's FPS gameplay (weapons, character, spectator)

@@ -218,7 +218,9 @@ directly: Structure has no dependency on Ship (see the assembly graph).
    solution, preconditioned by plain Jacobi plus (when
    `StructuralSolver.UseCoarseCorrection`, default on) `CoarsePreconditioner`'s
    deflated coarse correction: a rigid-body-mode prolongation over
-   4x4-block aggregates and a pseudo-inverted coarse operator, letting
+   4x4-block aggregates (coarsened automatically on big ships, see
+   `CoarsePreconditioner.MaxAggregates`) and a pseudo-inverted coarse
+   operator, letting
    information cross the ship in O(1) preconditioner applications instead
    of one CG iteration per element of width (see `CoarsePreconditioner`'s
    doc and `docs/roadmap.md`'s Performance section for the numbers and the
@@ -231,10 +233,17 @@ directly: Structure has no dependency on Ship (see the assembly graph).
    budget (see `CgSolver`'s doc: iterations scale with the ship's width in
    elements), the PARTIAL displacement is kept as the next tick's warm
    start rather than blocking the frame, and `StructuralSolver.Converged`
-   is false until a later tick's warm start finally gets under
-   `CgSolver.Tolerance` (relative to `|f|`, with an absolute floor via
-   `Tolerance * Math.Max(1, |f|)`, so a near-zero load never burns
-   iterations chasing noise). "Converged", concretely, means the tick's
+   is false until a later tick finally gets under `CgSolver.Tolerance`
+   (relative to `|f|` at every load scale). The warm start is not just
+   the displacement: a caller-owned `CgState` carries the residual, the
+   search direction and `r.z` across ticks, so an unfinished solve is
+   CONTINUED rather than restarted and the per-tick budget compounds
+   (`StructuralSolver.ContinuedFromLastTick` / `TicksSinceRestart`).
+   A continuation is only valid while `K`, the preconditioner and `f`
+   are all unchanged: `CgSolver` checks the load itself and
+   `StructuralSolver` invalidates the state on every rebuild, and a
+   continuation that stops making progress is rolled back to the best
+   displacement it had (see `CgState`'s doc). "Converged", concretely, means the tick's
    `BlockStresses` reflect a displacement field within `Tolerance` of the
    true quasi-static solution for that tick's load; a false `Converged`
    means they LAG the true answer by however far the residual still is.
@@ -268,10 +277,16 @@ directly: Structure has no dependency on Ship (see the assembly graph).
    stiffness `K_G` from the *current* stress state
    (`GeometricStiffness.Rebuild`), then runs subspace iteration
    (`BucklingAnalysis`) toward the lowest eigenvalues of the generalized
-   buckling eigenproblem. Cheap early-out: if no element anywhere is in
-   meaningful compression, `K_G` is positive semidefinite and there is no
-   positive load factor to find, so the whole subspace machinery is
-   skipped.
+   buckling eigenproblem, under its own per-tick CG budget
+   (`BucklingAnalysis.MaxCgIterationsPerTick`, 200 from
+   `StructuralSolver`) so a buckling tick cannot cost twenty times a
+   normal one. Cheap early-out: if no element anywhere is in meaningful
+   compression (minor principal stress below a fraction of the ship's
+   peak von Mises, so the test means the same thing at every load
+   scale), `K_G` is positive semidefinite and there is no positive load
+   factor to find, so the whole subspace machinery is skipped. Note that
+   a ship under an ordinary off-centre thrust does NOT hit this path:
+   inertia relief puts most of it in compression somewhere.
    - `BlockStress.BucklingRatio`: **client-safe**: a continuous float
      (`1 / CriticalLoadFactor`, scaled by strain-energy participation in
      the single critical mode), the same on every machine's own solve,
