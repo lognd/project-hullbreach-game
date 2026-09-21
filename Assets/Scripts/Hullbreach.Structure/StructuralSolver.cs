@@ -74,6 +74,7 @@ namespace Hullbreach.Structure
     {
         readonly StiffnessAssembly _assembly = new StiffnessAssembly();
         readonly CgSolver _solver = new CgSolver();
+        readonly CoarsePreconditioner _coarse = new CoarsePreconditioner();
 
         int _lastRebuiltCount = -1;
         bool _forceRebuild = true;
@@ -128,12 +129,37 @@ namespace Hullbreach.Structure
         public StructuralSolver()
         {
             _loadVector = new LoadVector(_assembly);
+            // NOT loosened to 1e-3 despite stress/damage decisions only
+            // needing that much accuracy: this branch tried exactly that
+            // and found it silently breaks buckling, because
+            // RunBuckling's gate is StructuralSolver.Converged, which is
+            // this SAME CgSolver instance's Tolerance. Loosening it to
+            // 1e-3 made CG stop (and report Converged=true) well before
+            // the displacement field was accurate enough for
+            // GeometricStiffness's Rayleigh quotients, regressing three
+            // BucklingTests (Column_CriticalLoadFactorMatchesDenseOracle,
+            // Column_CriticalLoadFactorScalesWithInverseLengthSquared,
+            // SmallBlob_HasNoLowLoadFactor) exactly the way CgSolver's own
+            // MaxIterations doc warns an under-converged solve does.
+            // Loosening this safely needs a SEPARATE, tighter tolerance
+            // gate for "safe to run buckling this tick" decoupled from
+            // "safe to stop CG this tick" (tracked in TODO.md); until then
+            // this stays at CgSolver's own 1e-5 default, same as
+            // BucklingAnalysis's internal CgSolver instance.
         }
 
         /// <summary>Call when the caller knows topology changed but the block
         /// count happens to be unchanged (e.g. a block swapped for a
         /// different type at the same key): Count alone cannot detect that.</summary>
         public void MarkTopologyChanged() => _forceRebuild = true;
+
+        /// <summary>On by default: augments CgSolver's plain Jacobi with
+        /// CoarsePreconditioner's deflated coarse correction (see that
+        /// class), which is what lets iteration counts grow sublinearly
+        /// with ship width instead of tracking it directly. Kept
+        /// switchable so the plain-Jacobi path stays available for
+        /// comparison/regression (see SolverBenchmarks).</summary>
+        public bool UseCoarseCorrection = true;
 
         /// <summary>Per-block stress results from the most recent Tick.</summary>
         public Dictionary<int, BlockStress> BlockStresses { get; } = new Dictionary<int, BlockStress>();
@@ -166,6 +192,14 @@ namespace Hullbreach.Structure
                 // (instead of every Tick or every RunBuckling call) is what
                 // keeps a steady-state ship's hot path allocation-free.
                 LoadVector.RigidBodyModes(_assembly.NodeRestPositions, _rigidModes);
+
+                // Kc depends only on K's current values/sparsity, both of
+                // which only change on this same rebuild, so this is the
+                // only place it needs to run (see CoarsePreconditioner's
+                // allocation doc): rebuilding it every tick would be the
+                // per-tick allocation/CPU regression SolverBenchmarks
+                // guards against.
+                if (UseCoarseCorrection) _coarse.Rebuild(_assembly);
             }
 
             var f = _loadBuffer;
@@ -178,7 +212,7 @@ namespace Hullbreach.Structure
             _loadVector.ApplyInertiaRelief(f, grid, out _, out _);
 
             _solver.MaxIterations = MaxCgIterationsPerTick;
-            _solver.Solve(_assembly, f, _displacement, _rigidModes);
+            _solver.Solve(_assembly, f, _displacement, _rigidModes, UseCoarseCorrection ? _coarse : null);
             Converged = _solver.Converged;
             ResidualNorm = _solver.LastResidualNorm;
             IterationsThisTick = _solver.LastIterationCount;
