@@ -112,6 +112,15 @@ namespace Hullbreach.Structure
         /// dependent error distribution in the returned displacement.</summary>
         readonly CgSolver _cg = new CgSolver();
 
+        /// <summary>CgSolver's own iteration cap, restored per solve when
+        /// no per-tick budget is set.</summary>
+        static readonly int DefaultCgIterations = new CgSolver().MaxIterations;
+
+        /// <summary>CG iterations the most recent Step spent in total,
+        /// across every inverse-iteration solve: what
+        /// MaxCgIterationsPerTick actually caps.</summary>
+        public int LastCgIterationCount { get; private set; }
+
         /// <summary>Strain-energy floor for publishing a mode, relative to
         /// max(diag K) * |phi|^2 (the natural scale of phi^T K phi for a
         /// shape of phi's size). A Ritz slot whose reduced-K pivot went
@@ -353,10 +362,37 @@ namespace Hullbreach.Structure
         /// is recorded in <see cref="LastConvergedTick"/> and
         /// <see cref="ExtractModes"/> is safe to call.
         /// </summary>
+        /// <summary>The coarse correction to hand this analysis's own CG,
+        /// or null for plain Jacobi. Attaching one was long avoided here on
+        /// the grounds that the inverse iteration's Rayleigh quotients
+        /// amplify any preconditioner-dependent error in K^-1; that concern
+        /// predates CoarsePreconditioner.ApplyAdditive projecting BOTH its
+        /// input and its output, which is what made the correction exactly
+        /// rigid-mode-free. With that in place every BucklingTests case
+        /// (including the dense-oracle comparison) passes unchanged, and
+        /// the 100-block benchmark's buckling tick halved, so the precision
+        /// argument no longer buys anything.</summary>
+        public CoarsePreconditioner Coarse;
+
+        /// <summary>Total CG iterations Step may spend across ALL of its
+        /// inverse-iteration solves in one call: the per-tick cost cap that
+        /// MaxSweepsPerTick alone never was. A sweep runs one CG solve per
+        /// block vector, each previously free to run to CgSolver's own
+        /// 4000-iteration cap, so "2 sweeps" could mean 16 full solves and
+        /// several hundred milliseconds on a ship whose quasi-static solve
+        /// costs 20 (measured: 370-480 ms every 4th tick at 100 blocks).
+        /// Budget exhausted means a block vector keeps its warm start for
+        /// this tick, which costs convergence SPEED (more ticks to publish
+        /// modes) and not correctness: the subspace is carried across ticks
+        /// precisely so it can be advanced a slice at a time.</summary>
+        public int MaxCgIterationsPerTick = int.MaxValue;
+
         public bool Step(StiffnessAssembly k, GeometricStiffness kg, float[][] rigidModes, int tick)
         {
             int sweeps = 0;
             bool converged = false;
+            int cgBudget = MaxCgIterationsPerTick;
+            LastCgIterationCount = 0;
 
             for (int iter = 0; iter < MaxSweepsPerTick; iter++)
             {
@@ -371,7 +407,13 @@ namespace Hullbreach.Structure
                     // Warm-start CG from the current subspace vector: the
                     // whole point of carrying _v across sweeps/ticks.
                     Array.Copy(_v[j], _y[j], _dof);
-                    _cg.Solve(k, _rhs[j], _y[j], rigidModes);
+                    if (cgBudget > 0)
+                    {
+                        _cg.MaxIterations = cgBudget == int.MaxValue ? DefaultCgIterations : cgBudget;
+                        _cg.Solve(k, _rhs[j], _y[j], rigidModes, Coarse);
+                        if (cgBudget != int.MaxValue) cgBudget -= _cg.LastIterationCount;
+                        LastCgIterationCount += _cg.LastIterationCount;
+                    }
 
                     // PROJECT THE CG SOLUTION, not just its right-hand
                     // side. CgSolver re-projects only its RESIDUAL, never
