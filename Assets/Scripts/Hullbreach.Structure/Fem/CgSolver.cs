@@ -36,6 +36,25 @@ namespace Hullbreach.Structure
         /// and CG still exits the moment Tolerance is met, so this only
         /// matters for the cases that actually needed more room.</summary>
         public int MaxIterations = 4000;
+
+        /// <summary>Stopping criterion, RELATIVE to |f|: Solve exits once
+        /// |r| &lt;= Tolerance * |f|. It used to be
+        /// Tolerance * max(1, |f|), which is the same thing only for ships
+        /// loaded past |f| = 1 and an ABSOLUTE bound of 1e-5 below that.
+        /// Every buckling test drives a self-equilibrated end load with
+        /// |f| on the order of 0.04, so that floor let CG stop at ~2.5e-4
+        /// relative residual while still reporting Converged, and the
+        /// displacement error left at that point is preconditioner-
+        /// dependent: with CoarsePreconditioner attached it landed
+        /// differently than under plain Jacobi, fed a different element
+        /// stress field into GeometricStiffness, and moved a 12-block
+        /// column's critical load factor to 0.008 against the dense
+        /// oracle's 0.149. A relative criterion means Tolerance means the
+        /// same thing at every load scale, which is what the callers that
+        /// reason about it (StructuralSolver.Converged gating buckling,
+        /// BucklingAnalysis's own inverse iteration) already assume.
+        /// |f| = 0 is still handled: the initial residual is then 0 too,
+        /// so the first check passes immediately.</summary>
         public float Tolerance = 1e-5f;
 
         /// <summary>Iterations the last Solve actually took. Watch this grow
@@ -182,7 +201,7 @@ namespace Hullbreach.Structure
 
             float rzOld = Dot(r, z);
             float fNorm = (float)Math.Sqrt(Dot(f, f));
-            float tolAbs = Tolerance * Math.Max(1f, fNorm);
+            float tolAbs = Tolerance * fNorm;
 
             // STAGNATION GUARD: tracks the best (smallest) residual norm seen
             // and how long ago it improved. A right-hand side that is

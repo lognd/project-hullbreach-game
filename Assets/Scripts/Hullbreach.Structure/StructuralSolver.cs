@@ -145,7 +145,12 @@ namespace Hullbreach.Structure
             // gate for "safe to run buckling this tick" decoupled from
             // "safe to stop CG this tick" (tracked in TODO.md); until then
             // this stays at CgSolver's own 1e-5 default, same as
-            // BucklingAnalysis's internal CgSolver instance.
+            // BucklingAnalysis's internal CgSolver instance. NOTE that
+            // 1e-5 only started meaning 1e-5 at these tests' load scale
+            // once CgSolver's stopping criterion became truly relative to
+            // |f| (see CgSolver.Tolerance): before that it was an absolute
+            // 1e-5 floor for any |f| below 1, which is every load case in
+            // BucklingTests.
         }
 
         /// <summary>Call when the caller knows topology changed but the block
@@ -442,7 +447,7 @@ namespace Hullbreach.Structure
             bool converged = _buckling.Step(_assembly, _kg, _rigidModes, _tickIndex);
             if (!converged) return;
 
-            var modes = _buckling.ExtractModes(grid, _assembly, BucklingModeCount);
+            var modes = _buckling.ExtractModes(grid, _assembly, _kg, BucklingModeCount);
             _bucklingModes.Clear();
             _bucklingModes.AddRange(modes);
             CriticalLoadFactor = _bucklingModes.Count > 0 ? _bucklingModes[0].LoadFactor : float.PositiveInfinity;
