@@ -75,6 +75,12 @@ namespace Hullbreach.Structure
         /// field.</summary>
         public bool Converged { get; private set; }
 
+        /// <summary>True when the last Solve continued the caller-owned
+        /// CgState's Krylov subspace instead of restarting from `u`; false
+        /// when no state was passed, the load changed, or the state had
+        /// been invalidated (see CgState).</summary>
+        public bool ContinuedFromLastTick { get; private set; }
+
         // Scratch buffers reused across Solve calls: this is warm-started
         // and called every tick (see StructuralSolver.Tick), so allocating
         // n-sized arrays here every call was real per-tick GC pressure with
@@ -170,8 +176,15 @@ namespace Hullbreach.Structure
         /// rigid-body modes every iteration, so rounding cannot slowly
         /// excite them: Gram-Schmidt every iteration is affordable at this
         /// problem size.
+        ///
+        /// KRYLOV CONTINUATION: pass a caller-owned <see cref="CgState"/>
+        /// to continue the previous call's iteration (same r, p and rz)
+        /// instead of restarting the subspace from `u`. Read CgState's doc
+        /// before doing so: a continuation is only valid while K, the
+        /// preconditioner and f all stay put, and only the last of those
+        /// three is something this method can check for itself.
         /// </summary>
-        public void Solve(StiffnessAssembly k, float[] f, float[] u, float[][] rigidModes, CoarsePreconditioner coarse = null)
+        public void Solve(StiffnessAssembly k, float[] f, float[] u, float[][] rigidModes, CoarsePreconditioner coarse = null, CgState state = null)
         {
             int n = k.DofCount;
             EnsureScratch(n, rigidModes.Length);
@@ -192,16 +205,54 @@ namespace Hullbreach.Structure
             var z = _z;
             var p = _p;
 
-            k.Multiply(u, kp);
-            for (int i = 0; i < n; i++) r[i] = f[i] - kp[i];
-            Project(r, modes);
+            // KRYLOV CONTINUATION (see CgState): when the caller kept the
+            // previous tick's r/p/rz and the load is the same system, pick
+            // the iteration up where it stopped instead of rebuilding the
+            // search direction from the residual, which would discard the
+            // accumulated subspace and spend this tick's whole budget
+            // re-earning it.
+            bool continued = false;
+            if (state != null)
+            {
+                state.Ensure(n);
+                continued = state.Primed && state.SuspendedTicks == 0 && state.LoadUnchanged(f);
+            }
 
-            ApplyPreconditioner(diag, r, z, n, coarse, modes);
-            Array.Copy(z, p, n);
-
-            float rzOld = Dot(r, z);
             float fNorm = (float)Math.Sqrt(Dot(f, f));
             float tolAbs = Tolerance * fNorm;
+
+            float rzOld;
+            if (continued)
+            {
+                // Pick the iteration up exactly where it stopped: the
+                // residual, the search direction and r.z all belong to one
+                // CG run on one unchanged system.
+                Array.Copy(state.R, r, n);
+                Array.Copy(state.P, p, n);
+                rzOld = state.Rz;
+                state.TicksSinceRestart++;
+            }
+            else
+            {
+                k.Multiply(u, kp);
+                for (int i = 0; i < n; i++) r[i] = f[i] - kp[i];
+                Project(r, modes);
+
+                ApplyPreconditioner(diag, r, z, n, coarse, modes);
+                Array.Copy(z, p, n);
+
+                rzOld = Dot(r, z);
+                if (state != null)
+                {
+                    state.TicksSinceRestart = 0;
+                    state.BestResidual = float.MaxValue;
+                    state.TicksSinceImprovement = 0;
+                    if (state.SuspendedTicks > 0) state.SuspendedTicks--;
+                }
+            }
+
+            ContinuedFromLastTick = continued;
+            if (state != null) state.ContinuedFromLastTick = continued;
 
             // STAGNATION GUARD: tracks the best (smallest) residual norm seen
             // and how long ago it improved. A right-hand side that is
@@ -217,7 +268,11 @@ namespace Hullbreach.Structure
             // iterations without at least a 0.1% improvement means "this is
             // the best available", not "not done yet".
             int stagnationPatience = Math.Max(100, n);
-            float bestRNorm = float.MaxValue;
+            // A CONTINUED tick inherits the best residual seen since the
+            // restart, so the divergence guard below measures growth against
+            // the whole continued run rather than against this tick's first
+            // iteration.
+            float bestRNorm = continued ? state.BestResidual : float.MaxValue;
             int lastImprovedIter = 0;
 
             // PERFORMANCE: the residual norm used to be recomputed twice per
@@ -232,16 +287,27 @@ namespace Hullbreach.Structure
             // cost down from ~327us to within noise of matvec-only cost.
             float rNorm = (float)Math.Sqrt(Dot(r, r));
 
+            bool breakdown = false;
             int iter = 0;
             for (; iter < MaxIterations; iter++)
             {
                 if (rNorm <= tolAbs) break;
+                // Divergence guard, checked per iteration and not per tick
+                // (see CgState.DivergenceFactor): a continued run that has
+                // started to diverge would otherwise burn its entire
+                // remaining budget making the displacement worse before the
+                // end-of-tick check noticed.
+                if (continued && rNorm > bestRNorm * state.DivergenceFactor) { breakdown = true; break; }
                 if (rNorm < bestRNorm * 0.999f) { bestRNorm = rNorm; lastImprovedIter = iter; }
-                else if (iter - lastImprovedIter > stagnationPatience) break;
+                else if (iter - lastImprovedIter > stagnationPatience) { breakdown = true; break; }
 
                 k.Multiply(p, kp);
                 float pkp = Dot(p, kp);
-                if (Math.Abs(pkp) < 1e-20f) break;
+                // Breakdown: the search direction carries no more curvature.
+                // Whatever is in `p` is numerically exhausted, so it must not
+                // become the next tick's continuation (see CgState's doc on
+                // the one failure mode Solve can detect from inside).
+                if (Math.Abs(pkp) < 1e-20f) { breakdown = true; break; }
 
                 float alpha = rzOld / pkp;
                 for (int i = 0; i < n; i++) u[i] += alpha * p[i];
@@ -269,6 +335,68 @@ namespace Hullbreach.Structure
             LastIterationCount = iter;
             LastResidualNorm = rNorm;
             Converged = LastResidualNorm <= tolAbs;
+
+            if (state != null)
+            {
+                // BEST-U SNAPSHOT AND ROLLBACK. `u` is what the stress
+                // field and the next tick's warm start are read from, so a
+                // continuation that wanders must never leave it worse than
+                // the best this run ever had. Every tick that improves on
+                // the best residual since the restart snapshots `u`
+                // alongside it (one n-copy, against a budget of hundreds of
+                // matvecs); a continuation that then goes bad restores that
+                // snapshot instead of publishing its own worse answer.
+                //
+                // "Goes bad" is judged by STAGNATION ACROSS TICKS, not by
+                // this tick's residual alone: PCG minimizes the energy
+                // norm, not |r|, so a healthy continued run under a small
+                // per-tick budget bounces its residual upward for several
+                // ticks at a time (the CgContinuationTests ship does
+                // exactly that and still converges to the same total
+                // iteration count as one unbudgeted solve). What the ships
+                // that must NOT continue look like instead is a best
+                // residual that stops improving at all while the current
+                // one creeps upward tick after tick, which is the
+                // 500-/2000-block plate+arm case: unguarded, that creep
+                // reached ~1e5 from ~1e2 over ten ticks.
+                bool catastrophic = !Converged && rNorm > state.BestResidual * state.ResidualGrowthSlack;
+                bool stagnant = !Converged && state.TicksSinceImprovement >= state.StagnationTicks;
+                if (continued && (breakdown || catastrophic || stagnant))
+                {
+                    Array.Copy(state.UBest, u, n);
+                    LastResidualNorm = state.BestResidual;
+                    Converged = LastResidualNorm <= tolAbs;
+                    state.Invalidate();
+                    state.SuspendedTicks = state.SuspensionTicks;
+                }
+                else if (breakdown)
+                {
+                    state.Invalidate();
+                }
+                else
+                {
+                    Array.Copy(r, state.R, n);
+                    Array.Copy(p, state.P, n);
+                    Array.Copy(f, state.PrevF, n);
+                    state.Rz = rzOld;
+                    state.Primed = true;
+                    if (rNorm < state.BestResidual)
+                    {
+                        state.BestResidual = rNorm;
+                        Array.Copy(u, state.UBest, n);
+                        state.TicksSinceImprovement = 0;
+                    }
+                    else
+                    {
+                        state.TicksSinceImprovement++;
+                    }
+
+                    // A restart that converged is proof the system is
+                    // solvable inside the budget again, so lift any
+                    // suspension and let the next tick continue.
+                    if (Converged) state.SuspendedTicks = 0;
+                }
+            }
         }
 
         /// <summary>Applies M^-1 to `r` into `z`: plain Jacobi (D^-1), plus

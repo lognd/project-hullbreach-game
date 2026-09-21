@@ -95,7 +95,7 @@ namespace Hullbreach.Structure.Tests
             return grid;
         }
 
-        static void RunBenchmark(int totalBlocks, int ticks = 10)
+        static void RunBenchmark(int totalBlocks, int ticks = 20)
         {
             var grid = BuildShip(totalBlocks, out float2 thrusterPoint);
 
@@ -125,6 +125,14 @@ namespace Hullbreach.Structure.Tests
                 (thrusterPoint, new float2(0f, -50f)),
             };
 
+            // Per-tick wall clock, kept for the min/median/max summary
+            // below: an average hides exactly the thing this benchmark
+            // exists to catch, a periodic spike on the buckling-eligible
+            // ticks (see docs/roadmap.md's Performance section). Measured
+            // in ticks of the Stopwatch, not whole milliseconds, because a
+            // settled 100-block tick now costs well under one.
+            var tickMicros = new double[ticks];
+
             var sw = System.Diagnostics.Stopwatch.StartNew();
             long allocBefore = 0, allocAfter = 0;
             long maxTickAlloc = 0;
@@ -143,9 +151,10 @@ namespace Hullbreach.Structure.Tests
                 bool measureAlloc = tick >= ticks - 2;
                 if (measureAlloc) allocBefore = GC.GetAllocatedBytesForCurrentThread();
 
-                long tickStartMs = sw.ElapsedMilliseconds;
+                double tickStart = sw.Elapsed.TotalMilliseconds;
                 solver.Tick(grid, forces, 1f / 60f);
-                long tickMs = sw.ElapsedMilliseconds - tickStartMs;
+                double tickMs = sw.Elapsed.TotalMilliseconds - tickStart;
+                tickMicros[tick] = tickMs;
 
                 if (measureAlloc)
                 {
@@ -159,10 +168,27 @@ namespace Hullbreach.Structure.Tests
                 TestContext.Out.WriteLine(
                     $"blocks={totalBlocks} tick={tick} dof={solver.DofCount} " +
                     $"iterations={solver.IterationsThisTick} converged={solver.Converged} " +
-                    $"residual={solver.ResidualNorm:g4} ms={tickMs}");
+                    $"residual={solver.ResidualNorm:g4} ms={tickMs:F2} " +
+                    $"continued={solver.ContinuedFromLastTick} ticksSinceRestart={solver.TicksSinceRestart}");
             }
 
             sw.Stop();
+
+            // STEADY STATE ONLY for the distribution: tick 0 pays the
+            // one-time K/coarse rebuild, which is reported separately
+            // because it is a different question (see the roadmap's
+            // rebuild-cost numbers) from what a tick costs in flight.
+            var steady = new double[ticks - 1];
+            Array.Copy(tickMicros, 1, steady, 0, ticks - 1);
+            Array.Sort(steady);
+            double median = steady.Length % 2 == 1
+                ? steady[steady.Length / 2]
+                : 0.5 * (steady[steady.Length / 2 - 1] + steady[steady.Length / 2]);
+
+            TestContext.Out.WriteLine(
+                $"TICKMS blocks={totalBlocks} rebuildTick0={tickMicros[0]:F2} " +
+                $"min={steady[0]:F2} median={median:F2} max={steady[steady.Length - 1]:F2} " +
+                $"(steady-state ticks 1..{ticks - 1}, ms)");
 
             TestContext.Out.WriteLine(
                 $"SUMMARY blocks={totalBlocks} ticks={ticks} totalMs={sw.ElapsedMilliseconds} " +

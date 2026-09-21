@@ -76,6 +76,16 @@ namespace Hullbreach.Structure
         readonly CgSolver _solver = new CgSolver();
         readonly CoarsePreconditioner _coarse = new CoarsePreconditioner();
 
+        // Per-ship Krylov state, carried across ticks so the per-tick
+        // iteration budget COMPOUNDS instead of each tick re-earning the
+        // search direction the previous one already paid for (see
+        // CgState). This solver instance owns exactly one ship, so one
+        // state object is the right granularity. Invalidated below on
+        // every rebuild of K or of the preconditioner, which is the
+        // invariant CgState cannot check for itself.
+        readonly CgState _cgState = new CgState();
+        bool _lastUsedCoarse = true;
+
         int _lastRebuiltCount = -1;
         bool _forceRebuild = true;
 
@@ -116,6 +126,18 @@ namespace Hullbreach.Structure
         /// <summary>CgSolver.LastIterationCount from the most recent Tick:
         /// how much of MaxCgIterationsPerTick this tick actually spent.</summary>
         public int IterationsThisTick { get; private set; }
+
+        /// <summary>True when this tick's quasi-static solve continued the
+        /// previous tick's Krylov subspace (see CgState) rather than
+        /// restarting it. False on the tick after any topology/stiffness
+        /// rebuild or any real load change, which is when a restart is the
+        /// only correct answer.</summary>
+        public bool ContinuedFromLastTick { get; private set; }
+
+        /// <summary>Ticks since the quasi-static solve last restarted its
+        /// Krylov subspace; 0 on a restarting tick. A ship under a steady
+        /// load should see this climb until it converges.</summary>
+        public int TicksSinceRestart { get; private set; }
 
         /// <summary>Degrees of freedom in the current assembly (2 per node),
         /// exposed read-only for callers (e.g. SolverBenchmarks) that want
@@ -205,6 +227,22 @@ namespace Hullbreach.Structure
                 // per-tick allocation/CPU regression SolverBenchmarks
                 // guards against.
                 if (UseCoarseCorrection) _coarse.Rebuild(_assembly);
+
+                // K and (if attached) M^-1 both just changed, so the stored
+                // r/p/rz describe a linear system that no longer exists:
+                // continuing against them would minimize the wrong
+                // quadratic (see CgState's doc). Restart.
+                _cgState.Invalidate();
+            }
+
+            // Same reasoning for the preconditioner being switched on or
+            // off mid-run (SolverBenchmarks and CoarsePreconditionerTests
+            // both do this): M^-1 changed without K changing, which no
+            // rebuild flag covers.
+            if (UseCoarseCorrection != _lastUsedCoarse)
+            {
+                _cgState.Invalidate();
+                _lastUsedCoarse = UseCoarseCorrection;
             }
 
             var f = _loadBuffer;
@@ -217,10 +255,12 @@ namespace Hullbreach.Structure
             _loadVector.ApplyInertiaRelief(f, grid, out _, out _);
 
             _solver.MaxIterations = MaxCgIterationsPerTick;
-            _solver.Solve(_assembly, f, _displacement, _rigidModes, UseCoarseCorrection ? _coarse : null);
+            _solver.Solve(_assembly, f, _displacement, _rigidModes, UseCoarseCorrection ? _coarse : null, _cgState);
             Converged = _solver.Converged;
             ResidualNorm = _solver.LastResidualNorm;
             IterationsThisTick = _solver.LastIterationCount;
+            ContinuedFromLastTick = _cgState.ContinuedFromLastTick;
+            TicksSinceRestart = _cgState.TicksSinceRestart;
 
             // Stress and damage decisions use whatever displacement is
             // available, converged or not: see the class remarks on lag.
@@ -320,7 +360,7 @@ namespace Hullbreach.Structure
         // ---------------------------------------------------------------
 
         readonly GeometricStiffness _kg = new GeometricStiffness();
-        readonly BucklingAnalysis _buckling = new BucklingAnalysis();
+        readonly BucklingAnalysis _buckling = new BucklingAnalysis { MaxCgIterationsPerTick = 200 };
 
         int _tickIndex;
         int _bucklingDof = -1;
@@ -344,6 +384,26 @@ namespace Hullbreach.Structure
         /// here so a caller (or a test wanting faster convergence than the
         /// production per-tick budget) can tune the per-tick cost cap without
         /// reaching into StructuralSolver's private analysis instance.</summary>
+        /// <summary>Total CG iterations the buckling sweep may spend in one
+        /// tick (see BucklingAnalysis.MaxCgIterationsPerTick). The
+        /// quasi-static solve has had a per-tick budget since
+        /// MaxCgIterationsPerTick was introduced; the buckling path never
+        /// did, which is the whole of the periodic spike the 100-block
+        /// benchmark showed (370-480 ms every fourth tick against 20 ms
+        /// for a normal one, Release). 200 is measured, not guessed: it
+        /// puts that tick at 29-39 ms, and the next step down (100, 9 ms)
+        /// under-converges the inverse iteration badly enough to break
+        /// BucklingTests.Column_CriticalLoadFactorScalesWithInverseLengthSquared
+        /// (the Euler 1/L^2 trend read 1.18 instead of 4). A ship that
+        /// needs more than this simply takes more ticks to publish its
+        /// modes: the subspace is carried across ticks for exactly that
+        /// reason.</summary>
+        public int BucklingMaxCgIterationsPerTick
+        {
+            get => _buckling.MaxCgIterationsPerTick;
+            set => _buckling.MaxCgIterationsPerTick = value;
+        }
+
         public int BucklingMaxSweepsPerTick
         {
             get => _buckling.MaxSweepsPerTick;
@@ -385,12 +445,26 @@ namespace Hullbreach.Structure
         public IReadOnlyList<int> BuckledBlocks => _buckledBlocks;
 
         /// <summary>Minor-principal-stress floor below which compression
-        /// counts as real for the early-out below. Pure tension still leaves
-        /// a whisper of local transverse compression at a point-load's
-        /// application node from Poisson coupling: that is a load-
-        /// application artifact, not a structural instability, so it must
-        /// not by itself keep the subspace machinery running every tick.</summary>
-        const float CompressionFloor = -1e-3f;
+        /// counts as real for the early-out below, as a FRACTION of the
+        /// ship's largest von Mises stress this tick. Pure tension still
+        /// leaves a whisper of local transverse compression at a point
+        /// load's application node from Poisson coupling: that is a
+        /// load-application artifact, not a structural instability, so it
+        /// must not by itself keep the subspace machinery running every
+        /// tick. This used to be an ABSOLUTE -1e-3, which means whatever
+        /// the load scale happens to make it mean: a ship loaded ten times
+        /// harder needs a floor ten times lower to draw the same
+        /// distinction, and a ship under a gentle load can have its entire
+        /// stress field sit above an absolute floor and never run buckling
+        /// at all. Relative to the stress field it is the same test at
+        /// every load scale, exactly as CgSolver.Tolerance is.</summary>
+        const float CompressionFloorFraction = 1e-3f;
+
+        /// <summary>Absolute backstop for the fraction above, for a ship
+        /// with no meaningful stress anywhere (an unloaded hull): without
+        /// it the fraction of a near-zero maximum would make rounding
+        /// noise count as compression.</summary>
+        const float CompressionFloorAbsolute = 1e-6f;
 
         /// <summary>
         /// Runs (at most every BucklingEveryNTicks ticks) the geometric
@@ -407,10 +481,18 @@ namespace Hullbreach.Structure
             if (!BucklingEnabled) return;
             if (_tickIndex % Math.Max(1, BucklingEveryNTicks) != 0) return;
 
+            // One pass for the scale, one for the test: the stress field
+            // is a Dictionary walk over blocks, nothing next to a sweep.
+            float maxVonMises = 0f;
+            foreach (var kvp in BlockStresses)
+                if (kvp.Value.VonMises > maxVonMises) maxVonMises = kvp.Value.VonMises;
+
+            float compressionFloor = -Math.Max(CompressionFloorFraction * maxVonMises, CompressionFloorAbsolute);
+
             bool anyCompression = false;
             foreach (var kvp in BlockStresses)
             {
-                if (kvp.Value.Minor < CompressionFloor) { anyCompression = true; break; }
+                if (kvp.Value.Minor < compressionFloor) { anyCompression = true; break; }
             }
 
             if (!anyCompression)
@@ -444,6 +526,7 @@ namespace Hullbreach.Structure
 
             _kg.Rebuild(grid, _assembly, BlockStresses);
 
+            _buckling.Coarse = UseCoarseCorrection ? _coarse : null;
             bool converged = _buckling.Step(_assembly, _kg, _rigidModes, _tickIndex);
             if (!converged) return;
 
