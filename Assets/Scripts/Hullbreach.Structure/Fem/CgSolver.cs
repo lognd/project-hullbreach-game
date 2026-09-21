@@ -56,6 +56,40 @@ namespace Hullbreach.Structure
         /// field.</summary>
         public bool Converged { get; private set; }
 
+        // Scratch buffers reused across Solve calls: this is warm-started
+        // and called every tick (see StructuralSolver.Tick), so allocating
+        // n-sized arrays here every call was real per-tick GC pressure with
+        // nothing to show for it (n only changes when topology does; see
+        // SolverBenchmarks' zero-allocation assertion). Resized only when n
+        // or the mode count changes.
+        int _scratchN = -1;
+        int _scratchModeCount = -1;
+        float[] _diag = Array.Empty<float>();
+        float[] _r = Array.Empty<float>();
+        float[] _kp = Array.Empty<float>();
+        float[] _z = Array.Empty<float>();
+        float[] _p = Array.Empty<float>();
+        float[][] _scratchModes = Array.Empty<float[]>();
+
+        /// <summary>(Re)sizes every scratch buffer for `n` dofs and
+        /// `modeCount` rigid modes, only when either actually changed.</summary>
+        void EnsureScratch(int n, int modeCount)
+        {
+            if (_scratchN == n && _scratchModeCount == modeCount) return;
+
+            _diag = new float[n];
+            _r = new float[n];
+            _kp = new float[n];
+            _z = new float[n];
+            _p = new float[n];
+
+            _scratchModes = new float[modeCount][];
+            for (int i = 0; i < modeCount; i++) _scratchModes[i] = new float[n];
+
+            _scratchN = n;
+            _scratchModeCount = modeCount;
+        }
+
         /// <summary>
         /// Orthonormalizes `modes` in place via Gram-Schmidt, so they can be
         /// used to repeatedly project a vector onto their complement.
@@ -118,21 +152,23 @@ namespace Hullbreach.Structure
         public void Solve(StiffnessAssembly k, float[] f, float[] u, float[][] rigidModes)
         {
             int n = k.DofCount;
+            EnsureScratch(n, rigidModes.Length);
 
-            // Work on copies of the modes so we can orthonormalize without
-            // mutating the caller's arrays.
-            var modes = new float[rigidModes.Length][];
+            // Copy (never alias) the caller's modes into scratch so we can
+            // orthonormalize without mutating rigidModes, reusing the same
+            // buffer every call instead of cloning fresh arrays.
+            var modes = _scratchModes;
             for (int i = 0; i < rigidModes.Length; i++)
-                modes[i] = (float[])rigidModes[i].Clone();
+                Array.Copy(rigidModes[i], modes[i], n);
             Orthonormalize(modes);
 
-            var diag = new float[n];
+            var diag = _diag;
             k.Diagonal(diag);
 
-            var r = new float[n];
-            var kp = new float[n];
-            var z = new float[n];
-            var p = new float[n];
+            var r = _r;
+            var kp = _kp;
+            var z = _z;
+            var p = _p;
 
             k.Multiply(u, kp);
             for (int i = 0; i < n; i++) r[i] = f[i] - kp[i];

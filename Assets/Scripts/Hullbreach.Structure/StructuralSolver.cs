@@ -116,6 +116,11 @@ namespace Hullbreach.Structure
         /// how much of MaxCgIterationsPerTick this tick actually spent.</summary>
         public int IterationsThisTick { get; private set; }
 
+        /// <summary>Degrees of freedom in the current assembly (2 per node),
+        /// exposed read-only for callers (e.g. SolverBenchmarks) that want
+        /// to report problem size alongside iteration counts.</summary>
+        public int DofCount => _assembly.DofCount;
+
         /// <summary>Wires the cached LoadVector to this instance's
         /// StiffnessAssembly once: LoadVector.Rebuild mutates that same
         /// StiffnessAssembly instance in place, so the reference stays
@@ -196,15 +201,27 @@ namespace Hullbreach.Structure
 
         /// <summary>Reduces the solved displacement field to a per-block
         /// stress, evaluated at the element center (xi = eta = 0).</summary>
+        // Scratch for ComputeBlockStress, reused across every block of
+        // every tick (see the class's per-tick allocation remarks): `_b`
+        // is filled once per Tick call since it does not depend on the
+        // element (constant xi=eta=0 sampling on a uniform mesh); `_strain`
+        // and `_dHat` are overwritten fresh for each block and never read
+        // across iterations, so reuse is safe despite varying PoissonClass.
+        readonly float[,] _strainB = new float[3, Q8Element.DofCount];
+        readonly int[] _stressNodeIds = new int[NodeLattice.NodesPerElement];
+        readonly float[] _stressUe = new float[Q8Element.DofCount];
+        readonly float[] _strainScratch = new float[3];
+        readonly float[,] _dHatScratch = new float[3, 3];
+
         void ComputeBlockStress(Hullbreach.Core.BlockGrid grid)
         {
             BlockStresses.Clear();
 
-            var b = new float[3, Q8Element.DofCount];
+            var b = _strainB;
             Q8Element.StrainDisplacement(0f, 0f, Hullbreach.Core.BlockType.Width, b);
 
-            var nodeIds = new int[NodeLattice.NodesPerElement];
-            var ue = new float[Q8Element.DofCount];
+            var nodeIds = _stressNodeIds;
+            var ue = _stressUe;
 
             foreach (var kvp in grid.All)
             {
@@ -219,7 +236,7 @@ namespace Hullbreach.Structure
                 }
 
                 // strain = B * u_e
-                var strain = new float[3];
+                var strain = _strainScratch;
                 for (int r = 0; r < 3; r++)
                 {
                     float sum = 0f;
@@ -232,7 +249,7 @@ namespace Hullbreach.Structure
                 var type = Hullbreach.Core.BlockTypes.Get(block.TypeId);
                 float e = Hullbreach.Core.BlockTypes.EffectiveStiffness(block);
 
-                var dHat = new float[3, 3];
+                var dHat = _dHatScratch;
                 Q8Element.ConstitutiveUnit(Q8Element.NuFor(type.PoissonClass), dHat);
 
                 float sxx = e * (dHat[0, 0] * strain[0] + dHat[0, 1] * strain[1] + dHat[0, 2] * strain[2]);
