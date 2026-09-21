@@ -582,7 +582,7 @@ namespace Hullbreach.Structure
             for (int j = 0; j < _m; j++)
                 if (!float.IsFinite(_mid[i, j])) _mid[i, j] = 0f;
 
-            Jacobi(_mid, _m, _mu, _eigVecs);
+            DenseJacobiEigen.Solve(_mid, _m, _mu, _eigVecs);
 
             // c_i = L^-T * w_i (back-substitute L^T c = w for each column).
             var coeffs = new float[_m, _m];
@@ -639,70 +639,6 @@ namespace Hullbreach.Structure
                 l[i, j] = 0f;
         }
 
-        /// <summary>
-        /// Cyclic Jacobi eigen-decomposition of a small dense symmetric
-        /// matrix: repeatedly zeroes the largest off-diagonal pair with a
-        /// plane rotation until the matrix is diagonal to `tolerance`.
-        /// Deterministic (fixed sweep order, no early-exit dependent on
-        /// anything but the matrix itself), which the bit-determinism test
-        /// relies on transitively.
-        /// </summary>
-        static void Jacobi(float[,] a, int n, float[] eigenvalues, float[,] eigenvectors)
-        {
-            var m = (float[,])a.Clone();
-            for (int i = 0; i < n; i++)
-            for (int j = 0; j < n; j++)
-                eigenvectors[i, j] = i == j ? 1f : 0f;
-
-            const int maxSweeps = 100;
-            const float tolerance = 1e-9f;
-
-            for (int sweep = 0; sweep < maxSweeps; sweep++)
-            {
-                float off = 0f;
-                for (int p = 0; p < n; p++)
-                for (int q = p + 1; q < n; q++)
-                    off += m[p, q] * m[p, q];
-                if (off < tolerance) break;
-
-                for (int p = 0; p < n; p++)
-                for (int q = p + 1; q < n; q++)
-                {
-                    if (Math.Abs(m[p, q]) < 1e-12f) continue;
-
-                    float theta = (m[q, q] - m[p, p]) / (2f * m[p, q]);
-                    float t = Math.Sign(theta) / (Math.Abs(theta) + (float)Math.Sqrt(theta * theta + 1f));
-                    if (theta == 0f) t = 1f;
-                    float c = 1f / (float)Math.Sqrt(t * t + 1f);
-                    float s = t * c;
-
-                    float mpp = m[p, p], mqq = m[q, q], mpq = m[p, q];
-                    m[p, p] = c * c * mpp - 2f * s * c * mpq + s * s * mqq;
-                    m[q, q] = s * s * mpp + 2f * s * c * mpq + c * c * mqq;
-                    m[p, q] = 0f;
-                    m[q, p] = 0f;
-
-                    for (int i = 0; i < n; i++)
-                    {
-                        if (i == p || i == q) continue;
-                        float mip = m[i, p], miq = m[i, q];
-                        m[i, p] = c * mip - s * miq;
-                        m[p, i] = m[i, p];
-                        m[i, q] = s * mip + c * miq;
-                        m[q, i] = m[i, q];
-                    }
-
-                    for (int i = 0; i < n; i++)
-                    {
-                        float vip = eigenvectors[i, p], viq = eigenvectors[i, q];
-                        eigenvectors[i, p] = c * vip - s * viq;
-                        eigenvectors[i, q] = s * vip + c * viq;
-                    }
-                }
-            }
-
-            for (int i = 0; i < n; i++) eigenvalues[i] = m[i, i];
-        }
 
         /// <summary>
         /// Reads the requested number of positive, sub-threshold-safe modes

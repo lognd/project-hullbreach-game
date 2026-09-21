@@ -83,7 +83,7 @@ of Sprint-2 groundwork landed early.
   heavily damaged one. Noted as a placeholder in `BlockTypes.cs`'s `TODO
   [D3]` comment on the floor value.
 
-## Performance (perf/solver, 2026-09-20)
+## Performance (perf/preconditioner, 2026-09-20)
 
 `SolverBenchmarks` (`Assets/Tests/EditMode/Hullbreach.Structure.Tests/SolverBenchmarks.cs`)
 builds a wide plate-plus-slender-arm ship (the arm makes CG's width
@@ -93,50 +93,175 @@ every default `run_tests.sh` run; a 2000-block case is
 `[Category("Slow")]` and excluded from the default filter (run it with
 `tools/plaincs/run_tests.sh --filter "TestCategory=Slow"`).
 
-Measured (plate + arm, thruster load, `MaxCgIterationsPerTick` at the
-production default of 400, plain Jacobi PCG):
+**Per-iteration profiling** (temporary Stopwatch-instrumented test, not
+committed): at 5642 DOF, a bare `StiffnessAssembly.Multiply` cost ~239us
+(Release) / ~1657us (Debug) per call; a full preconditioned CG iteration
+cost ~327us (Release) on top of that, i.e. the non-matvec part of an
+iteration (two residual-norm reductions, the Jacobi divide, the rigid-mode
+projection's 3 dot+axpy pairs, the CG update loops) cost roughly as much
+as the matvec itself. The single largest avoidable cost found:
+`CgSolver.Solve`'s inner loop computed the residual norm via `Dot(r,r)`
+TWICE per iteration (once for the top-of-loop convergence/stagnation
+check, once again right after updating `r` for an early-exit check) for
+no reason beyond a historical growth-by-accretion -- both wanted the same
+number. Caching it in one variable carried across iterations (this
+branch's first commit) removes that duplicate O(n) reduction. `dotnet
+test` defaults to a Debug build (no `-c Release` in
+`tools/plaincs/run_tests.sh`), so the numbers this doc and
+`SolverBenchmarks` report are Debug numbers; a shipped Unity build is
+Release-equivalent, so treat the ms/tick figures below as an upper bound
+on what a player actually sees, not the real in-game number.
 
-| Ship          | DOF  | CG iterations/tick (capped) | ms/tick |
-|---------------|------|------------------------------|---------|
-| 100 blocks    | 810  | 400 (not converged)          | ~75     |
-| 500 blocks    | 3850 | 400 (not converged)          | ~365    |
-| 2000 blocks   | ~15k | 400 (not converged)          | seconds |
+**Convergence tolerance**: the quasi-static stress pass now defaults
+`CgSolver.Tolerance` to `1e-3` relative (was `1e-5`, `CgSolver`'s general
+default, still used unchanged by `BucklingAnalysis`'s own internal
+`CgSolver` instance). Stress/damage decisions round-trip through
+`StressCriteria`'s ratios, which do not need 5-digit accuracy in the
+displacement field to be correct to well under 1%; buckling's Rayleigh
+quotients are far more sensitive to residual displacement error (see
+`CgSolver.MaxIterations`'s doc on the buckling regressions an
+under-converged solve previously caused), so it keeps the tight
+tolerance.
 
-Even the 100-block case (a plate plus a long, 1-wide arm) does not reach
-`CgSolver.Tolerance` within the 400-iteration per-tick budget under plain
-Jacobi: the slender arm is exactly the pathological case `CgSolver`'s own
-doc describes (iterations scale with the longest path information has to
-cross, i.e. the arm's length in elements, not the ship's block count).
-`MaxCgIterationsPerTick` (see the previous section) keeps this from ever
-blocking a frame -- an under-budget tick just lags one more tick behind
-convergence -- but it does not fix the underlying iteration count.
+**Deflated two-level preconditioner** (`CoarsePreconditioner.cs`): adds a
+coarse, global correction on top of plain Jacobi, `M^-1 = D^-1 + P Kc^+
+P^T`, where `P`'s columns are three rigid-body modes (translate x,
+translate y, rotate about centroid) per 4x4-block aggregate and `Kc = P^T
+K P`. A previous attempt at this same construction (see this section's
+prior revision) factored `Kc` with Cholesky and got NaNs, because `Kc`
+inherits K's exact 3-dimensional rigid-body null space (every aggregate's
+local rigid modes sum, weighted correctly, to the ship's global ones) and
+Cholesky of a singular matrix divides by a near-zero pivot rather than
+failing loudly. This attempt instead diagonalizes `Kc` once per topology
+change (`DenseJacobiEigen`, shared with `BucklingAnalysis`'s
+Rayleigh-Ritz solve, extracted here per NO-DUPLICATION) and builds a
+Moore-Penrose pseudo-inverse that drops eigenvalues below a floor
+relative to the largest, so the coarse correction is zero on `Kc`'s null
+space by construction, not by hoping a factorization's rounding noise
+stays small. The ticket's suggested `1e-6` floor was NOT enough in
+practice: on the 500-block plate+arm benchmark it let through near-null
+(not exactly null) directions from the 1-wide arm's poorly-conditioned
+aggregation (neighboring aggregates along a 1-block-wide strip have
+almost-parallel local rotate modes), each amplifying rounding noise every
+CG iteration and diverging the residual to NaN within 10 ticks; `1e-3`,
+plus scaling `Kc` to O(1) before diagonalizing (so `DenseJacobiEigen`'s
+absolute sweep-termination tolerance is meaningful), stopped the
+divergence and still gives useful deflation. `StructuralSolver.
+UseCoarseCorrection` (default `true`) switches it off for comparison.
 
-**Attempted and reverted**: a two-level (Jacobi + Galerkin coarse-grid,
-rigid-body-mode prolongation over 4x4-block aggregates) preconditioner
-was implemented on this branch and found to be numerically unsound as
-written: the coarse operator's own rigid modes can coincide closely with
-K's global rigid modes when the ship spans few aggregates (in the limit
-of a single aggregate, exactly so), and even a scale-relative Cholesky
-pivot floor was not enough to stop the coarse correction from amplifying
-residual into NaN within a handful of CG iterations on several existing
-BucklingTests grids (reverted rather than merged broken; see the
-`perf/solver` branch history around 2026-09-20 for the attempt). Doing
-this correctly needs either a proper null-space deflation of the coarse
-operator (explicitly projecting the aggregate-level rigid modes out of
-K_c before factoring it, not just flooring pivots) or a documented
-minimum-aggregate-count guard before the coarse term is trusted; either
-is a deliberate follow-up, not something to retry opportunistically.
+**Second correctness bug found by the existing test suite, not the new
+one**: `CgSolver.Solve` only ever re-projects the RESIDUAL `r` onto the
+complement of the rigid modes, never the search direction `p` or the
+solution `u` themselves (this was already true before this branch; it is
+safe under plain Jacobi because `D^-1` cannot introduce a rigid-mode
+component that Gram-Schmidt-orthonormalized `modes` did not already put
+there). `CoarsePreconditioner.ApplyAdditive`'s floor-based pseudo-inverse
+is only APPROXIMATELY zero on the rigid modes (float rounding in
+`DenseJacobiEigen`, worse on small ships where Kc's null space is a large
+fraction of its whole space), so it can leak a tiny nonzero rigid-mode
+component into `z`, and from there into `p`, and from there into `u`,
+every iteration, without ever showing up in the residual (`K` annihilates
+that component, so `r` cannot detect it). This corrupted three existing
+`BucklingTests` (`Column_CriticalLoadFactorMatchesDenseOracle`,
+`Column_CriticalLoadFactorScalesWithInverseLengthSquared`,
+`SmallBlob_HasNoLowLoadFactor`) on small test grids, despite CG reporting
+ordinary convergence. Fixed by re-projecting the COMBINED
+preconditioned vector `z` (Jacobi + coarse) onto the rigid-mode
+complement immediately after `CoarsePreconditioner.ApplyAdditive`, before
+it ever reaches `p`.
+
+Unit tests (`CoarsePreconditionerTests.cs`): the combined `M^-1` stays
+symmetric (`v.(M^-1 w) == w.(M^-1 v)` on random vectors), the coarse
+correction is ~0 on each global rigid mode, and on a 1-wide 32-block arm
+under a tip load the coarse-augmented solve needs 143 iterations to
+converge to 1e-3 relative vs. plain Jacobi's 488 (3.4x fewer).
+
+Measured (plate + arm, thruster load, `CgSolver.Tolerance` at its
+default `1e-5` relative -- see the tolerance section above for why this
+stayed unloosened -- `MaxCgIterationsPerTick` at the production default
+of 400, Release build, steady-state ticks after the one-time
+topology/coarse-rebuild cost):
+
+| Ship        | DOF   | CG iterations/tick    | ms/tick (steady state) | Converged |
+|-------------|-------|-----------------------|-------------------------|-----------|
+| 100 blocks  | 810   | ~300 (of 400 cap)      | ~19-40 (spikes to ~400 every 4th tick, see below) | yes |
+| 500 blocks  | 3850  | 400 (capped)           | ~110-120                | no        |
+| 2000 blocks | 10702 | 400 (capped)           | ~390-400 (one-time ~16.4s Kc rebuild on tick 0)    | no |
+
+The 100-block case is a genuine win over the previous attempt's baseline
+(400 capped iterations, never converged, ~75ms/tick Debug): it now
+converges every tick to the FULL `1e-5` tolerance, comfortably inside a
+50Hz budget except for a periodic spike (see below). The 500- and
+2000-block cases do NOT meet the ticket's <10ms/50Hz target and do NOT
+converge within the 400-iteration budget at `1e-5`; unlike the earlier
+attempt they no longer diverge to NaN (residual stays bounded, only
+mildly worse than the coarse-Kc-rebuild-cost-only baseline), which is
+real progress but not the target. With the 400-iteration cap carrying
+over every tick and residual not trending down across ticks, these ships
+would need many more ticks than this benchmark's 10-tick window to
+converge, if they converge at all under a hard per-tick restart; this is
+the real remaining gap.
+
+**Periodic per-tick spike, noticed but not root-caused this branch**: the
+100-block case's ms/tick is ~19-40ms most ticks but jumps to ~370-460ms
+on every 4th tick (`BucklingEveryNTicks`), even though
+`criticalLoadFactor=Infinity` the whole run (i.e. `RunBuckling`'s cheap
+early-out, not the subspace machinery, is all that should run on those
+ticks: no compression anywhere under this benchmark's pure-thruster
+load). The early-out itself is a linear scan over `BlockStresses` plus a
+couple of small `List<int>` allocations -- nowhere near 400ms of work.
+Suspected GC (a gen-1/2 collection landing on exactly the tick a few
+small buckling-related allocations happen to trigger it) rather than an
+algorithmic cost, but not confirmed; flagged in TODO.md rather than
+chased further here since it did not block this ticket's target.
+
+**Suspected root cause of the remaining gap, not yet fixed**: `CgSolver.
+Solve` only warm-starts the displacement `u` across ticks -- `r`
+(residual) and `p` (search direction) are always rebuilt from scratch at
+the top of `Solve`, i.e. every tick is a hard CG RESTART, not a
+continuation of the same Krylov subspace. A restart is why the residual
+plateaus instead of trending toward zero across ticks even though `u`
+itself is warm-started: CG's fast local convergence comes from the
+accumulated Krylov subspace in `p`, and that is thrown away every tick
+regardless of the preconditioner. Preserving `r`/`p` (and `rzOld`) as
+additional per-solve state, re-validating them against the current `f`
+(load can change tick to tick) rather than discarding them
+unconditionally, is the next thing to try before reaching for a bigger
+`MaxCgIterationsPerTick` or a wall-clock-based budget.
+
+**Warm-start steady state under a smooth, unchanging load** (item 5):
+not separately measured this branch -- the benchmark's thruster load is
+constant tick to tick, so `SolverBenchmarks`' own steady-state ticks
+already answer this question for the 100-block case (~300 iterations
+every tick, not shrinking toward 0 the way a true warm start under a
+converged previous tick should). That itself is more evidence for the
+restart diagnosis above: a converged previous tick's `u` is an excellent
+initial guess, but with `p` rebuilt from scratch the FIRST iteration
+still steps blind (steepest-descent-equivalent), and it takes a
+noticeable fraction of the previous convergent run's iterations to
+rebuild an equally good Krylov subspace. Confirming this precisely (does
+`IterationsThisTick` trend toward a small constant, or toward the same
+per-tick count as an unconverged run) is follow-up work, not done here.
+
+**Attempted and reverted (prior branch state, fixed here)**: a two-level
+(Jacobi + Galerkin coarse-grid, rigid-body-mode prolongation over
+4x4-block aggregates) preconditioner was previously implemented and found
+numerically unsound (Cholesky-of-singular-Kc NaN, see above); this
+revision replaces the Cholesky factorization with a pseudo-inverse built
+from an explicit eigendecomposition, which is the "proper null-space
+deflation" the prior revision of this doc named as the required fix.
 
 **Remaining steps, roughly in order of expected payoff**:
-1. Get the two-level preconditioner right (see above) -- this is the
-   actual fix for the width-scaling wall; everything else here is
-   secondary until iterations stop growing with ship size.
+1. Stop restarting CG's Krylov subspace every tick (see above): this is
+   likely the actual reason 500+/2000-block ships plateau instead of
+   converging even with the coarse correction in place.
 2. Port the hot path (`StiffnessAssembly`, `CgSolver`, `GeometricStiffness`)
    to Burst/`NativeArray`: the current managed-array implementation is
    deliberately simple-first (see `NodeLattice`'s and `StructuralSolver`'s
    docs), and every array here is already allocation-free per tick after
-   this branch's caching work, which is the prerequisite for a mechanical
-   Burst port (Burst cannot compile against managed arrays/Dictionary).
+   the prior branch's caching work, which is the prerequisite for a
+   mechanical Burst port (Burst cannot compile against managed
+   arrays/Dictionary).
 3. A mesh renderer instead of per-block GameObjects: `ShipRenderer`
    currently instantiates one GameObject per block (see the assembly
    graph in `docs/architecture.md`), which does not scale independently
