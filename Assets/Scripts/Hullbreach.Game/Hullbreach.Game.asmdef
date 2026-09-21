@@ -7,6 +7,7 @@
         "Hullbreach.Ship",
         "Hullbreach.Builder",
         "Hullbreach.Net",
+        "Hullbreach.World",
         "Unity.Mathematics"
     ],
     "includePlatforms": [],

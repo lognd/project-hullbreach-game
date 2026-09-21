@@ -54,5 +54,13 @@ namespace Hullbreach.Core.Tests
             Assert.Greater(armor.CompressiveStress, hull.CompressiveStress);
             Assert.Less(armor.YieldStress, hull.YieldStress);
         }
+
+        [Test]
+        public void Table_FinExistsWithPositiveMass()
+        {
+            var fin = BlockTypes.Get(BlockTypes.Fin);
+            Assert.AreEqual("Fin", fin.Name);
+            Assert.Greater(fin.Mass, 0f);
+        }
     }
 }

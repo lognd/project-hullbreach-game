@@ -32,7 +32,7 @@ pushing. Editor tests and a headless build are not in CI yet; see
 
 Conventional commits: `feat:`, `fix:`, `chore:`, `docs:`, `test:`,
 `refactor:`. Subject line under 72 characters, imperative mood. The body
-explains why, not what -- the diff already says what.
+explains why, not what: the diff already says what.
 
 ## Unity-specific rules
 

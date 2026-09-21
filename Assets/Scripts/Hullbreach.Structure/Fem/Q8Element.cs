@@ -7,7 +7,7 @@ namespace Hullbreach.Structure
     ///
     /// WHY Q8 AND NOT Q4: the bilinear Q4 cannot represent the curvature a
     /// bending member needs, so it fakes it with spurious shear and comes out
-    /// far too stiff -- "shear locking". For a ship made of beams and braces
+    /// far too stiff: "shear locking". For a ship made of beams and braces
     /// that would be disqualifying.
     ///
     /// WHY A *UNIT* STIFFNESS: for isotropic plane stress,

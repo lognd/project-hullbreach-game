@@ -4,6 +4,7 @@
     "references": [
         "Hullbreach.Core",
         "Hullbreach.Structure",
+        "Hullbreach.World",
         "Unity.Mathematics"
     ],
     "includePlatforms": [],

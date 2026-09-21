@@ -9,7 +9,7 @@ namespace Hullbreach.Core
     ///
     /// UNITS: do not use SI. Steel is E = 200e9 Pa with yield 250e6 Pa, and
     /// running CG on numbers spanning 1e9 throws away float precision and
-    /// wrecks conditioning. Normalize instead -- plain hull has YieldStress
+    /// wrecks conditioning. Normalize instead: plain hull has YieldStress
     /// 1.0 and everything else is relative to it. The solver behaves better
     /// and the numbers stay readable to whoever balances the game.
     /// </summary>
@@ -43,7 +43,7 @@ namespace Hullbreach.Core
         public readonly float SpallStress;
 
         /// <summary>Brittle limit in compression. Much larger than SpallStress
-        /// for armor-like materials -- brittle solids are far stronger in
+        /// for armor-like materials: brittle solids are far stronger in
         /// compression than in tension.</summary>
         public readonly float CompressiveStress;
 
@@ -68,22 +68,30 @@ namespace Hullbreach.Core
         public const byte Armor = 2;
         public const byte Thruster = 3;
         public const byte Cannon = 4;
+        public const byte Fin = 5;
+        /// <summary>Retro thruster: pushes the ship BACKWARD via two small
+        /// side nozzles that exhaust forward. Fires on the reverse key.</summary>
+        public const byte RetroThruster = 6;
 
         // Normalized against Hull.YieldStress = 1.0.
         //
-        //   Core:     the heaviest, toughest block -- it must survive whatever
+        //   Core:     the heaviest, toughest block: it must survive whatever
         //             kills everything around it, so both stresses are the
         //             highest in the table and it is stiffer than hull.
         //   Hull:     the reference. Ductile: ordinary yield, ordinary spall.
         //   Armor:    ~2x hull mass, stiffer (denser lattice), and brittle:
         //             high SpallStress/CompressiveStress (brittle solids take
         //             compression far better than tension) but LOWER
-        //             YieldStress than hull -- it is meant to shatter rather
+        //             YieldStress than hull: it is meant to shatter rather
         //             than bend.
         //   Thruster: hull-like stiffness/strength, a bit heavier for the
         //             machinery packed inside.
-        //   Cannon:   same idea as Thruster -- hull-like structurally, a
+        //   Cannon:   same idea as Thruster: hull-like structurally, a
         //             little heavier for its mechanism.
+        //   Fin:      light control surface: cheap mass so placement is
+        //             about leverage, not weight, and slightly weaker than
+        //             hull since it is a thin surface rather than a hull
+        //             plate.
         static readonly BlockType[] Table =
         {
             //             name         mass   E     nu#  yield  spall  compress
@@ -92,6 +100,8 @@ namespace Hullbreach.Core
             new BlockType("Armor",      2.0f,  1.4f, 0,   0.7f,  2.5f,  4.0f),
             new BlockType("Thruster",   1.2f,  1.0f, 0,   1.0f,  1.0f,  1.0f),
             new BlockType("Cannon",     1.3f,  1.0f, 0,   1.0f,  1.0f,  1.0f),
+            new BlockType("Fin",        0.6f,  0.9f, 0,   0.9f,  0.9f,  0.9f),
+            new BlockType("Retro",      0.9f,  1.0f, 0,   1.0f,  1.0f,  1.0f),
         };
 
         public static BlockType Get(byte typeId) => Table[typeId];
@@ -108,7 +118,7 @@ namespace Hullbreach.Core
         //            something that better matches real ductile softening.
         /// <summary>
         /// Fold in damage softening. A yielded block gets less stiff so it
-        /// sheds load to its neighbors -- that shedding is what makes ductile
+        /// sheds load to its neighbors: that shedding is what makes ductile
         /// failure actually read as ductile, without needing a nonlinear
         /// solve. Floored at 5% of nominal E so the stiffness matrix never
         /// goes singular even at full damage.

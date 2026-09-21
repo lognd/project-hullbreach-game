@@ -9,8 +9,8 @@ namespace Hullbreach.Core
     ///
     /// Deliberately NOT delegated to the physics engine. Rigidbody2D's
     /// useAutoMass recomputes from collider geometry on every change, which is
-    /// slower, gives no control over the value the netcode must agree on, and
-    /// -- worth knowing -- com.unity.physics is a 3D package that cannot help
+    /// slower, gives no control over the value the netcode must agree on, and,
+    /// worth knowing, com.unity.physics is a 3D package that cannot help
     /// a 2D game at all. Unity's 2D physics is Box2D behind Rigidbody2D.
     ///
     /// The accumulators are kept about the ORIGIN and shifted to the center of
