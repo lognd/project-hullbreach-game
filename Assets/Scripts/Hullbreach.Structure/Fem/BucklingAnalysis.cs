@@ -126,6 +126,53 @@ namespace Hullbreach.Structure
         /// coincidence; a small floor rides past it cheaply.</summary>
         public int MinSweepsBeforeConvergence = 30;
 
+        /// <summary>True once some sweep since the last Reset has seen at
+        /// least one nonzero mu: distinguishes "this block has never found
+        /// any coupling yet" (legitimate: e.g. no compression anywhere, see
+        /// <see cref="StuckSweepsBeforeReseed"/>'s doc) from "this block HAD
+        /// real signal and then every slot went silent at once" (the
+        /// collapse this fix targets). Only the latter is anomalous enough
+        /// to justify discarding the warm-started subspace.</summary>
+        bool _sawNonzeroMu;
+
+        /// <summary>Consecutive sweeps every mu has read exactly 0 SINCE
+        /// <see cref="_sawNonzeroMu"/> went true: see the class doc's Mono
+        /// note on a divide by a near-zero Cholesky pivot occasionally
+        /// landing on a merely-huge-but-finite value rather than the
+        /// intended signed-infinity sentinel. That value then gets mixed by
+        /// Jacobi's plane rotations into every slot, and once the resulting
+        /// subspace vectors have collapsed this way (checked directly
+        /// against a captured failure log) they are a genuine fixed point:
+        /// Gram-Schmidt only rescales a vector whose norm is already
+        /// informative (see Orthonormalize's `norm > 1e-8f` guard), so a
+        /// collapsed all-mu-zero state reproduces itself identically every
+        /// later sweep and no amount of further iteration escapes it. Left
+        /// unchecked, the existing "value hasn't changed" convergence
+        /// tolerance (see the per-slot loop below) would otherwise treat a
+        /// collapsed all-Infinity lambda as trivially settled within just
+        /// 2-3 more sweeps; that tolerance check is separately overridden
+        /// (see its own doc, "post-signal all-mu-zero") so it can never
+        /// publish while a collapse is still ambiguous, which is what buys
+        /// this counter the room to use a patient threshold instead of
+        /// racing that shortcut.</summary>
+        int _stuckSweeps;
+
+        /// <summary>Consecutive post-signal all-mu-zero sweeps (see
+        /// <see cref="_stuckSweeps"/>) before Step gives up warm-starting
+        /// from a collapsed subspace and reseeds it fresh instead. Gated on
+        /// <see cref="_sawNonzeroMu"/> rather than a sweep-count floor (a
+        /// genuinely-uncompressed block's spares can legitimately sit at
+        /// mu=0 indefinitely, see ExtractModes' doc, but never after having
+        /// shown real signal first). Deliberately patient (comfortably
+        /// above the several sweeps a HEALTHY run can legitimately spend
+        /// mid self-correction with every slot transiently silent, observed
+        /// directly in this file's own test suite) now that the tolerance
+        /// override below removes the time pressure to fire fast: a true
+        /// collapse is a permanent fixed point (see this field's doc) and
+        /// will still be sitting at all-mu-zero however long this waits, so
+        /// there is no cost to giving genuine self-correction first crack.</summary>
+        public int StuckSweepsBeforeReseed = 100;
+
         float[][] _v;      // current subspace block
         float[][] _rhs;    // -K_G * v_j, also the CG right-hand side
         float[][] _y;      // CG solutions / next Ritz vectors
@@ -179,21 +226,7 @@ namespace Hullbreach.Structure
                 _order = new int[m];
             }
 
-            // Deterministic seed: no two seed vectors are proportional (a
-            // sum of a few incommensurate sinusoids per vector), and no RNG
-            // is involved anywhere, which is what the bit-determinism test
-            // depends on.
-            for (int k = 0; k < _m; k++)
-            {
-                var vk = _v[k];
-                float freq = 1.3f + 0.7f * k;
-                for (int i = 0; i < dof; i++)
-                    vk[i] = (float)Math.Sin(freq * (i + 1) * 0.6180339887f + k);
-            }
-
-            foreach (var vk in _v)
-                CgSolver.Project(vk, rigidModes);
-            CgSolver.Orthonormalize(_v);
+            SeedBlock(rigidModes, 0);
 
             // NaN, not +Infinity: a genuinely converged (near-zero mu)
             // slot can legitimately report lambda = +Infinity (see
@@ -203,9 +236,34 @@ namespace Hullbreach.Structure
             // itself, so the check below always treats it as unset.
             for (int i = 0; i < _m; i++) _lambdaPrev[i] = float.NaN;
             _sweepsSinceReset = 0;
+            _stuckSweeps = 0;
+            _sawNonzeroMu = false;
             Converged = false;
             LastSweepCount = 0;
             LastConvergedTick = -1;
+        }
+
+        /// <summary>Fills every slot of the current subspace block with the
+        /// same fixed deterministic seed pattern Reset uses (a sum of a few
+        /// incommensurate sinusoids per vector, never an RNG, which is what
+        /// the bit-determinism test depends on), salted by `salt` so a
+        /// mid-run reseed (see Step's stuck-subspace doc) starts from a
+        /// genuinely different point than whatever seed produced the stuck
+        /// state, while staying just as deterministic as sweep 0's seed for
+        /// the same `salt`.</summary>
+        void SeedBlock(float[][] rigidModes, int salt)
+        {
+            for (int k = 0; k < _m; k++)
+            {
+                var vk = _v[k];
+                float freq = 1.3f + 0.7f * k + 0.11f * salt;
+                for (int i = 0; i < _dof; i++)
+                    vk[i] = (float)Math.Sin(freq * (i + 1) * 0.6180339887f + k + salt);
+            }
+
+            foreach (var vk in _v)
+                CgSolver.Project(vk, rigidModes);
+            CgSolver.Orthonormalize(_v);
         }
 
         static float[][] Alloc(int m, int dof)
@@ -266,6 +324,37 @@ namespace Hullbreach.Structure
 
                 SolveGeneralizedEigen();
 
+                // STUCK-SUBSPACE DETECTION AND RESEED: see _sawNonzeroMu's
+                // and _stuckSweeps' docs for why "every slot suddenly reads
+                // exactly 0, having shown real signal before" is a genuine
+                // fixed point, not a transient to iterate past. The ordinary
+                // tolerance-based convergence check below is separately
+                // overridden (see its own "post-signal all-mu-zero" doc) so
+                // it can never mistake a frozen all-Infinity lambda for a
+                // settled answer while this counter is still accumulating,
+                // which is what lets StuckSweepsBeforeReseed stay patient
+                // instead of racing that check.
+                bool allZero = true;
+                for (int i = 0; i < _m; i++)
+                {
+                    if (_mu[i] != 0f) { allZero = false; break; }
+                }
+                if (!allZero) _sawNonzeroMu = true;
+
+                _stuckSweeps = (allZero && _sawNonzeroMu) ? _stuckSweeps + 1 : 0;
+                if (_stuckSweeps >= StuckSweepsBeforeReseed)
+                {
+                    // Salted by _sweepsSinceReset so the fresh seed is not
+                    // just the sweep-0 seed the stuck state may itself have
+                    // originated from repeating.
+                    SeedBlock(rigidModes, _sweepsSinceReset);
+                    for (int i = 0; i < _m; i++) _lambdaPrev[i] = float.NaN;
+                    _stuckSweeps = 0;
+                    _sawNonzeroMu = false;
+                    converged = false;
+                    continue;
+                }
+
                 for (int a = 0; a < _m; a++) _order[a] = a;
                 Array.Sort(_order, (p, q) => _lambda[p].CompareTo(_lambda[q]));
 
@@ -293,6 +382,24 @@ namespace Hullbreach.Structure
                 var sortedLambda = new float[_m];
                 for (int outIdx = 0; outIdx < _m; outIdx++)
                     sortedLambda[outIdx] = _lambda[_order[outIdx]];
+
+                // _lambda ITSELF must move to the same ascending-lambda order
+                // as _v, not just this local sortedLambda copy: ExtractModes
+                // reads the class fields _lambda[idx] and _v[idx] together as
+                // ONE mode (see its doc), and _v above was just permuted by
+                // _order while _lambda (last written by SolveGeneralizedEigen
+                // in raw, unsorted Jacobi-output order) was not. Near a
+                // settled convergence that raw order usually already
+                // coincides with ascending order (the subspace feeding
+                // Jacobi is itself already close to sorted from the previous
+                // sweep), which is what let this silently work by
+                // coincidence; ANY sweep where Jacobi's raw order is not
+                // already sorted hands ExtractModes a shape/load-factor pair
+                // for two DIFFERENT modes. Copying the already-computed
+                // sortedLambda over _lambda keeps the two arrays in lockstep
+                // unconditionally, independent of whether this sweep's raw
+                // order happened to be trivial.
+                Array.Copy(sortedLambda, _lambda, _m);
 
                 // Only the requested modeCount smallest-lambda slots need to
                 // settle for the analysis to be USABLE: the 2 spares exist
@@ -334,6 +441,22 @@ namespace Hullbreach.Structure
                     }
                 }
                 Array.Copy(sortedLambda, _lambdaPrev, _m);
+
+                // Do NOT let a post-signal all-mu-zero sweep (see the
+                // stuck-subspace doc above) satisfy convergence via the
+                // IsInfinity "value hasn't changed" branch just above: that
+                // branch exists for a legitimately, PERSISTENTLY
+                // uncompressed block (_sawNonzeroMu false the whole run),
+                // not for a subspace that just collapsed FROM real signal,
+                // which can otherwise look "stable" (frozen at the same
+                // Infinity) within 2-3 sweeps of collapsing -- far sooner
+                // than _stuckSweeps could ever reach StuckSweepsBeforeReseed
+                // and actually recover it. This keeps the sweep budget
+                // running (rather than falsely publishing) until either the
+                // block self-corrects on its own (allZero goes false again,
+                // exactly as happens routinely in a healthy run) or the
+                // reseed above gets its chance to fire.
+                if (allZero && _sawNonzeroMu) converged = false;
 
                 if (_sweepsSinceReset < MinSweepsBeforeConvergence) converged = false;
                 else if (!converged && _sweepsSinceReset >= ForceConvergeAfterSweeps)
