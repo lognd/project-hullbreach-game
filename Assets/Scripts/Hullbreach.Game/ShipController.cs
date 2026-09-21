@@ -117,6 +117,11 @@ namespace Hullbreach.Game
             // Force the initial view build now rather than on the first Step,
             // so mass/CoM are already valid for the very first FixedUpdate.
             ship.RebuildDerivedViews();
+
+            // Null-safe: a scene with no GravityWorld (e.g. RocketScene)
+            // leaves this null, and ShipBody.Step already treats a null
+            // Gravity as "no gravity" rather than requiring a stub.
+            ship.Gravity = GravityWorld.Field;
         }
 
         void Update()
@@ -233,6 +238,28 @@ namespace Hullbreach.Game
                 body.linearVelocity = Vector2.zero;
                 body.angularVelocity = 0f;
                 body.MovePosition(Vector2.zero);
+                body.MoveRotation(0f);
+            }
+        }
+
+        /// <summary>
+        /// Resets the ship to `position` with `velocity` and zeroed rotation
+        /// / angular velocity. Used by DemoMode's R key when startInOrbit is
+        /// set, so a mangled or drifted ship can be brought back onto a
+        /// preset orbital pass instead of dead rest at the origin.
+        /// </summary>
+        public void ResetTo(Vector2 position, Vector2 velocity)
+        {
+            ship.Position = new float2(position.x, position.y);
+            ship.Rotation = 0f;
+            ship.Velocity = new float2(velocity.x, velocity.y);
+            ship.AngularVelocity = 0f;
+
+            if (body != null)
+            {
+                body.linearVelocity = velocity;
+                body.angularVelocity = 0f;
+                body.MovePosition(position);
                 body.MoveRotation(0f);
             }
         }
