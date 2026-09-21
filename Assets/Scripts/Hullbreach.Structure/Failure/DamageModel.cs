@@ -10,7 +10,7 @@ namespace Hullbreach.Structure
     /// is called. Real plasticity (return mapping, history variables, a
     /// nonlinear solve) is far too much machinery for this.
     ///
-    /// The substitute: on overshoot, accumulate damage and SOFTEN the block --
+    /// The substitute: on overshoot, accumulate damage and SOFTEN the block:
     /// reduce its E and its yield stress. A softened block sheds load to its
     /// neighbors, which is what yielding actually does. You get visible
     /// bending before breaking, load redistribution for free, and the solve
@@ -19,7 +19,7 @@ namespace Hullbreach.Structure
     public static class DamageModel
     {
         /// <summary>Break above this, but do not un-break until
-        /// <see cref="RecoverRatio"/> -- without hysteresis, blocks chatter in
+        /// <see cref="RecoverRatio"/>: without hysteresis, blocks chatter in
         /// and out of existence at the threshold.</summary>
         public const float FailRatio = 1.0f;
         public const float RecoverRatio = 0.9f;
@@ -31,7 +31,7 @@ namespace Hullbreach.Structure
         /// <summary>
         /// Accumulates damage proportional to the overshoot above yield,
         /// clamped to 0..1 (represented as a byte 0..255). Below yield
-        /// (ratio &lt;= 1) damage does not change -- this models plastic
+        /// (ratio &lt;= 1) damage does not change: this models plastic
         /// accumulation, not elastic loading/unloading fatigue.
         /// </summary>
         public static byte Accumulate(byte currentDamage, float ductileRatio, float dt)
@@ -57,7 +57,7 @@ namespace Hullbreach.Structure
         /// Should this block detach this tick? Ductile failure uses a
         /// hysteresis band: once failing, it must drop below RecoverRatio to
         /// stop, so blocks do not chatter in and out of existence right at
-        /// the threshold. Brittle failure is instantaneous (no hysteresis --
+        /// the threshold. Brittle failure is instantaneous (no hysteresis:
         /// a crack does not partially open).
         /// </summary>
         public static bool ShouldDetach(float ductileRatio, float brittleRatio, bool alreadyFailing)

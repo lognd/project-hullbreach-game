@@ -1,5 +1,7 @@
 # Project Hullbreach: Game
 
+New here? Start with [docs/getting-started.md](docs/getting-started.md).
+
 This is the game half of Hullbreach: the Unity client and the dedicated
 server, built from one project. Players build a spaceship out of blocks
 and try to breach each other's hull. Accounts, ELO, match history, and the
@@ -98,7 +100,7 @@ scripts/check_unity_tree.sh what CI runs on every PR
 ```
 
 That is the entire authored tree. Do not go looking for `Assets/Scripts/`
-or `Assets/Prefabs/` — nothing has needed them yet. When you add the
+or `Assets/Prefabs/`: nothing has needed them yet. When you add the
 second or third script, make `Assets/Scripts/` and move `PlayerSingle.cs`
 into it **from the Unity Project window** so the meta travels with it.
 
@@ -106,8 +108,8 @@ into it **from the Unity Project window** so the meta travels with it.
 
 Two root objects:
 
-- **`Camera`** — a plain orthographic 2D camera, not parented to the ship.
-- **`2D world`** — everything else. Two `Circle` planets, two loose
+- **`Camera`**: a plain orthographic 2D camera, not parented to the ship.
+- **`2D world`**: everything else. Two `Circle` planets, two loose
   `Triangle` sprites, and `PlayerShip`.
 
 `PlayerShip` carries a `Rigidbody2D` and the `PlayerSingle` component,
@@ -125,7 +127,7 @@ like the ship:
 - `Use Auto Mass` is **on**, so mass (currently ~5.69) is derived from the
   child colliders. Add hull, get heavier, for free. That is already half
   of S39's "a heavy ship feels heavy".
-- `Gravity Scale` is **0** — it is space, there is no world down.
+- `Gravity Scale` is **0**: it is space, there is no world down.
 - `Angular Damping` is **2**, which is why the ship stops spinning on its
   own. `Linear Damping` is 0, so it never stops drifting.
 
@@ -164,7 +166,7 @@ in `ProjectSettings/InputManager.asset`. If you switch the project to the
 new Input System only, every line in `PlayerSingle.cs` that reads input
 breaks at once. S27
 ([#4, Adjust settings](https://github.com/lognd/project-hullbreach-game/issues/4))
-wants rebindable keys, which is the natural moment to migrate — but that
+wants rebindable keys, which is the natural moment to migrate, but that
 is a separate change from this one.
 
 **Forces are applied in `Update()`, and should be in `FixedUpdate()`.**
@@ -174,7 +176,7 @@ ship differently from a 60 Hz machine, and it will differ again on the
 headless server (S47). Move the `AddForceAtPosition` / `AddTorque` calls
 into `FixedUpdate`, and leave edge-triggered input reads (`GetButtonDown`
 / `GetButtonUp`) in `Update`, latching them into a field that
-`FixedUpdate` consumes — `GetButtonDown` is true for exactly one frame and
+`FixedUpdate` consumes: `GetButtonDown` is true for exactly one frame and
 will be missed outright if you poll it from `FixedUpdate`.
 
 **Steering is currently coupled to thrust, and probably by accident:**
@@ -187,15 +189,15 @@ rb.AddTorque(Input.GetAxis("Horizontal") * -0.1f * rb.totalForce.y, ForceMode2D.
 With the thrusters off it is near zero, so turning does nothing at all
 until you hold Jump. That may be an intentional "you can only steer under
 power" rule, or it may be a leftover. It should be a decision rather than
-an accident, and criterion 3 — control fins you can feel — is where it
+an accident, and criterion 3 (control fins you can feel) is where it
 gets settled.
 
 **The flame toggle is edge-triggered and will desync.** The `Fire` child
 sprites are enabled inside `if (Input.GetButton("Jump"))`, which runs
 every frame the key is held, but disabled only in the
 `else if (Input.GetButtonUp("Jump"))` branch. Anything that stops thrust
-without a key release — running out of fuel, a destroyed thruster, losing
-window focus — leaves the flame on. Drive the sprite from the same boolean
+without a key release (running out of fuel, a destroyed thruster, losing
+window focus) leaves the flame on. Drive the sprite from the same boolean
 that drives the thrust.
 
 None of this is blocking. Criterion 1 essentially passes already; the work
@@ -286,7 +288,7 @@ relevant activities are **Build a ship** and **Fight**.
 
 Sprint 1 is **9/16 - 9/27**, and its goal is a walking skeleton: an
 account, a ship, a LAN fight. Sprint 2 (**10/5 - 10/23**) is real physics,
-real internet, real records — that is where the structural stress model
+real internet, real records: that is where the structural stress model
 (E10) and gravity fields land. Sprint 3 (**11/2 - 11/20**) is store,
 admin, hazards, and polish.
 
@@ -308,7 +310,7 @@ Windows run it from Git Bash.
 check calls `python3` and swallows stderr, so a missing `python3` is
 reported as `FAIL: invalid JSON: Packages/manifest.json` even when the
 manifest is perfectly valid. If you see that locally and the file looks
-fine, that is why — CI runs on Ubuntu, where `python3` exists, and passes.
+fine, that is why: CI runs on Ubuntu, where `python3` exists, and passes.
 
 Editor tests and a headless server build in CI are not there yet; see
 `TODO.md`. frob does not gate this repo either (it can parse C# but has no
@@ -347,6 +349,105 @@ GitHub issues mirrored from Jira.
   Keep `core.autocrlf=true` on Windows; `.gitattributes` normalizes line
   endings on commit.
 
+## Playing the demo
+
+Open `Assets/Scenes/DemoScene.unity` and press Play. It is registered as
+the first scene in `ProjectSettings/EditorBuildSettings.asset`, alongside
+`RocketScene`.
+
+The scene starts in **Build** mode with the player ship frozen at the
+origin and a stationary `TargetShip` 12 units up. Press **Tab** at any
+time to switch between Build and Fly.
+
+**Build mode:**
+
+- **1-7** select a palette entry (Core, Hull, Armor, Thruster, Cannon,
+  Fin, RetroThruster, in `BlockTypes` order). The ship already has a core,
+  so selecting Core again is harmless (it will just refuse to place a
+  second one).
+- Hover a cell to preview it: **green** means the current selection can be
+  placed there right now, **red** means it cannot, and the HUD's `Hover:`
+  line explains why (e.g. "must touch an existing block", "blocks the
+  cannon's muzzle").
+- **Left click** places the hovered/oriented block; directional blocks
+  (Cannon, Fin) take a second click to choose a facing after the first.
+  **Right click** removes a block (this can strand and remove other
+  blocks too, if they were only connected through it).
+- **Ctrl+Z** undoes the last placement or removal; **Ctrl+Shift+Z** redoes
+  it. **Esc** cancels an in-progress facing choice.
+
+**Fly mode:**
+
+- **W/S** or **Up/Down** fire the forward thrusters / retro thrusters.
+- **A/D** or **Left/Right** steer via the fins.
+- **Space** fires every cannon that is off cooldown.
+- **O** cycles the overlay: **None** (plain per-type colors) -> **Stress**
+  (green-to-red by how close a block is to structural failure) ->
+  **LoadBearing** (magenta on articulation points: the blocks whose loss
+  would split the ship) -> **Damage** (white-to-black by accumulated hit
+  damage) -> **Buckling** (blue-to-red by how close the ship is to folding
+  along its weakest buckling mode) -> back to None.
+- **R** resets the player ship. If the scene's DemoMode has `startInOrbit`
+  set (the shipped DemoScene does), this drops the player back onto its
+  preset circular orbit around the big planet instead of dead rest at the
+  origin; otherwise it resets to rest at the world origin.
+
+The always-on panel in the corner shows the current mode, its controls,
+the current overlay, total mass, block count, and (in Fly mode) speed,
+angular speed, and the critical load factor ("inf" when the ship is nowhere
+near buckling).
+
+Shooting the `TargetShip` knocks it back and tints it under the Damage
+overlay; sustained fire on the same block will eventually push its
+Stress ratio past 1 and detach it (and anything only connected through
+it) from the target.
+
+A ship also folds under its own loads without being shot at all: once the
+critical load factor drops below 1, the weakest buckling mode's blocks
+detach the same way a stress failure does. The Buckling overlay shows this
+coming before it happens: it tints purely on buckling risk, so a hull
+that looks fine under Stress can still show red under Buckling if a long,
+thin section is about to fold.
+
+## Powerups
+
+Three pickups float near the player's orbit start, around `(0, -30)`: a
+purple **gravity gun**, a red **anti-gravity gun**, and a green **seeking
+thruster**. Flying (or falling) into one transforms the nearest block of
+the matching type on your ship into that variant for 8 seconds, tinted
+with a slow white pulse so it reads at a glance, and lists the block, the
+variant, and the time remaining in the HUD (e.g. "Cannon (0,2): Gravity
+gun 6.2 s"). The transform reverts to the block's plain behaviour on its
+own once the timer runs out, and the pickup respawns in the same spot 10
+seconds after being collected.
+
+- The **gravity gun** (turns a Cannon into a gravity gun) fires a round
+  that, on impact, drops a short-lived gravitating well at the hit point:
+  anything nearby (including your own ship) gets pulled toward it
+  until it expires.
+- The **anti-gravity gun** is the same idea with the sign flipped: its
+  well pushes things away instead of pulling them in.
+- The **seeking thruster** (turns a Thruster into a seeking thruster) is
+  an "inconvenient" upgrade: while thrusting forward it drags the ship
+  toward the nearest enemy ship instead of pushing straight ahead, so it
+  is a downside as often as an advantage depending on where you want to go.
+
+## Planets and gravity
+
+The scene's `Gravity` object holds a `GravityWorld` (plain-C#
+`Hullbreach.World.GravityField` underneath) with two bodies: a big planet
+at `(0, -60)` and a small moon at `(45, 20)`, between which the
+`TargetShip` sits at `(0, 24)`. Every ship's blocks feel gravity as a
+per-block body force (torque-correct, so a lopsided ship spins under a
+strong tidal gradient near the moon), and cannon rounds fall the same
+way. Pressing **R** in Fly mode drops the player back onto a preset
+circular orbit around the big planet (see `startInOrbit` on `DemoMode`).
+
+Flying (or falling) into a planet's surface stops the ship at the surface
+and bounces it along the surface normal with that planet's restitution;
+landing too hard (above `ShipBody.ContactDamageSpeed`, 3 m/s by default)
+damages whichever block hit first, exactly like a projectile impact.
+
 ## Making a change
 
 Same as platform. `main` is protected; every change is a branch, a PR,
@@ -368,3 +469,24 @@ are the ones that save us from a bad week.
 
 [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) has the expectations and
 [SECURITY.md](SECURITY.md) how to report a vulnerability.
+
+## Handoff docs
+
+Deeper reference than this README, for whoever is picking this codebase
+up next:
+
+- [docs/architecture.md](docs/architecture.md): the assembly graph and
+  why it is split that way, the block grid conventions, `ShipBody.Step`'s
+  per-tick order of operations, the structural (Q8 FE / buckling)
+  pipeline, and the placement rule system.
+- [docs/adding-a-block-behaviour.md](docs/adding-a-block-behaviour.md):
+  the exact recipe for a new block behaviour variant (worked example: a
+  scatter-shot cannon) and for a brand-new block type.
+- [docs/demo-scene.md](docs/demo-scene.md): `DemoScene.unity`'s object
+  layout, controls, and a "first open in Unity" checklist of everything
+  hand-authored without an editor.
+- [docs/testing.md](docs/testing.md): running `tools/plaincs`, what CI
+  checks, which assemblies need the editor, and how to write a new test.
+- [docs/roadmap.md](docs/roadmap.md): sprint status against the GitHub
+  story numbers and known engineering debt. `TODO.md` keeps only the
+  short version.

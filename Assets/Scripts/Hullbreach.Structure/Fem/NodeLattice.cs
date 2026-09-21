@@ -9,7 +9,7 @@ namespace Hullbreach.Structure
     /// resolution.
     ///
     /// Block (i,j) owns the 8 doubled-lattice points around it, excluding the
-    /// center (Q8 is the serendipity element -- Q9 would use the center too):
+    /// center (Q8 is the serendipity element; Q9 would use the center too):
     ///
     ///     (2i,2j+2)---(2i+1,2j+2)---(2i+2,2j+2)
     ///         |                          |
@@ -95,7 +95,7 @@ namespace Hullbreach.Structure
         /// node id a contiguous index 0..n-1. Blocks are visited in ascending
         /// key order (and nodes within a block in standard Q8 order) so that
         /// two independent builds over the same grid produce byte-identical
-        /// maps -- required for client/server agreement without shipping the
+        /// maps: required for client/server agreement without shipping the
         /// map itself.
         /// </summary>
         public static void BuildNodeMap(Hullbreach.Core.BlockGrid grid,

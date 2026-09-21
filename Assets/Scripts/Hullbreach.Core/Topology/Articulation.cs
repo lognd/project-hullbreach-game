@@ -33,7 +33,7 @@ namespace Hullbreach.Core
 
         /// <summary>
         /// Tarjan's algorithm, O(V + E), once per topology change. Uses an
-        /// ITERATIVE DFS -- a recursive one would blow the stack on a large
+        /// ITERATIVE DFS: a recursive one would blow the stack on a large
         /// ship. Works with no core (any block can serve as the DFS root,
         /// since articulation points are a property of the adjacency graph
         /// alone) and correctly reports no articulation points for a single
@@ -48,9 +48,10 @@ namespace Hullbreach.Core
             var low = new Dictionary<int, int>();
             int timer = 0;
 
-            foreach (var kvp in grid.All)
+            var rootKeys = grid.SortedKeys;
+            for (int rootIndex = 0; rootIndex < rootKeys.Length; rootIndex++)
             {
-                int root = kvp.Key;
+                int root = rootKeys[rootIndex];
                 if (disc.ContainsKey(root)) continue;
 
                 // -1 is a safe "no parent" sentinel: packed keys are always

@@ -16,7 +16,7 @@ namespace Hullbreach.Structure.Tests
         [Test]
         public void Hysteresis_DoesNotStartFailingAtTheSameRatio()
         {
-            // The same 0.95 ratio must NOT start a fresh failure -- that is
+            // The same 0.95 ratio must NOT start a fresh failure: that is
             // the whole point of the hysteresis band.
             Assert.IsFalse(DamageModel.ShouldDetach(0.95f, 0f, alreadyFailing: false));
         }
@@ -37,7 +37,7 @@ namespace Hullbreach.Structure.Tests
         public void BrittleRatio_IsAsymmetricInCompressionVsTension()
         {
             // Same magnitude stress, tension vs. compression, with a
-            // compressive limit far above the spall (tensile) limit -- armor
+            // compressive limit far above the spall (tensile) limit: armor
             // shrugs off compression but not tension.
             float spall = 1f;
             float compressive = 4f;

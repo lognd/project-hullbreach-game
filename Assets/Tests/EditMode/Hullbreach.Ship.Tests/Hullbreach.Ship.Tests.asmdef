@@ -4,6 +4,7 @@
     "references": [
         "Hullbreach.Core",
         "Hullbreach.Ship",
+        "Hullbreach.World",
         "Unity.Mathematics",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner"

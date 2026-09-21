@@ -16,6 +16,7 @@
   <ItemGroup>
     <Compile Include="../../../Assets/Scripts/Hullbreach.Core/**/*.cs" />
     <Compile Include="../../../Assets/Scripts/Hullbreach.Ship/**/*.cs" />
+    <Compile Include="../../../Assets/Scripts/Hullbreach.World/**/*.cs" />
     <Compile Include="../../../Assets/Scripts/Hullbreach.Structure/**/*.cs" />
     <Compile Include="../../../Assets/Scripts/Hullbreach.Builder/**/*.cs" />
     <Compile Include="../../../Assets/Scripts/Hullbreach.Net/**/*.cs" />

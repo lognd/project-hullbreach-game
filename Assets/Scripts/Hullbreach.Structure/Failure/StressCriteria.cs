@@ -8,7 +8,7 @@ namespace Hullbreach.Structure
     /// computing both is effectively free.
     ///
     /// VON MISES is sqrt(3 J2), built from the DEVIATORIC (shape-changing) part
-    /// of stress only. It deliberately ignores hydrostatic pressure -- you
+    /// of stress only. It deliberately ignores hydrostatic pressure: you
     /// cannot yield metal by squeezing it uniformly from every side. That
     /// pressure-insensitivity is exactly what makes it the DUCTILE criterion.
     ///
@@ -47,7 +47,7 @@ namespace Hullbreach.Structure
         /// Ductile utilization: von Mises over the (damage-reduced) yield
         /// stress. Drives the S37 green-to-red tint. 1.0 means failing.
         /// The denominator shrinks with damage (floored via DamageModel's
-        /// softening curve) so a damaged block is STRUCTURALLY weaker --
+        /// softening curve) so a damaged block is STRUCTURALLY weaker:
         /// sustained fire then eventually causes a structural failure rather
         /// than only an HP kill.
         /// </summary>
@@ -61,7 +61,7 @@ namespace Hullbreach.Structure
         /// <summary>
         /// Brittle utilization from the impulsive load case. Uses max TENSILE
         /// principal stress against spall strength, and the (much larger)
-        /// compressive limit separately -- that asymmetry is most of what makes
+        /// compressive limit separately: that asymmetry is most of what makes
         /// armor feel like armor.
         /// </summary>
         public static float BrittleRatio(float major, float minor,
