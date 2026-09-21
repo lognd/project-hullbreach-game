@@ -44,7 +44,16 @@ namespace Hullbreach.Game
             }
         }
 
-        void OnShotFired(ShotRequest shot)
+        void OnShotFired(ShotRequest shot) => SpawnFromSink(shot);
+
+        /// <summary>
+        /// Spawns a real Projectile GameObject for `shot`. Public so
+        /// WorldSink.SpawnProjectile can route a block behaviour's
+        /// (e.g. the gravity gun's) ShotRequest through the same spawn path
+        /// as a ShipController's own ShotFired event, instead of duplicating
+        /// spawn logic in two places.
+        /// </summary>
+        public void SpawnFromSink(ShotRequest shot)
         {
             var go = new GameObject("Projectile");
             var body = go.AddComponent<Rigidbody2D>();

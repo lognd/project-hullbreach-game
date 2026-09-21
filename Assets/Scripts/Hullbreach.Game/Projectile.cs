@@ -92,8 +92,20 @@ namespace Hullbreach.Game
 
             if (field.TryContact(worldPos, _spec.Radius, out _, out _, out _))
             {
+                DropWellIfAny(worldPos);
                 Destroy(gameObject);
             }
+        }
+
+        /// <summary>If this projectile is a GravityWell shot, drops its well
+        /// at `worldPoint` via the scene's WorldSink. No-op for a plain
+        /// (Kind == None) round, and safely no-op if no WorldSink exists.</summary>
+        void DropWellIfAny(Vector2 worldPoint)
+        {
+            if (_spec.Kind != ProjectileKind.GravityWell) return;
+            var well = _spec.Well;
+            var body = new GravityBody(new float2(worldPoint.x, worldPoint.y), well.Mu, well.Radius, 0f);
+            WorldSink.Instance?.AddTemporaryGravity(body, well.Seconds);
         }
 
         void OnTriggerEnter2D(Collider2D other)
@@ -113,6 +125,7 @@ namespace Hullbreach.Game
 
             targetController.ApplyImpulse(hitPoint, direction * _spec.Impulse);
             targetController.ApplyDamage(hitPoint, _spec.Damage);
+            DropWellIfAny(hitPoint);
 
             Destroy(gameObject);
         }

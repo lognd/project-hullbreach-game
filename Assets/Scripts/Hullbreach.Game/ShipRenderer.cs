@@ -281,7 +281,7 @@ namespace Hullbreach.Game
             switch (Overlay)
             {
                 case OverlayMode.None:
-                    v.Body.color = ColorForType(v.TypeId);
+                    v.Body.color = VariantTint(v.TypeId, block.Modifiers);
                     break;
 
                 case OverlayMode.Damage:
@@ -307,6 +307,18 @@ namespace Hullbreach.Game
                     v.Body.color = BucklingColor(buckling);
                     break;
             }
+        }
+
+        /// <summary>Plain per-type color for a base-variant block; for a
+        /// temporarily-transformed block (nonzero BlockVariants bits, e.g. a
+        /// gravity-gun cannon) blends toward white with a slow pulse so an
+        /// active powerup reads at a glance without a UI element per block.</summary>
+        static Color VariantTint(byte typeId, byte modifiers)
+        {
+            var baseColor = ColorForType(typeId);
+            if (BlockVariants.Get(modifiers) == 0) return baseColor;
+            float pulse = 0.5f + 0.5f * Mathf.Sin(Time.time * 6f);
+            return Color.Lerp(baseColor, Color.white, 0.35f + 0.35f * pulse);
         }
 
         static Color StressColor(float ratio)
