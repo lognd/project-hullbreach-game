@@ -270,17 +270,16 @@ shared by every ship.
 | `Blocks` list, per entry (`X`, `Y`, `Type Id`, `Modifiers`) | The ship's starting layout of blocks: see section 4 below for exactly what these four numbers mean. | See section 4. |
 | `Thruster Mounts` | Not required to change; leave as authored unless you know a specific visual effect needs a mount point. | n/a |
 
-**Note on things that are not yet Inspector fields.** How hard the
-thrusters push, how hard the retro-thrusters and fins push, and how long
-a cannon takes to cool down between shots are all real numbers in the
-simulation (`ThrustPerBlock`, `RetroThrustPerBlock`, `FinForce`, and
-`CannonCooldown`), but right now they are hardcoded defaults inside the
-plain simulation code, not fields exposed on `Ship Controller` in the
-Inspector. The same is true of how fast a thruster "ramps up" to full
-power, which is controlled by 2 hidden bits packed into a block's
-`Modifiers` number (see section 4) rather than by its own Inspector
-field. Changing any of these today means editing code, which is outside
-this guide; treat this as "not in the Inspector yet."
+| `Thrust Per Block` | How hard each forward thruster pushes. Bigger means faster take-off and harder spins from off-center thrusters. | 5 to 30 |
+| `Retro Thrust Per Block` | How hard each retro thruster pushes you backward. | 2 to 15 |
+| `Fin Force` | How hard each fin turns the ship. | 2 to 20 |
+| `Cannon Cooldown` | Seconds between shots for every cannon. | 0.1 to 2 |
+
+**Note on the one thing that is not yet an Inspector field.** How fast a
+thruster "ramps up" to full power is controlled by 2 hidden bits packed
+into a block's `Modifiers` number (see section 4) rather than by its own
+Inspector field. Changing it today means editing the number by hand;
+treat this as "not in the Inspector yet."
 
 ## 4. Adding things by copying an existing entry
 

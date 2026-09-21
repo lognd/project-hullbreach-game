@@ -58,6 +58,19 @@ namespace Hullbreach.Game
         // serializes FIELDS only: a property would not show up at all.
         [SerializeField] Transform[] thrusterMounts;
 
+        // Tuning knobs mirrored onto ShipBody in Awake. They live here so a
+        // designer can change them in the Inspector without touching the
+        // engine-free simulation code.
+        [Header("Tuning")]
+        [Tooltip("Force each forward thruster applies at full throttle.")]
+        [SerializeField] float thrustPerBlock = 10f;
+        [Tooltip("Force each retro thruster applies at full throttle.")]
+        [SerializeField] float retroThrustPerBlock = 5f;
+        [Tooltip("Force each fin applies at full steer.")]
+        [SerializeField] float finForce = 6f;
+        [Tooltip("Seconds a cannon waits between shots.")]
+        [SerializeField] float cannonCooldown = 0.35f;
+
         /// <summary>The ship's blocks, authored in the Inspector until the
         /// builder (Hullbreach.Builder) can construct ships at runtime. The
         /// default lays out a minimal flyable ship: a core, hull fore/aft, two
@@ -108,7 +121,13 @@ namespace Hullbreach.Game
             // over the value the netcode has to agree on.
             body.useAutoMass = false;
 
-            ship = new ShipBody();
+            ship = new ShipBody
+            {
+                ThrustPerBlock = thrustPerBlock,
+                RetroThrustPerBlock = retroThrustPerBlock,
+                FinForce = finForce,
+                CannonCooldown = cannonCooldown,
+            };
             foreach (var b in blocks)
             {
                 int key = BlockKey.Pack(b.x, b.y);

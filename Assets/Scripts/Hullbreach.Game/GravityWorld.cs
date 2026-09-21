@@ -14,6 +14,7 @@ namespace Hullbreach.Game
     public struct PlanetSpec
     {
         public Vector2 position;
+        [Tooltip("Gravitational strength (G times mass). Bigger pulls harder.")]
         public float mu;
         public float radius;
         public Color color;
