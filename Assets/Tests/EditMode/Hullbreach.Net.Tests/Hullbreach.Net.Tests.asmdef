@@ -3,6 +3,11 @@
     "rootNamespace": "Hullbreach.Net.Tests",
     "references": [
         "Hullbreach.Net",
+        "Hullbreach.Core",
+        "Hullbreach.Ship",
+        "Hullbreach.World",
+        "Hullbreach.Structure",
+        "Unity.Mathematics",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner"
     ],

@@ -3,6 +3,9 @@
     "rootNamespace": "Hullbreach.Net",
     "references": [
         "Hullbreach.Core",
+        "Hullbreach.Ship",
+        "Hullbreach.World",
+        "Hullbreach.Structure",
         "Unity.Mathematics"
     ],
     "includePlatforms": [],
