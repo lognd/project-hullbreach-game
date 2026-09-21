@@ -12,6 +12,27 @@ work lives here instead of in tickets.
       Add the job to `.github/workflows/ci.yml` and to the `gate` job's
       needs list.
 - [ ] CI: headless Linux dedicated-server build on every PR.
+- [ ] Structure: `BucklingTests.SmallBlob_HasNoLowLoadFactor` still fails
+      under the real Unity/Mono editor (passes under `tools/plaincs`/.NET).
+      Root cause (confirmed via a captured Mono log): `BucklingAnalysis`'s
+      Rayleigh-Ritz mu for a tracked slot can oscillate, sweep to sweep,
+      between a normal value and a huge-but-finite one (a divide by a
+      near-zero Cholesky pivot landing on ~1e4-1e6 instead of the intended
+      near-zero/near-infinity sentinel; last-bit rounding differences
+      between CLRs change which side of the pivot floor a given sweep lands
+      on). Because `ForceConvergeAfterSweeps` eventually force-publishes
+      whatever the CURRENT sweep computed regardless of this instability,
+      the test's tick loop lands on the tail value of that oscillation.
+      A magnitude cap on mu (tried, see `git log` on this file around
+      2026-09-20) fixes this case but regresses
+      `SolverHookHigh`/`ModeShape_IsOrthogonalToRigidBodyModes`, which
+      legitimately produce large-but-STABLE mu for some sweeps; the two
+      symptoms are only distinguishable by whether mu is stable or
+      oscillating sweep to sweep, which needs `ForceConvergeAfterSweeps` to
+      publish a snapshot from the last sweep that actually satisfied the
+      ordinary tolerance check, not whatever the triggering sweep computed.
+      That is a bigger refactor (a published vs. working copy of
+      _v/_lambda) than fits opportunistically; do it deliberately.
 - [ ] frob: add a C# check stage so `frob check` gates this repo the way
       it gates platform. Tracked in frob itself.
 - [ ] Replace the template's FPS gameplay (weapons, character, spectator)
