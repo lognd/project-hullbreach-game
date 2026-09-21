@@ -76,6 +76,16 @@ namespace Hullbreach.Structure
         readonly CgSolver _solver = new CgSolver();
         readonly CoarsePreconditioner _coarse = new CoarsePreconditioner();
 
+        // Per-ship Krylov state, carried across ticks so the per-tick
+        // iteration budget COMPOUNDS instead of each tick re-earning the
+        // search direction the previous one already paid for (see
+        // CgState). This solver instance owns exactly one ship, so one
+        // state object is the right granularity. Invalidated below on
+        // every rebuild of K or of the preconditioner, which is the
+        // invariant CgState cannot check for itself.
+        readonly CgState _cgState = new CgState();
+        bool _lastUsedCoarse = true;
+
         int _lastRebuiltCount = -1;
         bool _forceRebuild = true;
 
@@ -116,6 +126,18 @@ namespace Hullbreach.Structure
         /// <summary>CgSolver.LastIterationCount from the most recent Tick:
         /// how much of MaxCgIterationsPerTick this tick actually spent.</summary>
         public int IterationsThisTick { get; private set; }
+
+        /// <summary>True when this tick's quasi-static solve continued the
+        /// previous tick's Krylov subspace (see CgState) rather than
+        /// restarting it. False on the tick after any topology/stiffness
+        /// rebuild or any real load change, which is when a restart is the
+        /// only correct answer.</summary>
+        public bool ContinuedFromLastTick { get; private set; }
+
+        /// <summary>Ticks since the quasi-static solve last restarted its
+        /// Krylov subspace; 0 on a restarting tick. A ship under a steady
+        /// load should see this climb until it converges.</summary>
+        public int TicksSinceRestart { get; private set; }
 
         /// <summary>Degrees of freedom in the current assembly (2 per node),
         /// exposed read-only for callers (e.g. SolverBenchmarks) that want
@@ -205,6 +227,22 @@ namespace Hullbreach.Structure
                 // per-tick allocation/CPU regression SolverBenchmarks
                 // guards against.
                 if (UseCoarseCorrection) _coarse.Rebuild(_assembly);
+
+                // K and (if attached) M^-1 both just changed, so the stored
+                // r/p/rz describe a linear system that no longer exists:
+                // continuing against them would minimize the wrong
+                // quadratic (see CgState's doc). Restart.
+                _cgState.Invalidate();
+            }
+
+            // Same reasoning for the preconditioner being switched on or
+            // off mid-run (SolverBenchmarks and CoarsePreconditionerTests
+            // both do this): M^-1 changed without K changing, which no
+            // rebuild flag covers.
+            if (UseCoarseCorrection != _lastUsedCoarse)
+            {
+                _cgState.Invalidate();
+                _lastUsedCoarse = UseCoarseCorrection;
             }
 
             var f = _loadBuffer;
@@ -217,10 +255,12 @@ namespace Hullbreach.Structure
             _loadVector.ApplyInertiaRelief(f, grid, out _, out _);
 
             _solver.MaxIterations = MaxCgIterationsPerTick;
-            _solver.Solve(_assembly, f, _displacement, _rigidModes, UseCoarseCorrection ? _coarse : null);
+            _solver.Solve(_assembly, f, _displacement, _rigidModes, UseCoarseCorrection ? _coarse : null, _cgState);
             Converged = _solver.Converged;
             ResidualNorm = _solver.LastResidualNorm;
             IterationsThisTick = _solver.LastIterationCount;
+            ContinuedFromLastTick = _cgState.ContinuedFromLastTick;
+            TicksSinceRestart = _cgState.TicksSinceRestart;
 
             // Stress and damage decisions use whatever displacement is
             // available, converged or not: see the class remarks on lag.
