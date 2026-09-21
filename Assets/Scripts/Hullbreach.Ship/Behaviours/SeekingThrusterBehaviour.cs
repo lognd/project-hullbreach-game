@@ -1,0 +1,40 @@
+using Unity.Mathematics;
+
+namespace Hullbreach.Ship.Behaviours
+{
+    /// <summary>
+    /// Thruster variant 1, the "inconvenient thruster": ramps like a normal
+    /// forward thruster while ThrustAxis &gt; 0, but pushes toward the
+    /// nearest enemy ship's position instead of ship-forward, dragging the
+    /// ship toward the fight whether the pilot wants that or not. Falls back
+    /// to ordinary ship-forward thrust when no enemy is known (e.g.
+    /// NullWorldSink, or a lone ship in the world).
+    /// </summary>
+    public sealed class SeekingThrusterBehaviour : IBlockBehaviour
+    {
+        /// <summary>Ramps toward the forward channel target and, if nonzero,
+        /// pushes toward the nearest enemy (direction computed in world
+        /// space, then converted to ship-local).</summary>
+        public void Step(ref BlockContext ctx)
+        {
+            float target = ctx.Input.ThrustAxis > 0f ? 1f : 0f;
+            float updated = ctx.Throttle(target);
+            if (updated == 0f) return;
+
+            float2 localDirection = new float2(0f, 1f);
+            if (ctx.World != null &&
+                ctx.World.TryNearestEnemy(ctx.Ship.Position, ctx.Ship, out var enemyPosition, out _))
+            {
+                float2 toEnemy = enemyPosition - ctx.Ship.Position;
+                float distance = math.length(toEnemy);
+                if (distance > 1e-6f)
+                {
+                    float2 worldDirection = toEnemy / distance;
+                    localDirection = ctx.Ship.WorldVectorToLocal(worldDirection);
+                }
+            }
+
+            ctx.AddForceLocal(localDirection * updated * ctx.Ship.ThrustPerBlock);
+        }
+    }
+}
