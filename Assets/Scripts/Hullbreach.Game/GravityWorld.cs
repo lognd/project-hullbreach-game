@@ -18,6 +18,7 @@ namespace Hullbreach.Game
         public float mu;
         public float radius;
         public Color color;
+        public Sprite sprite;
 
         [Tooltip("How many multiples of Radius the pull stays softened " +
                  "(no blow-up near the center) before falling back to the " +
@@ -26,17 +27,18 @@ namespace Hullbreach.Game
                  "small wells still soften over a perceptible distance.")]
         public float softRadiusFactor;
 
-        public PlanetSpec(Vector2 position, float mu, float radius, Color color)
-            : this(position, mu, radius, color, Hullbreach.World.GravityBody.DefaultSoftRadiusFactor)
+        public PlanetSpec(Vector2 position, float mu, float radius, Color color, Sprite sprite)
+            : this(position, mu, radius, color, Hullbreach.World.GravityBody.DefaultSoftRadiusFactor, sprite)
         {
         }
 
-        public PlanetSpec(Vector2 position, float mu, float radius, Color color, float softRadiusFactor)
+        public PlanetSpec(Vector2 position, float mu, float radius, Color color, float softRadiusFactor, Sprite sprite)
         {
             this.position = position;
             this.mu = mu;
             this.radius = radius;
             this.color = color;
+            this.sprite = sprite;
             this.softRadiusFactor = softRadiusFactor;
         }
     }
@@ -104,9 +106,10 @@ namespace Hullbreach.Game
             go.transform.position = planet.position;
 
             var sr = go.AddComponent<SpriteRenderer>();
-            sr.sprite = ShipRenderer.MakeSprite();
+            sr.sprite = planet.sprite;//ShipRenderer.MakeSprite();
             sr.color = planet.color;
-            sr.transform.localScale = new Vector3(planet.radius * 2f, planet.radius * 2f, 1f);
+            //will have to adjust scale here to match sprite size
+            sr.transform.localScale = new Vector3(planet.radius * 11.5f, planet.radius * 11.5f, 1f);
             sr.sortingOrder = -10;
         }
     }

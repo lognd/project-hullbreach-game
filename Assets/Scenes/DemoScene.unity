@@ -223,8 +223,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a79441f348de89743a2939f4d699eac1, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
   m_RenderShadows: 1
   m_RequiresDepthTextureOption: 2
   m_RequiresOpaqueTextureOption: 2
@@ -267,8 +267,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2d475e82b6f544be8f0b68d9349da5ba, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
   target: {fileID: 2002002}
   smoothing: 5
 --- !u!1 &2001001
@@ -317,8 +317,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 710c8dd40a284e3680dc3f40a5b9862f, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
   playerShip: {fileID: 2002004}
   playerBody: {fileID: 2002003}
   builder: {fileID: 2002008}
@@ -338,8 +338,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 49a1bbb621044377b2a5a40e776d1515, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
   speed: 20
   impulse: 2
   damage: 25
@@ -355,8 +355,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d28443b87d7f4c0b800bc519f1551eea, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
   controller: {fileID: 2002008}
 --- !u!114 &2001006
 MonoBehaviour:
@@ -368,8 +368,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c53064f7b7f64bc2afdf170364cfaf43, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
   spawner: {fileID: 2001004}
 --- !u!114 &2001007
 MonoBehaviour:
@@ -381,8 +381,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ab70efbf4249490784a6efb1e23a165e, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &2002001
 GameObject:
   m_ObjectHideFlags: 0
@@ -457,11 +457,15 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ff41aba1d1f046bb8011b61633e351b1, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
   body: {fileID: 2002003}
   thrusterMounts: []
-  InputEnabled: 1
+  thrustPerBlock: 10
+  retroThrustPerBlock: 5
+  finForce: 15
+  cannonCooldown: 0.35
+  angularDamping: 3
   blocks:
   - x: 0
     y: 0
@@ -499,6 +503,8 @@ MonoBehaviour:
     y: 1
     typeId: 5
     modifiers: 1
+  InputEnabled: 1
+  SimulationEnabled: 1
 --- !u!114 &2002005
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -509,10 +515,11 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 9ba7bc23e843425c8825f6bde9bbacbc, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
   controller: {fileID: 2002004}
   Overlay: 0
+  FlashRatioThreshold: 0.8
 --- !u!114 &2002006
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -523,8 +530,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3dc130e07f6e403c973c108c74d1d9b8, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
   controller: {fileID: 2002004}
 --- !u!114 &2002007
 MonoBehaviour:
@@ -536,10 +543,16 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 9357b7644aa24173bf69a216affb5e36, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
   controller: {fileID: 2002004}
   renderer_: {fileID: 2002005}
+  bucklingEveryNTicks: 4
+  bucklingModeCount: 4
+  loadScale: 0.06
+  materialStiffnessScale: 40
+  Authoritative: 1
+  bucklingHoldSeconds: 0.4
 --- !u!114 &2002008
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -550,8 +563,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d8bf2a27284748cfb1f79bb51d26332e, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
   builderCamera: {fileID: 2000003}
   shipRoot: {fileID: 2002002}
   shipRenderer: {fileID: 2002005}
@@ -631,11 +644,15 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ff41aba1d1f046bb8011b61633e351b1, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
   body: {fileID: 2003003}
   thrusterMounts: []
-  InputEnabled: 0
+  thrustPerBlock: 10
+  retroThrustPerBlock: 5
+  finForce: 6
+  cannonCooldown: 0.35
+  angularDamping: 1.5
   blocks:
   - x: -1
     y: 1
@@ -673,6 +690,8 @@ MonoBehaviour:
     y: -1
     typeId: 1
     modifiers: 0
+  InputEnabled: 0
+  SimulationEnabled: 1
 --- !u!114 &2003005
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -683,10 +702,11 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 9ba7bc23e843425c8825f6bde9bbacbc, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
   controller: {fileID: 2003004}
   Overlay: 0
+  FlashRatioThreshold: 0.8
 --- !u!114 &2003006
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -697,8 +717,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3dc130e07f6e403c973c108c74d1d9b8, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
   controller: {fileID: 2003004}
 --- !u!114 &2003007
 MonoBehaviour:
@@ -710,10 +730,16 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 9357b7644aa24173bf69a216affb5e36, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
   controller: {fileID: 2003004}
   renderer_: {fileID: 2003005}
+  bucklingEveryNTicks: 4
+  bucklingModeCount: 4
+  loadScale: 0.06
+  materialStiffnessScale: 40
+  Authoritative: 1
+  bucklingHoldSeconds: 0.4
 --- !u!114 &2003008
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -724,8 +750,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4aeb2bb3d19a491a82bdf30a471e8900, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
   ship: {fileID: 2003004}
   bodyIndex: 0
 --- !u!1 &2004001
@@ -770,17 +796,21 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4e293dd821eb45aabe0a3be395ecdb79, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
   planets:
   - position: {x: 0, y: -60}
     mu: 900
     radius: 18
     color: {r: 0.6, g: 0.45, b: 0.25, a: 1}
+    sprite: {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}
+    softRadiusFactor: 0
   - position: {x: 45, y: 20}
     mu: 120
     radius: 6
-    color: {r: 0.55, g: 0.55, b: 0.6, a: 1}
+    color: {r: 0.13710928, g: 0.13710928, b: 0.554717, a: 1}
+    sprite: {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}
+    softRadiusFactor: 0
   surfaceRestitution: 0.2
 --- !u!1 &2005001
 GameObject:
@@ -824,8 +854,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 59c431646dad4980a3a198ca353b005f, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
   presets:
   - position: {x: -6, y: -30}
     variant: 1
