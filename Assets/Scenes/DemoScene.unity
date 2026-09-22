@@ -802,14 +802,16 @@ MonoBehaviour:
   - position: {x: 0, y: -60}
     mu: 900
     radius: 18
-    color: {r: 0.6, g: 0.45, b: 0.25, a: 1}
-    sprite: {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}
+    color: {r: 1, g: 1, b: 1, a: 1}
+    sprite: {fileID: 21300000, guid: 507389e8c2324b546ae790a7bf776a9d, type: 3}
+    spriteScale: 1.95
     softRadiusFactor: 0
   - position: {x: 45, y: 20}
     mu: 120
     radius: 6
-    color: {r: 0.13710928, g: 0.13710928, b: 0.554717, a: 1}
-    sprite: {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}
+    color: {r: 1, g: 1, b: 1, a: 1}
+    sprite: {fileID: 21300000, guid: 8af6ee45d631b0346aaf94b96449f17b, type: 3}
+    spriteScale: 1.95
     softRadiusFactor: 0
   surfaceRestitution: 0.2
 --- !u!1 &2005001

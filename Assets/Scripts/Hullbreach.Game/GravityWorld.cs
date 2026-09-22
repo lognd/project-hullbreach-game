@@ -19,6 +19,7 @@ namespace Hullbreach.Game
         public float radius;
         public Color color;
         public Sprite sprite;
+        public float spriteScale;
 
         [Tooltip("How many multiples of Radius the pull stays softened " +
                  "(no blow-up near the center) before falling back to the " +
@@ -27,18 +28,19 @@ namespace Hullbreach.Game
                  "small wells still soften over a perceptible distance.")]
         public float softRadiusFactor;
 
-        public PlanetSpec(Vector2 position, float mu, float radius, Color color, Sprite sprite)
-            : this(position, mu, radius, color, Hullbreach.World.GravityBody.DefaultSoftRadiusFactor, sprite)
+        public PlanetSpec(Vector2 position, float mu, float radius, Color color, Sprite sprite, float spriteScale)
+            : this(position, mu, radius, color, Hullbreach.World.GravityBody.DefaultSoftRadiusFactor, sprite, spriteScale)
         {
         }
 
-        public PlanetSpec(Vector2 position, float mu, float radius, Color color, float softRadiusFactor, Sprite sprite)
+        public PlanetSpec(Vector2 position, float mu, float radius, Color color, float softRadiusFactor, Sprite sprite, float spriteScale)
         {
             this.position = position;
             this.mu = mu;
             this.radius = radius;
             this.color = color;
             this.sprite = sprite;
+            this.spriteScale = spriteScale;
             this.softRadiusFactor = softRadiusFactor;
         }
     }
@@ -109,7 +111,8 @@ namespace Hullbreach.Game
             sr.sprite = planet.sprite;//ShipRenderer.MakeSprite();
             sr.color = planet.color;
             //will have to adjust scale here to match sprite size
-            sr.transform.localScale = new Vector3(planet.radius * 11.5f, planet.radius * 11.5f, 1f);
+            //11.5 for default knob graphic
+            sr.transform.localScale = new Vector3(planet.radius * planet.spriteScale, planet.radius * planet.spriteScale, 1f);
             sr.sortingOrder = -10;
         }
     }
