@@ -1,5 +1,5 @@
 ---
-id: T-draft-75fa2d87
+id: T-0018
 title: 'S29: Find an online opponent'
 state: queued
 kind: feature

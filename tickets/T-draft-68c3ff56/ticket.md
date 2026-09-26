@@ -6,7 +6,7 @@ kind: feature
 origin: human
 created: '2026-09-26'
 priority: high
-parent: T-draft-75fa2d87
+parent: T-0018
 tier: ticket
 sprint: sprint-2
 runs_last: false
