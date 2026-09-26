@@ -1,5 +1,5 @@
 ---
-id: T-draft-a40ab636
+id: T-0044
 title: 'S16-4: Game server reports the finished match to the platform over HTTPS with
   retry'
 state: queued
