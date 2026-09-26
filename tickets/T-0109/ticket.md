@@ -1,5 +1,5 @@
 ---
-id: T-draft-31a5c9b9
+id: T-0109
 title: 'S48-2: Interpolation for the opponent ship and projectiles'
 state: queued
 kind: feature
