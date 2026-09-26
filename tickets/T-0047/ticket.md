@@ -1,5 +1,5 @@
 ---
-id: T-draft-53ce594d
+id: T-0047
 title: 'S26-3: Title screen art and layout'
 state: queued
 kind: feature
