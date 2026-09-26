@@ -95,9 +95,11 @@ noting if the two ever need to diverge on purpose).
 **Fly mode** (`Tab` to switch from Build):
 
 - `W`/`S` or `Up`/`Down`: forward thrusters / retro thrusters.
-- `A`/`D` or `Left`/`Right`: fins. `D`/`Right` steers right, `A`/`Left`
-  steers left. Do not set `invert` on the keyboard Horizontal axis in
-  `ProjectSettings/InputManager.asset`; it flips this mapping.
+- `A`/`D` or `Left`/`Right`: fins. `D`/`Right` steers right (steer +1,
+  clockwise; the HUD steer bar fills right), `A`/`Left` steers left
+  (steer -1, counter-clockwise). Do not set `invert` on the keyboard
+  Horizontal axis in `ProjectSettings/InputManager.asset`; it flips this
+  mapping.
 - `Space`: fire every cannon off cooldown.
 - `O`: cycle overlay, `None -> Stress -> LoadBearing -> Damage ->
   Buckling -> None` (`DemoMode.NextOverlay`).
