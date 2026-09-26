@@ -1,5 +1,5 @@
 ---
-id: T-draft-af98e3a4
+id: T-0066
 title: 'S33-3: Palette tests'
 state: queued
 kind: feature
