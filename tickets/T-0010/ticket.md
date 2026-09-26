@@ -2,7 +2,7 @@
 id: T-0010
 title: 'S0-2: Create the "customer requirements" for what the central game mechanics
   will be.'
-state: in-progress
+state: queued
 kind: feature
 origin: human
 created: '2026-09-26'
