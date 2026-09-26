@@ -1,5 +1,5 @@
 ---
-id: T-draft-d525a4be
+id: T-0060
 title: 'S31-2: UndoStack reversing placements and removals at least ten deep'
 state: queued
 kind: feature
