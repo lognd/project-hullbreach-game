@@ -8,25 +8,31 @@ it beyond "it parses and CI's tree check passes".
 
 ## Object / fileID layout
 
-Five root GameObjects, fileIDs grouped by the thousands digit so it is
-obvious which object a component belongs to just from its fileID:
+Five hand-authored root GameObjects, fileIDs grouped by the thousands
+digit so it is obvious which object a component belongs to just from its
+fileID, plus a `HudCanvas` instance and an `EventSystem` added on top by
+`HudPrefabBuilder` (U1, see "The uGUI HUD (U1)" below; these two get
+Unity-assigned fileIDs, not hand-authored ones):
 
 | fileID prefix | Object | Components (in order) |
 | --- | --- | --- |
 | `2000xxx` | (camera scaffolding: Transform, Camera, etc.; `fileID 1` block for the built-in camera setup) | -- |
 | n/a | **Main Camera** (`2000001`) | Transform, Camera, GUILayer/AudioListener, **`CameraFollow`** (target = PlayerShip's Transform, smoothing = 5) |
-| `2001xxx` | **Demo** | Transform, **`DemoMode`**, **`ProjectileSpawner`**, **`BuilderHud`**, **`WorldSink`**, **`ShipContactsRunner`** |
+| `2001xxx` | **Demo** | Transform, **`DemoMode`**, **`ProjectileSpawner`**, **`WorldSink`**, **`ShipContactsRunner`** |
 | `2002xxx` | **PlayerShip** | Transform, `Rigidbody2D`, **`ShipController`**, **`ShipRenderer`**, **`ShipCollider`**, **`ShipStructure`**, **`BuilderController`** |
 | `2003xxx` | **TargetShip** | Transform, `Rigidbody2D`, **`ShipController`**, **`ShipRenderer`**, **`ShipCollider`**, **`ShipStructure`**, **`OrbitStarter`** (no `BuilderController`; it is never edited) |
 | `2004xxx` | **Gravity** | Transform, **`GravityWorld`** |
 | `2005xxx` | **Powerups** | Transform, **`PowerupSpawner`** |
+| n/a | **HudCanvas** (instance of `Assets/Prefabs/UI/HudCanvas.prefab`) | Canvas, CanvasScaler, GraphicRaycaster, nested `BuilderPanel` with **`BuilderHud`** |
+| n/a | **EventSystem** | EventSystem, StandaloneInputModule |
 
 `DemoMode` (on **Demo**, fileID `2001003`) wires everything by direct
 fileID reference in its Inspector fields: `playerShip: {fileID: 2002004}`
 (PlayerShip's `ShipController`), `playerBody: {fileID: 2002003}`
 (PlayerShip's `Rigidbody2D`), `builder: {fileID: 2002008}`
-(PlayerShip's `BuilderController`), `builderHud: {fileID: 2001005}`
-(Demo's own `BuilderHud`), `playerRenderer: {fileID: 2002005}`,
+(PlayerShip's `BuilderController`), `builderHud` pointing at the
+`BuilderHud` on the `HudCanvas` instance (U1: moved off **Demo**, see "The
+uGUI HUD (U1)" below), `playerRenderer: {fileID: 2002005}`,
 `playerStructure: {fileID: 2002007}`. It also carries `startInOrbit: 1`,
 `orbitStartPosition: {x: 0, y: -30}`, `orbitBodyIndex: 0`. The player
 now STARTS on that circular orbit around the big planet (index 0 in
@@ -143,6 +149,23 @@ a one-line hint ("ease off thrust" / "brace the arm"). Independently of
 any overlay, `ShipRenderer` pulses any block at or above
 `FlashRatioThreshold` (0.8) toward alarm red, so the player can see
 WHERE the problem is without switching to the Stress overlay.
+
+## The uGUI HUD (U1)
+
+<!-- frob:describes Assets/Scripts/Hullbreach.Game/BuilderHud.cs::BuilderHud -->
+
+The builder palette panel (top-left) is a uGUI view now, not `OnGUI`
+(the IMGUI-to-uGUI port, `docs/design/ui-port.md`, U1). `DemoScene` gains
+a `HudCanvas` instance (`Assets/Prefabs/UI/HudCanvas.prefab`, nested
+`BuilderPanel.prefab`) and an `EventSystem`
+(`StandaloneInputModule`), both added by
+`Assets/Editor/Hullbreach.Editor/HudPrefabBuilder.cs`. The `BuilderHud`
+component now lives on the `HudCanvas` instance instead of `Demo`, and
+`DemoMode`'s `builderHud` field points at it; `DemoMode.ApplyState`
+enabling/disabling that component still shows/hides the panel exactly as
+before (its `OnEnable`/`OnDisable` toggle the panel's root GameObject).
+The status panel and hull warning banner (U2/U3) are still drawn by
+`DemoMode.OnGUI` until those units land.
 
 ## Resetting
 
