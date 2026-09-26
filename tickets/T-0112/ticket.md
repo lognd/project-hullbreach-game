@@ -1,5 +1,5 @@
 ---
-id: T-draft-5151eaa0
+id: T-0112
 title: 'S49-1: Defender-favored hit resolution within a documented tolerance'
 state: queued
 kind: feature
