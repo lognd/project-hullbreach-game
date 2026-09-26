@@ -1,5 +1,5 @@
 ---
-id: T-draft-35bc243e
+id: T-0003
 title: 'E9: Ship builder'
 state: queued
 kind: feature
