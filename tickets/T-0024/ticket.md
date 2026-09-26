@@ -1,5 +1,5 @@
 ---
-id: T-draft-6b4ba20e
+id: T-0024
 title: 'S35: Save and load ship designs'
 state: queued
 kind: feature
