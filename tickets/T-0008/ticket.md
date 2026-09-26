@@ -1,5 +1,5 @@
 ---
-id: T-draft-309eb6cf
+id: T-0008
 title: 'E14: Stretch goals'
 state: queued
 kind: feature
