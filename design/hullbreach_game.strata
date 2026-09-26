@@ -1,23 +1,11 @@
-// Hand-merged from `frob scaffold unity-project .`'s per-asmdef fragments
-// (design/unity_*.strata, deleted). The generator's output does not parse
-// (frob T-5198: no root module); the frob maintainers confirmed this
-// single-module, hand-named form stays compatible with their fix.
-// Companion to docs/design/frob-and-backlog.md section 2 and
-// docs/architecture.md's "one rule" section, which this file encodes as
-// a checked model: one node per `.asmdef`, `local` flows only along the
-// references that `.asmdef` actually declares.
-
+// Hand-merged from `frob scaffold unity-project .`'s fragments (frob
+// T-5198: they don't parse standalone). Rationale: docs/frob.md.
 // frob:doc docs/architecture.md#the-one-rule-engine-free-simulation-unity-only-adapters
 module hullbreach_game
 
-// -------------------------------------------------------------------
-// Engine-free assemblies (no UnityEngine reference; compiled and tested
-// by tools/plaincs with the stock .NET SDK, no Unity license needed).
-// -------------------------------------------------------------------
-
-// The foundation: grid, block types, mass, topology. References only
-// Unity.Mathematics/Unity.Collections (math libraries, not the engine),
-// so nothing else in the repo depends on anything outside this list.
+// Engine-free assemblies: no UnityEngine reference, compiled/tested by
+// tools/plaincs with the stock .NET SDK.
+// frob:doc docs/architecture.md#the-one-rule-engine-free-simulation-unity-only-adapters
 node core : trusted {
     code "Assets/Scripts/Hullbreach.Core/**";
     clearance Internal;
@@ -30,16 +18,15 @@ node world : trusted {
 }
 flow f_world_core : world -> core { label Internal; attr local; attr "Hullbreach.World.asmdef references Hullbreach.Core"; }
 
-// The Q8 FE solver, buckling, damage. No knowledge of ships or the grid
-// beyond Core's types.
+// The Q8 FE solver, buckling, damage.
 node structure : trusted {
     code "Assets/Scripts/Hullbreach.Structure/**";
     clearance Internal;
 }
 flow f_structure_core : structure -> core { label Internal; attr local; attr "Hullbreach.Structure.asmdef references Hullbreach.Core"; }
 
-// ShipBody and its authoritative step; the same code that runs
-// client-side for prediction and server-side for authority.
+// ShipBody and its authoritative step, shared by client prediction and
+// server authority.
 node ship : trusted {
     code "Assets/Scripts/Hullbreach.Ship/**";
     clearance Internal;
@@ -55,9 +42,7 @@ node builder : trusted {
 }
 flow f_builder_core : builder -> core { label Internal; attr local; attr "Hullbreach.Builder.asmdef references Hullbreach.Core"; }
 
-// Engine-free HUD models (D3, docs/design/ui-port.md#2-decisions): pure
-// functions/value types turning simulation state into the exact
-// strings/colors a uGUI view shows.
+// Engine-free HUD models (D3, ui-port.md#2-decisions).
 node hud : trusted {
     code "Assets/Scripts/Hullbreach.Hud/**";
     clearance Internal;
@@ -65,39 +50,22 @@ node hud : trusted {
 flow f_hud_core : hud -> core { label Internal; attr local; attr "Hullbreach.Hud.asmdef references Hullbreach.Core"; }
 flow f_hud_builder : hud -> builder { label Internal; attr local; attr "Hullbreach.Hud.asmdef references Hullbreach.Builder"; }
 
-// Authoritative server loop (ServerSimulation) and the client's
-// non-authoritative twin (ClientReplica). No transport/serializer yet
-// (roadmap.md: S28/S47 landed NetMessages/Quantization only).
+// Authoritative server loop plus the client's non-authoritative twin.
+// See docs/frob.md for the planned auth flows below.
 node net : trusted {
     code "Assets/Scripts/Hullbreach.Net/**";
     clearance Internal;
-    // Both flows below are planned, not implemented (Jira SCRUM-100,
-    // S07-2 sign-in screen); no game code calls the platform yet, so
-    // there is no real call site to prove a timeout attr against. Same
-    // waive idiom platform/design/hullbreach.strata uses for its own
-    // planned-vs-landed REL200 gaps, declared on the flow's SOURCE node
-    // (waiving on the destination silently fails to match the finding).
-    waive "REL200:f_login_game" reason "planned (Jira SCRUM-100, S07-2 sign-in screen); mirrors platform/design/hullbreach.strata's f_login_game from game_client; no timeout call site exists here yet";
-    waive "REL200:f_session_check" reason "planned (Jira SCRUM-100, S07-2 sign-in screen); mirrors platform/design/hullbreach.strata's f_session_check from game_server; no timeout call site exists here yet";
+    waive "REL200:f_login_game" reason "planned (Jira SCRUM-100, S07-2); no call site exists yet, see docs/frob.md";
+    waive "REL200:f_session_check" reason "planned (Jira SCRUM-100, S07-2); no call site exists yet, see docs/frob.md";
 }
 flow f_net_core : net -> core { label Internal; attr local; attr "Hullbreach.Net.asmdef references Hullbreach.Core"; }
 flow f_net_ship : net -> ship { label Internal; attr local; attr "Hullbreach.Net.asmdef references Hullbreach.Ship"; }
 flow f_net_structure : net -> structure { label Internal; attr local; attr "Hullbreach.Net.asmdef references Hullbreach.Structure"; }
 flow f_net_world : net -> world { label Internal; attr local; attr "Hullbreach.Net.asmdef references Hullbreach.World"; }
 
-// -------------------------------------------------------------------
-// The one Unity-engine node. `Hullbreach.Game` is the only assembly
-// that references UnityEngine (architecture.md's "one rule"). The rule
-// is enforced here by ABSENCE: no flow anywhere in this file targets
-// `game` as a destination -- every arrow above points AWAY from `game`,
-// never into it, so an engine-free assembly gaining a reference to
-// Hullbreach.Game would show up as a new, unmodeled flow into this node.
-// -------------------------------------------------------------------
-
-// Scene-facing MonoBehaviour adapters: ShipController, BuilderController,
-// ShipRenderer, WorldSink, GravityWorld, Powerup(Spawner), DemoMode. Thin
-// by design: Inspector wiring and lifecycle only, calls into the plain
-// assemblies above.
+// The one Unity-engine node; the one rule is enforced by ABSENCE of any
+// flow targeting `game` above (see docs/frob.md).
+// frob:doc docs/architecture.md#the-one-rule-engine-free-simulation-unity-only-adapters
 node game : trusted {
     code "Assets/Scripts/Hullbreach.Game/**";
     clearance Internal;
@@ -116,24 +84,13 @@ node editor : trusted {
     code "Assets/Editor/Hullbreach.Editor/**";
     attr editor;
     clearance Internal;
-    // HudPrefabBuilder (D6, docs/design/ui-port.md#2-decisions) writes
-    // the generated .prefab assets to disk under Assets/Prefabs/UI.
     may "fs.write" via "Assets/Editor/Hullbreach.Editor/HudPrefabBuilder.cs::Hullbreach.Editor.HudPrefabBuilder.BuildHudCanvasPrefab";
     may "fs.write" via "Assets/Editor/Hullbreach.Editor/HudPrefabBuilder.cs::Hullbreach.Editor.HudPrefabBuilder.BuildChannelBarPrefab";
-    // Its public entry points are run headlessly via Unity's own
-    // `-executeMethod`, which is an out-of-process invocation of this
-    // assembly's own code, not a call this code makes; declared blanket
-    // because the sweep found no single call-site line to `via`.
-    may "eval"; // because: "Unity -executeMethod entry points (BuildHudCanvasPrefab/BuildChannelBarPrefab), run out-of-process by the editor, not a call site in this file"
+    // eval: Unity's own -executeMethod, not a call site; see docs/frob.md.
+    may "eval";
 }
 
-// `editor`'s `may "eval"` (Unity's own `-executeMethod` mechanism, not a
-// dynamic-code-exec call site) drags in a CWE-78 obligation under the
-// owasp-top-10 view; there is no untrusted-input flow into `editor` in
-// this model at all (it has no inbound flow), so no OS-command-injection
-// path reaches it. Same idiom as frob's own design/frob.strata's
-// `weakness:CWE-78:<node>` `assume ... noflow` claims for its `eval`
-// grants (T-5396).
+// CWE-78 discharge for editor's may "eval"; rationale in docs/frob.md.
 // frob:doc docs/design/frob-and-backlog.md#2-w-frob-in-the-game-repo
 assume "weakness:CWE-78:editor" noflow hullbreach_platform_api -> editor owner logan review "2026-10-15"
 flow f_editor_core : editor -> core { label Internal; attr local; attr "Hullbreach.Editor.asmdef references Hullbreach.Core"; }
@@ -141,13 +98,8 @@ flow f_editor_builder : editor -> builder { label Internal; attr local; attr "Hu
 flow f_editor_game : editor -> game { label Internal; attr local; attr "Hullbreach.Editor.asmdef references Hullbreach.Game"; }
 flow f_editor_hud : editor -> hud { label Internal; attr local; attr "Hullbreach.Editor.asmdef references Hullbreach.Hud"; }
 
-// -------------------------------------------------------------------
-// Test assemblies (Assets/Tests): one node per *.Tests.asmdef, edges to
-// exactly what that asmdef references. EditMode tests are engine-free
-// (tools/plaincs runs them with dotnet, no Unity license); the one
-// PlayMode suite (demo_tests) needs the real editor and references Game.
-// -------------------------------------------------------------------
-
+// Test assemblies: one node per *.Tests.asmdef, edges to what that
+// asmdef references.
 node core_tests : trusted {
     code "Assets/Tests/EditMode/Hullbreach.Core.Tests/**";
     attr editor;
@@ -209,15 +161,11 @@ flow f_net_tests_ship : net_tests -> ship { label Internal; attr local; attr "Hu
 flow f_net_tests_structure : net_tests -> structure { label Internal; attr local; attr "Hullbreach.Net.Tests.asmdef references Hullbreach.Structure"; }
 flow f_net_tests_world : net_tests -> world { label Internal; attr local; attr "Hullbreach.Net.Tests.asmdef references Hullbreach.World"; }
 
-// The one PlayMode suite; it references Game, so (unlike every other
-// test node) it does put a flow INTO `game` -- that is expected, tests
-// are allowed to depend on the adapters they exercise, the one rule
-// only forbids the reverse (an engine-free assembly depending on Game).
+// The one PlayMode suite; unlike other test nodes it flows INTO `game`,
+// which is fine (tests may depend on the adapters they exercise).
 node demo_tests : trusted {
     code "Assets/Tests/PlayMode/Hullbreach.Demo.Tests/**";
     clearance Internal;
-    // DemoScreenshots reads HULLBREACH_SHOTS to find the output
-    // directory, then writes screenshots into it.
     may "env.read" via "Assets/Tests/PlayMode/Hullbreach.Demo.Tests/DemoScreenshots.cs::Hullbreach.Demo.Tests.DemoScreenshots.CaptureDemoStates";
     may "fs.write" via "Assets/Tests/PlayMode/Hullbreach.Demo.Tests/DemoScreenshots.cs::Hullbreach.Demo.Tests.DemoScreenshots.CaptureDemoStates";
 }
@@ -230,35 +178,19 @@ flow f_demo_tests_net : demo_tests -> net { label Internal; attr local; attr "Hu
 flow f_demo_tests_game : demo_tests -> game { label Internal; attr local; attr "Hullbreach.Demo.Tests.asmdef references Hullbreach.Game"; }
 flow f_demo_tests_hud : demo_tests -> hud { label Internal; attr local; attr "Hullbreach.Demo.Tests.asmdef references Hullbreach.Hud"; }
 
-// -------------------------------------------------------------------
-// The platform (sibling repo, out of our control): a `foreign` node
-// for its auth API, plus the two flows the platform's own model
-// already declares from its side (platform/design/hullbreach.strata's
-// `game_client`/`game_server` nodes and `f_login_game`/`f_session_check`
-// flows). Neither call site exists in this repo yet -- Jira SCRUM-100
-// (S07-2, sign-in screen) is the tracked work -- so both are marked
-// `planned` using the platform model's own waive idiom rather than
-// inventing new syntax.
-// -------------------------------------------------------------------
-
-// The platform's auth API (POST /auth/login, GET /auth/session); no
-// code of ours to scan, so `managed` like the platform side models it.
+// The platform's auth API: no code of ours to scan, `managed` like the
+// platform side models it. Planned flows/rationale: docs/frob.md.
 node hullbreach_platform_api : foreign {
     managed;
 }
 
-// Mirrors the platform's f_login_game (game_client -> hullbreach_server_api,
-// POST /auth/login): the game client authenticating against the platform.
-// Sourced from `net`, the assembly that already owns client/server
-// networking (ServerSimulation/ClientReplica); planned, not yet called.
+// Mirrors the platform's f_login_game; sourced from `net`, planned only.
 flow f_login_game : net -> hullbreach_platform_api {
     label Pii;
     attr "planned: POST /auth/login (Jira SCRUM-100, S07-2)";
 }
 
-// Mirrors the platform's f_session_check (game_server -> hullbreach_server_api,
-// GET /auth/session): the dedicated server validating a client's token.
-// Planned alongside f_login_game.
+// Mirrors the platform's f_session_check; planned alongside f_login_game.
 flow f_session_check : net -> hullbreach_platform_api {
     label Internal;
     attr "planned: GET /auth/session (Jira SCRUM-100, S07-2)";

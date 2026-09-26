@@ -67,6 +67,58 @@ describes that symbol" -- frob's graph checks that both ends agree once
 its check stage runs here, so a heading that gets renamed or a symbol
 that gets moved shows up as drift instead of a silently stale link.
 
+## Design notes for `design/hullbreach_game.strata` and `frob.toml`
+
+The comment blocks in both files stay to one or two `// `/`# ` lines
+each (the same D9 rule as code); this section is where the rest of the
+"why" that used to live in those comments now lives.
+
+- **The hand-merge.** `frob scaffold unity-project .` writes one
+  `design/unity_*.strata` fragment per `.asmdef`; none of them parse on
+  their own (frob T-5198: no root module). The frob maintainers
+  confirmed on 2026-09-26 that hand-merging them into one file with a
+  single `module hullbreach_game` line stays compatible with their
+  eventual fix, so that is what `design/hullbreach_game.strata` is:
+  every fragment's node and flow, renamed to short, per-asmdef names
+  (`core`, `world`, `hud`, ...) instead of the generator's
+  `unity_hullbreach_*` prefix, under one module.
+- **The one rule, encoded.** `docs/architecture.md`'s "one rule"
+  (engine-free simulation, `Hullbreach.Game` is the only assembly that
+  touches `UnityEngine`) is enforced in the model by absence: every
+  `local` flow in the file points AWAY from `game`, never into it. A
+  new reference from an engine-free assembly to `Hullbreach.Game` would
+  show up as an unmodeled flow targeting `game`.
+- **`net`'s planned platform flows.** `f_login_game`/`f_session_check`
+  mirror the platform's own `f_login_game`/`f_session_check` in
+  `platform/design/hullbreach.strata` (sourced there from `game_client`/
+  `game_server`). Neither call site exists in this repo yet -- Jira
+  SCRUM-100 (S07-2, the sign-in screen) is the tracked work -- so both
+  are sourced from `net` (the assembly that already owns client/server
+  networking) and their `REL200` findings are `waive`d as planned,
+  using the same idiom the platform model uses for its own
+  planned-vs-landed gaps. The waive has to sit on the flow's SOURCE
+  node (`net`), not its destination (`hullbreach_platform_api`) --
+  waiving on the destination silently fails to match the finding.
+- **`editor`'s capabilities.** `HudPrefabBuilder` (D6,
+  `ui-port.md#2-decisions`) writes the generated `.prefab` assets to
+  disk, hence the two `may "fs.write"` grants. Its public entry points
+  are also run headlessly via Unity's own `-executeMethod`, an
+  out-of-process invocation with no single call-site line to `via`,
+  hence the blanket `may "eval"`. That capability drags in a CWE-78
+  obligation under the `owasp-top-10` audit view; there is no inbound
+  flow into `editor` in this model at all, so the `assume ... noflow`
+  claim (the same idiom frob's own `design/frob.strata` uses for its
+  `eval` grants) discharges it honestly.
+- **`demo_tests`'s capabilities.** `DemoScreenshots` reads the
+  `HULLBREACH_SHOTS` env var to find its output directory, then writes
+  screenshots into it -- hence its `may "env.read"`/`may "fs.write"`.
+- **Known frob-side gap.** `frob sys audit` still reports `SYS114` (no
+  proven config-bound host constraint) on both planned platform flows.
+  Unlike `REL200`, there is no `waive`/planned-discharge idiom for
+  `SYS114` yet, so a flow to a foreign node with no code behind it
+  cannot pass that check today -- reported to the frob maintainers, not
+  worked around here.
+
 ## Known blocker
 
 `frob check` exits `CHECK001` ("unknown project type") on this repo
