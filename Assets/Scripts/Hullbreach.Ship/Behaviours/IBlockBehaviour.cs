@@ -1,15 +1,13 @@
 namespace Hullbreach.Ship.Behaviours
 {
-    /// <summary>
-    /// One block's per-Step logic. This is the entire extension point: a new
-    /// weapon or thruster variant is one class implementing this interface
-    /// plus one BehaviourRegistry.Register call: ShipBody.Step never grows
-    /// a new switch case.
-    /// </summary>
+    // One block's per-Step logic. This is the entire extension point: a new
+    // weapon or thruster variant is one class implementing this interface
+    // plus one BehaviourRegistry.Register call: ShipBody.Step never grows
+    // a new switch case.
+    // frob:doc docs/reference/hullbreach-ship.md#iblockbehaviour
     public interface IBlockBehaviour
     {
-        /// <summary>Advance this one block by ctx.Dt: read/ramp its throttle
-        /// or cooldown, apply forces/fire shots through ctx.</summary>
+        // frob:doc docs/reference/hullbreach-ship.md#iblockbehaviour
         void Step(ref BlockContext ctx);
     }
 }

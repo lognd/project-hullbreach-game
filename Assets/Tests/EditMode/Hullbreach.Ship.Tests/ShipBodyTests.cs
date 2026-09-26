@@ -5,9 +5,9 @@ using Hullbreach.Ship;
 
 namespace Hullbreach.Ship.Tests
 {
-    /// <summary>S39 handling criteria, exercised against the plain-C# sim so
-    /// they run without a scene and stay meaningful once the headless server
-    /// reuses the same ShipBody.</summary>
+    // S39 handling criteria, exercised against the plain-C# sim so
+    // they run without a scene and stay meaningful once the headless server
+    // reuses the same ShipBody.
     public class ShipBodyTests
     {
         const float Tol = 1e-3f;

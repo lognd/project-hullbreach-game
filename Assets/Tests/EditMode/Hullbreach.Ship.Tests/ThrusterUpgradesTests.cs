@@ -3,8 +3,8 @@ using Hullbreach.Ship;
 
 namespace Hullbreach.Ship.Tests
 {
-    /// <summary>Locks down the modifier-bits-to-ramp-rate table shared by
-    /// thrusters, retro thrusters and fins.</summary>
+    // Locks down the modifier-bits-to-ramp-rate table shared by
+    // thrusters, retro thrusters and fins.
     public class ThrusterUpgradesTests
     {
         [Test]

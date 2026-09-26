@@ -3,49 +3,40 @@ using Hullbreach.Core;
 
 namespace Hullbreach.Ship
 {
-    /// <summary>
-    /// Ship-to-ship contact, resolved in plain C# by the same authority that
-    /// integrates the ships.
-    ///
-    /// WHY NOT BOX2D: ShipBody is authoritative for ship motion, and
-    /// ShipController overwrites the Rigidbody2D's position and velocity
-    /// every FixedUpdate. Two DYNAMIC bodies driven that way still get
-    /// Box2D's depenetration solver run on them when their per-block
-    /// BoxCollider2Ds overlap: Box2D computes a large separation velocity for
-    /// an overlap our MovePosition keeps re-creating, and the result is one
-    /// ship flung across the map. Making the bodies kinematic and resolving
-    /// contact here removes the fight entirely: there is exactly one
-    /// integrator.
-    ///
-    /// The geometry is a cheap proxy: each block is a disc of radius 0.5 at
-    /// its world center. Blocks are unit squares, so this slightly
-    /// over-reports contact at the corners, which for a collision response
-    /// that already ends in a restitution impulse is not worth an OBB test.
-    /// </summary>
+    // Ship-to-ship contact, resolved in plain C# by the same authority that
+    // integrates the ships.
+    //
+    // WHY NOT BOX2D: ShipBody is authoritative for ship motion, and
+    // ShipController overwrites the Rigidbody2D's position and velocity
+    // every FixedUpdate. Two DYNAMIC bodies driven that way still get
+    // Box2D's depenetration solver run on them when their per-block
+    // BoxCollider2Ds overlap: Box2D computes a large separation velocity for
+    // an overlap our MovePosition keeps re-creating, and the result is one
+    // ship flung across the map. Making the bodies kinematic and resolving
+    // contact here removes the fight entirely: there is exactly one
+    // integrator.
+    //
+    // The geometry is a cheap proxy: each block is a disc of radius 0.5 at
+    // its world center. Blocks are unit squares, so this slightly
+    // over-reports contact at the corners, which for a collision response
+    // that already ends in a restitution impulse is not worth an OBB test.
+    // frob:doc docs/reference/hullbreach-ship.md#shipcontacts
     public static class ShipContacts
     {
-        /// <summary>Radius of the per-block contact proxy disc. Half a block,
-        /// so two flush blocks just touch.</summary>
+        // frob:doc docs/reference/hullbreach-ship.md#shipcontacts
         public const float BlockRadius = 0.5f;
 
-        /// <summary>Bounce restored on contact, matching the planet-surface
-        /// restitution the demo already uses.</summary>
+        // frob:doc docs/reference/hullbreach-ship.md#shipcontacts
         public const float Restitution = 0.2f;
 
-        /// <summary>
-        /// Resolves at most one contact between `a` and `b` for this step:
-        /// finds the deepest overlapping block pair, pushes the two ships
-        /// apart along the contact normal in inverse-mass proportion, and
-        /// applies an equal and opposite restitution impulse at the contact
-        /// point. Above <see cref="ShipBody.ContactDamageSpeed"/> of closing
-        /// speed both contacting blocks take damage, on the same curve as a
-        /// planet impact.
-        ///
-        /// Returns whether a contact was found. One pair per step is enough:
-        /// the deepest pair dominates the response, and resolving every
-        /// overlapping pair in one pass double-counts the push for a flush
-        /// face-to-face hit.
-        /// </summary>
+        // Resolves at most one contact between `a` and `b` for this step:
+        // finds the deepest overlapping block pair, pushes the two ships
+        // apart along the contact normal in inverse-mass proportion, and
+        // applies an equal and opposite restitution impulse at the contact
+        // point. One pair per step is enough: the deepest pair dominates the
+        // response, and resolving every overlapping pair in one pass
+        // double-counts the push for a flush face-to-face hit.
+        // frob:doc docs/reference/hullbreach-ship.md#shipcontacts
         public static bool Resolve(ShipBody a, ShipBody b, float dt)
         {
             if (a == null || b == null || ReferenceEquals(a, b)) return false;
@@ -116,8 +107,8 @@ namespace Hullbreach.Ship
             return true;
         }
 
-        /// <summary>Distance from the ship origin to the far corner of its
-        /// furthest block, for the broad-phase circle test.</summary>
+        // Distance from the ship origin to the far corner of its furthest
+        // block, for the broad-phase circle test.
         static float BoundingRadius(ShipBody ship)
         {
             var keys = ship.Grid.SortedKeys;
@@ -130,11 +121,9 @@ namespace Hullbreach.Ship
             return math.sqrt(worst) + BlockRadius;
         }
 
-        /// <summary>
-        /// Deepest overlapping block-disc pair across the two ships, with the
-        /// contact normal pointing from `a` toward `b`, the penetration depth
-        /// and the midpoint of the two block centers as the contact point.
-        /// </summary>
+        // Deepest overlapping block-disc pair across the two ships, with the
+        // contact normal pointing from `a` toward `b`, the penetration depth
+        // and the midpoint of the two block centers as the contact point.
         static bool FindDeepestPair(ShipBody a, ShipBody b,
                                     out int keyA, out int keyB,
                                     out float2 normal, out float penetration, out float2 contactPoint)
@@ -181,16 +170,16 @@ namespace Hullbreach.Ship
             return found;
         }
 
-        /// <summary>World velocity of a world-space point rigidly attached to
-        /// `ship`: v + w x r about the world center of mass.</summary>
+        // World velocity of a world-space point rigidly attached to `ship`:
+        // v + w x r about the world center of mass.
         static float2 PointVelocity(ShipBody ship, float2 worldPoint)
         {
             float2 r = worldPoint - ship.LocalToWorld(ship.Grid.Mass.CenterOfMass);
             return ship.Velocity + ship.AngularVelocity * new float2(-r.y, r.x);
         }
 
-        /// <summary>Applies the same speed-proportional damage a planet
-        /// impact does, so one collision model covers both.</summary>
+        // Applies the same speed-proportional damage a planet impact does,
+        // so one collision model covers both.
         static void ApplyContactDamage(ShipBody ship, int key, float impactSpeed)
         {
             if (!ship.Grid.TryGet(key, out var block)) return;

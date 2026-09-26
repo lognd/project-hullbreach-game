@@ -8,10 +8,10 @@ using Hullbreach.World;
 
 namespace Hullbreach.Ship.Tests
 {
-    /// <summary>Covers the block behaviour extension point: registry
-    /// resolution/fallback, the gravity-gun/anti-gravity-gun shot payload,
-    /// the seeking thruster's targeting, and the temporary variant
-    /// (powerup) transform on ShipBody.</summary>
+    // Covers the block behaviour extension point: registry
+    // resolution/fallback, the gravity-gun/anti-gravity-gun shot payload,
+    // the seeking thruster's targeting, and the temporary variant
+    // (powerup) transform on ShipBody.
     public class BlockBehaviourTests
     {
         const float Tol = 1e-3f;
@@ -87,9 +87,9 @@ namespace Hullbreach.Ship.Tests
             Assert.AreEqual(ProjectileKind.None, ship.PendingShots[0].Spec.Kind);
         }
 
-        /// <summary>A stub sink whose TryNearestEnemy always reports a fixed
-        /// position, so the seeking thruster's direction can be asserted
-        /// exactly instead of depending on a second real ShipBody.</summary>
+        // A stub sink whose TryNearestEnemy always reports a fixed
+        // position, so the seeking thruster's direction can be asserted
+        // exactly instead of depending on a second real ShipBody.
         sealed class StubSink : IWorldSink
         {
             public float2 EnemyPosition;

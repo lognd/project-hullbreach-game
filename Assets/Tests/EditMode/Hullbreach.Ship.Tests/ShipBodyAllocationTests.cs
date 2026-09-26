@@ -6,24 +6,20 @@ using Hullbreach.World;
 
 namespace Hullbreach.Ship.Tests
 {
-    /// <summary>
-    /// Regression guard for the BlockGrid/ShipBody per-tick allocation work:
-    /// once RebuildDerivedViews has run once and every steady-state
-    /// collection (ContactsThisStep, AppliedForcesThisStep, the boxed grid
-    /// enumerators) has grown to its final capacity, Step must not allocate
-    /// at all on a ShipBody exercising gravity, thrust and steering
-    /// together. If this starts failing after a change in
-    /// Hullbreach.Structure (StructuralSolver reading the same grid), that
-    /// is out of this ticket's scope; ShipBody alone is what this asserts.
-    /// </summary>
+    // Regression guard for the BlockGrid/ShipBody per-tick allocation work:
+    // once RebuildDerivedViews has run once and every steady-state
+    // collection (ContactsThisStep, AppliedForcesThisStep, the boxed grid
+    // enumerators) has grown to its final capacity, Step must not allocate
+    // at all on a ShipBody exercising gravity, thrust and steering
+    // together. If this starts failing after a change in
+    // Hullbreach.Structure (StructuralSolver reading the same grid), that
+    // is out of this ticket's scope; ShipBody alone is what this asserts.
     public class ShipBodyAllocationTests
     {
-        /// <summary>
-        /// Builds a 50-block ship (core, a scattering of thrusters, retros
-        /// and fins) so RebuildDerivedViews has real per-behaviour key
-        /// arrays to build once, then never again (topology never changes
-        /// after this).
-        /// </summary>
+        // Builds a 50-block ship (core, a scattering of thrusters, retros
+        // and fins) so RebuildDerivedViews has real per-behaviour key
+        // arrays to build once, then never again (topology never changes
+        // after this).
         static ShipBody Build50BlockShip()
         {
             var ship = new ShipBody();

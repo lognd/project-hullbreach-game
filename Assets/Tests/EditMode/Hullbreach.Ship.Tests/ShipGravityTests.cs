@@ -6,9 +6,9 @@ using Hullbreach.World;
 
 namespace Hullbreach.Ship.Tests
 {
-    /// <summary>Covers ShipBody's gravity integration: per-block body force
-    /// (linear a = g, tidal torque off-axis) and planet surface contact
-    /// (push-out, restitution, contact damage).</summary>
+    // Covers ShipBody's gravity integration: per-block body force
+    // (linear a = g, tidal torque off-axis) and planet surface contact
+    // (push-out, restitution, contact damage).
     public class ShipGravityTests
     {
         static GravityField MakeField(float mu = 400f, float radius = 1f)
