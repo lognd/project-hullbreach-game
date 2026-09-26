@@ -61,5 +61,11 @@ while IFS= read -r -d '' f; do
     fi
 done < <(git ls-files -z 'Assets/Scripts/*.cs')
 
+# 7. The keyboard Horizontal axis must not be inverted: the right arrow has
+#    to steer the ship right, and the invert flag is invisible in code review.
+if awk '/negativeButton: left/{f=1; next} f && /^\s*invert:/{print $0; exit}' ProjectSettings/InputManager.asset | grep -q 'invert: 1'; then
+    fail "keyboard Horizontal axis (negativeButton: left) has invert: 1 in ProjectSettings/InputManager.asset"
+fi
+
 if [ "$problems" -eq 0 ]; then echo "unity tree: clean"; fi
 exit "$problems"
