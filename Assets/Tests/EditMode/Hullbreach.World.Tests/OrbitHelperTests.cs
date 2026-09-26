@@ -6,9 +6,8 @@ using Hullbreach.World;
 
 namespace Hullbreach.World.Tests
 {
-    /// <summary>Covers OrbitHelper.CircularOrbitVelocity by actually flying a
-    /// single-block ship on the computed velocity and checking the orbit
-    /// holds its radius.</summary>
+    // Flies a single-block ship on the computed velocity and checks the
+    // orbit holds its radius.
     public class OrbitHelperTests
     {
         [Test]

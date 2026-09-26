@@ -1,24 +1,21 @@
 namespace Hullbreach.Ship.Behaviours
 {
-    /// <summary>
-    /// Cannon variant 2: fires a shot flagged GravityWell with a negative-Mu
-    /// WellSpec, so on impact the game drops a short-lived REPULSING well at
-    /// the hit point.
-    /// </summary>
+    // Cannon variant 2: fires a REPULSING gravity-well shot (negative-Mu
+    // WellSpec).
+    // frob:doc docs/reference/hullbreach-ship.md#antigravitygunbehaviour
     public sealed class AntiGravityGunBehaviour : CannonBehaviourBase
     {
-        /// <summary>Gravitational parameter of the dropped well (negative:
-        /// repels rather than attracts).</summary>
+        // Negative: repels rather than attracts.
+        // frob:doc docs/reference/hullbreach-ship.md#antigravitygunbehaviour
         public float WellMu = -40f;
 
-        /// <summary>Physical radius of the dropped well.</summary>
+        // frob:doc docs/reference/hullbreach-ship.md#antigravitygunbehaviour
         public float WellRadius = 1.5f;
 
-        /// <summary>Seconds before the dropped well expires.</summary>
+        // frob:doc docs/reference/hullbreach-ship.md#antigravitygunbehaviour
         public float WellSeconds = 6f;
 
-        /// <summary>The ship's own Projectile spec, tagged as a repelling
-        /// gravity well.</summary>
+        // frob:doc docs/reference/hullbreach-ship.md#antigravitygunbehaviour
         protected override ProjectileSpec BuildSpec(in BlockContext ctx)
             => ctx.Ship.Projectile.WithGravityWell(new WellSpec(WellMu, WellRadius, WellSeconds));
     }

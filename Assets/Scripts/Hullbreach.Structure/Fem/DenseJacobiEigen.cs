@@ -2,24 +2,12 @@ using System;
 
 namespace Hullbreach.Structure
 {
-    /// <summary>
-    /// Cyclic Jacobi eigen-decomposition of a small dense symmetric matrix,
-    /// shared by BucklingAnalysis's subspace Rayleigh-Ritz solve and
-    /// CoarsePreconditioner's coarse-operator pseudo-inverse (NO-DUPLICATION:
-    /// both previously would have carried their own copy of the same ~40
-    /// lines). Deterministic (fixed sweep order, no early-exit dependent on
-    /// anything but the matrix itself).
-    /// </summary>
+    // Cyclic Jacobi eigen-decomposition, shared by BucklingAnalysis and
+    // CoarsePreconditioner per NO-DUPLICATION. Deterministic sweep order.
     internal static class DenseJacobiEigen
     {
-        /// <summary>
-        /// Repeatedly zeroes the largest-magnitude off-diagonal pair with a
-        /// plane rotation until `a` (read-only; a scratch copy is rotated
-        /// internally) is diagonal to `tolerance`, or `maxSweeps` cyclic
-        /// sweeps have run. `eigenvalues` and `eigenvectors` must already be
-        /// sized `n` / `n x n`; `eigenvectors` columns are the eigenvectors,
-        /// matching `eigenvalues` by index (not sorted).
-        /// </summary>
+        // Zeroes off-diagonal pairs by plane rotation until `a` (read via
+        // a scratch copy) is diagonal to `tolerance` or sweeps run out.
         public static void Solve(float[,] a, int n, float[] eigenvalues, float[,] eigenvectors, int maxSweeps = 100, float tolerance = 1e-9f)
         {
             var m = (float[,])a.Clone();

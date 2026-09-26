@@ -1,10 +1,11 @@
 namespace Hullbreach.Ship.Behaviours
 {
-    /// <summary>The stock cannon: fires the ship's own Projectile spec
-    /// unchanged. Cannon variant 0.</summary>
+    // The stock cannon: fires the ship's own Projectile spec unchanged.
+    // Cannon variant 0.
+    // frob:doc docs/reference/hullbreach-ship.md#cannonbehaviour
     public sealed class CannonBehaviour : CannonBehaviourBase
     {
-        /// <summary>Uses the ship's configured Projectile spec as-is.</summary>
+        // frob:doc docs/reference/hullbreach-ship.md#cannonbehaviour
         protected override ProjectileSpec BuildSpec(in BlockContext ctx) => ctx.Ship.Projectile;
     }
 }

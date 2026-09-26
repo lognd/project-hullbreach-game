@@ -7,165 +7,127 @@ using Hullbreach.Ship.Behaviours;
 
 namespace Hullbreach.Ship
 {
-    /// <summary>
-    /// The ship simulation. PLAIN C# ON PURPOSE: no UnityEngine anywhere in
-    /// this assembly.
-    ///
-    /// That constraint buys three things: edit-mode tests that run in
-    /// milliseconds without a scene, Burst-compilable hot paths, and a
-    /// simulation the headless server (S47) can run without Unity's object
-    /// model. The MonoBehaviour that drives this (ShipController) is a thin
-    /// adapter holding lifecycle and Inspector wiring, and nothing else.
-    /// </summary>
+    // PLAIN C# ON PURPOSE: no UnityEngine anywhere, so this stays testable
+    // and portable to the headless server (S47).
+    // frob:doc docs/reference/hullbreach-ship.md#shipbody
     public sealed class ShipBody
     {
+        // frob:doc docs/reference/hullbreach-ship.md#shipbody
         public readonly BlockGrid Grid = new BlockGrid();
 
+        // frob:doc docs/reference/hullbreach-ship.md#shipbody
         public float2 Position;
+        // frob:doc docs/reference/hullbreach-ship.md#shipbody
         public float Rotation;
+        // frob:doc docs/reference/hullbreach-ship.md#shipbody
         public float2 Velocity;
+        // frob:doc docs/reference/hullbreach-ship.md#shipbody
         public float AngularVelocity;
 
-        /// <summary>Tunable force one FULLY THROTTLED forward thruster block
-        /// contributes, in ship-local newtons-per-block.</summary>
+        // frob:doc docs/reference/hullbreach-ship.md#shipbody
         public float ThrustPerBlock = 10f;
 
-        /// <summary>Tunable force one fully throttled retro thruster block
-        /// contributes. Defaults to half of ThrustPerBlock: retros are two
-        /// small side nozzles, not a main engine.</summary>
+        // Defaults to half of ThrustPerBlock: retros are two small side
+        // nozzles, not a main engine.
+        // frob:doc docs/reference/hullbreach-ship.md#shipbody
         public float RetroThrustPerBlock = 5f;
 
-        /// <summary>Force magnitude a fin applies at full (|throttle| = 1)
-        /// steer authority.</summary>
+        // frob:doc docs/reference/hullbreach-ship.md#shipbody
         public float FinForce = 6f;
 
-        /// <summary>Seconds between shots for a single cannon block.</summary>
+        // frob:doc docs/reference/hullbreach-ship.md#shipbody
         public float CannonCooldown = 0.35f;
 
-        /// <summary>Projectile parameters every cannon on this ship fires.</summary>
+        // frob:doc docs/reference/hullbreach-ship.md#shipbody
         public ProjectileSpec Projectile = ProjectileSpec.Default;
 
-        /// <summary>The gravity field this ship falls in, or null for none
-        /// (e.g. RocketScene, which never wires one up). Set by the caller
-        /// (ShipController.Awake) rather than owned here, so the same
-        /// ShipBody can be dropped into a field-less test without a stub.</summary>
+        // Null for none (e.g. RocketScene). Set by the caller
+        // (ShipController.Awake) rather than owned here.
+        // frob:doc docs/reference/hullbreach-ship.md#shipbody
         public GravityField Gravity;
 
-        /// <summary>The game-side sink block behaviours use for spawning
-        /// projectiles, dropping temporary gravity, and finding targets.
-        /// Defaults to NullWorldSink so a ShipBody built by a test (or the
-        /// headless server with no game layer wired up yet) never needs a
-        /// null check to Step. Set by the caller (ShipController.Awake).</summary>
+        // Defaults to NullWorldSink so a ShipBody built by a test never
+        // needs a null check to Step.
+        // frob:doc docs/reference/hullbreach-ship.md#shipbody
         public IWorldSink World = NullWorldSink.Instance;
 
-        /// <summary>Relative contact speed (m/s) above which a planet impact
-        /// starts dealing damage; below this, a landing is "soft" and does
-        /// no damage at all.</summary>
+        // Below this, a landing is "soft" and does no damage at all.
+        // frob:doc docs/reference/hullbreach-ship.md#shipbody
         public float ContactDamageSpeed = 3f;
 
-        /// <summary>Damage points per m/s of contact speed above
-        /// ContactDamageSpeed.</summary>
+        // frob:doc docs/reference/hullbreach-ship.md#shipbody
         public float ContactDamagePerSpeed = 12f;
 
-        /// <summary>Fraction of tangential contact velocity removed per
-        /// second while a block is touching a planet's surface, approximating
-        /// ground friction without a full friction-cone solve.</summary>
+        // Approximates ground friction without a full friction-cone solve.
+        // frob:doc docs/reference/hullbreach-ship.md#shipbody
         public float Friction = 2f;
 
-        /// <summary>
-        /// Exponential decay rate (per second) applied to AngularVelocity
-        /// every Step. Without it nothing ever stops a ship spinning: fins
-        /// apply a torque, and when the player lets go the ship keeps the
-        /// rotation rate it reached forever, so aiming means counter-steering
-        /// exactly, which is what made the demo feel uncontrollable.
-        ///
-        /// Defaults to 0 so ShipBody's own unit tests (and any caller that
-        /// wants pure Newtonian rotation) are unaffected; the demo's
-        /// ShipController sets it from the Inspector.
-        /// </summary>
+        // Without it nothing stops a ship spinning once steer is released.
+        // Defaults to 0 so tests get pure Newtonian rotation.
+        // frob:doc docs/reference/hullbreach-ship.md#shipbody
         public float AngularDamping = 0f;
 
-        /// <summary>Clearance (world units) added to a planet's Radius when
-        /// testing block contact, so a block's own half-extent does not sink
-        /// visibly into the surface before contact registers.</summary>
+        // Added to a planet's Radius when testing block contact, so a
+        // block's half-extent does not visibly sink into the surface.
+        // frob:doc docs/reference/hullbreach-ship.md#shipbody
         public float ContactClearance = 0.5f;
 
-        /// <summary>Every planet contact resolved this Step: which block
-        /// (grid key), the surface normal at that block, and the impact
-        /// speed along that normal. Cleared and repopulated every Step, for
-        /// the renderer/audio to react to.</summary>
+        // Cleared and repopulated every Step, for the renderer/audio.
+        // frob:doc docs/reference/hullbreach-ship.md#shipbody
         public readonly List<(int key, float2 normal, float speed)> ContactsThisStep = new List<(int, float2, float)>();
 
-        /// <summary>Thruster block keys, rebuilt when topology is dirty.
-        /// A dense typed list, because systems iterate "all thrusters" rather
-        /// than dispatching polymorphically over all blocks.</summary>
+        // Rebuilt when topology is dirty; systems iterate "all thrusters"
+        // rather than dispatching polymorphically over all blocks.
+        // frob:doc docs/reference/hullbreach-ship.md#shipbody
         public int[] ThrusterKeys = Array.Empty<int>();
 
-        /// <summary>Retro thruster block keys, rebuilt when topology is dirty.</summary>
+        // frob:doc docs/reference/hullbreach-ship.md#shipbody
         public int[] RetroKeys = Array.Empty<int>();
 
-        /// <summary>Fin block keys, rebuilt when topology is dirty.</summary>
+        // frob:doc docs/reference/hullbreach-ship.md#shipbody
         public int[] FinKeys = Array.Empty<int>();
 
-        /// <summary>Cannon/weapon block keys, rebuilt when topology is dirty.</summary>
+        // frob:doc docs/reference/hullbreach-ship.md#shipbody
         public int[] WeaponKeys = Array.Empty<int>();
 
-        /// <summary>Set when FirePressed arrives in Step, for a later combat
-        /// system to consume. This is deliberately the simplest possible
-        /// hand-off: a flag, not an event, because nothing downstream exists
-        /// yet to justify more machinery.</summary>
+        // Deliberately the simplest possible hand-off: a flag, not an
+        // event, since nothing downstream needs more machinery yet.
+        // frob:doc docs/reference/hullbreach-ship.md#shipbody
         public bool FireRequested { get; private set; }
 
-        /// <summary>Shots fired this Step, appended to and left for the
-        /// caller (ShipController) to drain and clear. ShipBody never spawns
-        /// projectile objects itself: it only records intent and applies
-        /// its own recoil.</summary>
+        // ShipBody never spawns projectiles itself; left for the caller
+        // (ShipController) to drain and clear.
+        // frob:doc docs/reference/hullbreach-ship.md#shipbody
         public readonly List<ShotRequest> PendingShots = new List<ShotRequest>();
 
-        /// <summary>Every continuous force applied via AddForceAtPoint this
-        /// Step (thrusters, retros, fins), in SHIP-LOCAL coordinates. Cleared
-        /// at the start of every Step. A later structural system (ShipStructure)
-        /// feeds these straight into StructuralSolver.Tick without ShipBody
-        /// needing to know StructuralSolver exists.</summary>
+        // Cleared at the start of every Step. A later structural system
+        // feeds these into StructuralSolver.Tick without ShipBody knowing.
+        // frob:doc docs/reference/hullbreach-ship.md#shipbody
         public readonly List<(float2 point, float2 force)> AppliedForcesThisStep = new List<(float2, float2)>();
 
-        /// <summary>Linear acceleration computed by the last Step, in world
-        /// space. Exposed (not just consumed internally) because the FE
-        /// inertia-relief work on another branch needs the same a = F/M this
-        /// integrator already computed.</summary>
+        // Exposed because the FE inertia-relief work on another branch
+        // needs the same a = F/M this integrator already computed.
+        // frob:doc docs/reference/hullbreach-ship.md#shipbody
         public float2 LastLinearAcceleration { get; private set; }
 
-        /// <summary>Angular acceleration computed by the last Step.</summary>
+        // frob:doc docs/reference/hullbreach-ship.md#shipbody
         public float LastAngularAcceleration { get; private set; }
 
         float2 _forceAccum;
         float _torqueAccum;
 
-        /// <summary>Per-block ramped throttle, shared by every ramped-channel
-        /// behaviour (forward/retro thrust 0..1, fin steer -1..1, seeking
-        /// thrust 0..1), ramped toward that channel's target at the block's
-        /// own upgrade rate. Keyed by grid key: a cell has exactly one block
-        /// and therefore exactly one behaviour, so keys never collide across
-        /// behaviours.</summary>
+        // Keyed by grid key: a cell has exactly one block/behaviour, so
+        // keys never collide.
         readonly Dictionary<int, float> _throttleByKey = new Dictionary<int, float>();
 
-        /// <summary>Seconds remaining before each cannon can fire again.</summary>
         readonly Dictionary<int, float> _cannonCooldownByKey = new Dictionary<int, float>();
 
-        /// <summary>Seconds remaining before each temporarily-transformed
-        /// block (see ApplyPowerup) reverts to its base variant. Ticked down
-        /// every Step; a block reverts (variant bits cleared) once its entry
-        /// hits zero.</summary>
+        // Ticked down every Step; reverts (variant bits cleared) at zero.
         readonly Dictionary<int, float> _powerupExpiryByKey = new Dictionary<int, float>();
 
-        /// <summary>
-        /// Rebuild ThrusterKeys/RetroKeys/FinKeys/WeaponKeys from the grid.
-        /// O(block count); called lazily from Step only when
-        /// Grid.TopologyDirty, so placing or removing blocks is what pays
-        /// this cost, not every physics tick. Per-key ramp/cooldown state is
-        /// pruned to the surviving keys but otherwise preserved, so placing
-        /// an unrelated block does not reset an in-progress throttle ramp.
-        /// </summary>
+        // O(block count); called lazily only when Grid.TopologyDirty.
+        // Per-key ramp/cooldown state is pruned but otherwise preserved.
+        // frob:doc docs/reference/hullbreach-ship.md#shipbody
         public void RebuildDerivedViews()
         {
             var thrusters = new List<int>();
@@ -208,34 +170,25 @@ namespace Hullbreach.Ship
             foreach (int key in stale) dict.Remove(key);
         }
 
-        /// <summary>Current throttle 0..1 of the thruster/retro at `key`, for
-        /// the renderer to size its flame effect.</summary>
+        // frob:doc docs/reference/hullbreach-ship.md#shipbody
         public float Throttle(int key) => _throttleByKey.TryGetValue(key, out var t) ? t : 0f;
 
-        /// <summary>Current steer throttle -1..1 of the fin at `key`, for the
-        /// renderer to animate the control surface.</summary>
+        // frob:doc docs/reference/hullbreach-ship.md#shipbody
         public float SteerThrottle(int key) => _throttleByKey.TryGetValue(key, out var t) ? t : 0f;
 
-        /// <summary>Mean throttle 0..1 across every forward thruster after
-        /// the last Step. One aggregate read by BOTH the HUD bars and the
-        /// play-mode tests, so what a player sees and what a test asserts on
-        /// can never drift apart. Zero when the ship has no thrusters.</summary>
+        // One aggregate read by BOTH the HUD bars and the play-mode tests.
+        // Zero when the ship has no thrusters.
+        // frob:doc docs/reference/hullbreach-ship.md#shipbody
         public float ForwardThrottleMean { get; private set; }
 
-        /// <summary>Mean throttle 0..1 across every retro thruster after the
-        /// last Step. See <see cref="ForwardThrottleMean"/>.</summary>
+        // frob:doc docs/reference/hullbreach-ship.md#shipbody
         public float ReverseThrottleMean { get; private set; }
 
-        /// <summary>Mean steer throttle -1..1 across every fin after the last
-        /// Step. See <see cref="ForwardThrottleMean"/>.</summary>
+        // frob:doc docs/reference/hullbreach-ship.md#shipbody
         public float SteerThrottleMean { get; private set; }
 
-        /// <summary>
-        /// Recomputes the three control-channel means from the per-key
-        /// throttles the behaviours just ramped. Allocation-free: it walks
-        /// the already-built key arrays and the dictionary, so this runs on
-        /// the hot path without adding GC pressure.
-        /// </summary>
+        // Allocation-free: walks the already-built key arrays and the
+        // dictionary, so this stays off the GC on the hot path.
         void RecomputeThrottleMeans()
         {
             ForwardThrottleMean = MeanThrottle(ThrusterKeys);
@@ -254,24 +207,9 @@ namespace Hullbreach.Ship
             return sum / keys.Length;
         }
 
-        /// <summary>
-        /// Advance one FIXED timestep. Never call this from Update: the physics
-        /// step runs on a fixed timer, and applying force per rendered frame
-        /// makes a 144 Hz machine fly differently from a 60 Hz one, and both
-        /// differently from the headless server.
-        ///
-        /// Forces/torques are accumulated in SHIP-LOCAL space (thrusters and
-        /// fins are fixed to the hull), then the net force is rotated into
-        /// world space before integrating: torque is a scalar about the
-        /// out-of-plane axis and is unaffected by that rotation.
-        ///
-        /// Three ramped control channels drive everything: forward
-        /// (target 1 while ThrustAxis &gt; 0), reverse (target 1 while
-        /// ThrustAxis &lt; 0) and steer (target Steer, -1..1). Each thruster,
-        /// retro and fin block ramps its OWN throttle toward its channel's
-        /// target at a rate from its own upgrade bits, so releasing a key
-        /// fades the effect out rather than cutting it instantly.
-        /// </summary>
+        // Never call this from Update: runs on a fixed timer so behavior
+        // does not depend on frame rate. See docs/reference/hullbreach-ship.md#shipbody.
+        // frob:doc docs/reference/hullbreach-ship.md#shipbody
         public void Step(in ShipInput input, float dt)
         {
             if (Grid.TopologyDirty) RebuildDerivedViews();
@@ -282,9 +220,8 @@ namespace Hullbreach.Ship
             float mass = Grid.Mass.Total;
             if (mass <= 0f)
             {
-                // No blocks (not even a core survives debris-splitting down to
-                // nothing): there is nothing to push, so skip integration
-                // entirely rather than divide by zero.
+                // No blocks left: nothing to push, so skip integration
+                // rather than divide by zero.
                 LastLinearAcceleration = float2.zero;
                 LastAngularAcceleration = 0f;
                 ForwardThrottleMean = 0f;
@@ -300,10 +237,8 @@ namespace Hullbreach.Ship
             StepBehaviours(FinKeys, input, dt);
             StepBehaviours(WeaponKeys, input, dt);
 
-            // After the behaviours have ramped their per-block throttles and
-            // before anything reads them, so the HUD bars and the play-mode
-            // tests both see THIS tick's control state rather than last
-            // tick's.
+            // After behaviours ramp their throttles, before anything reads
+            // them, so readers see THIS tick's control state.
             RecomputeThrottleMeans();
 
             ApplyGravityForces();
@@ -318,16 +253,12 @@ namespace Hullbreach.Ship
             LastAngularAcceleration = alpha;
 
             // Semi-implicit (symplectic) Euler: update velocity first, then
-            // use the NEW velocity to update position. More stable than
-            // explicit Euler for the same dt, and it is what Box2D itself
-            // does, so this stays consistent with how the rest of the
-            // physics feels once handed to Rigidbody2D.
+            // use the NEW velocity to update position (as Box2D does).
             Velocity += a * dt;
             AngularVelocity += alpha * dt;
 
-            // Applied to the NEW angular velocity, as an exponential decay
-            // rather than a subtraction, so it is stable at any dt and can
-            // never drive the spin through zero and back the other way.
+            // Exponential decay on the NEW angular velocity: stable at any
+            // dt, never drives the spin through zero and back.
             if (AngularDamping > 0f)
             {
                 AngularVelocity *= 1f / (1f + AngularDamping * dt);
@@ -341,22 +272,14 @@ namespace Hullbreach.Ship
             ResolvePlanetContacts(dt);
         }
 
-        /// <summary>
-        /// Adds gravity as a per-block BODY FORCE, before integration: each
-        /// block's own weight m_i * g(worldCenter_i) is pushed through
-        /// AddForceAtPoint at that block's ship-local center, so it is both
-        /// torque-correct (a lopsided ship spins under a tidal gradient) and
-        /// recorded in AppliedForcesThisStep for the structural solver.
-        /// No-op (and allocation-free either way) when Gravity is unset.
-        /// </summary>
+        // Each block's own weight is pushed through AddForceAtPoint at its
+        // ship-local center, so a lopsided ship spins under a tidal gradient.
         void ApplyGravityForces()
         {
             if (Gravity == null) return;
 
-            // Sorted key order (not Grid.All) so per-block force application
-            // is deterministic regardless of the grid's internal dictionary
-            // layout, and so this loop shares the same allocation-free key
-            // view as ResolvePlanetContacts.
+            // Sorted key order (not Grid.All) so this is deterministic and
+            // shares the same allocation-free key view as ResolvePlanetContacts.
             var keys = Grid.SortedKeys;
             for (int i = 0; i < keys.Length; i++)
             {
@@ -372,32 +295,19 @@ namespace Hullbreach.Ship
             }
         }
 
-        /// <summary>
-        /// After integration: tests every block center against Gravity for
-        /// surface contact, pushes the ship out of the deepest single
-        /// penetration once, then resolves each contacting block's normal
-        /// velocity with a restitution impulse (ApplyImpulseAtWorldPoint),
-        /// bleeds tangential velocity by Friction (a simple ground-friction
-        /// approximation), and applies contact damage proportional to the
-        /// impact speed above ContactDamageSpeed. Contacts are processed in
-        /// sorted key order so the result is deterministic regardless of the
-        /// grid's internal dictionary iteration order.
-        /// </summary>
+        // Tests every block against Gravity for contact and applies
+        // push-out, restitution/friction impulses and contact damage.
         void ResolvePlanetContacts(float dt)
         {
             ContactsThisStep.Clear();
             if (Gravity == null || Grid.Mass.Total <= 0f) return;
 
             // Grid.SortedKeys is already the deterministic, allocation-free
-            // key view BlockGrid maintains, so there is nothing left for the
-            // per-step scratch list to do; ContactKeys is kept below only
-            // as a scratch buffer for anything that still needs a List<int>.
+            // key view BlockGrid maintains.
             var keys = Grid.SortedKeys;
 
-            // Pass 1: find the single deepest penetration across all
-            // contacting blocks and push the whole ship out along that
-            // normal once, so multiple simultaneously-contacting blocks
-            // (e.g. a flat hull landing) do not get pushed out repeatedly.
+            // Pass 1: find the single deepest penetration and push the
+            // whole ship out once, so a flat landing is not pushed out repeatedly.
             float deepestPenetration = 0f;
             float2 deepestNormal = float2.zero;
             bool anyContact = false;
@@ -448,9 +358,8 @@ namespace Hullbreach.Ship
                     ApplyImpulseAtWorldPoint(worldCenter, impulse);
                 }
 
-                // Ground friction: bleed the tangential component of this
-                // block's velocity, recomputed after the restitution impulse
-                // above so friction acts on the post-bounce state.
+                // Ground friction: bleed the tangential velocity,
+                // recomputed after restitution so friction acts post-bounce.
                 float2 tangent = new float2(-normal.y, normal.x);
                 float2 postR = worldCenter - LocalToWorld(Grid.Mass.CenterOfMass);
                 float2 postVelocity = Velocity + AngularVelocity * new float2(-postR.y, postR.x);
@@ -472,16 +381,8 @@ namespace Hullbreach.Ship
             }
         }
 
-        /// <summary>
-        /// Steps every block in `keys` through its resolved IBlockBehaviour
-        /// (BehaviourRegistry.Resolve), building one BlockContext per block.
-        /// This is the entire dispatch: a new weapon or thruster variant
-        /// needs no change here, only a new IBlockBehaviour class and a
-        /// BehaviourRegistry.Register call. Keys with no resolved behaviour
-        /// (should not happen for ThrusterKeys/RetroKeys/FinKeys/WeaponKeys,
-        /// which are only ever populated with types that have one) are
-        /// skipped rather than throwing, so a mid-migration gap fails soft.
-        /// </summary>
+        // The entire dispatch: a new variant needs only an IBlockBehaviour
+        // class; missing behaviours are skipped rather than throwing.
         void StepBehaviours(int[] keys, in ShipInput input, float dt)
         {
             foreach (int key in keys)
@@ -507,11 +408,9 @@ namespace Hullbreach.Ship
             }
         }
 
-        /// <summary>Ramps `key`'s stored throttle toward `target` at the rate
-        /// implied by `modifiers`' ramp-upgrade bits, stores, and returns the
-        /// updated value. Shared by every ramped-throttle behaviour
-        /// (forward/retro thrust, fin steer, seeking thrust): one block
-        /// belongs to exactly one behaviour, so keys never collide.</summary>
+        // Shared by every ramped-throttle behaviour; one block belongs to
+        // exactly one behaviour, so keys never collide.
+        // frob:doc docs/reference/hullbreach-ship.md#shipbody
         public float RampThrottleFor(int key, byte modifiers, float target, float dt)
         {
             float rate = ThrusterUpgrades.RampRate(modifiers);
@@ -521,8 +420,7 @@ namespace Hullbreach.Ship
             return updated;
         }
 
-        /// <summary>Ticks `key`'s stored cooldown down by `dt` (floored at
-        /// zero), stores, and returns the seconds remaining.</summary>
+        // frob:doc docs/reference/hullbreach-ship.md#shipbody
         public float TickCooldownFor(int key, float dt)
         {
             float remaining = _cannonCooldownByKey.TryGetValue(key, out var rem) ? rem : 0f;
@@ -531,20 +429,14 @@ namespace Hullbreach.Ship
             return remaining;
         }
 
-        /// <summary>Sets `key`'s stored cooldown to `seconds`, e.g. right
-        /// after firing.</summary>
+        // frob:doc docs/reference/hullbreach-ship.md#shipbody
         public void SetCooldownFor(int key, float seconds) => _cannonCooldownByKey[key] = seconds;
 
-        /// <summary>
-        /// Rotates a ship-local free vector into world space (no
-        /// translation), for behaviours that compute a world-space muzzle
-        /// direction from a ship-local facing. Thin public wrapper over the
-        /// private rotation helper the rest of Step already uses.
-        /// </summary>
+        // Thin public wrapper over the private rotation helper Step uses,
+        // for a behaviour's world-space muzzle direction.
+        // frob:doc docs/reference/hullbreach-ship.md#shipbody
         public float2 RotateLocalToWorld(float2 v) => RotateByRotation(v);
 
-        /// <summary>Ramp `current` toward `target` by at most `ratePerSecond
-        /// * dt`, landing exactly on target rather than overshooting.</summary>
         static float RampToward(float current, float target, float ratePerSecond, float dt)
         {
             float maxDelta = ratePerSecond * dt;
@@ -553,14 +445,9 @@ namespace Hullbreach.Ship
             return current + math.sign(diff) * maxDelta;
         }
 
-        /// <summary>
-        /// Finds the nearest block of `baseTypeId` (base variant or already
-        /// transformed, ties broken by lowest key for determinism) to
-        /// `worldPoint`, sets its variant bits to `variant`, and records that
-        /// it should revert to variant 0 after `seconds` of further Step
-        /// calls. No-op if no block of that type exists. This is the whole
-        /// "temporary transform" mechanism a powerup pickup drives.
-        /// </summary>
+        // Finds the nearest block of `baseTypeId`, sets its variant bits,
+        // and schedules a revert after `seconds` (the powerup mechanism).
+        // frob:doc docs/reference/hullbreach-ship.md#shipbody
         public bool ApplyPowerup(byte variant, byte baseTypeId, float2 worldPoint, float seconds)
         {
             float2 localPoint = WorldToLocal(worldPoint);
@@ -596,19 +483,12 @@ namespace Hullbreach.Ship
             return true;
         }
 
-        /// <summary>Seconds remaining before the temporary variant at `key`
-        /// reverts to base, or 0 if that key has no active powerup.</summary>
+        // frob:doc docs/reference/hullbreach-ship.md#shipbody
         public float VariantTimeLeft(int key)
             => _powerupExpiryByKey.TryGetValue(key, out var remaining) ? remaining : 0f;
 
-        /// <summary>
-        /// Ticks every active powerup's expiry down by `dt` and reverts any
-        /// block whose timer has run out back to variant 0, clearing only
-        /// the variant bits so facing and ramp-upgrade bits are untouched.
-        /// Allocation-free aside from the small scratch list of expired
-        /// keys, sized to how many powerups actually expire this Step (almost
-        /// always zero).
-        /// </summary>
+        // Reverts any block whose timer ran out to variant 0, clearing only
+        // the variant bits (facing/ramp-upgrade bits untouched).
         void TickPowerups(float dt)
         {
             if (_powerupExpiryByKey.Count == 0) return;
@@ -647,12 +527,10 @@ namespace Hullbreach.Ship
             return new float2(v.x * c - v.y * s, v.x * s + v.y * c);
         }
 
-        /// <summary>Ship-local point to world space: rotate by Rotation, then
-        /// translate by Position.</summary>
+        // frob:doc docs/reference/hullbreach-ship.md#shipbody
         public float2 LocalToWorld(float2 localPoint) => RotateByRotation(localPoint) + Position;
 
-        /// <summary>World point to ship-local space: exact inverse of
-        /// LocalToWorld.</summary>
+        // frob:doc docs/reference/hullbreach-ship.md#shipbody
         public float2 WorldToLocal(float2 worldPoint)
         {
             float2 d = worldPoint - Position;
@@ -661,12 +539,9 @@ namespace Hullbreach.Ship
             return new float2(d.x * c - d.y * s, d.x * s + d.y * c);
         }
 
-        /// <summary>Rotates a world-space free VECTOR (force, direction,
-        /// no translation) into ship-local space; the vector counterpart of
-        /// WorldToLocal, used to fold a world-space gravity force into the
-        /// ship-local force accumulator that AddForceAtPoint expects, and by
-        /// the seeking thruster to turn a world-space "toward the enemy"
-        /// direction into a ship-local force direction.</summary>
+        // The vector counterpart of WorldToLocal (no translation): folds a
+        // world-space force/direction into ship-local space.
+        // frob:doc docs/reference/hullbreach-ship.md#shipbody
         public float2 WorldVectorToLocal(float2 worldVector)
         {
             float s = math.sin(-Rotation);
@@ -674,12 +549,9 @@ namespace Hullbreach.Ship
             return new float2(worldVector.x * c - worldVector.y * s, worldVector.x * s + worldVector.y * c);
         }
 
-        /// <summary>
-        /// Accumulate a force applied at a ship-local point. Updates both the
-        /// linear accumulator and the torque about the center of mass:
-        /// tau = r x F, with r measured from the CoM, and in 2D
-        /// r x F = r.x * F.y - r.y * F.x.
-        /// </summary>
+        // Updates both the linear accumulator and the torque about the
+        // CoM: tau = r x F = r.x*F.y - r.y*F.x in 2D.
+        // frob:doc docs/reference/hullbreach-ship.md#shipbody
         public void AddForceAtPoint(float2 shipLocalPoint, float2 force)
         {
             _forceAccum += force;
@@ -688,12 +560,9 @@ namespace Hullbreach.Ship
             AppliedForcesThisStep.Add((shipLocalPoint, force));
         }
 
-        /// <summary>
-        /// Apply an INSTANTANEOUS impulse at a world-space point: dv = J/M,
-        /// dw = cross(r, J)/I with r measured from the world-space center of
-        /// mass. Used for cannon recoil, which should feel like a kick right
-        /// now rather than a force integrated over the next dt.
-        /// </summary>
+        // dv = J/M, dw = cross(r, J)/I about the world-space CoM. Used for
+        // cannon recoil, which should feel instant, not integrated.
+        // frob:doc docs/reference/hullbreach-ship.md#shipbody
         public void ApplyImpulseAtWorldPoint(float2 worldPoint, float2 impulse)
         {
             float mass = Grid.Mass.Total;
@@ -710,13 +579,9 @@ namespace Hullbreach.Ship
             }
         }
 
-        /// <summary>
-        /// Apply `damage` (saturating) to whatever block occupies the grid
-        /// cell under a world-space point, e.g. a projectile hit. Returns
-        /// whether a block was actually there; `key` is the grid key checked
-        /// (valid even on a miss, -1 only if the point falls outside the
-        /// packable grid range).
-        /// </summary>
+        // `key` is the grid key checked (valid even on a miss, -1 only if
+        // the point falls outside the packable grid range).
+        // frob:doc docs/reference/hullbreach-ship.md#shipbody
         public bool ApplyDamageAtWorldPoint(float2 worldPoint, byte damage, out int key)
         {
             float2 local = WorldToLocal(worldPoint);
@@ -733,22 +598,24 @@ namespace Hullbreach.Ship
         }
     }
 
-    /// <summary>
-    /// One tick of player intent. A value type, so it is trivially
-    /// serializable for the netcode and trivially constructible in tests.
-    /// </summary>
+    // A value type, so it is trivially serializable for the netcode and
+    // trivially constructible in tests.
+    // frob:doc docs/reference/hullbreach-ship.md#shipinput
     public readonly struct ShipInput
     {
-        /// <summary>Main thrust axis, -1..1: positive fires forward
-        /// thrusters, negative fires retro thrusters, zero fires neither.</summary>
+        // Positive fires forward thrusters, negative fires retro
+        // thrusters, zero fires neither.
+        // frob:doc docs/reference/hullbreach-ship.md#shipinput
         public readonly float ThrustAxis;
 
-        /// <summary>Steering axis, -1 .. +1.</summary>
+        // frob:doc docs/reference/hullbreach-ship.md#shipinput
         public readonly float Steer;
 
-        /// <summary>Fire was PRESSED this tick (edge, not level).</summary>
+        // Edge, not level: true only the tick the button goes down.
+        // frob:doc docs/reference/hullbreach-ship.md#shipinput
         public readonly bool FirePressed;
 
+        // frob:doc docs/reference/hullbreach-ship.md#shipinput
         public ShipInput(float thrustAxis, float steer, bool firePressed)
         {
             ThrustAxis = thrustAxis;

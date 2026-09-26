@@ -5,27 +5,25 @@ using Hullbreach.World;
 
 namespace Hullbreach.Ship.Behaviours
 {
-    /// <summary>
-    /// The do-nothing IWorldSink: every ShipBody defaults to this so tests
-    /// (and any ship never wired to a real game scene) can Step without a
-    /// null check at every call site. SpawnProjectile/AddTemporaryGravity are
-    /// no-ops; TryNearestEnemy always fails; Ships is always empty.
-    /// </summary>
+    // The do-nothing IWorldSink: every ShipBody defaults to this so tests
+    // can Step without a null check at every call site.
+    // frob:doc docs/reference/hullbreach-ship.md#nullworldsink
     public sealed class NullWorldSink : IWorldSink
     {
-        /// <summary>The single shared instance; this sink holds no state, so
-        /// there is never a reason to allocate more than one.</summary>
+        // This sink holds no state, so there is never a reason to allocate
+        // more than one.
+        // frob:doc docs/reference/hullbreach-ship.md#nullworldsink
         public static readonly NullWorldSink Instance = new NullWorldSink();
 
         NullWorldSink() { }
 
-        /// <summary>No-op: nothing is listening.</summary>
+        // frob:doc docs/reference/hullbreach-ship.md#nullworldsink
         public void SpawnProjectile(in ShotRequest shot) { }
 
-        /// <summary>No-op: there is no gravity field to add to.</summary>
+        // frob:doc docs/reference/hullbreach-ship.md#nullworldsink
         public void AddTemporaryGravity(GravityBody body, float seconds) { }
 
-        /// <summary>Always false: a null sink knows about no other ships.</summary>
+        // frob:doc docs/reference/hullbreach-ship.md#nullworldsink
         public bool TryNearestEnemy(float2 from, ShipBody self, out float2 position, out float2 velocity)
         {
             position = float2.zero;
@@ -33,7 +31,7 @@ namespace Hullbreach.Ship.Behaviours
             return false;
         }
 
-        /// <summary>Always empty.</summary>
+        // frob:doc docs/reference/hullbreach-ship.md#nullworldsink
         public IReadOnlyList<ShipBody> Ships => Array.Empty<ShipBody>();
     }
 }

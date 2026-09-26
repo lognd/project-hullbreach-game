@@ -4,8 +4,8 @@ using Hullbreach.Ship;
 
 namespace Hullbreach.Ship.Tests
 {
-    /// <summary>Locks down the modifier-bits-to-direction encoding that thrust
-    /// application, muzzle direction and gizmos all share.</summary>
+    // Locks down the modifier-bits-to-direction encoding that thrust
+    // application, muzzle direction and gizmos all share.
     public class BlockFacingTests
     {
         [Test]

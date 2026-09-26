@@ -4,72 +4,40 @@ using Unity.Mathematics;
 
 namespace Hullbreach.Structure
 {
-    /// <summary>
-    /// Per-block stress result for one tick: the S36/S37 API. VonMises and
-    /// the principal stresses are read from the QUASI-STATIC solve (ductile);
-    /// the ratios summarize both criteria for whatever wants to color a block
-    /// or decide it should break.
-    /// </summary>
+    // Per-block stress result for one tick: the S36/S37 API. VonMises and
+    // the principal stresses are from the quasi-static (ductile) solve.
+    // frob:doc docs/reference/hullbreach-structure.md#blockstress
     public struct BlockStress
     {
+        // frob:doc docs/reference/hullbreach-structure.md#blockstress
         public float VonMises;
+        // frob:doc docs/reference/hullbreach-structure.md#blockstress
         public float Major;
+        // frob:doc docs/reference/hullbreach-structure.md#blockstress
         public float Minor;
+        // frob:doc docs/reference/hullbreach-structure.md#blockstress
         public float DuctileRatio;
+        // frob:doc docs/reference/hullbreach-structure.md#blockstress
         public float BrittleRatio;
 
-        /// <summary>Raw element-center stress tensor components (quasi-static
-        /// case), plane-stress convention sigma = [[Sxx,Txy],[Txy,Syy]].
-        /// GeometricStiffness needs the tensor itself, not just the
-        /// von Mises/principal reductions.</summary>
+        // Raw element-center stress tensor (quasi-static case); needed by
+        // GeometricStiffness, not just the reduced ratios above.
+        // frob:doc docs/reference/hullbreach-structure.md#blockstress
         public float Sxx;
+        // frob:doc docs/reference/hullbreach-structure.md#blockstress
         public float Syy;
+        // frob:doc docs/reference/hullbreach-structure.md#blockstress
         public float Txy;
 
-        /// <summary>
-        /// Buckling risk tint: 1 / CriticalLoadFactor scaled by this block's
-        /// strain-energy participation in the CRITICAL (lowest load factor)
-        /// buckling mode; 0 when the block does not participate in that mode
-        /// or no sub-critical mode exists. CLIENT-SAFE: unlike
-        /// <see cref="StructuralSolver.BuckledBlocks"/>, this is a continuous
-        /// float derived the same way on every machine's own solve and is
-        /// meant for a color tint only: it must never be used to decide
-        /// that a block breaks (see BuckledBlocks doc for why).
-        /// </summary>
+        // CLIENT-SAFE continuous tint (unlike StructuralSolver.BuckledBlocks);
+        // see the reference page for why it must never decide a break.
+        // frob:doc docs/reference/hullbreach-structure.md#blockstress
         public float BucklingRatio;
     }
 
-    /// <summary>
-    /// Ties NodeLattice/Q8Element/StiffnessAssembly/LoadVector/CgSolver
-    /// together for one simulation tick, and reduces the resulting
-    /// displacement field to a per-block stress.
-    ///
-    /// TOPOLOGY TRACKING: this class does NOT call grid.ClearDirty(); the
-    /// ship branch owns that flag's lifecycle (other systems, e.g.
-    /// Connectivity/Articulation, also read it). Instead it snapshots
-    /// grid.TopologyDirty at the start of Tick and remembers whether it has
-    /// already rebuilt for the current dirty streak, using its own
-    /// `_lastRebuiltCount` compared against grid.Count as a cheap proxy: if
-    /// the block count changed since the last rebuild, or the caller
-    /// explicitly asks via MarkTopologyChanged, this rebuilds. This avoids
-    /// ever mutating state owned by another module while still not
-    /// re-assembling every tick.
-    ///
-    /// PER-TICK CONVERGENCE BUDGET: <see cref="MaxCgIterationsPerTick"/>
-    /// bounds how much CG work one Tick call may spend on the quasi-static
-    /// solve. A ship large enough that CG cannot reach tolerance within the
-    /// budget (see CgSolver's doc on iterations scaling with ship width)
-    /// keeps its PARTIAL displacement as next tick's warm start rather than
-    /// blocking the frame or discarding progress, so <see cref="Converged"/>
-    /// can be false for several ticks in a row while the solve slowly
-    /// catches up as the warm start improves. Stress and damage decisions
-    /// (<see cref="BlockStresses"/>) always use whatever displacement is
-    /// available, so on an unconverged tick they LAG the true quasi-static
-    /// answer by however far the residual still is from tolerance; this is
-    /// deliberate (better a slightly stale stress field than a stalled
-    /// frame) and is why buckling (which depends on that same stress field
-    /// for its geometric stiffness) only runs when <see cref="Converged"/>.
-    /// </summary>
+    // Ties NodeLattice/Q8Element/StiffnessAssembly/LoadVector/CgSolver
+    // together for one tick; see docs/reference/hullbreach-structure.md#structuralsolver.
+    // frob:doc docs/reference/hullbreach-structure.md#structuralsolver
     public sealed class StructuralSolver
     {
         readonly StiffnessAssembly _assembly = new StiffnessAssembly();
@@ -77,12 +45,7 @@ namespace Hullbreach.Structure
         readonly CoarsePreconditioner _coarse = new CoarsePreconditioner();
 
         // Per-ship Krylov state, carried across ticks so the per-tick
-        // iteration budget COMPOUNDS instead of each tick re-earning the
-        // search direction the previous one already paid for (see
-        // CgState). This solver instance owns exactly one ship, so one
-        // state object is the right granularity. Invalidated below on
-        // every rebuild of K or of the preconditioner, which is the
-        // invariant CgState cannot check for itself.
+        // budget COMPOUNDS; invalidated below on every K/preconditioner rebuild.
         readonly CgState _cgState = new CgState();
         bool _lastUsedCoarse = true;
 
@@ -91,157 +54,78 @@ namespace Hullbreach.Structure
 
         float[] _displacement = Array.Empty<float>();
 
-        // Reused across ticks so a converged, steady-state ship (unchanged
-        // topology) never allocates in its per-tick hot path: see
-        // SolverBenchmarks' zero-allocation assertion. All are re-sized (the
-        // only place they may allocate) in the same needsRebuild branch that
-        // already resizes _displacement.
+        // Reused across ticks so a converged, steady-state ship never
+        // allocates in its per-tick hot path.
         readonly LoadVector _loadVector;
         float[] _loadBuffer = Array.Empty<float>();
         float[][] _rigidModes = new float[3][] { Array.Empty<float>(), Array.Empty<float>(), Array.Empty<float>() };
 
-        /// <summary>Per-tick CG iteration budget: the quasi-static solve is
-        /// warm-started from whatever displacement the previous tick left,
-        /// so a ship too large to fully converge within one frame keeps
-        /// making progress across ticks instead of either blocking the
-        /// frame or silently returning nonsense (the pre-budget behavior
-        /// was an unconditional 4000-iteration cap inside CgSolver, cheap
-        /// for a plain mat-vec but not bounded to a frame budget). 400 is a
-        /// starting point, not a measured number: see SolverBenchmarks for
-        /// per-tick ms at a few ship sizes to retune it.</summary>
+        // 400 is a starting point, not a measured number; see
+        // SolverBenchmarks for per-tick ms at a few ship sizes to retune it.
+        // frob:doc docs/reference/hullbreach-structure.md#structuralsolver
         public int MaxCgIterationsPerTick = 400;
 
-        /// <summary>True when the most recent Tick's quasi-static solve met
-        /// CgSolver's tolerance within <see cref="MaxCgIterationsPerTick"/>.
-        /// False means <see cref="BlockStresses"/> reflects a partially
-        /// converged displacement field (see the class remarks on lag) and
-        /// buckling was skipped this tick (see RunBuckling).</summary>
+        // False means BlockStresses reflects a partially converged
+        // displacement field, and buckling was skipped this tick.
+        // frob:doc docs/reference/hullbreach-structure.md#structuralsolver
         public bool Converged { get; private set; }
 
-        /// <summary>CgSolver.LastResidualNorm from the most recent Tick's
-        /// quasi-static solve, for callers that want to log/plot the
-        /// convergence trend rather than just a bool.</summary>
+        // frob:doc docs/reference/hullbreach-structure.md#structuralsolver
         public float ResidualNorm { get; private set; }
 
-        /// <summary>CgSolver.LastIterationCount from the most recent Tick:
-        /// how much of MaxCgIterationsPerTick this tick actually spent.</summary>
+        // How much of MaxCgIterationsPerTick this tick actually spent.
+        // frob:doc docs/reference/hullbreach-structure.md#structuralsolver
         public int IterationsThisTick { get; private set; }
 
-        /// <summary>True when this tick's quasi-static solve continued the
-        /// previous tick's Krylov subspace (see CgState) rather than
-        /// restarting it. False on the tick after any topology/stiffness
-        /// rebuild or any real load change, which is when a restart is the
-        /// only correct answer.</summary>
+        // False on the tick after any topology/stiffness rebuild or real
+        // load change, when a restart is the only correct answer.
+        // frob:doc docs/reference/hullbreach-structure.md#structuralsolver
         public bool ContinuedFromLastTick { get; private set; }
 
-        /// <summary>Ticks since the quasi-static solve last restarted its
-        /// Krylov subspace; 0 on a restarting tick. A ship under a steady
-        /// load should see this climb until it converges.</summary>
+        // A ship under a steady load should see this climb until converged.
+        // frob:doc docs/reference/hullbreach-structure.md#structuralsolver
         public int TicksSinceRestart { get; private set; }
 
-        /// <summary>Degrees of freedom in the current assembly (2 per node),
-        /// exposed read-only for callers (e.g. SolverBenchmarks) that want
-        /// to report problem size alongside iteration counts.</summary>
+        // Exposed read-only for callers (e.g. SolverBenchmarks) reporting
+        // problem size alongside iteration counts.
+        // frob:doc docs/reference/hullbreach-structure.md#structuralsolver
         public int DofCount => _assembly.DofCount;
 
-        /// <summary>Wires the cached LoadVector to this instance's
-        /// StiffnessAssembly once: LoadVector.Rebuild mutates that same
-        /// StiffnessAssembly instance in place, so the reference stays
-        /// valid across every future topology rebuild.</summary>
+        // Wires the cached LoadVector to this instance's StiffnessAssembly
+        // once, since Rebuild mutates it in place across future rebuilds.
+        // frob:doc docs/reference/hullbreach-structure.md#structuralsolver
         public StructuralSolver()
         {
             _loadVector = new LoadVector(_assembly);
-            // NOT loosened to 1e-3 despite stress/damage decisions only
-            // needing that much accuracy: this branch tried exactly that
-            // and found it silently breaks buckling, because
-            // RunBuckling's gate is StructuralSolver.Converged, which is
-            // this SAME CgSolver instance's Tolerance. Loosening it to
-            // 1e-3 made CG stop (and report Converged=true) well before
-            // the displacement field was accurate enough for
-            // GeometricStiffness's Rayleigh quotients, regressing three
-            // BucklingTests (Column_CriticalLoadFactorMatchesDenseOracle,
-            // Column_CriticalLoadFactorScalesWithInverseLengthSquared,
-            // SmallBlob_HasNoLowLoadFactor) exactly the way CgSolver's own
-            // MaxIterations doc warns an under-converged solve does.
-            // Loosening this safely needs a SEPARATE, tighter tolerance
-            // gate for "safe to run buckling this tick" decoupled from
-            // "safe to stop CG this tick" (tracked in TODO.md); until then
-            // this stays at CgSolver's own 1e-5 default, same as
-            // BucklingAnalysis's internal CgSolver instance. NOTE that
-            // 1e-5 only started meaning 1e-5 at these tests' load scale
-            // once CgSolver's stopping criterion became truly relative to
-            // |f| (see CgSolver.Tolerance): before that it was an absolute
-            // 1e-5 floor for any |f| below 1, which is every load case in
-            // BucklingTests.
+            // NOT loosened to 1e-3: this also gates RunBuckling's
+            // Converged check; see the reference page for the regressed tests.
         }
 
-        /// <summary>Call when the caller knows topology changed but the block
-        /// count happens to be unchanged (e.g. a block swapped for a
-        /// different type at the same key): Count alone cannot detect that.</summary>
+        // Count alone cannot detect a same-key type swap.
+        // frob:doc docs/reference/hullbreach-structure.md#structuralsolver
         public void MarkTopologyChanged() => _forceRebuild = true;
 
-        /// <summary>On by default: augments CgSolver's plain Jacobi with
-        /// CoarsePreconditioner's deflated coarse correction (see that
-        /// class), which is what lets iteration counts grow sublinearly
-        /// with ship width instead of tracking it directly. Kept
-        /// switchable so the plain-Jacobi path stays available for
-        /// comparison/regression (see SolverBenchmarks).</summary>
+        // On by default: augments Jacobi with CoarsePreconditioner's
+        // deflated coarse correction. Switchable for SolverBenchmarks comparison.
+        // frob:doc docs/reference/hullbreach-structure.md#structuralsolver
         public bool UseCoarseCorrection = true;
 
-        /// <summary>Per-block stress results from the most recent Tick.</summary>
+        // frob:doc docs/reference/hullbreach-structure.md#structuralsolver
         public Dictionary<int, BlockStress> BlockStresses { get; } = new Dictionary<int, BlockStress>();
 
-        /// <summary>
-        /// Converts GAMEPLAY force units into the solver's normalized
-        /// material units before the solve.
-        ///
-        /// BlockType deliberately normalizes materials (hull yield = 1.0,
-        /// E = 1.0) for conditioning, while thrust and gravity are authored
-        /// in whatever units make the ship fly nicely (ThrustPerBlock 10,
-        /// planet mu 900). Those two scales have no reason to agree, and
-        /// they did not: the demo ship's own thrusters put every block far
-        /// past yield on the first tick, so the ship disintegrated the
-        /// instant play mode started.
-        ///
-        /// The fix is one honest conversion factor, not a disabled failure
-        /// check: the whole load vector (applied forces AND the inertia
-        /// relief that balances them) is multiplied by this, so the solve
-        /// stays linear, stresses scale exactly with it, and the geometric
-        /// stiffness that buckling is built from scales consistently too.
-        /// Calibrated so the stock demo ship at full thrust sits around 0.3
-        /// of yield while a long unsupported arm still fails.
-        /// </summary>
+        // Converts GAMEPLAY force units into the solver's normalized
+        // material units before the solve; see the reference page.
+        // frob:doc docs/reference/hullbreach-structure.md#structuralsolver
         public float LoadScale = 1f;
 
-        /// <summary>
-        /// Ratio of real Young's modulus to yield stress that BlockType's
-        /// normalized material table leaves out, applied to the published
-        /// buckling load factors.
-        ///
-        /// BlockType normalizes hull to E = 1.0 AND yield = 1.0, i.e. a
-        /// material that yields at unit strain. Real structural metals yield
-        /// nearer 0.1% strain: E/yield is several hundred. That omission is
-        /// harmless for STRESS, which for a given self-equilibrated load is
-        /// independent of E (strain scales as 1/E, stress as E times strain),
-        /// which is why the stress ratios calibrate cleanly on their own.
-        /// It is NOT harmless for BUCKLING: the critical load factor is the
-        /// ratio of elastic to geometric stiffness, so it scales directly
-        /// with E. Left at 1, the demo's 9-block ship read as buckling at 13%
-        /// of its own thrust, and ShipStructure detached the blocks that
-        /// "buckled": a rubber ship folding up, not a metal one.
-        ///
-        /// Scaling the published load factors is exactly equivalent to
-        /// solving with E multiplied by this and leaving everything else
-        /// alone, and it keeps the default at 1 so every existing
-        /// BucklingTests case (all calibrated against E = 1) is untouched.
-        /// </summary>
+        // Ratio of real Young's modulus to yield stress BlockType omits,
+        // applied to buckling load factors only; see the reference page.
+        // frob:doc docs/reference/hullbreach-structure.md#structuralsolver
         public float MaterialStiffnessScale = 1f;
 
-        /// <summary>
-        /// Runs one structural solve: rebuilds K if topology changed, applies
-        /// the given point forces plus inertia relief, solves for
-        /// displacement, and fills <see cref="BlockStresses"/>.
-        /// </summary>
+        // Runs one structural solve: rebuilds K if topology changed,
+        // applies point forces plus inertia relief, solves, fills BlockStresses.
+        // frob:doc docs/reference/hullbreach-structure.md#structuralsolver
         public void Tick(Hullbreach.Core.BlockGrid grid, IReadOnlyList<(float2 point, float2 force)> appliedForces, float dt)
         {
             bool needsRebuild = _forceRebuild || grid.TopologyDirty || grid.Count != _lastRebuiltCount;
@@ -261,30 +145,20 @@ namespace Hullbreach.Structure
                 }
 
                 // Rigid modes depend only on NodeRestPositions, which only
-                // changes on a topology rebuild, so recomputing them here
-                // (instead of every Tick or every RunBuckling call) is what
-                // keeps a steady-state ship's hot path allocation-free.
+                // changes here, keeping the hot path allocation-free.
                 LoadVector.RigidBodyModes(_assembly.NodeRestPositions, _rigidModes);
 
                 // Kc depends only on K's current values/sparsity, both of
-                // which only change on this same rebuild, so this is the
-                // only place it needs to run (see CoarsePreconditioner's
-                // allocation doc): rebuilding it every tick would be the
-                // per-tick allocation/CPU regression SolverBenchmarks
-                // guards against.
+                // which only change on this same rebuild.
                 if (UseCoarseCorrection) _coarse.Rebuild(_assembly);
 
-                // K and (if attached) M^-1 both just changed, so the stored
-                // r/p/rz describe a linear system that no longer exists:
-                // continuing against them would minimize the wrong
-                // quadratic (see CgState's doc). Restart.
+                // K and (if attached) M^-1 both just changed, so the
+                // stored r/p/rz describe a system that no longer exists. Restart.
                 _cgState.Invalidate();
             }
 
             // Same reasoning for the preconditioner being switched on or
-            // off mid-run (SolverBenchmarks and CoarsePreconditionerTests
-            // both do this): M^-1 changed without K changing, which no
-            // rebuild flag covers.
+            // off mid-run: M^-1 changed without K changing, no rebuild flag covers it.
             if (UseCoarseCorrection != _lastUsedCoarse)
             {
                 _cgState.Invalidate();
@@ -300,9 +174,8 @@ namespace Hullbreach.Structure
 
             _loadVector.ApplyInertiaRelief(f, grid, out _, out _);
 
-            // Applied AFTER inertia relief so the self-equilibrated load set
-            // is scaled as a whole: scaling only the applied forces would
-            // leave the relief unbalanced and inject a spurious net load.
+            // Applied AFTER inertia relief so the self-equilibrated load
+            // set is scaled as a whole, not left unbalanced.
             if (LoadScale != 1f)
             {
                 for (int i = 0; i < f.Length; i++) f[i] *= LoadScale;
@@ -317,29 +190,17 @@ namespace Hullbreach.Structure
             TicksSinceRestart = _cgState.TicksSinceRestart;
 
             // Stress and damage decisions use whatever displacement is
-            // available, converged or not: see the class remarks on lag.
+            // available, converged or not (see the reference page on lag).
             ComputeBlockStress(grid);
 
-            // Buckling's geometric stiffness is built FROM this tick's
-            // element stresses (see GeometricStiffness.Rebuild), so an
-            // under-converged solve would feed it a stress field that has
-            // not settled yet and can bias the Rayleigh quotients the same
-            // way an under-converged CG cap used to (see CgSolver's
-            // MaxIterations doc): skip the sweep entirely rather than
-            // spend it on stale input, and let the previously published
-            // modes stand until a later tick converges.
+            // Buckling's K_G is built FROM this tick's element stresses;
+            // skip on an under-converged solve, let old modes stand.
             if (Converged) RunBuckling(grid);
             _tickIndex++;
         }
 
-        /// <summary>Reduces the solved displacement field to a per-block
-        /// stress, evaluated at the element center (xi = eta = 0).</summary>
-        // Scratch for ComputeBlockStress, reused across every block of
-        // every tick (see the class's per-tick allocation remarks): `_b`
-        // is filled once per Tick call since it does not depend on the
-        // element (constant xi=eta=0 sampling on a uniform mesh); `_strain`
-        // and `_dHat` are overwritten fresh for each block and never read
-        // across iterations, so reuse is safe despite varying PoissonClass.
+        // Reduces displacement to a per-block stress at the element
+        // center; scratch below is reused across every block/tick.
         readonly float[,] _strainB = new float[3, Q8Element.DofCount];
         readonly int[] _stressNodeIds = new int[NodeLattice.NodesPerElement];
         readonly float[] _stressUe = new float[Q8Element.DofCount];
@@ -409,9 +270,7 @@ namespace Hullbreach.Structure
             }
         }
 
-        // ---------------------------------------------------------------
-        // Linearized buckling.
-        // ---------------------------------------------------------------
+        // --- Linearized buckling ---
 
         readonly GeometricStiffness _kg = new GeometricStiffness();
         readonly BucklingAnalysis _buckling = new BucklingAnalysis { MaxCgIterationsPerTick = 200 };
@@ -421,122 +280,69 @@ namespace Hullbreach.Structure
         readonly List<BucklingMode> _bucklingModes = new List<BucklingMode>();
         readonly List<int> _buckledBlocks = new List<int>();
 
-        /// <summary>Master switch; on by default. Off entirely skips the
-        /// geometric-stiffness assembly and subspace iteration.</summary>
+        // Master switch; off entirely skips the geometric-stiffness
+        // assembly and subspace iteration.
+        // frob:doc docs/reference/hullbreach-structure.md#structuralsolver
         public bool BucklingEnabled = true;
 
-        /// <summary>Buckling is attempted at most once every this many ticks
-        /// (a tick-count throttle, not a wall-clock one; see
-        /// BucklingAnalysis's determinism doc). Between eligible ticks the
-        /// previously published modes stand.</summary>
+        // A tick-count throttle, not a wall-clock one; previously
+        // published modes stand between eligible ticks.
+        // frob:doc docs/reference/hullbreach-structure.md#structuralsolver
         public int BucklingEveryNTicks = 4;
 
-        /// <summary>Modes requested from the subspace iteration.</summary>
+        // frob:doc docs/reference/hullbreach-structure.md#structuralsolver
         public int BucklingModeCount = 4;
 
-        /// <summary>Forwards to BucklingAnalysis.MaxSweepsPerTick: exposed
-        /// here so a caller (or a test wanting faster convergence than the
-        /// production per-tick budget) can tune the per-tick cost cap without
-        /// reaching into StructuralSolver's private analysis instance.</summary>
-        /// <summary>Total CG iterations the buckling sweep may spend in one
-        /// tick (see BucklingAnalysis.MaxCgIterationsPerTick). The
-        /// quasi-static solve has had a per-tick budget since
-        /// MaxCgIterationsPerTick was introduced; the buckling path never
-        /// did, which is the whole of the periodic spike the 100-block
-        /// benchmark showed (370-480 ms every fourth tick against 20 ms
-        /// for a normal one, Release). 200 is measured, not guessed: it
-        /// puts that tick at 29-39 ms, and the next step down (100, 9 ms)
-        /// under-converges the inverse iteration badly enough to break
-        /// BucklingTests.Column_CriticalLoadFactorScalesWithInverseLengthSquared
-        /// (the Euler 1/L^2 trend read 1.18 instead of 4). A ship that
-        /// needs more than this simply takes more ticks to publish its
-        /// modes: the subspace is carried across ticks for exactly that
-        /// reason.</summary>
+        // Forwards to BucklingAnalysis.MaxCgIterationsPerTick; see the
+        // reference page for the measured per-tick cost this caps.
+        // frob:doc docs/reference/hullbreach-structure.md#structuralsolver
         public int BucklingMaxCgIterationsPerTick
         {
             get => _buckling.MaxCgIterationsPerTick;
             set => _buckling.MaxCgIterationsPerTick = value;
         }
 
+        // frob:doc docs/reference/hullbreach-structure.md#structuralsolver
         public int BucklingMaxSweepsPerTick
         {
             get => _buckling.MaxSweepsPerTick;
             set => _buckling.MaxSweepsPerTick = value;
         }
 
-        /// <summary>
-        /// Cumulative strain-energy fraction (descending by block
-        /// participation) that defines "the blocks that fold" in a
-        /// sub-critical mode: e.g. 0.5 means the fewest highest-energy
-        /// blocks whose participation sums to half the mode's energy.
-        /// </summary>
+        // Cumulative strain-energy fraction (descending) that defines "the
+        // blocks that fold" in a sub-critical mode.
+        // frob:doc docs/reference/hullbreach-structure.md#structuralsolver
         public float BucklingParticipationThreshold = 0.5f;
 
-        /// <summary>Most recent converged buckling modes, ascending by load
-        /// factor. Empty when buckling is disabled, not yet converged since
-        /// the last topology change, or the ship has no compression anywhere.</summary>
+        // Empty when buckling is disabled, not yet converged, or nothing is
+        // in compression.
+        // frob:doc docs/reference/hullbreach-structure.md#structuralsolver
         public IReadOnlyList<BucklingMode> BucklingModes => _bucklingModes;
 
-        /// <summary>Smallest load factor among <see cref="BucklingModes"/>,
-        /// or +infinity when there is none (nothing sub-critical, or no
-        /// converged analysis yet).</summary>
+        // frob:doc docs/reference/hullbreach-structure.md#structuralsolver
         public float CriticalLoadFactor { get; private set; } = float.PositiveInfinity;
 
-        /// <summary>
-        /// Union, across every mode with LoadFactor &lt;= 1, of the blocks
-        /// making up <see cref="BucklingParticipationThreshold"/> of that
-        /// mode's strain energy: i.e. every block that some independent
-        /// sub-critical fold wants to break, combined, because a ship can
-        /// fold in two places at once and both must break.
-        ///
-        /// SERVER-AUTHORITATIVE, NOT CLIENT-SAFE: the float FE solve is not
-        /// bit-identical across machines. Only the authoritative simulation
-        /// may read this list to decide a block dies and then BROADCAST that
-        /// as an event; a client independently reading this and detaching a
-        /// block itself can disagree with the server and desync. Clients
-        /// must use BlockStress.BucklingRatio (a tint, not a decision) instead.
-        /// </summary>
+        // SERVER-AUTHORITATIVE, NOT CLIENT-SAFE: see the reference page for
+        // why only the authority may read this to decide a block dies.
+        // frob:doc docs/reference/hullbreach-structure.md#structuralsolver
         public IReadOnlyList<int> BuckledBlocks => _buckledBlocks;
 
-        /// <summary>Minor-principal-stress floor below which compression
-        /// counts as real for the early-out below, as a FRACTION of the
-        /// ship's largest von Mises stress this tick. Pure tension still
-        /// leaves a whisper of local transverse compression at a point
-        /// load's application node from Poisson coupling: that is a
-        /// load-application artifact, not a structural instability, so it
-        /// must not by itself keep the subspace machinery running every
-        /// tick. This used to be an ABSOLUTE -1e-3, which means whatever
-        /// the load scale happens to make it mean: a ship loaded ten times
-        /// harder needs a floor ten times lower to draw the same
-        /// distinction, and a ship under a gentle load can have its entire
-        /// stress field sit above an absolute floor and never run buckling
-        /// at all. Relative to the stress field it is the same test at
-        /// every load scale, exactly as CgSolver.Tolerance is.</summary>
+        // Relative to the ship's own max von Mises so the test means the
+        // same thing at every load scale; see the reference page.
         const float CompressionFloorFraction = 1e-3f;
 
-        /// <summary>Absolute backstop for the fraction above, for a ship
-        /// with no meaningful stress anywhere (an unloaded hull): without
-        /// it the fraction of a near-zero maximum would make rounding
-        /// noise count as compression.</summary>
+        // Absolute backstop for an unloaded hull, so rounding noise near
+        // zero does not count as compression.
         const float CompressionFloorAbsolute = 1e-6f;
 
-        /// <summary>
-        /// Runs (at most every BucklingEveryNTicks ticks) the geometric
-        /// stiffness assembly and one step of the subspace iteration, and
-        /// publishes modes/BuckledBlocks/BucklingRatio only once it has
-        /// converged. Cheap early-out: if no element anywhere is meaningfully
-        /// in compression, K_G is positive semidefinite (see
-        /// GeometricStiffness' sign convention), so there is no positive
-        /// lambda to find; skipped without ever touching the subspace
-        /// machinery.
-        /// </summary>
+        // Runs (at most every BucklingEveryNTicks ticks) one subspace step,
+        // publishing only once converged; early-out if nothing compresses.
         void RunBuckling(Hullbreach.Core.BlockGrid grid)
         {
             if (!BucklingEnabled) return;
             if (_tickIndex % Math.Max(1, BucklingEveryNTicks) != 0) return;
 
-            // One pass for the scale, one for the test: the stress field
-            // is a Dictionary walk over blocks, nothing next to a sweep.
+            // One pass for the scale, one for the test: cheap Dictionary walk.
             float maxVonMises = 0f;
             foreach (var kvp in BlockStresses)
                 if (kvp.Value.VonMises > maxVonMises) maxVonMises = kvp.Value.VonMises;
@@ -558,22 +364,13 @@ namespace Hullbreach.Structure
                 return;
             }
 
-            // Reset only on an actual DOF-COUNT change, not merely because K
-            // was numerically rebuilt this tick: StructuralSolver rebuilds K
-            // whenever grid.TopologyDirty is set, and that flag's lifecycle
-            // belongs to the ship branch (see the class doc); it can stay
-            // true for many ticks in a row with no real topology change
-            // (e.g. in a test harness that never clears it), and discarding
-            // a perfectly good warm-started subspace every such tick would
-            // make convergence impossible. The subspace and K_G's sparsity
-            // are only actually invalidated when the number of DOFs changes.
+            // Reset only on an actual DOF-COUNT change, not merely a K
+            // rebuild (TopologyDirty can stay true with no real change).
             if (_bucklingDof != _assembly.DofCount)
             {
                 _kg.AttachSparsity(_assembly);
-                // _rigidModes was already (re)computed this Tick by the
-                // needsRebuild branch above, for the same DofCount: reuse it
-                // instead of allocating a second identical set (see the
-                // class's per-tick allocation remarks).
+                // _rigidModes was already recomputed this Tick for the
+                // same DofCount; reuse instead of allocating a second set.
                 _buckling.Reset(_assembly.DofCount, BucklingModeCount, _rigidModes);
                 _bucklingDof = _assembly.DofCount;
             }
@@ -587,8 +384,7 @@ namespace Hullbreach.Structure
             var modes = _buckling.ExtractModes(grid, _assembly, _kg, BucklingModeCount);
             _bucklingModes.Clear();
             // Applied here, before anything reads a load factor, so
-            // BuckledBlocks' lambda <= 1 test and BucklingRatio's 1/lambda
-            // tint both see the same corrected numbers.
+            // BuckledBlocks and BucklingRatio see the same corrected numbers.
             for (int i = 0; i < modes.Count; i++)
             {
                 var mode = modes[i];
@@ -601,10 +397,8 @@ namespace Hullbreach.Structure
             RecomputeBucklingRatios();
         }
 
-        /// <summary>Combines every sub-critical (LoadFactor &lt;= 1) mode's
-        /// top-participation blocks (cumulative to BucklingParticipationThreshold)
-        /// into one sorted, de-duplicated list: see BuckledBlocks' doc for
-        /// why this is deterministic and server-only.</summary>
+        // Combines every sub-critical (LoadFactor <= 1) mode's
+        // top-participation blocks into one sorted, de-duplicated list.
         void RecomputeBuckledBlocks()
         {
             var set = new HashSet<int>();
@@ -633,8 +427,8 @@ namespace Hullbreach.Structure
             _buckledBlocks.Sort();
         }
 
-        /// <summary>Writes BlockStress.BucklingRatio from the CRITICAL mode's
-        /// participation, scaled by 1/CriticalLoadFactor; 0 elsewhere.</summary>
+        // Writes BlockStress.BucklingRatio from the CRITICAL mode's
+        // participation, scaled by 1/CriticalLoadFactor; 0 elsewhere.
         void RecomputeBucklingRatios()
         {
             if (_bucklingModes.Count == 0 || float.IsInfinity(CriticalLoadFactor))

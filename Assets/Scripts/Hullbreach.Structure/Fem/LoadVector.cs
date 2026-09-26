@@ -3,65 +3,34 @@ using Unity.Mathematics;
 
 namespace Hullbreach.Structure
 {
-    /// <summary>
-    /// Builds the right-hand side, including INERTIA RELIEF.
-    ///
-    /// THE PROBLEM: a ship in space has no supports, so K is singular with a
-    /// 3-dimensional null space (translate x, translate y, rotate). K u = f has
-    /// a solution only when f is orthogonal to that null space, which
-    /// physically means net force zero and net torque zero. An accelerating
-    /// ship does not satisfy that.
-    ///
-    /// THE WRONG FIX: pin the core. One line, but it is false physics: the
-    /// pinned node supplies reaction forces, so stress piles up at the core and
-    /// a distant thruster reads as a lever against it.
-    ///
-    /// THE RIGHT FIX (this file): d'Alembert. Work in the accelerating frame
-    /// and add the inertial body force to every block:
-    ///
-    ///     a = F_net / M,   alpha = tau_net / I
-    ///     f_eff_i = f_applied_i - m_i * (a + alpha x r_i)
-    ///     with  alpha x r = alpha * (-r.y, r.x)  in 2D
-    ///
-    /// Summing forces gives F_net - M a = 0 and summing moments gives
-    /// tau_net - I alpha = 0, so f_eff is self-equilibrated BY CONSTRUCTION and
-    /// the system becomes solvable with nothing pinned.
-    ///
-    /// The solution u is still only determined up to a rigid-body mode, but B
-    /// annihilates rigid modes, so the STRESS does not care. Only orthogonalize
-    /// u against the modes if you want to draw the deformed shape.
-    /// </summary>
+    // Builds the right-hand side, including INERTIA RELIEF (d'Alembert);
+    // see docs/reference/hullbreach-structure.md#loadvector for why.
+    // frob:doc docs/reference/hullbreach-structure.md#loadvector
     public sealed class LoadVector
     {
-        /// <summary>
-        /// The assembly this load vector is built against. Needed to map a
-        /// ship-local point to a containing element's nodes/dofs, and to know
-        /// the dense node layout for inertia relief. Passed in rather than
-        /// looked up globally so a LoadVector is always explicit about which
-        /// assembly (and therefore which topology snapshot) it belongs to.
-        /// </summary>
+        // Passed in rather than looked up globally so a LoadVector is
+        // always explicit about which topology snapshot it belongs to.
         readonly StiffnessAssembly _assembly;
 
+        // frob:doc docs/reference/hullbreach-structure.md#loadvector
         public LoadVector(StiffnessAssembly assembly)
         {
             _assembly = assembly;
         }
 
-        /// <summary>The quasi-static case: thrust, gravity wells, contact.
-        /// Checked against von Mises (ductile).</summary>
+        // The quasi-static case: thrust, gravity wells, contact. Checked
+        // against von Mises (ductile).
+        // frob:doc docs/reference/hullbreach-structure.md#loadvector
         public float[] QuasiStatic;
 
-        /// <summary>The impulsive case: projectile impacts this tick only.
-        /// Checked against max tensile principal stress (brittle).
-        /// Separate because linear FE superposes exactly, so the two load
-        /// cases can share one K and one assembly.</summary>
+        // The impulsive case: projectile impacts this tick only, checked
+        // against max tensile principal stress (brittle).
+        // frob:doc docs/reference/hullbreach-structure.md#loadvector
         public float[] Impulsive;
 
-        /// <summary>
-        /// Scatters a force applied at a world (ship-local) point into the
-        /// nodal load vector, distributing it over the containing element's
-        /// nodes by shape-function weight.
-        /// </summary>
+        // Scatters a force at a ship-local point into the nodal load
+        // vector, by shape-function weight over the containing element.
+        // frob:doc docs/reference/hullbreach-structure.md#loadvector
         public void AddPointForce(float[] target, float2 shipLocalPoint, float2 force)
         {
             int bx = (int)math.floor(shipLocalPoint.x);
@@ -87,29 +56,17 @@ namespace Hullbreach.Structure
             }
         }
 
-        /// <summary>
-        /// Applies inertia relief to `target`, in place. Returns the
-        /// rigid-body acceleration it solved for, which the caller also wants
-        /// for integrating the actual ship motion.
-        ///
-        /// Net force/torque are read off of `target` itself (the loads already
-        /// scattered into it), and inertial body forces are then distributed
-        /// per BLOCK across that block's 4 corner nodes (a lumped-mass
-        /// simplification; midside nodes carry no mass in this scheme, which
-        /// is standard practice and keeps the distribution trivial).
-        /// </summary>
+        // Returns the rigid-body acceleration solved for; body forces are
+        // distributed per block across its 4 corner (lumped-mass) nodes.
+        // frob:doc docs/reference/hullbreach-structure.md#loadvector
         public void ApplyInertiaRelief(float[] target, Hullbreach.Core.BlockGrid grid,
                                        out float2 linearAccel, out float angularAccel)
         {
             float2 com = grid.Mass.CenterOfMass;
             float totalMass = grid.Mass.Total;
 
-            // Point-mass inertia (mass concentrated at each block's center),
-            // NOT grid.Mass.InertiaAboutCenterOfMass: that value also folds
-            // in each block's own spin inertia (RectangleInertia), which has
-            // no counterpart in this lumped-corner-mass distribution below.
-            // Using the wrong I here would make alpha inconsistent with how
-            // torque is actually cancelled, leaving a residual net torque.
+            // Point-mass inertia, NOT grid.Mass.InertiaAboutCenterOfMass:
+            // that also folds in spin inertia with no counterpart here.
             float inertia = 0f;
             foreach (var kvp in grid.All)
             {
@@ -118,8 +75,8 @@ namespace Hullbreach.Structure
                 inertia += mass * math.lengthsq(center - com);
             }
 
-            // Net force and net torque (about the center of mass) implied by
-            // the currently scattered load.
+            // Net force/torque about the center of mass, from the load
+            // already scattered into `target`.
             float2 netForce = float2.zero;
             float netTorque = 0f;
 
@@ -160,15 +117,9 @@ namespace Hullbreach.Structure
             }
         }
 
-        /// <summary>
-        /// The three rigid-body modes as DOF vectors, for the projection above
-        /// and for the solver's orthogonalization:
-        ///   translate x : (1, 0) at every node
-        ///   translate y : (0, 1) at every node
-        ///   rotate      : (-y, x) at the node at (x, y)
-        /// `modes` must already contain three preallocated arrays of length
-        /// 2 * nodeRest.Length.
-        /// </summary>
+        // The three rigid-body modes as DOF vectors (translate x, translate
+        // y, rotate); `modes` needs three preallocated length-2n arrays.
+        // frob:doc docs/reference/hullbreach-structure.md#loadvector
         public static void RigidBodyModes(float2[] nodeRest, float[][] modes)
         {
             var tx = modes[0];

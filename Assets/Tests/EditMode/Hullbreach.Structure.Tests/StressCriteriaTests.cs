@@ -26,8 +26,7 @@ namespace Hullbreach.Structure.Tests
         public void EquibiaxialTension_VonMisesEqualsTheStress()
         {
             // Surprising but correct in PLANE STRESS: sigma_zz is 0, so
-            // equibiaxial in-plane tension is not hydrostatic and does not
-            // cancel. sigma_vm = S, not 0.
+            // this is not hydrostatic and does not cancel.
             Assert.AreEqual(S, StressCriteria.VonMises(S, S, 0f), Tol);
         }
 
@@ -50,10 +49,8 @@ namespace Hullbreach.Structure.Tests
         [Test]
         public void Compression_LooksIdenticalToDuctileButNotToBrittle()
         {
-            // THE WHOLE POINT of running both criteria. Pure compression at -S
-            // has the same von Mises as tension at +S (pressure-insensitive),
-            // but its max principal is 0, so a brittle block shrugs it off
-            // while a ductile one yields exactly as it would in tension.
+            // Pure compression at -S has the same von Mises as tension at
+            // +S, but a brittle block shrugs it off (max principal is 0).
             Assert.AreEqual(StressCriteria.VonMises(S, 0f, 0f),
                             StressCriteria.VonMises(-S, 0f, 0f), Tol);
 

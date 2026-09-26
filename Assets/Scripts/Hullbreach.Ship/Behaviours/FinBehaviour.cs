@@ -3,17 +3,12 @@ using Hullbreach.Core;
 
 namespace Hullbreach.Ship.Behaviours
 {
-    /// <summary>
-    /// The stock control fin: ramps its own throttle toward the steer
-    /// channel target, then pushes perpendicular to its facing with a sign
-    /// chosen so the resulting torque about the center of mass matches the
-    /// sign of its current ramped throttle: this is what lets torque fade
-    /// out smoothly after the steer key is released. Fin variant 0.
-    /// </summary>
+    // The stock control fin: ramps toward the steer target, then pushes
+    // perpendicular to its facing, signed to match the throttle's sign.
+    // frob:doc docs/reference/hullbreach-ship.md#finbehaviour
     public sealed class FinBehaviour : IBlockBehaviour
     {
-        /// <summary>Ramps toward the clamped steer axis and, if nonzero,
-        /// applies a perpendicular force sized/signed to turn the requested way.</summary>
+        // frob:doc docs/reference/hullbreach-ship.md#finbehaviour
         public void Step(ref BlockContext ctx)
         {
             float steerTarget = math.clamp(ctx.Input.Steer, -1f, 1f);

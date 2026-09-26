@@ -4,8 +4,8 @@ using Hullbreach.World;
 
 namespace Hullbreach.World.Tests
 {
-    /// <summary>Covers GravityField's acceleration summation, softening,
-    /// and temporary-body expiry.</summary>
+    // Covers GravityField's acceleration summation, softening,
+    // and temporary-body expiry.
     public class GravityFieldTests
     {
         [Test]
@@ -98,9 +98,8 @@ namespace Hullbreach.World.Tests
         public void AccelerationAt_ClampsSummedMagnitude_ToMaxAcceleration()
         {
             var field = new GravityField();
-            // Three strong, overlapping wells all pulling roughly the same
-            // direction from the sample point, so their sum would otherwise
-            // exceed the cap.
+            // Overlapping wells pulling roughly the same direction: sum
+            // would otherwise exceed the cap.
             field.Add(new GravityBody(new float2(1f, 0f), mu: 1000f, radius: 0.5f, surfaceRestitution: 0f));
             field.Add(new GravityBody(new float2(-1f, 3f), mu: 1000f, radius: 0.5f, surfaceRestitution: 0f));
             field.Add(new GravityBody(new float2(-1f, -3f), mu: 1000f, radius: 0.5f, surfaceRestitution: 0f));

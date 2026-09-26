@@ -6,12 +6,8 @@ using Hullbreach.Structure;
 
 namespace Hullbreach.Structure.Tests
 {
-    /// <summary>
-    /// End-to-end coverage across NodeLattice/StiffnessAssembly/LoadVector/
-    /// CgSolver: the things a unit test on a single file cannot catch, like a
-    /// sign error in inertia relief or a solver that silently fails to
-    /// converge.
-    /// </summary>
+    // End-to-end coverage across NodeLattice/StiffnessAssembly/LoadVector/
+    // CgSolver: catches what a single-file unit test cannot.
     public class FemTests
     {
         const float Tol = 1e-3f;
@@ -63,14 +59,8 @@ namespace Hullbreach.Structure.Tests
         [Test]
         public void CoreAtCenter_HasHigherStressThanTheEnds()
         {
-            // A 3-block horizontal bar, core in the middle, pulled apart from
-            // both ends with equal and opposite forces spread over each end
-            // face (so the load is self-equilibrated tension, not a single
-            // point load whose own local stress concentration would swamp
-            // the effect being tested). The core is stiffer than the hull
-            // either side of it, so the stiffness DISCONTINUITY at its two
-            // interfaces concentrates stress there more than at the bar's
-            // free ends.
+            // A 3-block bar, core in the middle, pulled apart from both
+            // ends: the stiffness DISCONTINUITY at the core concentrates stress.
             var grid = new BlockGrid();
             grid.TryAdd(BlockKey.Pack(1, 0), new Block(BlockTypes.Core));
             grid.TryAdd(BlockKey.Pack(0, 0), new Block(BlockTypes.Hull));

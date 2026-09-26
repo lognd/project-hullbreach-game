@@ -7,18 +7,12 @@ using Hullbreach.Structure;
 
 namespace Hullbreach.Structure.Tests
 {
-    /// <summary>
-    /// Covers CgState: that a per-tick iteration budget COMPOUNDS across
-    /// ticks under a steady load (the whole point of keeping r/p/rz), and
-    /// that a real load change restarts instead of continuing against a
-    /// system that no longer exists.
-    /// </summary>
+    // Covers CgState: a per-tick iteration budget COMPOUNDS across ticks
+    // under a steady load, and a real load change restarts.
     public class CgContinuationTests
     {
-        /// <summary>Plate plus a 1-wide arm, the same shape SolverBenchmarks
-        /// uses and for the same reason: a slender member makes CG's
-        /// width-scaling (and therefore the value of not restarting) visible
-        /// where a compact blob would hide it.</summary>
+        // Plate plus a 1-wide arm (same shape as SolverBenchmarks): a
+        // slender member makes CG's width-scaling visible.
         static BlockGrid BuildArmShip(int side, int armLength, out float2 tip)
         {
             var grid = new BlockGrid();
@@ -64,11 +58,8 @@ namespace Hullbreach.Structure.Tests
             Assert.IsTrue(reference.Converged, "reference solve did not converge; the test ship is mis-sized");
             int referenceIterations = reference.IterationsThisTick;
 
-            // Budgeted: the same solve, 50 iterations at a time. With the
-            // Krylov state carried across ticks this is ONE CG run split
-            // into slices, so the slices sum to (about) the reference
-            // count; with a per-tick restart each tick would re-earn the
-            // search direction and the sum would be several times larger.
+            // Budgeted: the same solve, 50 iterations at a time; slices
+            // should sum to about the reference count if state carries over.
             var budgeted = NewSolver(50);
             int total = 0;
             int ticks = 0;
@@ -165,8 +156,7 @@ namespace Hullbreach.Structure.Tests
             Assert.IsTrue(budgeted.Converged);
 
             // Converged is converged: continuation must not trade accuracy
-            // for iteration count. Compare the published stress field,
-            // which is what every caller downstream actually consumes.
+            // for iteration count. Compare the published stress field.
             foreach (var kvp in reference.BlockStresses)
             {
                 var got = budgeted.BlockStresses[kvp.Key];

@@ -7,23 +7,14 @@ using Hullbreach.Structure;
 
 namespace Hullbreach.Structure.Tests
 {
-    /// <summary>
-    /// Coverage for GeometricStiffness + BucklingAnalysis + the
-    /// StructuralSolver hook. Grids are kept small (a handful to a few dozen
-    /// blocks) so the whole file runs in a couple of seconds even though
-    /// buckling needs many ticks of subspace iteration to converge:
-    /// BucklingEveryNTicks is set to 1 throughout so each Tick call spends
-    /// its (default) 2 sweeps, instead of waiting out the production
-    /// default of one attempt every 4 ticks.
-    /// </summary>
+    // Coverage for GeometricStiffness + BucklingAnalysis + the
+    // StructuralSolver hook. BucklingEveryNTicks = 1 throughout.
     public class BucklingTests
     {
         const float Tol = 1e-3f;
 
-        /// <summary>End-load magnitude shared by every column test, chosen by
-        /// trial so an 8-block column's critical load factor lands within an
-        /// order of magnitude of 1 (see the class doc on why the ratio test
-        /// does not actually need this to be precise).</summary>
+        // End-load magnitude shared by every column test, chosen by trial
+        // so an 8-block column's load factor lands near order-of-magnitude 1.
         const float ColumnEndForce = 0.02f;
 
         static BlockGrid Column(int n)
@@ -35,11 +26,8 @@ namespace Hullbreach.Structure.Tests
             return grid;
         }
 
-        /// <summary>Equal and opposite forces spread over the two end faces
-        /// of a 1-wide, n-tall column, self-equilibrated so no inertia-relief
-        /// artifact swamps the effect under test. Positive `magnitude`
-        /// compresses the column (pushes the ends together); negative
-        /// stretches it.</summary>
+        // Equal and opposite forces on a 1-wide, n-tall column's end
+        // faces; positive `magnitude` compresses, negative stretches.
         static List<(float2, float2)> ColumnEndForces(int n, float magnitude)
         {
             return new List<(float2, float2)>
@@ -51,17 +39,8 @@ namespace Hullbreach.Structure.Tests
             };
         }
 
-        /// <summary>Ticks `solver` until it publishes a converged buckling
-        /// analysis (BucklingEveryNTicks is expected to already be 1) or
-        /// `maxTicks` is exhausted, whichever comes first: a tick-count
-        /// bound, not a wall-clock one, matching BucklingAnalysis's own
-        /// convergence contract. STOPS EARLY once the critical mode's
-        /// LoadFactor has stopped changing for a few consecutive ticks:
-        /// running the full `maxTicks` unconditionally (as this used to)
-        /// meant every test paid for its worst-case tick budget even when
-        /// the subspace settled in a fraction of it, which is most of why
-        /// this file used to take well over a minute: see the class doc.
-        /// </summary>
+        // Ticks `solver` until buckling converges or `maxTicks` runs out;
+        // stops early once the critical LoadFactor stops changing.
         static void RunUntilConverged(StructuralSolver solver, BlockGrid grid,
                                       List<(float2, float2)> forces, int maxTicks = 60)
         {
@@ -83,12 +62,7 @@ namespace Hullbreach.Structure.Tests
         public void SmallBlob_HasNoLowLoadFactor()
         {
             // A 2x2 blob has no slender member to buckle: any positive
-            // load factor should be large, not something combat-scale loads
-            // would ever cross. Forces are spread over whole opposite edges
-            // (not a single diagonal corner-to-corner point pair) so the
-            // load reads as uniform compression rather than a concentrated
-            // point load, which would create its own local stress
-            // singularity unrelated to genuine buckling.
+            // load factor should be large. Forces spread over whole edges.
             var grid = new BlockGrid();
             grid.TryAdd(BlockKey.Pack(0, 0), new Block(BlockTypes.Core));
             grid.TryAdd(BlockKey.Pack(1, 0), new Block(BlockTypes.Hull));
@@ -108,17 +82,8 @@ namespace Hullbreach.Structure.Tests
             RunUntilConverged(solver, grid, forces, 60);
 
 
-            // 10, not the 20 this used to assert: with load factors now
-            // published as direct Rayleigh quotients of a rigid-mode-free
-            // shape (see BucklingAnalysis.ExtractModes), this blob reads
-            // 14.036202 against DenseEigenOracle's independent
-            // 14.036202 on the identical K/K_G pair -- the analysis is
-            // exact here, and 20 was a threshold calibrated against the
-            // OLD, inflated number from the reduced eigenproblem's
-            // rounding path, not against the physics. The property under
-            // test is unchanged and still comfortably held: a stubby blob's
-            // critical load factor is an order of magnitude above the
-            // combat-scale loads that reach 1.
+            // 10, not the old 20: Rayleigh-quotient load factors now read
+            // 14.036202, exactly matching DenseEigenOracle.
             foreach (var mode in solver.BucklingModes)
                 Assert.Greater(mode.LoadFactor, 10f, "a stubby blob should not read as buckling-prone");
         }
@@ -126,18 +91,8 @@ namespace Hullbreach.Structure.Tests
         [Test]
         public void Column_CriticalLoadFactorScalesWithInverseLengthSquared()
         {
-            // 16 vs 32, not 8 vs 16: subspace iteration on a coarse Q8 mesh
-            // can cluster a short column's low buckling modes close enough
-            // together that the block rotates between them for a long time
-            // before settling (a documented characteristic of subspace
-            // iteration with near-degenerate eigenvalues, not a correctness
-            // bug); the longer, more slender columns below converge cleanly
-            // well within the tick budgets used here.
-            // 12 vs 24, not 16 vs 32: with the CgSolver fix below both pairs
-            // reproduce the Euler trend, and the smaller pair converges in a
-            // fraction of the tick budget, keeping this file's total runtime
-            // well under the old multi-minute cost of running CG near its
-            // (previously too-low) iteration cap.
+            // 12 vs 24, not 8 vs 16 or 16 vs 32: short columns cluster
+            // near-degenerate modes; these converge cleanly and quickly.
             var grid12 = Column(12);
             var solver12 = new StructuralSolver { BucklingEveryNTicks = 1, BucklingMaxSweepsPerTick = 8, BucklingModeCount = 2 };
             RunUntilConverged(solver12, grid12, ColumnEndForces(12, ColumnEndForce), 40);
@@ -153,16 +108,8 @@ namespace Hullbreach.Structure.Tests
             float lambda24 = solver24.BucklingModes[0].LoadFactor;
             float ratio = lambda12 / lambda24;
 
-            // Euler buckling on a slender beam predicts P_cr ~ 1/L^2, i.e. a
-            // ratio near (24/12)^2 = 4 for doubling the length. Root cause of
-            // the old, loosened "ratio > 1.5" assertion was CgSolver's
-            // MaxIterations cap (200) being far below what these columns
-            // actually need (measured ~650 CG iterations for a 32-block
-            // column's 326 dof; see CgSolver's MaxIterations doc), which
-            // under-converged K^-1 and biased the subspace iteration's
-            // Rayleigh quotients enough to flatten the trend toward 1/L and
-            // even invert it for longer columns. With that fixed the ratio
-            // tracks the Euler exponent within the tolerance below.
+            // Euler buckling predicts P_cr ~ 1/L^2, ratio ~4 for doubling
+            // length; needed CgSolver.MaxIterations raised from 200 (see its doc).
             Assert.Greater(ratio, 3.6f,
                 $"doubling the column length should roughly quarter the critical load factor (Euler P_cr ~ 1/L^2), got ratio {ratio}");
             Assert.Less(ratio, 4.5f,
@@ -172,18 +119,8 @@ namespace Hullbreach.Structure.Tests
         [Test]
         public void Column_CriticalLoadFactorMatchesDenseOracle()
         {
-            // Independent check on the SUBSPACE ITERATION itself (as opposed
-            // to the trend test above, which is sensitive to the geometric
-            // stiffness and load case too): take the converged stress state
-            // StructuralSolver already produced, rebuild K/K_G against it
-            // directly, and compare BucklingAnalysis's own iteration against
-            // DenseEigenOracle's independent dense Cholesky+Jacobi solve of
-            // the identical reduced eigenproblem. N=8 is skipped here (see
-            // Column_CriticalLoadFactorScalesWithInverseLengthSquared's
-            // class doc on short columns): its lowest two buckling modes
-            // sit close enough together that which one the subspace settles
-            // on first is a coin flip unrelated to either implementation
-            // being wrong.
+            // Independent check on the subspace iteration itself, against
+            // DenseEigenOracle's dense solve of the identical reduced problem.
             foreach (int n in new[] { 12, 16 })
             {
                 var grid = Column(n);
@@ -229,11 +166,8 @@ namespace Hullbreach.Structure.Tests
         [Test]
         public void TwoSeparateArms_UnderCompression_BuckleIndependently()
         {
-            // A core with two slender single-wide arms going in different
-            // directions. Both are compressed hard enough that each folds on
-            // its own: the ship should read at least two sub-critical
-            // modes, and their top-participation blocks should land on
-            // different arms (a ship folding in two places at once).
+            // A core with two slender arms, both compressed hard enough to
+            // fold independently: two sub-critical modes on different arms.
             const int armLength = 8;
             var grid = new BlockGrid();
             grid.TryAdd(BlockKey.Pack(0, 0), new Block(BlockTypes.Core));
@@ -269,24 +203,8 @@ namespace Hullbreach.Structure.Tests
             Assert.GreaterOrEqual(subCritical.Count, 2,
                 "two independently slender arms under enough compression should give at least two sub-critical modes");
 
-            // WHICH ARM each sub-critical mode's TOP block sits on is NOT a
-            // valid assertion here, and this test used to make it: the two
-            // arms are geometrically identical and identically loaded, so
-            // this ship is symmetric under reflection about the diagonal
-            // and every buckling eigenvalue has multiplicity 2. Any
-            // rotation within a degenerate 2-dimensional eigenspace is an
-            // equally correct eigenvector, and the subspace iteration in
-            // fact returns the symmetric/antisymmetric combinations:
-            // measured directly, every published mode splits its strain
-            // energy 0.479/0.479, 0.499/0.499, 0.481/0.481, 0.496/0.496
-            // between arm A and arm B. Which arm then holds the single
-            // largest block is decided by float rounding alone, so the old
-            // assertion was a coin flip that happened to be landing heads.
-            //
-            // What IS true, runtime-independent, and what this test
-            // actually cares about ("a ship can fold in two places at once
-            // and both must break"): the blocks the analysis marks as
-            // buckled span BOTH arms.
+            // WHICH ARM holds a mode's TOP block is a coin flip; assert
+            // only that buckled blocks span BOTH arms.
             static bool OnArmA(int key) { BlockKey.Unpack(key, out int x, out int y); return x == 0 && y > 0; }
             static bool OnArmB(int key) { BlockKey.Unpack(key, out int x, out int y); return y == 0 && x > 0; }
 
@@ -347,10 +265,8 @@ namespace Hullbreach.Structure.Tests
             RunUntilConverged(solverHigh, gridHigh, ColumnEndForces(10, ColumnEndForce));
 
             Assert.Greater(solverHigh.BucklingModes.Count, 0);
-            // Only assert BuckledBlocks non-empty when the load actually put
-            // a mode sub-critical; the load above is calibrated so the first
-            // mode is not far from 1, but to keep this test robust to that
-            // calibration, drive the load up further until one clearly is.
+            // Only assert BuckledBlocks non-empty once a mode is clearly
+            // sub-critical; drive the load up until one clearly is.
             var solverVeryHigh = new StructuralSolver { BucklingEveryNTicks = 1, BucklingMaxSweepsPerTick = 8, BucklingModeCount = 2 };
             RunUntilConverged(solverVeryHigh, gridHigh, ColumnEndForces(10, ColumnEndForce * 50f));
             Assert.Greater(solverVeryHigh.BucklingModes.Count, 0);

@@ -4,12 +4,8 @@ using Hullbreach.Structure;
 
 namespace Hullbreach.Structure.Tests
 {
-    /// <summary>
-    /// Node sharing is the single most likely place for a silent bug in the
-    /// whole FE phase: if adjacent blocks do not share node ids, the mesh
-    /// quietly falls apart into disconnected elements and every stress result
-    /// is garbage that still looks plausible.
-    /// </summary>
+    // Node sharing is the single most likely place for a silent bug: if
+    // adjacent blocks do not share node ids, the mesh falls apart quietly.
     public class NodeLatticeTests
     {
         static HashSet<int> NodesOf(int x, int y)
