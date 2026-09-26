@@ -13,10 +13,9 @@ Sprint-0 work was completed and marked Done in Jira before frob was wired into t
  tickets/T-draft-33d0ff5e/ticket.md      | 60 +++++++++++++++++++++++++
  tickets/T-draft-35a383c1/ticket.md      | 60 +++++++++++++++++++++++++
  tickets/T-0003/ticket.md      | 45 +++++++++++++++++++
- tickets/T-draft-43b63f0e/ticket.md      | 63 ++++++++++++++++++++++++++
+ tickets/T-0011/ticket.md      | 63 ++++++++++++++++++++++++++
  tickets/T-draft-47367bd9/ticket.md      | 60 +++++++++++++++++++++++++
- tickets/T-draft-4c80d619/done-report.md | 55 +++++++++++++++++++++++
- tickets/T-draft-4c80d619/ticket.md      | 72 ++++++++++++++++++++++++++++++
+ tickets/T-0010/ticket.md      | 64 ++++++++++++++++++++++++++
  tickets/T-draft-5381c69e/ticket.md      | 62 ++++++++++++++++++++++++++
  tickets/T-draft-5942609c/ticket.md      | 62 ++++++++++++++++++++++++++
  tickets/T-0005/ticket.md      | 45 +++++++++++++++++++
@@ -27,9 +26,9 @@ Sprint-0 work was completed and marked Done in Jira before frob was wired into t
  tickets/T-draft-75fa2d87/ticket.md      | 62 ++++++++++++++++++++++++++
  tickets/T-draft-80877e32/ticket.md      | 62 ++++++++++++++++++++++++++
  tickets/T-draft-8487ff95/ticket.md      | 62 ++++++++++++++++++++++++++
- tickets/T-draft-8e96ef69/ticket.md      | 61 +++++++++++++++++++++++++
- tickets/T-draft-935f1161/done-report.md | 54 ++++++++++++++++++++++
- tickets/T-draft-935f1161/ticket.md      | 79 +++++++++++++++++++++++++++++++++
+ tickets/T-0012/ticket.md      | 61 +++++++++++++++++++++++++
+ tickets/T-0009/done-report.md | 54 ++++++++++++++++++++++
+ tickets/T-0009/ticket.md      | 79 +++++++++++++++++++++++++++++++++
  tickets/T-draft-94bbc3f2/ticket.md      | 60 +++++++++++++++++++++++++
  tickets/T-draft-9a028cc5/ticket.md      | 63 ++++++++++++++++++++++++++
  tickets/T-draft-a1a22ccf/ticket.md      | 58 ++++++++++++++++++++++++
@@ -45,7 +44,7 @@ Sprint-0 work was completed and marked Done in Jira before frob was wired into t
  tickets/T-draft-eeef0f98/ticket.md      | 61 +++++++++++++++++++++++++
  tickets/T-draft-f37c6a9a/ticket.md      | 58 ++++++++++++++++++++++++
  tickets/T-draft-fd1cf6a8/ticket.md      | 62 ++++++++++++++++++++++++++
- 41 files changed, 2381 insertions(+)
+ 40 files changed, 2318 insertions(+)
 ```
 
 ### Evidence

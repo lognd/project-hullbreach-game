@@ -1,5 +1,5 @@
 ---
-id: T-draft-4c80d619
+id: T-0010
 title: 'S0-2: Create the "customer requirements" for what the central game mechanics
   will be.'
 state: in-progress

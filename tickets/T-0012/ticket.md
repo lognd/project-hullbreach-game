@@ -1,5 +1,5 @@
 ---
-id: T-draft-8e96ef69
+id: T-0012
 title: 'S07: Sign in from inside the game'
 state: queued
 kind: feature

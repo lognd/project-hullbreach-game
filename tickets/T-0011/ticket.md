@@ -1,6 +1,6 @@
 ---
-id: T-draft-935f1161
-title: 'S0-1: Create a couple drawing mock-ups of what the game will look like.'
+id: T-0011
+title: 'S0-3: Get the initial repository set up.'
 state: in-progress
 kind: feature
 origin: human
@@ -34,43 +34,35 @@ body_changes:
   reason: 'BUG002 front door (T-2393): done in Jira before frob (Sprint 0)'
   actor: logan
   at: '2026-09-26'
-  old_length: 152
-  new_length: 222
+  old_length: 218
+  new_length: 288
 - mode: append
   reason: 'BUG002 front door (T-2393): done in Jira before frob (Sprint 0)'
   actor: logan
   at: '2026-09-26'
-  old_length: 222
-  new_length: 292
+  old_length: 288
+  new_length: 358
 - mode: append
   reason: 'BUG002 front door (T-2393): done in Jira before frob (Sprint 0)'
   actor: logan
   at: '2026-09-26'
-  old_length: 292
-  new_length: 362
-- mode: append
-  reason: 'BUG002 front door (T-2393): done in Jira before frob (Sprint 0)'
-  actor: logan
-  at: '2026-09-26'
-  old_length: 362
-  new_length: 432
+  old_length: 358
+  new_length: 428
 designated_repro_test: null
 threat: null
 component: null
 labels:
-- jira:SCRUM-5
-- owner:a-carten
+- jira:SCRUM-7
+- owner:mcnairrobotics
 anchor: false
 anchor_reason: null
 land_commit: null
 ---
-https://aliens-against-humanity.atlassian.net/browse/SCRUM-5
+https://aliens-against-humanity.atlassian.net/browse/SCRUM-7
 
 **Card**
-We need a good idea of what the game's art style will be, so this is a priority.
+We need a working baseline build with the necessary requirements laid out, so we can start development after finishing the specification document.
 
-
-frob:no-behavior-change reason="done in Jira before frob (Sprint 0)"
 
 frob:no-behavior-change reason="done in Jira before frob (Sprint 0)"
 
