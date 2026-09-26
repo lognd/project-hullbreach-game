@@ -164,9 +164,10 @@ words:
 - **W** / **S** (or Up/Down arrows): fire the forward thrusters / the
   retro (reverse) thrusters.
 - **A** / **D** (or Left/Right arrows): fire the fins to turn left/right.
-  **D**/Right steers right, **A**/Left steers left. Do not set `invert` on
-  the keyboard Horizontal axis in `ProjectSettings/InputManager.asset`;
-  it flips this mapping.
+  **D**/Right steers right (steer +1, clockwise; the HUD steer bar fills
+  right), **A**/Left steers left (steer -1, counter-clockwise). Do not
+  set `invert` on the keyboard Horizontal axis in
+  `ProjectSettings/InputManager.asset`; it flips this mapping.
 - **Space**: fire every cannon on the ship that is not still cooling
   down.
 - **O**: cycle through the visual overlays (see below).

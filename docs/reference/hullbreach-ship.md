@@ -516,9 +516,10 @@ lone ship in the world).
 
 The stock control fin: ramps its own throttle toward the steer channel
 target, then pushes perpendicular to its facing with a sign chosen so the
-resulting torque about the center of mass matches the sign of its current
-ramped throttle: this is what lets torque fade out smoothly after the
-steer key is released. Fin variant 0.
+resulting torque about the center of mass is OPPOSITE the sign of its
+current ramped throttle: steer +1 (right) yields clockwise (negative)
+torque, matching the HUD steer bar filling right. This is also what lets
+torque fade out smoothly after the steer key is released. Fin variant 0.
 
 ### CannonBehaviourBase
 
