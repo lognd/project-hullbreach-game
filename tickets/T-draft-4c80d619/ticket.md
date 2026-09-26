@@ -28,8 +28,8 @@ worktree: null
 branch: null
 scope_breadth_ack: false
 scope_breadth_ack_reason: null
-no_scope_declared: false
-no_scope_declared_reason: null
+no_scope_declared: true
+no_scope_declared_reason: sprint-0 story, done in Jira before frob, no code scope
 body_changes:
 - mode: append
   reason: 'BUG002 front door (T-2393): done in Jira before frob (Sprint 0)'
