@@ -1,5 +1,5 @@
 ---
-id: T-draft-158292f6
+id: T-0103
 title: 'S46-3: Results screen with winner, duration, and both players'' stats, plus
   rematch or return to lobby'
 state: queued
