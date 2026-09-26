@@ -1,0 +1,17 @@
+{
+    "name": "Hullbreach.Hud",
+    "rootNamespace": "Hullbreach.Hud",
+    "references": [
+        "Hullbreach.Core",
+        "Hullbreach.Builder"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": true
+}
