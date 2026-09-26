@@ -13,3 +13,7 @@
   tests.
 - `roadmap.md`: read this if you want to know what is built, in
   progress, or not started yet, against the course's story numbers.
+- `design/ui-port.md`: read this if you are working on the HUD or any
+  new screen; it is the spec for moving the IMGUI HUD to Unity UI
+  (uGUI prefabs), who owns which part, and the dated plan for the
+  screens that build on it.
