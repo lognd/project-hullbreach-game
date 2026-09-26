@@ -1,5 +1,5 @@
 ---
-id: T-draft-80877e32
+id: T-0019
 title: 'S30: Place a block with two clicks'
 state: queued
 kind: feature
