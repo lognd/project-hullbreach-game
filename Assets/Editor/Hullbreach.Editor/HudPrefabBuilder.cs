@@ -7,6 +7,7 @@ using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using TMPro;
 using Hullbreach.Game;
+using Hullbreach.Hud;
 
 namespace Hullbreach.Editor
 {
@@ -24,6 +25,10 @@ namespace Hullbreach.Editor
         // frob:doc docs/design/ui-port.md#hudprefabbuilder-editor
         public const string DemoScenePath = "Assets/Scenes/DemoScene.unity";
 
+        // Standalone widget prefab (U2); not yet nested into HudCanvas -- U3 does that.
+        // frob:doc docs/design/ui-port.md#hudprefabbuilder-editor
+        public const string ChannelBarPrefabPath = "Assets/Prefabs/UI/ChannelBar.prefab";
+
         // frob:doc docs/design/ui-port.md#hudprefabbuilder-editor
         [MenuItem("Hullbreach/UI/Rebuild default HUD prefabs")]
         public static void RebuildDefaultHudPrefabsMenuItem() => Run(force: false);
@@ -35,6 +40,14 @@ namespace Hullbreach.Editor
         // -executeMethod entry point that DOES overwrite existing prefabs.
         // frob:doc docs/design/ui-port.md#hudprefabbuilder-editor
         public static void BuildForce() => Run(force: true);
+
+        // -executeMethod entry point for the standalone ChannelBar prefab (U2).
+        // frob:doc docs/design/ui-port.md#hudprefabbuilder-editor
+        public static void BuildChannelBar() => BuildChannelBarPrefab(force: false);
+
+        // -executeMethod entry point that DOES overwrite the ChannelBar prefab.
+        // frob:doc docs/design/ui-port.md#hudprefabbuilder-editor
+        public static void BuildChannelBarForce() => BuildChannelBarPrefab(force: true);
 
         // frob:doc docs/design/ui-port.md#hudprefabbuilder-editor
         public static void Run(bool force)
@@ -126,6 +139,80 @@ namespace Hullbreach.Editor
 
             PrefabUtility.SaveAsPrefabAsset(panel, BuilderPanelPrefabPath);
             return panel;
+        }
+
+        // Builds the reusable labelled-fill widget as its own top-level prefab
+        // (U2); U3 nests three instances under the status panel.
+        // frob:doc docs/design/ui-port.md#hudprefabbuilder-editor
+        public static void BuildChannelBarPrefab(bool force)
+        {
+            if (!force && File.Exists(ChannelBarPrefabPath))
+            {
+                Debug.Log("HudPrefabBuilder: ChannelBar prefab already exists, skipping (pass force=true to overwrite).");
+                return;
+            }
+
+            Directory.CreateDirectory("Assets/Prefabs/UI");
+
+            var root = new GameObject("ChannelBar", typeof(RectTransform));
+            var rootRect = root.GetComponent<RectTransform>();
+            rootRect.sizeDelta = new Vector2(350f, 20f);
+
+            var layout = root.AddComponent<HorizontalLayoutGroup>();
+            layout.spacing = 4f;
+            layout.childAlignment = TextAnchor.MiddleLeft;
+            layout.childControlWidth = true;
+            layout.childControlHeight = true;
+            layout.childForceExpandWidth = false;
+            layout.childForceExpandHeight = true;
+
+            var label = AddLabel(root.transform, "Label", "Thrust  0%");
+            var labelLayout = label.gameObject.AddComponent<LayoutElement>();
+            labelLayout.preferredWidth = 110f;
+
+            var track = new GameObject("Track", typeof(RectTransform));
+            var trackRect = track.GetComponent<RectTransform>();
+            trackRect.SetParent(root.transform, false);
+            var trackLayout = track.AddComponent<LayoutElement>();
+            trackLayout.flexibleWidth = 1f;
+            trackLayout.preferredHeight = 14f;
+            var trackImage = track.AddComponent<Image>();
+            trackImage.color = new Color(HudColor.TrackDark.R, HudColor.TrackDark.G, HudColor.TrackDark.B, HudColor.TrackDark.A);
+
+            var fill = new GameObject("Fill", typeof(RectTransform));
+            var fillRect = fill.GetComponent<RectTransform>();
+            fillRect.SetParent(trackRect, false);
+            fillRect.anchorMin = new Vector2(0f, 0f);
+            fillRect.anchorMax = new Vector2(0f, 1f);
+            fillRect.offsetMin = Vector2.zero;
+            fillRect.offsetMax = Vector2.zero;
+            var fillImage = fill.AddComponent<Image>();
+            fillImage.color = new Color(HudColor.ThrustRed.R, HudColor.ThrustRed.G, HudColor.ThrustRed.B, HudColor.ThrustRed.A);
+
+            var tick = new GameObject("CenterTick", typeof(RectTransform));
+            var tickRect = tick.GetComponent<RectTransform>();
+            tickRect.SetParent(trackRect, false);
+            tickRect.anchorMin = new Vector2(0.5f, 0f);
+            tickRect.anchorMax = new Vector2(0.5f, 1f);
+            tickRect.sizeDelta = new Vector2(2f, 0f);
+            var tickImage = tick.AddComponent<Image>();
+            var tickColor = HudColor.CenterTickGrey;
+            tickImage.color = new Color(tickColor.R, tickColor.G, tickColor.B, tickColor.A);
+            tick.SetActive(false);
+
+            var channelBar = root.AddComponent<ChannelBar>();
+            var so = new SerializedObject(channelBar);
+            so.FindProperty("labelText").objectReferenceValue = label;
+            so.FindProperty("trackImage").objectReferenceValue = trackImage;
+            so.FindProperty("fillImage").objectReferenceValue = fillImage;
+            so.FindProperty("fillRect").objectReferenceValue = fillRect;
+            so.FindProperty("centerTick").objectReferenceValue = tickRect;
+            so.ApplyModifiedPropertiesWithoutUndo();
+
+            PrefabUtility.SaveAsPrefabAsset(root, ChannelBarPrefabPath);
+            Object.DestroyImmediate(root);
+            AssetDatabase.SaveAssets();
+            Debug.Log($"HudPrefabBuilder: wrote {ChannelBarPrefabPath}.");
         }
 
         static TMP_Text AddLabel(Transform parent, string name, string text)
