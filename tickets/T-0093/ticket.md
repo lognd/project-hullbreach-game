@@ -1,5 +1,5 @@
 ---
-id: T-draft-5f5722c4
+id: T-0093
 title: 'S42-3: Deterministic hit resolution so both clients agree on impacts'
 state: queued
 kind: feature
