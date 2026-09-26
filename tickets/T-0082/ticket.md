@@ -1,5 +1,5 @@
 ---
-id: T-draft-c0cff1b1
+id: T-0082
 title: 'S39-1: ShipBody integrator applying per-block thruster force and torque at
   the mount point'
 state: queued
