@@ -1,5 +1,5 @@
 ---
-id: T-draft-7d1ae080
+id: T-0099
 title: 'S45-2: Radar with a warning phase before a hazard can hit'
 state: queued
 kind: feature
