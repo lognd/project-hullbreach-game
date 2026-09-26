@@ -41,9 +41,7 @@ namespace Hullbreach.Hud
         }
     }
 
-    // Pure function of ship telemetry (D3): the exact speed line and three
-    // channel bar values the old DrawStatusPanel/DrawChannelBar/DrawSteerBar
-    // drew, with no UnityEngine dependency.
+    // Pure function of ship telemetry (D3), no UnityEngine dependency.
     // frob:doc docs/design/ui-port.md#hullbreachhud-module-reference
     public readonly struct FlightTelemetryModel
     {
