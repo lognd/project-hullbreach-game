@@ -1,5 +1,5 @@
 ---
-id: T-draft-c53e39bd
+id: T-0078
 title: 'S37-3: Document the stress-to-color mapping shared by build mode and combat'
 state: queued
 kind: docs
