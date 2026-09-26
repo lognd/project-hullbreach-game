@@ -32,9 +32,7 @@ namespace Hullbreach.Hud
         }
     }
 
-    // Pure function of demo/ship state (D3): the exact text the old
-    // DrawStatusPanel/DrawActivePowerups drew, minus the control bars
-    // (FlightTelemetryModel already covers those).
+    // Pure function of demo/ship state (D3); see docs for details.
     // frob:doc docs/design/ui-port.md#hullbreachhud-module-reference
     public readonly struct StatusPanelModel
     {

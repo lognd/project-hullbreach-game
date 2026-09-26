@@ -1,8 +1,6 @@
 namespace Hullbreach.Hud
 {
-    // How close the most loaded block is to failing, as three bands the HUD
-    // can shout about without the player reading numbers. Moved here from
-    // Hullbreach.Game.DemoMode (D3/D7); DemoMode still computes it.
+    // How close the most loaded block is to failing, as three bands (D3/D7).
     // frob:doc docs/design/ui-port.md#hullbreachhud-module-reference
     public enum HullWarning
     {
@@ -15,9 +13,7 @@ namespace Hullbreach.Hud
         Critical,
     }
 
-    // Pure function of the warning band and stress numbers (D3): the exact
-    // headline/detail/hint/color the old DrawHullWarning drew, including the
-    // CRITICAL pulse, with no UnityEngine dependency (time is passed in).
+    // Pure function of the warning band and stress numbers (D3).
     // frob:doc docs/design/ui-port.md#hullbreachhud-module-reference
     public readonly struct HullWarningModel
     {

@@ -161,7 +161,9 @@ assets), but it has three costs that now matter:
   -1..1 with center-origin fill). `Build` copies its format strings and
   clamp order verbatim from the old `DrawStatusPanel`/`DrawChannelBar`/
   `DrawSteerBar` so the rendered text is unchanged.
-- `StatusPanelModel` -- mode line, control-hint lines for Build/Fly,
+- `StatusPanelModel` -- the exact text the old `DrawStatusPanel`/
+  `DrawActivePowerups` drew, minus the control bars (`FlightTelemetryModel`
+  already covers those): mode line, control-hint lines for Build/Fly,
   overlay line, mass/blocks line, and the active powerup lines, built
   from a list of plain `ActivePowerup` structs (type name, x, y, type
   id, variant, time left) so the model needs no `ShipBody`; `DemoMode`
