@@ -1,7 +1,7 @@
 ---
 id: T-0011
 title: 'S0-3: Get the initial repository set up.'
-state: in-progress
+state: queued
 kind: feature
 origin: human
 created: '2026-09-26'
