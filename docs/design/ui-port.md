@@ -9,6 +9,8 @@ design extends), [demo scene layout](../demo-scene.md),
 [testing](../testing.md), [roadmap](../roadmap.md),
 [Jira export](#jira-stories-this-touches).
 
+Status: U0-U4 landed (Sprint 1); the IMGUI HUD is gone.
+
 ## 1. Why
 
 Every on-screen element in the game today is immediate-mode GUI
