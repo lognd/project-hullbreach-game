@@ -165,3 +165,32 @@ $RECYCLE.BIN/
 TestResults.xml
 *.TestResults.xml
 /[Tt]est[Rr]esults/
+
+# Global block (~/.claude/CLAUDE.md): caches and artifacts from tooling
+# used across every repo, game and non-game alike (frob's own .frob/ and
+# FROBLEMS.md are already covered above; this is the rest of the block).
+# *.so/*.a/*.dylib/*.o here mean native-tool build output (dotnet/cmake/
+# rust), not a Unity native plugin -- verified none of those extensions
+# are tracked under Assets/ (`git ls-files -ci --exclude-standard` stays
+# empty after this change).
+build/
+dist/
+*.egg-info/
+cmake-build-*/
+CMakeFiles/
+CMakeCache.txt
+*.o
+*.a
+*.so
+*.dylib
+target/
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+coverage.xml
+.env

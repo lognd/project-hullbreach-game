@@ -20,5 +20,9 @@
 - `design/frob-and-backlog.md`: read this before touching tickets, frob
   directives or code comments; it specs the frob wiring, the comment
   style sweep, and how the Jira backlog maps onto frob tickets.
+- `frob.md`: read this if you have never used frob; it is the
+  teammate-facing companion to `design/frob-and-backlog.md` above --
+  what frob is here, the comment rules, the ticket workflow, and the
+  current CHECK001 blocker.
 - `reference/`: one page per assembly, the target of every
   `// frob:doc` link in the code.
