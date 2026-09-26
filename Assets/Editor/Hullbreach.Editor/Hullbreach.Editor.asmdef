@@ -1,0 +1,22 @@
+{
+    "name": "Hullbreach.Editor",
+    "rootNamespace": "Hullbreach.Editor",
+    "references": [
+        "Hullbreach.Game",
+        "Hullbreach.Core",
+        "Hullbreach.Builder",
+        "Hullbreach.Hud",
+        "UnityEngine.UI"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
