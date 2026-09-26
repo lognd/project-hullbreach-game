@@ -1,5 +1,5 @@
 ---
-id: T-draft-96d9ea18
+id: T-0095
 title: 'S43-2: Well area and remaining-lifetime visuals for both players'
 state: queued
 kind: feature
