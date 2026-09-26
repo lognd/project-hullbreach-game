@@ -1,5 +1,5 @@
 ---
-id: T-draft-a1a22ccf
+id: T-0013
 title: 'S12: Equip a skin'
 state: queued
 kind: feature
