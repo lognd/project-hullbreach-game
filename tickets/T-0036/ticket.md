@@ -1,5 +1,5 @@
 ---
-id: T-draft-fd1cf6a8
+id: T-0036
 title: 'S47: Run matches on an authoritative server'
 state: queued
 kind: feature
