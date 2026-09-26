@@ -1,5 +1,5 @@
 ---
-id: T-draft-cf4f464a
+id: T-0002
 title: 'E8: Game shell'
 state: queued
 kind: feature
