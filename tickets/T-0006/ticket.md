@@ -1,5 +1,5 @@
 ---
-id: T-draft-c93bc4b5
+id: T-0006
 title: 'E12: Combat'
 state: queued
 kind: feature
