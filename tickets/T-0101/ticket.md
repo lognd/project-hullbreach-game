@@ -1,5 +1,5 @@
 ---
-id: T-draft-fe02e546
+id: T-0101
 title: 'S46-1: Match state machine ending the match when a core is destroyed'
 state: queued
 kind: feature
