@@ -6,12 +6,9 @@ using Hullbreach.Core;
 
 namespace Hullbreach.Game
 {
-    /// <summary>
-    /// One powerup pickup authored in the Inspector: where it floats, which
-    /// variant it applies to which block type, how long the transform lasts,
-    /// and its color/label: the disc itself is generated at runtime
-    /// (ShipRenderer.MakeSprite), same convention as GravityWorld's planets.
-    /// </summary>
+    // The disc itself is generated at runtime (ShipRenderer.MakeSprite),
+    // same convention as GravityWorld's planets.
+    // frob:doc docs/reference/hullbreach-game.md#poweruppreset
     [Serializable]
     public struct PowerupPreset
     {
@@ -36,12 +33,10 @@ namespace Hullbreach.Game
         }
     }
 
-    /// <summary>
-    /// Spawns every authored PowerupPreset as a Powerup GameObject on Start,
-    /// and respawns one at the same place after respawnSeconds once it is
-    /// collected: this lets the demo scene keep a fixed lineup of pickups
-    /// visible near the player's orbit start without hand-placing prefabs.
-    /// </summary>
+    // Respawns one at the same place after respawnSeconds once it is
+    // collected: this lets the demo scene keep a fixed lineup of pickups
+    // visible near the player's orbit start without hand-placing prefabs.
+    // frob:doc docs/reference/hullbreach-game.md#powerupspawner
     public sealed class PowerupSpawner : MonoBehaviour
     {
         [SerializeField] PowerupPreset[] presets = Array.Empty<PowerupPreset>();
@@ -66,10 +61,10 @@ namespace Hullbreach.Game
             powerup.Configure(preset);
         }
 
-        /// <summary>Called by a Powerup right before it destroys itself, so
-        /// this spawner can bring it back after respawnSeconds. No-op for a
-        /// Powerup this spawner did not create (defensive; should not
-        /// happen since Powerup only looks up its own parent spawner).</summary>
+        // No-op for a Powerup this spawner did not create (defensive;
+        // should not happen since Powerup only looks up its own parent
+        // spawner).
+        // frob:doc docs/reference/hullbreach-game.md#powerupspawner
         public void NotifyCollected(Powerup collected)
         {
             StartCoroutine(RespawnAfterDelay(collected.Preset));

@@ -3,12 +3,10 @@ using Hullbreach.Ship;
 
 namespace Hullbreach.Game
 {
-    /// <summary>
-    /// Subscribes to every ShipController's ShotFired in the scene and turns
-    /// each ShotRequest into a real Projectile GameObject. The Inspector
-    /// fields below are written into every ship's ShipBody.Projectile at
-    /// Start, so one spawner tunes every ship's cannon uniformly for the demo.
-    /// </summary>
+    // The Inspector fields below are written into every ship's
+    // ShipBody.Projectile at Start, so one spawner tunes every ship's cannon
+    // uniformly for the demo.
+    // frob:doc docs/reference/hullbreach-game.md#projectilespawner
     public sealed class ProjectileSpawner : MonoBehaviour
     {
         [SerializeField] float speed = 20f;
@@ -46,13 +44,11 @@ namespace Hullbreach.Game
 
         void OnShotFired(ShotRequest shot) => SpawnFromSink(shot);
 
-        /// <summary>
-        /// Spawns a real Projectile GameObject for `shot`. Public so
-        /// WorldSink.SpawnProjectile can route a block behaviour's
-        /// (e.g. the gravity gun's) ShotRequest through the same spawn path
-        /// as a ShipController's own ShotFired event, instead of duplicating
-        /// spawn logic in two places.
-        /// </summary>
+        // Public so WorldSink.SpawnProjectile can route a block behaviour's
+        // (e.g. the gravity gun's) ShotRequest through the same spawn path
+        // as a ShipController's own ShotFired event, instead of duplicating
+        // spawn logic in two places.
+        // frob:doc docs/reference/hullbreach-game.md#projectilespawner
         public void SpawnFromSink(ShotRequest shot)
         {
             var go = new GameObject("Projectile");

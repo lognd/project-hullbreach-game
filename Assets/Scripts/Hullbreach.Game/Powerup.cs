@@ -3,31 +3,21 @@ using Unity.Mathematics;
 
 namespace Hullbreach.Game
 {
-    /// <summary>
-    /// A floating pickup: a spinning tinted disc with a trigger collider.
-    /// On contact with a ship it calls that ship's ShipBody.ApplyPowerup at
-    /// the pickup's own position, transforming the nearest block of
-    /// Preset.baseTypeId into Preset.variant for Preset.seconds, then
-    /// destroys itself (its PowerupSpawner, if any, respawns it after a
-    /// delay). Always created by PowerupSpawner.Spawn, which calls
-    /// Configure immediately after AddComponent: never place one in a
-    /// scene directly, since it has nothing to show/apply until configured.
-    /// </summary>
+    // Always created by PowerupSpawner.Spawn, which calls Configure
+    // immediately after AddComponent: never place one in a scene directly,
+    // since it has nothing to show/apply until configured.
+    // frob:doc docs/reference/hullbreach-game.md#powerup
     [RequireComponent(typeof(CircleCollider2D))]
     public sealed class Powerup : MonoBehaviour
     {
-        /// <summary>Degrees per second this powerup's sprite spins, purely
-        /// cosmetic (makes it read as "alive" from a distance).</summary>
         [SerializeField] float spinDegreesPerSecond = 90f;
 
-        /// <summary>The preset this instance was spawned from, kept so
-        /// PowerupSpawner can respawn an identical one after collection.</summary>
+        // frob:doc docs/reference/hullbreach-game.md#powerup
         public PowerupPreset Preset { get; private set; }
 
         bool _configured;
 
-        /// <summary>Applies `preset`'s color/label to this instance. Must be
-        /// called once, right after AddComponent&lt;Powerup&gt;.</summary>
+        // frob:doc docs/reference/hullbreach-game.md#powerup
         public void Configure(PowerupPreset preset)
         {
             Preset = preset;

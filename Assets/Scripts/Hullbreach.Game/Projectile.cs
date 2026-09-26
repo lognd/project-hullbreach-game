@@ -5,21 +5,15 @@ using Hullbreach.World;
 
 namespace Hullbreach.Game
 {
-    /// <summary>
-    /// A single spawned cannon round: a small yellow circle with a
-    /// Rigidbody2D carrying it in a straight line, that applies the firing
-    /// ship's own recoil-free hit (impulse + damage) to whatever ShipCollider
-    /// it touches, then destroys itself. Spawned only by ProjectileSpawner:
-    /// never construct one directly, since Configure must run before the
-    /// first FixedUpdate.
-    /// </summary>
+    // Spawned only by ProjectileSpawner: never construct one directly,
+    // since Configure must run before the first FixedUpdate.
+    // frob:doc docs/reference/hullbreach-game.md#projectile
     [RequireComponent(typeof(Rigidbody2D))]
     [RequireComponent(typeof(CircleCollider2D))]
     public sealed class Projectile : MonoBehaviour
     {
-        /// <summary>Seconds a freshly spawned projectile ignores its own
-        /// firing ship's colliders, so it can clear the muzzle before trigger
-        /// checks turn on against it.</summary>
+        // Lets a freshly spawned projectile clear the muzzle before trigger
+        // checks turn on against its own firing ship's colliders.
         const float OwnerIgnoreSeconds = 0.1f;
 
         ProjectileSpec _spec;
@@ -28,8 +22,8 @@ namespace Hullbreach.Game
         float _deathTime;
         bool _configured;
 
-        /// <summary>Set up this projectile right after Instantiate, before
-        /// any physics step runs. `direction` must already be normalized.</summary>
+        // `direction` must already be normalized.
+        // frob:doc docs/reference/hullbreach-game.md#projectile
         public void Configure(Vector2 origin, Vector2 direction, Vector2 carrierVelocity, ProjectileSpec spec, ShipCollider owner)
         {
             _spec = spec;
@@ -70,13 +64,7 @@ namespace Hullbreach.Game
             if (Time.time >= _deathTime) Destroy(gameObject);
         }
 
-        /// <summary>
-        /// Applies the ambient gravity field's acceleration to this
-        /// projectile's own velocity each physics step (velocity += a * dt),
-        /// exactly like any other free body in the field, and destroys the
-        /// projectile the instant it reaches a planet's surface: a round
-        /// that hits a planet does not bounce or linger, it is gone.
-        /// </summary>
+        // A round that hits a planet does not bounce or linger, it is gone.
         void FixedUpdate()
         {
             if (!_configured) return;
@@ -97,9 +85,8 @@ namespace Hullbreach.Game
             }
         }
 
-        /// <summary>If this projectile is a GravityWell shot, drops its well
-        /// at `worldPoint` via the scene's WorldSink. No-op for a plain
-        /// (Kind == None) round, and safely no-op if no WorldSink exists.</summary>
+        // No-op for a plain (Kind == None) round, and safely no-op if no
+        // WorldSink exists.
         void DropWellIfAny(Vector2 worldPoint)
         {
             if (_spec.Kind != ProjectileKind.GravityWell) return;
