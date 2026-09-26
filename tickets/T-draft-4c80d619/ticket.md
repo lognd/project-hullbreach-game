@@ -37,6 +37,12 @@ body_changes:
   at: '2026-09-26'
   old_length: 474
   new_length: 544
+- mode: append
+  reason: 'BUG002 front door (T-2393): done in Jira before frob (Sprint 0)'
+  actor: logan
+  at: '2026-09-26'
+  old_length: 544
+  new_length: 614
 designated_repro_test: null
 threat: null
 component: null
@@ -52,5 +58,7 @@ https://aliens-against-humanity.atlassian.net/browse/SCRUM-6
 **Card**
 We need to figure out the core game mechanics. We already know we want a PvP (or PvE against "bosses") experience where you control a spaceship (rotation/thrust) in a 2D environment with strong gravity with custom weapons (like a gravity gun) and try not to crash. However, we need to codify what is needed. Document: https://docs.google.com/document/d/1XLp7jC3vxNCxfLwqoCgjOYlqB2soMnYeyLbjpDl5Xr8/edit
 
+
+frob:no-behavior-change reason="done in Jira before frob (Sprint 0)"
 
 frob:no-behavior-change reason="done in Jira before frob (Sprint 0)"
