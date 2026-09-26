@@ -4,18 +4,22 @@ using Hullbreach.Core;
 
 namespace Hullbreach.Builder
 {
-    /// <summary>Preview shown to the UI for whatever cell the pointer is over.</summary>
+    // Preview shown to the UI for whatever cell the pointer is over.
+    // frob:doc docs/reference/hullbreach-builder.md#hoverstate
     public readonly struct HoverState
     {
-        /// <summary>True when acting on Key right now would succeed (place or, while orienting, commit).</summary>
+        // True when acting on Key right now would succeed.
+        // frob:doc docs/reference/hullbreach-builder.md#hoverstate
         public readonly bool Valid;
 
-        /// <summary>The hovered cell.</summary>
+        // frob:doc docs/reference/hullbreach-builder.md#hoverstate
         public readonly int Key;
 
-        /// <summary>Why Valid is what it is; PlacementVerdict.Ok when Valid is true.</summary>
+        // Why Valid is what it is; Ok when Valid is true.
+        // frob:doc docs/reference/hullbreach-builder.md#hoverstate
         public readonly PlacementVerdict Verdict;
 
+        // frob:doc docs/reference/hullbreach-builder.md#hoverstate
         public HoverState(bool valid, int key, PlacementVerdict verdict)
         {
             Valid = valid;
@@ -24,82 +28,74 @@ namespace Hullbreach.Builder
         }
     }
 
-    /// <summary>
-    /// The two-click placement state machine (S30). Idle is "nothing pending";
-    /// Orienting is "a cell is chosen, waiting for a facing or a symmetric
-    /// commit". Symmetric block types (Core/Hull/Armor) have no facing to
-    /// choose, so S30's UI conversation ("skip the second click") applies and
-    /// they commit on the first click.
-    /// </summary>
+    // The two-click placement state machine (S30). See
+    // docs/reference/hullbreach-builder.md#builderstate.
+    // frob:doc docs/reference/hullbreach-builder.md#builderstate
     public enum BuilderState { Idle, Orienting }
 
-    /// <summary>
-    /// Owns the grid plus the click-driven state machine that turns palette
-    /// selection and cell clicks into placements, orientations, removals and
-    /// undo/redo. Pure C#, with no UnityEngine dependency, so it is exercised
-    /// directly in edit-mode tests; BuilderController in Hullbreach.Game is
-    /// the thin MonoBehaviour that feeds it mouse input.
-    /// </summary>
+    // Owns the grid plus the click-driven state machine; pure C#, no
+    // UnityEngine dependency. See docs/reference/hullbreach-builder.md#buildersession.
+    // frob:doc docs/reference/hullbreach-builder.md#buildersession
     public sealed class BuilderSession
     {
         readonly UndoStack _undo = new UndoStack();
 
-        /// <summary>The ship under construction.</summary>
+        // frob:doc docs/reference/hullbreach-builder.md#buildersession
         public BlockGrid Grid { get; }
 
-        /// <summary>Owns a brand-new grid: the original behavior, used by
-        /// standalone builder tests and any caller with no existing ship.</summary>
+        // Owns a brand-new grid, for standalone tests/callers.
+        // frob:doc docs/reference/hullbreach-builder.md#buildersession
         public BuilderSession() : this(new BlockGrid())
         {
         }
 
-        /// <summary>
-        /// Build over an EXTERNAL grid instead of a private one, so the demo
-        /// scene's builder can edit the very same BlockGrid a ShipBody is
-        /// simulating. Otherwise placements would land in a grid nobody
-        /// flies. Ownership stays with the caller; this session only mutates it.
-        /// </summary>
+        // Builds over an EXTERNAL grid so a demo scene's builder can edit
+        // the same BlockGrid a ShipBody simulates; caller keeps ownership.
+        // frob:doc docs/reference/hullbreach-builder.md#buildersession
         public BuilderSession(BlockGrid grid)
         {
             Grid = grid ?? throw new ArgumentNullException(nameof(grid));
         }
 
-        /// <summary>Currently selected palette type, defaults to Core so the very first click can seed the grid.</summary>
+        // Defaults to Core so the very first click can seed the grid.
+        // frob:doc docs/reference/hullbreach-builder.md#buildersession
         public byte SelectedTypeId { get; private set; } = BlockTypes.Core;
 
-        /// <summary>Idle or Orienting; drives what Click and Hover do.</summary>
+        // Drives what Click and Hover do.
+        // frob:doc docs/reference/hullbreach-builder.md#buildersession
         public BuilderState State { get; private set; } = BuilderState.Idle;
 
-        /// <summary>The cell chosen on the first click, while Orienting.</summary>
+        // The cell chosen on the first click, while Orienting.
+        // frob:doc docs/reference/hullbreach-builder.md#buildersession
         public int PendingKey { get; private set; }
 
-        /// <summary>The facing modifier previewed by the last Hover while Orienting (low 2 bits: 0=+y,1=+x,2=-y,3=-x).</summary>
+        // Facing previewed by the last Hover while Orienting (low 2 bits).
+        // frob:doc docs/reference/hullbreach-builder.md#buildersession
         public byte PendingModifiers { get; private set; }
 
-        /// <summary>Fires after any mutation (place, remove, undo, redo) so UI can refresh.</summary>
+        // Fires after any mutation so UI can refresh.
+        // frob:doc docs/reference/hullbreach-builder.md#buildersession
         public event Action Changed;
 
-        /// <summary>Total mass of everything currently on the grid (S33 criterion 2).</summary>
+        // S33 criterion 2.
+        // frob:doc docs/reference/hullbreach-builder.md#buildersession
         public float TotalMass => Grid.Mass.Total;
 
-        /// <summary>Number of blocks currently on the grid (S33 criterion 2).</summary>
+        // S33 criterion 2.
+        // frob:doc docs/reference/hullbreach-builder.md#buildersession
         public int BlockCount => Grid.Count;
 
-        /// <summary>Choose which palette entry the next click will place. Cancels any pending orientation.</summary>
+        // Cancels any pending orientation.
+        // frob:doc docs/reference/hullbreach-builder.md#buildersession
         public void Select(byte typeId)
         {
             SelectedTypeId = typeId;
             Cancel();
         }
 
-        /// <summary>
-        /// Preview what would happen at `key` right now: while Idle, whether it
-        /// is a legal placement for the selected type; while Orienting, the
-        /// cell hovered snaps the pending facing towards it, and the returned
-        /// verdict re-validates the pending cell with that candidate facing:
-        /// an orientation that would block its own exhaust/muzzle/fin
-        /// clearance, or lacks a fin's hull anchor, previews as invalid.
-        /// </summary>
+        // Previews what would happen at `key` right now; see
+        // docs/reference/hullbreach-builder.md#buildersession.
+        // frob:doc docs/reference/hullbreach-builder.md#buildersession
         public HoverState Hover(int key)
         {
             if (State == BuilderState.Orienting)
@@ -113,11 +109,8 @@ namespace Hullbreach.Builder
             return new HoverState(valid, key, why);
         }
 
-        /// <summary>
-        /// The main two-click gesture. Idle + valid cell: symmetric types
-        /// commit immediately, asymmetric types enter Orienting. Orienting:
-        /// commits the pending placement with the facing from the last Hover.
-        /// </summary>
+        // The main two-click gesture; see docs/reference/hullbreach-builder.md#buildersession.
+        // frob:doc docs/reference/hullbreach-builder.md#buildersession
         public bool Click(int key)
         {
             if (State == BuilderState.Orienting)
@@ -132,9 +125,7 @@ namespace Hullbreach.Builder
             }
 
             // The facing is not chosen yet, so the cell only needs to admit
-            // SOME facing (any of the four cardinals); the exact one is
-            // picked by Hover and re-validated for real when the second
-            // click commits it.
+            // SOME facing; Hover picks the exact one before it commits.
             if (!CanPlaceAnyFacing(key, SelectedTypeId)) return false;
 
             PendingKey = key;
@@ -143,12 +134,7 @@ namespace Hullbreach.Builder
             return true;
         }
 
-        /// <summary>
-        /// True when at least one of the four cardinal facings would make
-        /// `typeId` placeable at `key` right now. Used only to decide whether
-        /// a cell is even worth entering Orienting over, since the actual
-        /// facing has not been chosen yet.
-        /// </summary>
+        // True if any of the four cardinal facings would place `typeId` at `key`.
         bool CanPlaceAnyFacing(int key, byte typeId)
         {
             for (byte modifiers = 0; modifiers < 4; modifiers++)
@@ -158,7 +144,7 @@ namespace Hullbreach.Builder
             return false;
         }
 
-        /// <summary>Abandon the pending orientation without placing anything.</summary>
+        // frob:doc docs/reference/hullbreach-builder.md#buildersession
         public void Cancel()
         {
             State = BuilderState.Idle;
@@ -166,15 +152,14 @@ namespace Hullbreach.Builder
             PendingModifiers = 0;
         }
 
-        /// <summary>Remove the block at `key`, applying the detach rule, and record it as one undoable action.</summary>
+        // Applies the detach rule, recording it as one undoable action.
+        // frob:doc docs/reference/hullbreach-builder.md#buildersession
         public bool Remove(int key)
         {
             if (!PlacementRules.CanRemove(Grid, key)) return false;
 
-            // Snapshot every block currently on the grid BEFORE mutating it,
-            // so whichever keys Detach ends up removing (the requested one
-            // plus any stranded by the detach rule) can be recorded with
-            // their real type/modifiers/damage rather than a fresh default.
+            // Snapshot every block BEFORE mutating, so Detach's stranded
+            // keys can be recorded with their real block, not a default.
             var before = new Dictionary<int, Block>();
             foreach (var kvp in Grid.All) before[kvp.Key] = kvp.Value;
 
@@ -192,7 +177,7 @@ namespace Hullbreach.Builder
             return true;
         }
 
-        /// <summary>Undo the last placement or removal action.</summary>
+        // frob:doc docs/reference/hullbreach-builder.md#buildersession
         public bool Undo()
         {
             bool did = _undo.TryUndo(Grid);
@@ -200,7 +185,7 @@ namespace Hullbreach.Builder
             return did;
         }
 
-        /// <summary>Redo the last undone action.</summary>
+        // frob:doc docs/reference/hullbreach-builder.md#buildersession
         public bool Redo()
         {
             bool did = _undo.TryRedo(Grid);
@@ -208,7 +193,8 @@ namespace Hullbreach.Builder
             return did;
         }
 
-        /// <summary>Number of actions available to undo, for UI/diagnostics.</summary>
+        // For UI/diagnostics.
+        // frob:doc docs/reference/hullbreach-builder.md#buildersession
         public int UndoDepth => _undo.Depth;
 
         bool CommitPending()
@@ -216,10 +202,8 @@ namespace Hullbreach.Builder
             int key = PendingKey;
             byte modifiers = PendingModifiers;
 
-            // Validate BEFORE leaving Orienting: an invalid facing (e.g. one
-            // that blocks its own exhaust/muzzle/fin clearance) must refuse
-            // the commit and leave the pending placement in place, not
-            // silently cancel it.
+            // Validate BEFORE leaving Orienting: an invalid facing must
+            // refuse the commit and leave the pending placement in place.
             if (!PlacementRules.CanPlace(Grid, key, SelectedTypeId, modifiers, out _)) return false;
 
             Cancel();
@@ -238,7 +222,8 @@ namespace Hullbreach.Builder
             return true;
         }
 
-        /// <summary>Short human text for the HUD explaining why a hovered cell is invalid.</summary>
+        // Short human text for the HUD explaining an invalid hover.
+        // frob:doc docs/reference/hullbreach-builder.md#buildersession
         public static string DescribeVerdict(PlacementVerdict verdict) => verdict switch
         {
             PlacementVerdict.Ok => "ok",
@@ -255,11 +240,7 @@ namespace Hullbreach.Builder
             _ => "invalid",
         };
 
-        /// <summary>
-        /// Snap the direction from `from` to `to` onto the nearest of the four
-        /// cardinal facings and encode it in the low 2 bits (0=+y,1=+x,2=-y,
-        /// 3=-x), matching the Ship branch's modifier convention.
-        /// </summary>
+        // Snaps from->to onto the nearest cardinal facing (0=+y,1=+x,2=-y,3=-x).
         static byte FacingTowards(int from, int to)
         {
             BlockKey.Unpack(from, out int fx, out int fy);

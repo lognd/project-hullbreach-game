@@ -143,10 +143,8 @@ namespace Hullbreach.Builder.Tests
             Assert.IsTrue(session.Click(BlockKey.Pack(1, 1)));
             Assert.AreEqual(BuilderState.Orienting, session.State);
 
-            // Hovering south snaps the facing to -y, whose muzzle is the
-            // hull at (1, 0): this candidate orientation must preview as
-            // invalid, and the commit click must be refused, not silently
-            // placed with a bad facing.
+            // Hovering south snaps facing to -y, whose muzzle is the hull at
+            // (1, 0): must preview and commit as invalid, not silently place.
             var hover = session.Hover(BlockKey.Pack(1, 0));
             Assert.IsFalse(hover.Valid);
             Assert.AreEqual(PlacementVerdict.BlocksMuzzle, hover.Verdict);
@@ -189,7 +187,7 @@ namespace Hullbreach.Builder.Tests
             Assert.AreEqual(6, session.BlockCount);
         }
 
-        // frob:tests Hullbreach.Builder.Tests.BuilderSessionTests.ExternalGrid_PlacementsLandOnCallersGrid
+        // frob:tests Assets/Scripts/Hullbreach.Builder/BuilderSession.cs::BuilderSession.BuilderSession
         [Test]
         public void ExternalGrid_PlacementsLandOnCallersGrid()
         {

@@ -3,12 +3,9 @@ using Hullbreach.Core;
 
 namespace Hullbreach.Builder
 {
-    /// <summary>
-    /// Why a placement was accepted or refused (S30, S31, S32, and the
-    /// exhaust/muzzle/fin clearance rules). Ok is the only accepting value;
-    /// every other member names the specific rule that refused the cell so
-    /// the HUD can explain it instead of just flashing red.
-    /// </summary>
+    // Why a placement was accepted or refused; every non-Ok member names
+    // the specific rule so the HUD can explain it, not just flash red.
+    // frob:doc docs/reference/hullbreach-builder.md#placementverdict
     public enum PlacementVerdict
     {
         Ok,
@@ -24,44 +21,29 @@ namespace Hullbreach.Builder
         InsideReservedCell,
     }
 
-    /// <summary>Placement and removal validity for the two-click builder (S30, S31, S32).</summary>
+    // Placement and removal validity for the two-click builder (S30, S31, S32).
+    // frob:doc docs/reference/hullbreach-builder.md#placementrules
     public static class PlacementRules
     {
         static readonly int[] Neighbors = new int[4];
         static readonly List<int> ReservedScratch = new List<int>();
 
-        /// <summary>
-        /// A cell is valid for a NON-CORE block when it is in range, empty, and
-        /// 4-adjacent to an existing block. This overload never accepts an empty
-        /// grid (S32: exactly one core, and it must be the first block placed),
-        /// so callers placing the very first block must go through the
-        /// type-aware overload. Thin wrapper over the full rule for callers
-        /// that only care about adjacency, not clearance.
-        /// </summary>
+        // Range/empty/adjacency only, never accepts an empty grid (S32).
+        // frob:doc docs/reference/hullbreach-builder.md#placementrules
         public static bool CanPlace(BlockGrid grid, int key)
         {
             if (grid.Count == 0) return false;
             return CanPlaceCommon(grid, key);
         }
 
-        /// <summary>
-        /// Type-aware placement check that encodes S32's core rule: an empty
-        /// grid may ONLY accept a core, and a core may ONLY be placed into an
-        /// empty grid (there is exactly one core, ever). Every other type
-        /// falls back to the ordinary adjacency rule. Thin wrapper over the
-        /// full rule with modifiers = 0 and the verdict discarded.
-        /// </summary>
+        // Adds S32's core rule (empty grid takes only a core).
+        // frob:doc docs/reference/hullbreach-builder.md#placementrules
         public static bool CanPlace(BlockGrid grid, int key, byte typeId)
             => CanPlace(grid, key, typeId, 0, out _);
 
-        /// <summary>
-        /// Full placement check: range, the core-seeding rule, occupancy,
-        /// adjacency, then clearance: the new block's own reserved cells
-        /// (Clearance.TryReservedCells) must be empty, the new block must not
-        /// sit inside any EXISTING block's reserved cell, and a Fin's anchor
-        /// cell (Clearance.RequiredAnchor) must hold a non-Fin block. `why`
-        /// names exactly which rule decided the outcome.
-        /// </summary>
+        // Full check: range, core-seeding, occupancy, adjacency, clearance;
+        // see docs/reference/hullbreach-builder.md#placementrules.
+        // frob:doc docs/reference/hullbreach-builder.md#placementrules
         public static bool CanPlace(BlockGrid grid, int key, byte typeId, byte modifiers, out PlacementVerdict why)
         {
             BlockKey.Unpack(key, out int x, out int y);
@@ -112,11 +94,7 @@ namespace Hullbreach.Builder
             }
 
             // The new block must not land inside an EXISTING block's reserved
-            // cell (e.g. directly behind a thruster, ahead of a cannon or
-            // fin, or beside a retro thruster). Every reserved-cell relation
-            // is exactly one orthogonal step, so the 4-connected neighbors of
-            // `key` are the complete set of cells that could possibly reserve
-            // it, so there is no need to walk the whole grid.
+            // cell; every relation is one orthogonal step, so 4 neighbors suffice.
             for (int i = 0; i < 4; i++)
             {
                 int neighborKey = Neighbors[i];
@@ -164,7 +142,7 @@ namespace Hullbreach.Builder
             return true;
         }
 
-        /// <summary>Shared range/empty/adjacency check for a non-empty grid.</summary>
+        // Shared range/empty/adjacency check for a non-empty grid.
         static bool CanPlaceCommon(BlockGrid grid, int key)
         {
             BlockKey.Unpack(key, out int x, out int y);
@@ -179,13 +157,9 @@ namespace Hullbreach.Builder
             return false;
         }
 
-        /// <summary>
-        /// A block can be removed when it is present and is not the core.
-        /// DECISION (S31's open question): a removal that would strand other
-        /// blocks is ALLOWED, not refused: the stranded blocks detach along
-        /// with it (see <see cref="Detach"/>). This keeps single-click removal
-        /// always available instead of silently failing near a bottleneck.
-        /// </summary>
+        // Present and not the core. DECISION: a removal that strands other
+        // blocks is ALLOWED (see Detach), not refused.
+        // frob:doc docs/reference/hullbreach-builder.md#placementrules
         public static bool CanRemove(BlockGrid grid, int key)
         {
             if (!grid.Contains(key)) return false;
@@ -193,15 +167,9 @@ namespace Hullbreach.Builder
             return true;
         }
 
-        /// <summary>
-        /// Remove `key` and, per the detach rule, anything that becomes
-        /// unreachable from the core as a result. Every removed key (the
-        /// requested one plus any stranded ones) is appended to `removed`.
-        /// Uses Articulation as a fast path: if `key` is not an articulation
-        /// point, removing it cannot disconnect anything, so the flood fill
-        /// is skipped entirely. Returns false without mutating the grid when
-        /// `key` cannot be removed (missing or the core).
-        /// </summary>
+        // Removes `key` plus anything stranded per the detach rule; uses
+        // Articulation as a fast path to skip the flood fill when possible.
+        // frob:doc docs/reference/hullbreach-builder.md#placementrules
         public static bool Detach(BlockGrid grid, int key, List<int> removed)
         {
             removed.Clear();
