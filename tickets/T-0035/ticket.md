@@ -1,5 +1,5 @@
 ---
-id: T-draft-94bbc3f2
+id: T-0035
 title: 'S46: Win by breaching the core'
 state: queued
 kind: feature
