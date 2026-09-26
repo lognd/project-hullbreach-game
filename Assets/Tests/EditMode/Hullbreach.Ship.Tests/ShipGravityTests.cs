@@ -6,9 +6,8 @@ using Hullbreach.World;
 
 namespace Hullbreach.Ship.Tests
 {
-    // Covers ShipBody's gravity integration: per-block body force
-    // (linear a = g, tidal torque off-axis) and planet surface contact
-    // (push-out, restitution, contact damage).
+    // Covers ShipBody's gravity integration (body force, tidal torque)
+    // and planet surface contact (push-out, restitution, damage).
     public class ShipGravityTests
     {
         static GravityField MakeField(float mu = 400f, float radius = 1f)
@@ -28,9 +27,8 @@ namespace Hullbreach.Ship.Tests
             ship.Gravity = field;
             ship.Position = new float2(50f, 0f);
 
-            // The single block's own world-space center (not ship.Position
-            // itself, which is offset from it by half a block) is what
-            // gravity is actually evaluated at.
+            // Gravity is evaluated at the block's own world-space center,
+            // not ship.Position (offset from it by half a block).
             float2 blockWorldCenter = ship.LocalToWorld(BlockGrid.CenterOf(BlockKey.Pack(0, 0)));
 
             ship.Step(default, 1f / 60f);
@@ -43,9 +41,8 @@ namespace Hullbreach.Ship.Tests
         [Test]
         public void TwoBlockShip_OffAxisInStrongGradient_RecordsNonzeroTidalTorque()
         {
-            // A strong (small-radius, large-mu) body puts the two blocks at
-            // very different distances when the ship sits off-axis, so the
-            // near block is pulled noticeably harder than the far one.
+            // A strong, small-radius body puts the two off-axis blocks at
+            // very different distances, so the near one pulls harder.
             var field = MakeField(mu: 4000f, radius: 0.5f);
 
             var offAxis = new ShipBody();
@@ -59,11 +56,8 @@ namespace Hullbreach.Ship.Tests
             offAxis.Step(default, 1f / 60f);
             Assert.AreNotEqual(0f, offAxis.LastAngularAcceleration);
 
-            // Same two blocks, but oriented so the line between them IS
-            // radial (straight out from the body): no tidal torque. Both
-            // block centers land exactly on y=0 (a line straight through
-            // the body at the origin) once the -0.5 offset (block centers
-            // sit at local y=0.5) is folded into Position.
+            // Same two blocks, oriented so the line between them IS radial:
+            // no tidal torque (block centers land exactly on y=0).
             var onAxis = new ShipBody();
             onAxis.Grid.TryAdd(BlockKey.Pack(0, 0), new Block(BlockTypes.Core, 0));
             onAxis.Grid.TryAdd(BlockKey.Pack(1, 0), new Block(BlockTypes.Hull, 0));
@@ -95,9 +89,8 @@ namespace Hullbreach.Ship.Tests
             float distanceFromCenter = math.length(ship.Position);
             Assert.GreaterOrEqual(distanceFromCenter, 5f - 1e-3f);
 
-            // After Step's contact resolution, the block's velocity along
-            // the outward normal must not still be driving it INTO the
-            // planet.
+            // After contact resolution the block's velocity along the
+            // outward normal must not still drive it INTO the planet.
             float2 normal = math.normalize(ship.Position);
             float normalVelocity = math.dot(ship.Velocity, normal);
             Assert.GreaterOrEqual(normalVelocity, -1e-2f);

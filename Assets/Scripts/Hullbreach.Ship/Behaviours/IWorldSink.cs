@@ -4,11 +4,8 @@ using Hullbreach.World;
 
 namespace Hullbreach.Ship.Behaviours
 {
-    // Everything a block behaviour needs from "the rest of the world":
-    // spawning projectiles, dropping temporary gravity wells, and finding
-    // targets. Implemented by the game layer (WorldSink); ShipBody and its
-    // behaviours only ever see this interface, so the plain-C# simulation
-    // stays free of UnityEngine and testable with NullWorldSink.
+    // Everything a block behaviour needs from "the rest of the world".
+    // Implemented by the game layer; keeps the sim free of UnityEngine.
     // frob:doc docs/reference/hullbreach-ship.md#iworldsink
     public interface IWorldSink
     {

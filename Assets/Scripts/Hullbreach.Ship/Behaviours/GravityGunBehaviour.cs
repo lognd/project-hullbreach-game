@@ -1,8 +1,7 @@
 namespace Hullbreach.Ship.Behaviours
 {
-    // Cannon variant 1: fires a shot flagged GravityWell with a positive-Mu
-    // WellSpec, so on impact the game drops a short-lived ATTRACTING well at
-    // the hit point (via IWorldSink.AddTemporaryGravity).
+    // Cannon variant 1: fires an ATTRACTING gravity-well shot (positive-Mu
+    // WellSpec, via IWorldSink.AddTemporaryGravity).
     // frob:doc docs/reference/hullbreach-ship.md#gravitygunbehaviour
     public sealed class GravityGunBehaviour : CannonBehaviourBase
     {

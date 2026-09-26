@@ -6,9 +6,7 @@ using Hullbreach.World;
 namespace Hullbreach.Ship.Behaviours
 {
     // The do-nothing IWorldSink: every ShipBody defaults to this so tests
-    // (and any ship never wired to a real game scene) can Step without a
-    // null check at every call site. SpawnProjectile/AddTemporaryGravity are
-    // no-ops; TryNearestEnemy always fails; Ships is always empty.
+    // can Step without a null check at every call site.
     // frob:doc docs/reference/hullbreach-ship.md#nullworldsink
     public sealed class NullWorldSink : IWorldSink
     {

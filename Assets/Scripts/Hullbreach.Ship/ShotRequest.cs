@@ -2,10 +2,8 @@ using Unity.Mathematics;
 
 namespace Hullbreach.Ship
 {
-    // One cannon shot handed off by ShipBody.Step for the caller to spawn.
-    // ShipBody only records intent (and applies its own recoil); it never
-    // creates the projectile object, so this stays a plain value the caller
-    // drains from ShipBody.PendingShots.
+    // One cannon shot handed off by ShipBody.Step for the caller to spawn;
+    // ShipBody never creates the projectile object itself.
     // frob:doc docs/reference/hullbreach-ship.md#shotrequest
     public readonly struct ShotRequest
     {

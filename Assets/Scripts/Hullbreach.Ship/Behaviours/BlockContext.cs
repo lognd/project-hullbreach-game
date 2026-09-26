@@ -3,10 +3,8 @@ using Hullbreach.Core;
 
 namespace Hullbreach.Ship.Behaviours
 {
-    // Everything an IBlockBehaviour needs to act for one block on one Step,
-    // bundled so ShipBody.Step can fill in one instance per block without
-    // allocating: a plain mutable struct passed by ref, never boxed, never
-    // stored past the call that filled it in.
+    // Everything an IBlockBehaviour needs for one block on one Step: a
+    // plain mutable struct passed by ref, never boxed or stored.
     // frob:doc docs/reference/hullbreach-ship.md#blockcontext
     public struct BlockContext
     {
@@ -44,9 +42,8 @@ namespace Hullbreach.Ship.Behaviours
         // frob:doc docs/reference/hullbreach-ship.md#blockcontext
         public void AddForceLocal(float2 force) => Ship.AddForceAtPoint(LocalCenter, force);
 
-        // Shared by every ramped channel (forward/retro thrust, fin steer)
-        // since one block belongs to exactly one behaviour and keys never
-        // collide.
+        // Shared by every ramped channel; one block belongs to exactly
+        // one behaviour so keys never collide.
         // frob:doc docs/reference/hullbreach-ship.md#blockcontext
         public float Throttle(float target) => Ship.RampThrottleFor(Key, Block.Modifiers, target, Dt);
 

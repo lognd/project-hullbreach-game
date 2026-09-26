@@ -2,12 +2,8 @@ using Unity.Mathematics;
 
 namespace Hullbreach.Ship.Behaviours
 {
-    // Thruster variant 1, the "inconvenient thruster": ramps like a normal
-    // forward thruster while ThrustAxis > 0, but pushes toward the nearest
-    // enemy ship's position instead of ship-forward, dragging the ship
-    // toward the fight whether the pilot wants that or not. Falls back to
-    // ordinary ship-forward thrust when no enemy is known (e.g.
-    // NullWorldSink, or a lone ship in the world).
+    // Thruster variant 1, the "inconvenient thruster": pushes toward the
+    // nearest enemy instead of ship-forward; falls back when none is known.
     // frob:doc docs/reference/hullbreach-ship.md#seekingthrusterbehaviour
     public sealed class SeekingThrusterBehaviour : IBlockBehaviour
     {

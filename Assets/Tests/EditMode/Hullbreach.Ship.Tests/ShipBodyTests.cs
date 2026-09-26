@@ -5,9 +5,8 @@ using Hullbreach.Ship;
 
 namespace Hullbreach.Ship.Tests
 {
-    // S39 handling criteria, exercised against the plain-C# sim so
-    // they run without a scene and stay meaningful once the headless server
-    // reuses the same ShipBody.
+    // S39 handling criteria, exercised against the plain-C# sim so they
+    // run without a scene.
     public class ShipBodyTests
     {
         const float Tol = 1e-3f;
@@ -52,8 +51,7 @@ namespace Hullbreach.Ship.Tests
         public void DoublingMass_HalvesLinearAcceleration()
         {
             // a = F/M falls straight out of Step; doubling Grid.Mass.Total
-            // (rather than fighting the discrete set of block masses to land
-            // on exactly 2x) isolates that relationship precisely.
+            // isolates that relationship precisely.
             var light = OneOffCenterThruster();
             light.Step(new ShipInput(1f, 0f, false), 1f / 60f);
             float lightAccel = math.length(light.LastLinearAcceleration);
@@ -173,9 +171,8 @@ namespace Hullbreach.Ship.Tests
         {
             var ship = new ShipBody();
             ship.Grid.TryAdd(BlockKey.Pack(0, 0), new Block(BlockTypes.Core));
-            // Facing = +x (bits 01) so Perpendicular is +/-y, which has a
-            // nonzero lever arm against these fins' x-offset from the CoM.
-            // Upper bits 11 = level-3 (fast) ramp.
+            // Facing = +x (bits 01) so Perpendicular is +/-y, giving a
+            // lever arm; upper bits 11 = level-3 (fast) ramp.
             ship.Grid.TryAdd(BlockKey.Pack(2, 0), new Block(BlockTypes.Fin, 0b1101));
             ship.Grid.TryAdd(BlockKey.Pack(-2, 0), new Block(BlockTypes.Fin, 0b1101));
 
@@ -296,7 +293,7 @@ namespace Hullbreach.Ship.Tests
             Assert.Less(ship.Throttle(retro), 0.2f, "retro's own (slower) rate must not jump to full in one tick");
         }
 
-        // frob:tests Hullbreach.Ship.Tests.ShipBodyTests.Step_RecordsOneAppliedForcePerThruster
+        // frob:tests Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.AppliedForcesThisStep
         [Test]
         public void Step_RecordsOneAppliedForcePerThruster()
         {

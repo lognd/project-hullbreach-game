@@ -2,14 +2,8 @@ using System.Collections.Generic;
 
 namespace Hullbreach.Ship.Behaviours
 {
-    // The (TypeId, VariantId) -> IBlockBehaviour table. This is the whole
-    // extension mechanism: a new weapon or thruster registers itself here
-    // once and ShipBody.Step picks it up through Resolve, with no switch
-    // statement anywhere that needs editing.
-    //
-    // A static constructor calls RegisterDefaults so tests (and anything
-    // else that touches this class before a game bootstrap runs) always see
-    // the stock behaviours registered, with no explicit setup call needed.
+    // The (TypeId, VariantId) -> IBlockBehaviour table: the whole extension
+    // mechanism. A static constructor calls RegisterDefaults so tests always see it.
     // frob:doc docs/reference/hullbreach-ship.md#behaviourregistry
     public static class BehaviourRegistry
     {
@@ -29,11 +23,8 @@ namespace Hullbreach.Ship.Behaviours
             Table[(typeId, variant)] = behaviour;
         }
 
-        // Falls back to that type's variant 0 (its base behaviour) when the
-        // specific variant is not registered: an unrecognized variant id
-        // behaves like the plain block rather than doing nothing. Null when
-        // even variant 0 has nothing registered (e.g. Core/Hull/Armor,
-        // which have no per-Step behaviour at all).
+        // Falls back to that type's variant 0 when the specific variant is
+        // unregistered. Null when even variant 0 has nothing registered.
         // frob:doc docs/reference/hullbreach-ship.md#behaviourregistry
         public static IBlockBehaviour Resolve(in Hullbreach.Core.Block block)
         {

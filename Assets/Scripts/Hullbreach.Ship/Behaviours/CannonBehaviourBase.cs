@@ -2,14 +2,8 @@ using Unity.Mathematics;
 
 namespace Hullbreach.Ship.Behaviours
 {
-    // Shared fire-control for every cannon variant: ticks the per-block
-    // cooldown, and on FirePressed while ready, builds the muzzle
-    // origin/direction, records a ShotRequest with the spec from BuildSpec,
-    // applies recoil, and resets the cooldown. Subclasses only decide WHAT
-    // gets fired, never how firing/cooldown itself works: that is the whole
-    // point of factoring this out, since the gravity gun and anti-gravity
-    // gun differ from the stock cannon only in the ProjectileSpec they
-    // attach to the shot.
+    // Shared fire-control for every cannon variant. Subclasses only decide
+    // WHAT gets fired (BuildSpec), never how firing/cooldown works.
     // frob:doc docs/reference/hullbreach-ship.md#cannonbehaviourbase
     public abstract class CannonBehaviourBase : IBlockBehaviour
     {

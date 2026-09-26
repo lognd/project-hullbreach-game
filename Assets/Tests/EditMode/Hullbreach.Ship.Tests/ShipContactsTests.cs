@@ -5,10 +5,8 @@ using Hullbreach.Ship;
 
 namespace Hullbreach.Ship.Tests
 {
-    // Ship-to-ship contact resolution. These cover the failure the player
-    // saw: flying into the target ship flung it off the map, because two
-    // Box2D dynamic bodies were being overwritten by ShipBody every tick and
-    // the depenetration solver fought back.
+    // Ship-to-ship contact resolution: covers the bug where flying into a
+    // ship flung it off the map (see ShipContacts's WHY NOT BOX2D note).
     public sealed class ShipContactsTests
     {
         static ShipBody SingleBlockShip(float2 position, float2 velocity)

@@ -1,8 +1,7 @@
 namespace Hullbreach.Ship.Behaviours
 {
-    // Cannon variant 2: fires a shot flagged GravityWell with a negative-Mu
-    // WellSpec, so on impact the game drops a short-lived REPULSING well at
-    // the hit point.
+    // Cannon variant 2: fires a REPULSING gravity-well shot (negative-Mu
+    // WellSpec).
     // frob:doc docs/reference/hullbreach-ship.md#antigravitygunbehaviour
     public sealed class AntiGravityGunBehaviour : CannonBehaviourBase
     {

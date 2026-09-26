@@ -3,9 +3,7 @@ using Hullbreach.Core;
 
 namespace Hullbreach.Ship
 {
-    // Decodes the low 2 bits of Block.Modifiers into a ship-local facing so
-    // every system that cares which way a directional block points (thrust
-    // application, muzzle direction, gizmo drawing) agrees on one encoding:
+    // Decodes the low 2 bits of Block.Modifiers into a ship-local facing:
     // 0 = +y ("up"), 1 = +x, 2 = -y, 3 = -x, before Rotation is applied.
     // frob:doc docs/reference/hullbreach-ship.md#blockfacing
     public static class BlockFacing

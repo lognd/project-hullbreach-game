@@ -1,9 +1,7 @@
 namespace Hullbreach.Ship
 {
-    // What special payload a projectile carries beyond plain damage. None is
-    // the stock cannon round; GravityWell marks a shot whose impact should
-    // drop a temporary gravity well (positive Mu) or anti-well (negative Mu)
-    // via IWorldSink.AddTemporaryGravity, per its WellSpec.
+    // What special payload a projectile carries beyond plain damage; see
+    // docs/reference/hullbreach-ship.md#projectilekind.
     // frob:doc docs/reference/hullbreach-ship.md#projectilekind
     public enum ProjectileKind : byte
     {
@@ -46,9 +44,8 @@ namespace Hullbreach.Ship
         public static readonly WellSpec None = new WellSpec(0f, 0f, 0f);
     }
 
-    // Immutable description of the projectile a cannon fires. Plain data so
-    // the demo-scene branch can spawn whatever visual/physics object it
-    // wants from a ShotRequest without ShipBody knowing about prefabs.
+    // Immutable description of the projectile a cannon fires; plain data
+    // so the demo-scene branch can spawn it without ShipBody knowing prefabs.
     // frob:doc docs/reference/hullbreach-ship.md#projectilespec
     public readonly struct ProjectileSpec
     {
@@ -104,9 +101,8 @@ namespace Hullbreach.Ship
             => new ProjectileSpec(speed: 20f, impulse: 2f, damage: 25,
                                    lifetimeSeconds: 3f, radius: 0.1f);
 
-        // Used by the gravity-gun/anti-gravity-gun variants to reuse the
-        // ship's own ballistic numbers (speed, damage, lifetime, radius)
-        // while swapping only the impact payload.
+        // Used by the gravity-gun variants to reuse the ship's ballistic
+        // numbers while swapping only the impact payload.
         // frob:doc docs/reference/hullbreach-ship.md#projectilespec
         public ProjectileSpec WithGravityWell(WellSpec well)
             => new ProjectileSpec(Speed, Impulse, Damage, LifetimeSeconds, Radius,
