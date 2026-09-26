@@ -1,5 +1,5 @@
 ---
-id: T-draft-583f7fa6
+id: T-0117
 title: 'S51-2: Upgrade effects for thruster efficiency, armor stiffness, and repair'
 state: queued
 kind: feature
