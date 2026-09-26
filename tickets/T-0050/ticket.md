@@ -1,5 +1,5 @@
 ---
-id: T-draft-a6976c81
+id: T-0050
 title: 'S27-3: Persist settings to a local file across launches'
 state: queued
 kind: feature
