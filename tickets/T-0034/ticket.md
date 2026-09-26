@@ -1,5 +1,5 @@
 ---
-id: T-draft-2728601e
+id: T-0034
 title: 'S45: Dodge telegraphed hazards'
 state: queued
 kind: feature
