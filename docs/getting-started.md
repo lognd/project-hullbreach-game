@@ -405,9 +405,16 @@ your new one.
 
 ## 6. Editing the HUD
 
-The builder palette panel is a normal uGUI screen now (the IMGUI-to-uGUI
-port, see `docs/design/ui-port.md`), so you can move, resize or restyle
-it in the editor without touching code.
+The whole HUD is a normal uGUI screen now (the IMGUI-to-uGUI port, see
+`docs/design/ui-port.md`), so you can move, resize or restyle it in the
+editor without touching code. Which prefab holds which panel:
+
+- `Assets/Prefabs/UI/BuilderPanel.prefab` -- the top-left build palette.
+- `Assets/Prefabs/UI/StatusPanel.prefab` -- the bottom-left mode/controls/
+  mass/speed/control-bar/powerup panel, nesting three
+  `Assets/Prefabs/UI/ChannelBar.prefab` instances (thrust, reverse, steer).
+- `Assets/Prefabs/UI/HullWarningBanner.prefab` -- the top-center hull
+  warning banner, visible only in Fly mode.
 
 1. In the Project window, open `Assets/Prefabs/UI/BuilderPanel.prefab`
    (double-click to enter Prefab Mode). This is the panel itself: the
