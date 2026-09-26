@@ -9,18 +9,11 @@ using Hullbreach.Game;
 
 namespace Hullbreach.Demo.Tests
 {
-    /// <summary>
-    /// Saves PNGs of the demo in each state worth looking at. Not an
-    /// assertion suite: it exists so a human (or a reviewer) can SEE that the
-    /// ship renders, the HUD reads sensibly and the thruster effects fire,
-    /// which no numeric assertion covers.
-    ///
-    /// Skipped unless HULLBREACH_SHOTS names a directory, and must be run
-    /// WITHOUT -nographics or every capture comes out blank.
-    /// </summary>
+    // Saves PNGs of the demo in each state worth looking at, for a human to
+    // SEE what no numeric assertion covers. Skipped unless HULLBREACH_SHOTS
+    // names a directory, and must be run WITHOUT -nographics.
     public sealed class DemoScreenshots : DemoSceneFixture
     {
-        /// <summary>Environment variable naming the output directory.</summary>
         public const string OutputVariable = "HULLBREACH_SHOTS";
 
         string _directory;
@@ -79,8 +72,7 @@ namespace Hullbreach.Demo.Tests
             Assert.Pass($"Screenshots written to {_directory}");
         }
 
-        /// <summary>Captures one PNG and waits for the file to appear;
-        /// ScreenCapture writes at the end of a later frame, not inline.</summary>
+        // ScreenCapture writes at the end of a later frame, not inline.
         IEnumerator Capture(string name)
         {
             string path = Path.Combine(_directory, name + ".png");

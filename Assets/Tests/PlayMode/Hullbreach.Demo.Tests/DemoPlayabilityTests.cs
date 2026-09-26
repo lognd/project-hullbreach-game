@@ -8,12 +8,7 @@ using Hullbreach.Game;
 
 namespace Hullbreach.Demo.Tests
 {
-    /// <summary>
-    /// One test per playability requirement the user reported broken: the
-    /// ship must survive being left alone, Tab must not teleport, thrust and
-    /// steer must do what they say, firing must hit, building must build, and
-    /// the overlay and reset keys must not throw.
-    /// </summary>
+    // One test per playability requirement the user reported broken.
     public sealed class DemoPlayabilityTests : DemoSceneFixture
     {
         [UnityTest]
