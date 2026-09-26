@@ -1,5 +1,5 @@
 ---
-id: T-draft-deadbb61
+id: T-0040
 title: 'S51: Salvage parts mid-match'
 state: queued
 kind: feature
