@@ -1,5 +1,5 @@
 ---
-id: T-draft-5ad91051
+id: T-0041
 title: 'S07-2: Sign-in screen in the game client calling the login endpoint'
 state: queued
 kind: feature
