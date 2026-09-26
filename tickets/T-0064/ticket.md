@@ -1,5 +1,5 @@
 ---
-id: T-draft-56e95674
+id: T-0064
 title: 'S33-1: BlockPalette with mass and cost per block type'
 state: queued
 kind: feature
