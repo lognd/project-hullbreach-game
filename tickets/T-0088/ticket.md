@@ -1,5 +1,5 @@
 ---
-id: T-draft-7e2fc672
+id: T-0088
 title: 'S40-3: Gravity constants loaded from configuration'
 state: queued
 kind: feature
