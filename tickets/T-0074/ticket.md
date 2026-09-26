@@ -1,5 +1,5 @@
 ---
-id: T-draft-7cafa1b5
+id: T-0074
 title: 'S36-3: Material properties per block type (hull, armor, thruster)'
 state: queued
 kind: feature
