@@ -1,5 +1,5 @@
 ---
-id: T-draft-1f185c83
+id: T-0077
 title: 'S37-2: Colorblind-safe alternative palette and a settings toggle'
 state: queued
 kind: feature
