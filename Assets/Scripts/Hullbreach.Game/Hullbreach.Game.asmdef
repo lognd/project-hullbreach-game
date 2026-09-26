@@ -8,7 +8,9 @@
         "Hullbreach.Builder",
         "Hullbreach.Net",
         "Hullbreach.World",
-        "Unity.Mathematics"
+        "Hullbreach.Hud",
+        "Unity.Mathematics",
+        "UnityEngine.UI"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

@@ -1,50 +1,104 @@
 using UnityEngine;
-using Hullbreach.Core;
-using Hullbreach.Builder;
+using UnityEngine.UI;
+using Hullbreach.Hud;
 
 namespace Hullbreach.Game
 {
-    /// <summary>
-    /// Minimal OnGUI HUD for the builder (S33): lists the palette with mass
-    /// and cost, shows total mass and block count, and highlights the current
-    /// selection. Deliberately OnGUI, not a Canvas: it needs no scene setup
-    /// and is only meant to make the palette/criteria testable by hand.
-    /// </summary>
+    // uGUI view over BuilderHudModel (D4): copies model strings into
+    // serialized Text references every LateUpdate, no formatting or
+    // layout math here. Keeps the old class name and DemoMode.ApplyState's
+    // enable/disable contract (D8).
+    // frob:doc docs/demo-scene.md#the-ugui-hud-u1
     public sealed class BuilderHud : MonoBehaviour
     {
-        /// <summary>The controller whose session this HUD reflects.</summary>
         [SerializeField] BuilderController controller;
 
-        void OnGUI()
+        // Toggled with this component's enabled state: MonoBehaviour.enabled
+        // alone does not stop uGUI children from rendering.
+        [SerializeField] GameObject panelRoot;
+
+        [SerializeField] Text titleText;
+
+        [SerializeField] RectTransform rowContainer;
+
+        // Cloned once per BlockPalette entry; views never create UI objects
+        // at runtime except rows cloned from a template (D4).
+        [SerializeField] Text rowTemplate;
+
+        [SerializeField] Text totalMassText;
+
+        [SerializeField] Text blockCountText;
+
+        [SerializeField] Text stateText;
+
+        [SerializeField] Text hoverText;
+
+        Text[] _rows;
+
+        void Awake()
+        {
+            if (rowTemplate != null) rowTemplate.gameObject.SetActive(false);
+        }
+
+        // Matches DemoMode.ApplyState enabling this component.
+        void OnEnable()
+        {
+            if (panelRoot != null) panelRoot.SetActive(true);
+        }
+
+        // Matches DemoMode.ApplyState disabling this component.
+        void OnDisable()
+        {
+            if (panelRoot != null) panelRoot.SetActive(false);
+        }
+
+        void LateUpdate()
         {
             if (controller == null || controller.Session == null) return;
-            var session = controller.Session;
 
-            // Clamped to the space DemoMode's bottom-left panel leaves, so
-            // the palette and the status panel never draw over each other on
-            // a short window (they did at 341 px tall, which is what a
-            // batch-mode screenshot run produces).
-            float available = Screen.height - DemoMode.StatusPanelHeight(true) - 20f;
-            float height = Mathf.Clamp(available, 120f, 400f);
-            GUILayout.BeginArea(new Rect(10, 10, 260, height), GUI.skin.box);
-            GUILayout.Label("Palette (keys 1-7)");
+            var model = BuilderHudModel.Build(controller.Session, controller.HoverVerdictText);
 
-            foreach (var entry in BlockPalette.All())
+            if (titleText != null) titleText.text = model.Title;
+
+            EnsureRowCount(model.Rows.Count);
+            // Bounded by _rows.Length, not model.Rows.Count: if rowTemplate/
+            // rowContainer are not wired yet, EnsureRowCount leaves _rows
+            // empty rather than crashing every frame.
+            int rowCount = _rows.Length < model.Rows.Count ? _rows.Length : model.Rows.Count;
+            for (int i = 0; i < rowCount; i++)
             {
-                bool selected = entry.TypeId == session.SelectedTypeId;
-                string marker = selected ? "> " : "  ";
-                GUILayout.Label($"{marker}{entry.Name}  mass {entry.Mass:0.0}  cost {entry.Cost}");
+                _rows[i].text = model.Rows[i];
             }
 
-            GUILayout.Space(8);
-            GUILayout.Label($"Total mass: {session.TotalMass:0.0}");
-            GUILayout.Label($"Block count: {session.BlockCount}");
-            GUILayout.Label($"State: {session.State}");
-            if (!string.IsNullOrEmpty(controller.HoverVerdictText))
+            if (totalMassText != null) totalMassText.text = model.TotalMassLine;
+            if (blockCountText != null) blockCountText.text = model.BlockCountLine;
+            if (stateText != null) stateText.text = model.StateLine;
+
+            if (hoverText != null)
             {
-                GUILayout.Label($"Hover: {controller.HoverVerdictText}");
+                bool hasHover = model.HoverLine != null;
+                hoverText.gameObject.SetActive(hasHover);
+                if (hasHover) hoverText.text = model.HoverLine;
             }
-            GUILayout.EndArea();
+        }
+
+        // The palette never changes size at runtime, so this only ever grows once.
+        void EnsureRowCount(int count)
+        {
+            if (_rows != null && _rows.Length == count) return;
+            if (rowTemplate == null || rowContainer == null)
+            {
+                _rows = System.Array.Empty<Text>();
+                return;
+            }
+
+            _rows = new Text[count];
+            for (int i = 0; i < count; i++)
+            {
+                var row = Instantiate(rowTemplate, rowContainer);
+                row.gameObject.SetActive(true);
+                _rows[i] = row;
+            }
         }
     }
 }
