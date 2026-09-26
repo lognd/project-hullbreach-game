@@ -8,7 +8,6 @@ namespace Hullbreach.Hud
     // frob:doc docs/design/ui-port.md#hullbreachhud-module-reference
     public readonly struct BuilderHudModel
     {
-        // Always "Palette (keys 1-7)".
         public readonly string Title;
 
         // One line per palette entry, in BlockPalette.All() order.
