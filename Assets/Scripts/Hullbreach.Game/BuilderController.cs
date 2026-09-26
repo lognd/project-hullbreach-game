@@ -4,31 +4,26 @@ using Hullbreach.Builder;
 
 namespace Hullbreach.Game
 {
-    /// <summary>
-    /// The MonoBehaviour adapter for BuilderSession (S30-S33). Lifecycle,
-    /// mouse-to-grid conversion and Gizmo drawing ONLY: every rule about
-    /// what is a legal click lives in BuilderSession/PlacementRules, which
-    /// have no UnityEngine dependency and are exercised in edit-mode tests.
-    ///
-    /// NOT compiled by tools/plaincs/run_tests.sh (it depends on UnityEngine),
-    /// so keep this file thin and let the harness catch regressions in the
-    /// logic it calls into.
-    /// </summary>
+    // The MonoBehaviour adapter for BuilderSession (S30-S33). Lifecycle,
+    // mouse-to-grid conversion and Gizmo drawing ONLY: every rule about
+    // what is a legal click lives in BuilderSession/PlacementRules, which
+    // have no UnityEngine dependency and are exercised in edit-mode tests.
+    //
+    // NOT compiled by tools/plaincs/run_tests.sh (it depends on UnityEngine),
+    // so keep this file thin and let the harness catch regressions in the
+    // logic it calls into.
+    // frob:doc docs/reference/hullbreach-game.md#buildercontroller
     public sealed class BuilderController : MonoBehaviour
     {
-        /// <summary>Camera used to convert the mouse position to world space.</summary>
         [SerializeField] Camera builderCamera;
 
-        /// <summary>The ship's root transform; the grid is authored in this transform's local space.</summary>
         [SerializeField] Transform shipRoot;
 
-        /// <summary>Underlying state machine; exposed read-only so a HUD can bind to it.</summary>
+        // frob:doc docs/reference/hullbreach-game.md#buildercontroller
         public BuilderSession Session { get; private set; }
 
-        /// <summary>Renderer/collider to notify after every mutation, so the
-        /// demo scene's ShipRenderer/ShipCollider rebuild without polling.
-        /// Optional: standalone use (e.g. a future dedicated build scene
-        /// with no ShipBody yet) leaves these null.</summary>
+        // Optional: standalone use (e.g. a future dedicated build scene
+        // with no ShipBody yet) leaves these null.
         [SerializeField] ShipRenderer shipRenderer;
         [SerializeField] ShipCollider shipCollider;
         [SerializeField] ShipController shipController;
@@ -40,12 +35,10 @@ namespace Hullbreach.Game
 
         SpriteRenderer _hoverIndicator;
 
-        /// <summary>Whether the last Hover this frame was valid; drives the
-        /// green/red tint on the runtime hover indicator and the HUD text.</summary>
+        // frob:doc docs/reference/hullbreach-game.md#buildercontroller
         public bool HoverValid => _hoverValid;
 
-        /// <summary>Human text for why the hovered cell is (in)valid, for
-        /// BuilderHud to display without duplicating BuilderSession's switch.</summary>
+        // frob:doc docs/reference/hullbreach-game.md#buildercontroller
         public string HoverVerdictText => _hasHover ? BuilderSession.DescribeVerdict(_hoverVerdict) : string.Empty;
 
         void Awake()
@@ -68,13 +61,10 @@ namespace Hullbreach.Game
             if (Session != null) Session.Changed -= OnSessionChanged;
         }
 
-        /// <summary>
-        /// Hides the hover preview and drops any half-finished two-click
-        /// placement when the builder is switched off. Without this the
-        /// red/green cell outline stayed on screen through the whole of Fly
-        /// mode (Update stops running, so nothing ever cleared it) and a
-        /// pending Orienting state came back the next time Build opened.
-        /// </summary>
+        // Without this the red/green cell outline stayed on screen through
+        // the whole of Fly mode (Update stops running, so nothing ever
+        // cleared it) and a pending Orienting state came back the next time
+        // Build opened.
         void OnDisable()
         {
             _hasHover = false;
@@ -83,14 +73,9 @@ namespace Hullbreach.Game
             Session?.Cancel();
         }
 
-        /// <summary>The runtime hover preview quad, or null before the first
-        /// Update built it; exposed so a play-mode test can assert it is
-        /// hidden in Fly mode.</summary>
+        // frob:doc docs/reference/hullbreach-game.md#buildercontroller
         public GameObject HoverIndicator => _hoverIndicator != null ? _hoverIndicator.gameObject : null;
 
-        /// <summary>Propagates any grid mutation to the renderer/collider and
-        /// re-derives ShipBody's thruster/fin/weapon key lists, since a
-        /// placed or removed block can add or remove any of those.</summary>
         void OnSessionChanged()
         {
             if (shipRenderer != null) shipRenderer.MarkDirty();
@@ -98,30 +83,23 @@ namespace Hullbreach.Game
             if (shipController != null && shipController.Ship != null) shipController.Ship.RebuildDerivedViews();
         }
 
-        /// <summary>
-        /// Places the currently selected block at `key`, exactly as a left
-        /// click over that cell would. Public because mouse position cannot
-        /// be synthesised in a play-mode test, and a builder that is only
-        /// reachable through the mouse is a builder that cannot be proven to
-        /// work. Returns whether the placement was accepted.
-        /// </summary>
+        // Public because mouse position cannot be synthesised in a
+        // play-mode test, and a builder that is only reachable through the
+        // mouse is a builder that cannot be proven to work.
+        // frob:doc docs/reference/hullbreach-game.md#buildercontroller
         public bool TryPlaceAt(int key) => Session != null && Session.Click(key);
 
-        /// <summary>Removes the block at `key`, exactly as a right click over
-        /// that cell would. See <see cref="TryPlaceAt"/>.</summary>
+        // frob:doc docs/reference/hullbreach-game.md#buildercontroller
         public bool TryRemoveAt(int key) => Session != null && Session.Remove(key);
 
-        /// <summary>The placement verdict for `key` with the current
-        /// selection, without clicking: what the hover preview would show.</summary>
+        // frob:doc docs/reference/hullbreach-game.md#buildercontroller
         public Hullbreach.Builder.PlacementVerdict VerdictAt(int key)
             => Session != null ? Session.Hover(key).Verdict : Hullbreach.Builder.PlacementVerdict.OutOfRange;
 
-        /// <summary>
-        /// Pins the hover preview to `key` instead of following the mouse,
-        /// so a screenshot test can show the green/red placement indicator
-        /// (there is no way to move the OS cursor from a play-mode test).
-        /// Pass null to hand the hover back to the mouse.
-        /// </summary>
+        // Lets a screenshot test show the green/red placement indicator;
+        // there is no way to move the OS cursor from a play-mode test.
+        // Pass null to hand the hover back to the mouse.
+        // frob:doc docs/reference/hullbreach-game.md#buildercontroller
         public void PreviewHoverAt(int? key) => _hoverOverride = key;
 
         int? _hoverOverride;
@@ -189,11 +167,6 @@ namespace Hullbreach.Game
             }
         }
 
-        /// <summary>
-        /// Convert the mouse position through the camera and shipRoot into a
-        /// floored grid key, or return false when the mouse is off the plane
-        /// (e.g. no camera assigned).
-        /// </summary>
         bool TryGetHoveredKey(out int key)
         {
             key = 0;
@@ -211,11 +184,9 @@ namespace Hullbreach.Game
             return true;
         }
 
-        /// <summary>
-        /// Positions and colors a runtime-only quad over the hovered cell, so
-        /// the green/red preview is visible in a running build, not just the
-        /// Scene view (OnDrawGizmos never renders in Play mode's Game view).
-        /// </summary>
+        // Runtime-only quad over the hovered cell, so the green/red preview
+        // is visible in a running build, not just the Scene view
+        // (OnDrawGizmos never renders in Play mode's Game view).
         void UpdateHoverIndicator()
         {
             if (_hoverIndicator == null)

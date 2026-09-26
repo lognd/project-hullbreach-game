@@ -5,15 +5,10 @@ using Hullbreach.Structure;
 
 namespace Hullbreach.Game
 {
-    /// <summary>
-    /// Runs the plain-C# StructuralSolver over a ship's grid every
-    /// FixedUpdate, using the forces ShipBody recorded this Step, and applies
-    /// damage/detach when a block's ratios cross DamageModel's thresholds.
-    ///
-    /// Ordered AFTER ShipController (-100) so ship.AppliedForcesThisStep for
-    /// this tick is already populated, and BEFORE ShipRenderer (default 0) so
-    /// the Stress overlay reads this tick's solve, not the previous one.
-    /// </summary>
+    // Ordered AFTER ShipController (-100) so ship.AppliedForcesThisStep for
+    // this tick is already populated, and BEFORE ShipRenderer (default 0) so
+    // the Stress overlay reads this tick's solve, not the previous one.
+    // frob:doc docs/reference/hullbreach-game.md#shipstructure
     [DefaultExecutionOrder(-50)]
     [RequireComponent(typeof(ShipController))]
     public sealed class ShipStructure : MonoBehaviour
@@ -21,82 +16,48 @@ namespace Hullbreach.Game
         [SerializeField] ShipController controller;
         [SerializeField] ShipRenderer renderer_;
 
-        /// <summary>Bounds how often the solver re-runs the linearized
-        /// buckling subspace iteration; forwarded to Solver in Awake so it
-        /// can be tuned per-ship without editing StructuralSolver's default.
-        /// See StructuralSolver.BucklingEveryNTicks for why this must stay
-        /// bounded (the eigen-solve is not free every FixedUpdate).</summary>
+        // Forwarded to Solver in Awake so it can be tuned per-ship without
+        // editing StructuralSolver's default. See
+        // StructuralSolver.BucklingEveryNTicks for why this must stay
+        // bounded (the eigen-solve is not free every FixedUpdate).
         [SerializeField] int bucklingEveryNTicks = 4;
 
-        /// <summary>Number of buckling modes the subspace iteration tracks;
-        /// forwarded to Solver in Awake. See StructuralSolver.BucklingModeCount.</summary>
         [SerializeField] int bucklingModeCount = 4;
 
-        /// <summary>
-        /// Gameplay-force to material-unit conversion, forwarded to
-        /// StructuralSolver.LoadScale in Awake. See that property for why it
-        /// exists; the default is measured, not guessed: at 1.0 the stock
-        /// demo ship peaked at 1.08 of yield under its own full thrust and
-        /// shed both thrusters within 0.2 s of the player pressing W, which
-        /// is the "play mode instantly breaks" report. 0.06 puts that same
-        /// peak near 0.34, inside the 0.3-to-0.5 band the demo is tuned to,
-        /// and gravity alone near 0.02.
-        /// </summary>
+        // Gameplay-force to material-unit conversion, forwarded to
+        // StructuralSolver.LoadScale in Awake; see the reference page for
+        // how this and materialStiffnessScale were calibrated.
         [SerializeField] float loadScale = DefaultLoadScale;
 
-        /// <summary>The calibrated default for <see cref="loadScale"/>, named
-        /// so tests and docs can refer to the same number.</summary>
+        // frob:doc docs/reference/hullbreach-game.md#shipstructure
         public const float DefaultLoadScale = 0.06f;
 
-        /// <summary>
-        /// E-over-yield ratio missing from BlockType's normalized material
-        /// table, forwarded to StructuralSolver.MaterialStiffnessScale in
-        /// Awake. See that property: without it the demo ship read as
-        /// buckling at a small fraction of its own thrust and ShipStructure
-        /// dutifully detached the "buckled" blocks. 200 is a plausible
-        /// E/yield for a stiff-but-not-steel structural material, and it is
-        /// the knob that SEPARATES the two ends of the calibration: it moves
-        /// buckling without touching stress at all, so the stock blob keeps a
-        /// critical load factor in the tens while a slender 1-wide arm still
-        /// folds. Measured at 1.0 the stock ship read a load factor of 0.13
-        /// under its own thrust and ShipStructure detached the blocks that
-        /// "buckled": a rubber ship folding up, not a metal one.
-        /// </summary>
+        // E-over-yield ratio missing from BlockType's normalized material
+        // table, forwarded to StructuralSolver.MaterialStiffnessScale in
+        // Awake; see the reference page for how this was calibrated.
         [SerializeField] float materialStiffnessScale = DefaultMaterialStiffnessScale;
 
-        /// <summary>The calibrated default for
-        /// <see cref="materialStiffnessScale"/>.</summary>
+        // frob:doc docs/reference/hullbreach-game.md#shipstructure
         public const float DefaultMaterialStiffnessScale = 40f;
 
-        /// <summary>
-        /// Only the authoritative simulation may act on Solver.BuckledBlocks
-        /// by detaching blocks: the FE solve is not bit-identical across
-        /// machines, so a client independently detaching from BuckledBlocks
-        /// can desync from the server (see StructuralSolver.BuckledBlocks).
-        /// Non-authoritative instances (clients) still tint BucklingRatio via
-        /// ShipRenderer but skip the break here; they act only on explicit
-        /// block-died events broadcast by the server (see NetMessages.cs).
-        /// </summary>
+        // Only the authoritative simulation may act on Solver.BuckledBlocks
+        // by detaching blocks: the FE solve is not bit-identical across
+        // machines, so a client independently detaching from BuckledBlocks
+        // can desync from the server (see StructuralSolver.BuckledBlocks).
+        // Non-authoritative instances (clients) still tint BucklingRatio via
+        // ShipRenderer but skip the break here; they act only on explicit
+        // block-died events broadcast by the server (see NetMessages.cs).
+        // frob:doc docs/reference/hullbreach-game.md#shipstructure
         public bool Authoritative = true;
 
-        /// <summary>The underlying solver, exposed so ShipRenderer's Stress
-        /// overlay (and diagnostics) can read BlockStresses directly.</summary>
+        // Exposed so ShipRenderer's Stress overlay (and diagnostics) can
+        // read BlockStresses directly.
+        // frob:doc docs/reference/hullbreach-game.md#shipstructure
         public StructuralSolver Solver { get; } = new StructuralSolver();
 
-        /// <summary>
-        /// Seconds a block must stay in the solver's BuckledBlocks set before
-        /// it actually comes off.
-        ///
-        /// Buckling is published by an eigen-solve that only runs every
-        /// BucklingEveryNTicks and only once its subspace iteration has
-        /// converged, so the first tick that reports a sub-unity load factor
-        /// is ALSO the first tick the player could have been told anything.
-        /// Detaching on that tick means the HUD warning and the failure
-        /// arrive in the same frame, which reads as "it just exploded".
-        /// A real column does not collapse instantaneously either: it
-        /// deflects, then goes. This hold is that deflection, and it is what
-        /// makes the warning actionable rather than a post-mortem.
-        /// </summary>
+        // Seconds a block must stay in the solver's BuckledBlocks set
+        // before it actually comes off; see the reference page for why
+        // this hold exists.
         [SerializeField] float bucklingHoldSeconds = 0.4f;
 
         readonly Dictionary<int, float> _buckledFor = new Dictionary<int, float>();
@@ -121,10 +82,8 @@ namespace Hullbreach.Game
             Solver.BucklingModeCount = bucklingModeCount;
         }
 
-        /// <summary>Reads BlockStress.BucklingRatio for one block, 0 if the
-        /// solver has no stress recorded for it yet; wired into ShipRenderer
-        /// as the ExtraRatioSource for the Stress overlay's max(...) and used
-        /// directly by the Buckling overlay.</summary>
+        // Wired into ShipRenderer as the ExtraRatioSource for the Stress
+        // overlay's max(...) and used directly by the Buckling overlay.
         float BucklingRatioFor(int key)
             => Solver.BlockStresses.TryGetValue(key, out var stress) ? stress.BucklingRatio : 0f;
 
@@ -181,14 +140,10 @@ namespace Hullbreach.Game
             }
         }
 
-        /// <summary>
-        /// Advances each currently-buckling block's timer and collects the
-        /// ones that have been buckling for longer than bucklingHoldSeconds
-        /// into <see cref="_buckledLongEnough"/>. A block that stops
-        /// buckling (the player eased off, or load redistributed) loses its
-        /// accumulated time entirely rather than keeping partial credit: it
-        /// survived, and the next overload starts the clock again.
-        /// </summary>
+        // A block that stops buckling (the player eased off, or load
+        // redistributed) loses its accumulated time entirely rather than
+        // keeping partial credit: it survived, and the next overload starts
+        // the clock again.
         void TickBucklingHold(float dt)
         {
             _buckledLongEnough.Clear();
@@ -223,13 +178,11 @@ namespace Hullbreach.Game
 
         void DetachAndCleanUp(BlockGrid grid) => DetachAndCleanUp(grid, _toDetach);
 
-        /// <summary>
-        /// Same break path as the ductile/brittle stress failure above,
-        /// reused for buckled blocks: remove the given keys, then remove
-        /// whatever that stranded, rebuild derived views and mark the
-        /// renderer/collider dirty. Only called for BuckledBlocks when
-        /// Authoritative: see the Authoritative doc comment.
-        /// </summary>
+        // Same break path as the ductile/brittle stress failure above,
+        // reused for buckled blocks: remove the given keys, then remove
+        // whatever that stranded, rebuild derived views and mark the
+        // renderer/collider dirty. Only called for BuckledBlocks when
+        // Authoritative: see the Authoritative comment above.
         void DetachAndCleanUp(BlockGrid grid, IReadOnlyList<int> keys)
         {
             foreach (int key in keys)
