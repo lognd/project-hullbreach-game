@@ -1,5 +1,5 @@
 ---
-id: T-draft-68447a75
+id: T-0087
 title: 'S40-2: Projectiles follow gravity'
 state: queued
 kind: feature
