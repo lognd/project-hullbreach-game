@@ -6,32 +6,15 @@ using Hullbreach.Net;
 
 namespace Hullbreach.Net.Tests
 {
-    /// <summary>
-    /// The full pipeline over LoopbackTransport: a ServerSimulation with two
-    /// ships, and one ClientReplica per ship, run for 200 ticks with
-    /// scripted input (one ship thrusting, one firing). Exercises every
-    /// deliverable together: message encoding, transport delivery with
-    /// simulated jitter/reorder, server authority, and client-side
-    /// derivation of detachment from ordered destruction events alone.
-    ///
-    /// Peer ids are the ids LoopbackTransport itself assigns each endpoint
-    /// (there is no separate "player id" concept in this design): whatever
-    /// id the hub hands the server for a given client's messages IS the peer
-    /// key ServerSimulation.Join/SetInput/Leave use.
-    /// </summary>
+    // The full pipeline over LoopbackTransport: server + two ClientReplica
+    // instances run for 200 scripted ticks with simulated jitter/reorder.
     public class ServerClientEndToEndTests
     {
         const int DelayTicks = 1;
         const int JitterTicks = 3;
 
-        // Because ShipState is unreliable/unordered by design (see
-        // ITransport's contract), a replica's applied pose after any given
-        // Tick is whatever the most recently ARRIVED message says, not
-        // necessarily the most recently SENT one: a jittery transport can
-        // let an older update overtake a newer one. So "matches the server
-        // within quantization error" is checked against the whole recent
-        // window of server poses the transport could plausibly still be
-        // delivering, not against the single latest server pose.
+        // Checked against the recent lag window, not just the latest pose,
+        // since ShipState is unreliable/unordered and can arrive out of order.
         const int Lookback = DelayTicks + JitterTicks + 2;
 
         static ShipSnapshot Design(SnapshotBlock[] blocks) => new ShipSnapshot(0, 0, blocks, 0, 0, 0, 0, 0, 0);
@@ -111,10 +94,8 @@ namespace Hullbreach.Net.Tests
                 PumpClientInbound(client1Transport, replica1, clientTick);
                 PumpClientInbound(client2Transport, replica2, clientTick);
 
-                // "Replica poses match server poses within quantization
-                // error after every state message": once a snapshot has
-                // established the ship, its pose must always be explained
-                // by SOME server pose from the recent lag window.
+                // Once established, pose must be explained by SOME recent
+                // server pose within quantization error.
                 if (replica1.Ships.TryGetValue((ushort)peerThruster, out var repA))
                     AssertPoseExplainedByRecentHistory(repA.Position, historyA, tick);
                 if (replica2.Ships.TryGetValue((ushort)peerCannon, out var repB))

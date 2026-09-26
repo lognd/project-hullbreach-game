@@ -9,35 +9,27 @@ using Hullbreach.World;
 
 namespace Hullbreach.Net
 {
-    /// <summary>
-    /// The authoritative, plain-C# server loop: one ShipBody + StructuralSolver
-    /// per connected peer, a shared GravityField, and a minimal point-body
-    /// projectile simulation (its own IWorldSink), all driven at a fixed tick
-    /// rate. Never touches ITransport directly: every Tick call fills the
-    /// IServerOutbox handed to the constructor, and whatever owns the real
-    /// transport (a MonoBehaviour, a headless loop) drains that outbox and
-    /// forwards it. That separation is deliverable 4's whole point: this
-    /// class, and therefore the entire server simulation, compiles and tests
-    /// without knowing sockets exist.
-    /// </summary>
+    // The authoritative, plain-C# server loop; see the reference page.
+    // frob:doc docs/reference/hullbreach-net.md#serversimulation
     public sealed class ServerSimulation
     {
-        /// <summary>Fixed ticks per second the caller is expected to drive
-        /// Tick() at. Only used to derive Dt and the input timeout in ticks;
-        /// ServerSimulation never sleeps or measures wall-clock time itself.</summary>
+        // Only used to derive Dt and the input timeout in ticks;
+        // ServerSimulation never sleeps or measures wall-clock time itself.
+        // frob:doc docs/reference/hullbreach-net.md#serversimulation
         public float TickRate = 50f;
 
-        /// <summary>Seconds without a fresh SetInput before a peer is
-        /// dropped and its ship removed (S47 criterion 2).</summary>
+        // Seconds without a fresh SetInput before a peer is dropped and its
+        // ship removed (S47 criterion 2).
+        // frob:doc docs/reference/hullbreach-net.md#serversimulation
         public float TimeoutSeconds = 5f;
 
         float Dt => 1f / TickRate;
 
         readonly GravityField _gravity = new GravityField();
 
-        /// <summary>The shared gravity field every server ship falls in.
-        /// Exposed so a test/host can add permanent bodies (planets) before
-        /// the first Tick.</summary>
+        // Exposed so a test/host can add permanent bodies (planets) before
+        // the first Tick.
+        // frob:doc docs/reference/hullbreach-net.md#serversimulation
         public GravityField Gravity => _gravity;
 
         sealed class PeerState
@@ -68,20 +60,18 @@ namespace Hullbreach.Net
 
         readonly List<ProjectileBody> _projectiles = new List<ProjectileBody>();
 
-        /// <summary>This server's own IWorldSink: routes cannon shots into
-        /// the point-body projectile list above and gravity-well drops into
-        /// the shared GravityField (broadcasting a GravityWellSpawned event,
-        /// since a dropped well is a CAUSE clients cannot derive).</summary>
+        // This server's own IWorldSink; see the reference page.
         readonly ServerWorldSink _sink;
 
+        // frob:doc docs/reference/hullbreach-net.md#serversimulation
         public ServerSimulation(IServerOutbox outbox)
         {
             _outbox = outbox ?? throw new ArgumentNullException(nameof(outbox));
             _sink = new ServerWorldSink(this);
         }
 
-        /// <summary>Every ship currently connected, keyed by peer id. Test-
-        /// and diagnostics-only accessor; gameplay code should not need it.</summary>
+        // Test- and diagnostics-only accessor; gameplay code should not need it.
+        // frob:doc docs/reference/hullbreach-net.md#serversimulation
         public IReadOnlyDictionary<int, ShipBody> Ships
         {
             get
@@ -92,20 +82,11 @@ namespace Hullbreach.Net
             }
         }
 
-        /// <summary>
-        /// Admits `peer` with the block layout in `initialDesign`, building a
-        /// fresh ShipBody/StructuralSolver pair wired to the shared
-        /// GravityField and this server's IWorldSink. Re-broadcasts the
-        /// snapshot (reliable) to every OTHER connected peer so they can
-        /// build a replica for the new ship; the joining peer already has
-        /// `initialDesign` locally and does not need it echoed back.
-        /// </summary>
+        // Re-broadcasts the new snapshot to every other peer; see reference page.
+        // frob:doc docs/reference/hullbreach-net.md#serversimulation
         public void Join(int peer, ShipSnapshot initialDesign)
         {
-            // Catch the newcomer up on every ship that already exists,
-            // before adding theirs to _peers, so the loop below (which
-            // broadcasts the newcomer's own snapshot to everyone ELSE)
-            // never doubles back and resends an existing ship to itself.
+            // Runs before adding the newcomer to _peers; see reference page.
             foreach (var kv in _peers)
                 EmitReliable(peer, BuildSnapshot(kv.Value));
 
@@ -135,23 +116,17 @@ namespace Hullbreach.Net
             };
             _peers[peer] = state;
 
-            // Every connected peer (including the joiner itself: it needs a
-            // snapshot of its own ship exactly like everyone else does) gets
-            // this ship's snapshot.
+            // Includes the joiner itself; see the reference page.
             var snapshot = BuildSnapshot(state);
             foreach (var kv in _peers) EmitReliable(kv.Key, snapshot);
         }
 
-        /// <summary>Removes `peer` and its ship. Safe to call for an unknown
-        /// peer (no-op).</summary>
+        // Safe to call for an unknown peer (no-op).
+        // frob:doc docs/reference/hullbreach-net.md#serversimulation
         public void Leave(int peer) => _peers.Remove(peer);
 
-        /// <summary>
-        /// Records `input` as the latest known intent for `peer`, overwriting
-        /// whatever was queued: latest-wins, so a peer that sends every tick
-        /// simply always has fresh input, and one that drops a packet loses
-        /// nothing but that tick's precision.
-        /// </summary>
+        // Latest-wins; see the reference page.
+        // frob:doc docs/reference/hullbreach-net.md#serversimulation
         public void SetInput(int peer, InputMessage input)
         {
             if (!_peers.TryGetValue(peer, out var state)) return;
@@ -160,16 +135,8 @@ namespace Hullbreach.Net
             state.SecondsSinceInput = 0f;
         }
 
-        /// <summary>
-        /// Advances every ship by one fixed tick: apply latest input, Step
-        /// the ship body, tick its structural solver, resolve any damage/
-        /// detachment/buckling this tick produced, then emit one ShipState
-        /// (unreliable) per surviving ship and reliable events for every
-        /// block destroyed/damaged/placed, fragment spawned, powerup
-        /// applied, and well spawned this tick, in a fixed, deterministic
-        /// order (peer id, then event kind) so sequence numbers are
-        /// reproducible given the same inputs.
-        /// </summary>
+        // Advances every ship by one fixed tick, in deterministic order.
+        // frob:doc docs/reference/hullbreach-net.md#serversimulation
         public void Tick()
         {
             _tickIndex++;
@@ -344,10 +311,8 @@ namespace Hullbreach.Net
                 DestroyAndDetach(peer, state, new List<int>(state.Solver.BuckledBlocks));
         }
 
-        /// <summary>
-        /// Removes `keys` (broadcasting a BlockDestroyed for each, in sorted
-        /// key order for determinism), then resolves whatever that stranded.
-        /// </summary>
+        // Broadcasts a BlockDestroyed for each key (sorted for determinism),
+        // then resolves whatever that stranded.
         void DestroyAndDetach(int peer, PeerState state, List<int> keys)
         {
             keys.Sort();
@@ -363,15 +328,7 @@ namespace Hullbreach.Net
             ResolveDetachAfterDestruction(peer, state);
         }
 
-        /// <summary>
-        /// Runs Connectivity.FindDetached/SplitIntoComponents once for the
-        /// whole batch (never per block, see Connectivity's doc), removes
-        /// every stranded block from the authoritative grid without
-        /// individually announcing them (clients derive the same set from
-        /// the BlockDestroyed events already broadcast, per the wire
-        /// design), and broadcasts one FragmentSpawned per resulting
-        /// component so both sides spawn matching debris bodies.
-        /// </summary>
+        // Runs FindDetached/SplitIntoComponents once per batch; see reference page.
         void ResolveDetachAfterDestruction(int peer, PeerState state)
         {
             var grid = state.Ship.Grid;
@@ -416,12 +373,8 @@ namespace Hullbreach.Net
             state.Ship.RebuildDerivedViews();
         }
 
-        /// <summary>
-        /// Test/debug hook: destroys the block at (x,y) on `peer`'s ship as
-        /// if a hit landed there, going through the exact same broadcast +
-        /// detach-resolution path a real projectile impact would. Lets a
-        /// test force a split without simulating the ballistics.
-        /// </summary>
+        // Test/debug hook; see the reference page.
+        // frob:doc docs/reference/hullbreach-net.md#serversimulation
         public void DebugDestroyBlock(int peer, int x, int y)
         {
             if (!_peers.TryGetValue(peer, out var state)) return;
@@ -478,10 +431,7 @@ namespace Hullbreach.Net
             _outbox.Send(peer, reliable: true, buffer, w.Position);
         }
 
-        /// <summary>Broadcasts a reliable event to every connected peer
-        /// (everyone needs to know every ship's destruction/damage/fragment
-        /// events to keep their replicas in sync, not just the ship's own
-        /// owner).</summary>
+        // Broadcasts to every peer, not just the ship's own owner.
         void BroadcastReliable<T>(T message) where T : struct
         {
             foreach (int peer in _peers.Keys)
@@ -507,11 +457,7 @@ namespace Hullbreach.Net
             }
         }
 
-        /// <summary>
-        /// The server's own IWorldSink: spawns cannon shots as simple point
-        /// bodies (no rigid body, no scene object) and routes gravity-well
-        /// drops into the shared field while broadcasting the cause.
-        /// </summary>
+        // The server's own IWorldSink; see the reference page.
         sealed class ServerWorldSink : IWorldSink
         {
             readonly ServerSimulation _owner;
@@ -569,9 +515,7 @@ namespace Hullbreach.Net
         }
     }
 
-    /// <summary>Small BlockGrid helper: the core key, or an out-of-range
-    /// sentinel when the grid has none, so a comparison against a candidate
-    /// key never needs a separate HasValue branch.</summary>
+    // Small BlockGrid helper; see the reference page.
     static class BlockGridExtensions
     {
         public static int CoreKeyOrDefault(this BlockGrid grid) => grid.CoreKey ?? int.MinValue;

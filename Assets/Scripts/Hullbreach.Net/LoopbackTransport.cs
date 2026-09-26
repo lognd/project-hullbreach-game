@@ -3,25 +3,9 @@ using System.Collections.Generic;
 
 namespace Hullbreach.Net
 {
-    /// <summary>
-    /// In-memory transport hub for tests and local (same-process) play: no
-    /// sockets, no threads. <see cref="CreateEndpoint"/> hands back one
-    /// ITransport per logical participant (the server, each client); every
-    /// endpoint can address every other by the peer id CreateEndpoint
-    /// returned for it.
-    ///
-    /// Simulates a lossy, jittery network on purpose (see
-    /// <see cref="UnreliableDropRate"/>/<see cref="DelayTicks"/>/
-    /// <see cref="JitterTicks"/>): unreliable sends may be dropped, and BOTH
-    /// channels may be delivered out of send order, exactly like a real
-    /// transport's internal channels can. Nothing here ever drops or
-    /// duplicates a reliable message; it only reorders and delays it, which
-    /// is why ClientReplica buffers reliable events by sequence number
-    /// rather than trusting arrival order.
-    ///
-    /// Advance time by calling <see cref="Tick"/> once per simulation tick;
-    /// nothing is delivered until enough ticks have passed.
-    /// </summary>
+    // In-memory transport hub for tests/local play; deliberately lossy and
+    // jittery on purpose, see the reference page for why.
+    // frob:doc docs/reference/hullbreach-net.md#loopbacktransport
     public sealed class LoopbackTransport
     {
         struct Pending
@@ -31,10 +15,7 @@ namespace Hullbreach.Net
             public byte[] Data;
         }
 
-        /// <summary>One participant's view of the hub: the ITransport a
-        /// caller actually holds and calls Send/TryReceive on. Thin: all the
-        /// real bookkeeping (timing, drop, delivery) lives on the owning
-        /// LoopbackTransport hub.</summary>
+        // Thin view of the hub; the real bookkeeping lives on the owner.
         sealed class Endpoint : ITransport
         {
             public readonly int Id;
@@ -82,29 +63,25 @@ namespace Hullbreach.Net
         int _tick;
         readonly Random _rng;
 
-        /// <summary>Base delay, in Tick() calls, before a sent message
-        /// becomes deliverable. Zero means "as soon as the next Tick runs".</summary>
+        // Zero means "as soon as the next Tick runs".
+        // frob:doc docs/reference/hullbreach-net.md#loopbacktransport
         public int DelayTicks;
 
-        /// <summary>Extra random delay (0..JitterTicks, inclusive) added on
-        /// top of DelayTicks per message, independently for every send: this
-        /// is what lets two reliable messages sent in order arrive out of
-        /// order, exercising ClientReplica's sequence buffering.</summary>
+        // Added independently per send on top of DelayTicks.
+        // frob:doc docs/reference/hullbreach-net.md#loopbacktransport
         public int JitterTicks;
 
-        /// <summary>Probability (0..1) an unreliable send is silently
-        /// dropped instead of queued. Never applied to reliable sends.</summary>
+        // Never applied to reliable sends.
+        // frob:doc docs/reference/hullbreach-net.md#loopbacktransport
         public float UnreliableDropRate;
 
+        // frob:doc docs/reference/hullbreach-net.md#loopbacktransport
         public LoopbackTransport(int? seed = null)
         {
             _rng = seed.HasValue ? new Random(seed.Value) : new Random();
         }
 
-        /// <summary>
-        /// Registers a new participant on this hub and returns its private
-        /// ITransport view plus the peer id everyone else addresses it by.
-        /// </summary>
+        // frob:doc docs/reference/hullbreach-net.md#loopbacktransport
         public ITransport CreateEndpoint(out int id)
         {
             id = _nextId++;
@@ -114,16 +91,16 @@ namespace Hullbreach.Net
             return endpoint;
         }
 
-        /// <summary>Wires two endpoints together: PeerConnected fires on
-        /// both immediately, each naming the other's id.</summary>
+        // PeerConnected fires on both endpoints immediately.
+        // frob:doc docs/reference/hullbreach-net.md#loopbacktransport
         public void Connect(int a, int b)
         {
             _endpoints[a].RaiseConnected(b);
             _endpoints[b].RaiseConnected(a);
         }
 
-        /// <summary>Marks `id` as gone: fires PeerDisconnected on `other` and
-        /// drops any still-in-flight messages addressed to `id`.</summary>
+        // Fires PeerDisconnected on `other` and drops in-flight messages to `id`.
+        // frob:doc docs/reference/hullbreach-net.md#loopbacktransport
         public void Disconnect(int id, int other)
         {
             if (_endpoints.Remove(id)) _inFlight.Remove(id);
@@ -140,11 +117,9 @@ namespace Hullbreach.Net
             list.Add(new Pending { From = from, ReadyAtTick = _tick + DelayTicks + jitter, Data = data });
         }
 
-        /// <summary>
-        /// Advances the hub's clock by one tick and moves every message
-        /// whose delay has elapsed from in-flight into its target's ready
-        /// queue. Call once per simulation tick.
-        /// </summary>
+        // Moves every message whose delay has elapsed into its target's
+        // ready queue. Call once per simulation tick.
+        // frob:doc docs/reference/hullbreach-net.md#loopbacktransport
         public void Tick()
         {
             _tick++;

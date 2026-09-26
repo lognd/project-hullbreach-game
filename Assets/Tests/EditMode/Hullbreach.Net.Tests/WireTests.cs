@@ -3,9 +3,7 @@ using Hullbreach.Net;
 
 namespace Hullbreach.Net.Tests
 {
-    /// <summary>Round-trips every ByteWriter/ByteReader primitive at its
-    /// extreme values, so a bug in the little-endian packing is caught here
-    /// rather than as a mystery in a higher-level message test.</summary>
+    // Round-trips every ByteWriter/ByteReader primitive at extreme values.
     public class WireTests
     {
         [Test]

@@ -11,14 +11,12 @@ using Hullbreach.Game;
 
 namespace Hullbreach.Demo.Tests
 {
-    // Play-mode proof of ui-port.md section 5 criterion 4: one HudCanvas/EventSystem,
-    // panel visibility per mode, on-screen text matching the model, and a layout
-    // check standing in for the visual check ScreenCapture cannot do headless (D7).
+    // Play-mode proof of ui-port.md section 5 criterion 4: canvas/panel
+    // structure, on-screen text, and a layout check standing in for D7's visual check.
     public sealed class DemoHudTests : DemoSceneFixture
     {
-        // Private [SerializeField]/instance fields are read by reflection rather
-        // than made public, so the views stay exactly the thin MonoBehaviours D4
-        // specifies; the test reaches in instead of widening their contract.
+        // Reads private fields by reflection so views stay the thin
+        // MonoBehaviours D4 specifies.
         static T GetField<T>(object target, string name)
         {
             var field = target.GetType().GetField(name, BindingFlags.Instance | BindingFlags.NonPublic);
@@ -142,14 +140,8 @@ namespace Hullbreach.Demo.Tests
             RectTransform bannerPanel = GetField<GameObject>(banner, "panelRoot").GetComponent<RectTransform>();
             RectTransform statusPanel = GameObject.Find("StatusPanel").GetComponent<RectTransform>();
 
-            // Screen.SetResolution does not take effect in this headless batchmode
-            // host (measured identical world corners with and without it), so a
-            // real window resize cannot drive this check. Instead this reproduces
-            // CanvasScaler's own ScaleWithScreenSize/MatchWidthOrHeight formula to
-            // compute the reference-space canvas extent a given screen size WOULD
-            // produce, and feeds that straight into the root canvas RectTransform
-            // (switched to WorldSpace so it stops being screen-driven) so every
-            // child panel's anchors/sizes lay out exactly as they would for real.
+            // Screen.SetResolution has no effect headless, so this reproduces
+            // CanvasScaler's own formula and feeds it straight to the RectTransform.
             var originalRenderMode = canvas.renderMode;
             var originalScalerEnabled = scaler.enabled;
             var originalAnchorMin = canvasRect.anchorMin;
@@ -203,9 +195,7 @@ namespace Hullbreach.Demo.Tests
             }
         }
 
-        // CanvasScaler's own ScaleWithScreenSize/MatchWidthOrHeight math: the
-        // reference-space size the canvas would end up with for a given real
-        // screen size, so the fake window above lays out identically to a real one.
+        // CanvasScaler's own ScaleWithScreenSize/MatchWidthOrHeight math.
         static Vector2 EffectiveCanvasSize(int screenWidth, int screenHeight, Vector2 referenceResolution, float match)
         {
             float scaleFactor = Mathf.Pow(screenWidth / referenceResolution.x, 1f - match)
