@@ -959,10 +959,18 @@ PrefabInstance:
       propertyPath: m_Name
       value: HudCanvas
       objectReference: {fileID: 0}
+    - target: {fileID: 2396411246158673740, guid: e6da8b218b4903a4c816e612c2d55890, type: 3}
+      propertyPath: demoMode
+      value: 
+      objectReference: {fileID: 2001003}
     - target: {fileID: 2580910447572531606, guid: e6da8b218b4903a4c816e612c2d55890, type: 3}
       propertyPath: controller
       value: 
       objectReference: {fileID: 2002008}
+    - target: {fileID: 8877867163912012005, guid: e6da8b218b4903a4c816e612c2d55890, type: 3}
+      propertyPath: demoMode
+      value: 
+      objectReference: {fileID: 2001003}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

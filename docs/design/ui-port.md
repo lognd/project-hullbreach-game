@@ -127,6 +127,24 @@ assets), but it has three costs that now matter:
 <!-- frob:describes Assets/Scripts/Hullbreach.Hud/FlightTelemetryModel.cs::FlightTelemetryModel.Reverse -->
 <!-- frob:describes Assets/Scripts/Hullbreach.Hud/FlightTelemetryModel.cs::FlightTelemetryModel.Steer -->
 <!-- frob:describes Assets/Scripts/Hullbreach.Hud/FlightTelemetryModel.cs::FlightTelemetryModel.Build -->
+<!-- frob:describes Assets/Scripts/Hullbreach.Hud/StatusPanelModel.cs::ActivePowerup -->
+<!-- frob:describes Assets/Scripts/Hullbreach.Hud/StatusPanelModel.cs::ActivePowerup.ActivePowerup -->
+<!-- frob:describes Assets/Scripts/Hullbreach.Hud/StatusPanelModel.cs::StatusPanelModel -->
+<!-- frob:describes Assets/Scripts/Hullbreach.Hud/StatusPanelModel.cs::StatusPanelModel.ModeLine -->
+<!-- frob:describes Assets/Scripts/Hullbreach.Hud/StatusPanelModel.cs::StatusPanelModel.ControlLines -->
+<!-- frob:describes Assets/Scripts/Hullbreach.Hud/StatusPanelModel.cs::StatusPanelModel.OverlayLine -->
+<!-- frob:describes Assets/Scripts/Hullbreach.Hud/StatusPanelModel.cs::StatusPanelModel.MassBlocksLine -->
+<!-- frob:describes Assets/Scripts/Hullbreach.Hud/StatusPanelModel.cs::StatusPanelModel.PowerupLines -->
+<!-- frob:describes Assets/Scripts/Hullbreach.Hud/StatusPanelModel.cs::StatusPanelModel.VariantLabel -->
+<!-- frob:describes Assets/Scripts/Hullbreach.Hud/StatusPanelModel.cs::StatusPanelModel.Build -->
+<!-- frob:describes Assets/Scripts/Hullbreach.Hud/HullWarningModel.cs::HullWarning -->
+<!-- frob:describes Assets/Scripts/Hullbreach.Hud/HullWarningModel.cs::HullWarningModel -->
+<!-- frob:describes Assets/Scripts/Hullbreach.Hud/HullWarningModel.cs::HullWarningModel.Headline -->
+<!-- frob:describes Assets/Scripts/Hullbreach.Hud/HullWarningModel.cs::HullWarningModel.Detail -->
+<!-- frob:describes Assets/Scripts/Hullbreach.Hud/HullWarningModel.cs::HullWarningModel.Hint -->
+<!-- frob:describes Assets/Scripts/Hullbreach.Hud/HullWarningModel.cs::HullWarningModel.Color -->
+<!-- frob:describes Assets/Scripts/Hullbreach.Hud/HullWarningModel.cs::HullWarningModel.ShowDetails -->
+<!-- frob:describes Assets/Scripts/Hullbreach.Hud/HullWarningModel.cs::HullWarningModel.Build -->
 
 - `HudColor` -- readonly RGBA float struct; the palette constants used
   by the HUD today (thrust red, reverse green, steer white, track dark,
@@ -140,13 +158,16 @@ assets), but it has three costs that now matter:
   channel bar values (label text + clamped fill, steer as signed
   -1..1 with center-origin fill).
 - `StatusPanelModel` -- mode line, control-hint lines for Build/Fly,
-  overlay line, mass/blocks line, and the active powerup lines
-  (`VariantLabel` moves here from `DemoMode`).
+  overlay line, mass/blocks line, and the active powerup lines, built
+  from a list of plain `ActivePowerup` structs (type name, x, y, type
+  id, variant, time left) so the model needs no `ShipBody`; `DemoMode`
+  gathers them (`DemoMode.ActivePowerups`). `VariantLabel` moved here
+  from `DemoMode`.
 - `HullWarningModel` -- from (warning band, max ratio, critical block
   count, worst block name, unscaled time): headline, detail, hint,
   color including the CRITICAL pulse, and whether detail lines show.
-  `HullWarning` enum moves here (the `Hullbreach.Game` name is kept via
-  the tests' `using`s; update them).
+  `HullWarning` enum moved here from `Hullbreach.Game.DemoMode`; the
+  play-mode tests' `using Hullbreach.Hud;` picks it up.
 
 ### `Hullbreach.Game` views (`Assets/Scripts/Hullbreach.Game/Hud/`)
 
@@ -164,8 +185,14 @@ assets), but it has three costs that now matter:
   the standalone widget prefab U3 nests three copies of.
 - `BuilderHud` -- rewritten as a view over `BuilderHudModel`; palette
   rows cloned from a row template.
+
+<!-- frob:describes Assets/Scripts/Hullbreach.Game/Hud/StatusPanelView.cs::StatusPanelView -->
+<!-- frob:describes Assets/Scripts/Hullbreach.Game/Hud/HullWarningBanner.cs::HullWarningBanner -->
+
 - `StatusPanelView` -- view over `StatusPanelModel` and
-  `FlightTelemetryModel`; owns three `ChannelBar`s and the powerup list.
+  `FlightTelemetryModel`; owns three nested `ChannelBar` instances
+  (thrust, reverse, steer) and a powerup row list cloned from a row
+  template, grown once and destroyed back down when powerups expire.
 - `HullWarningBanner` -- view over `HullWarningModel`; shown only in Fly.
 
 ### Editor (`Assets/Editor/Hullbreach.Editor/`, Editor-only asmdef)
@@ -186,15 +213,26 @@ assets), but it has three costs that now matter:
 <!-- frob:describes Assets/Editor/Hullbreach.Editor/HudPrefabBuilder.cs::HudPrefabBuilder.BuildChannelBar -->
 <!-- frob:describes Assets/Editor/Hullbreach.Editor/HudPrefabBuilder.cs::HudPrefabBuilder.BuildChannelBarForce -->
 <!-- frob:describes Assets/Editor/Hullbreach.Editor/HudPrefabBuilder.cs::HudPrefabBuilder.BuildChannelBarPrefab -->
+<!-- frob:describes Assets/Editor/Hullbreach.Editor/HudPrefabBuilder.cs::HudPrefabBuilder.StatusPanelPrefabPath -->
+<!-- frob:describes Assets/Editor/Hullbreach.Editor/HudPrefabBuilder.cs::HudPrefabBuilder.HullWarningBannerPrefabPath -->
 
 - `HudPrefabBuilder` -- builds the prefabs and wires `DemoScene` (D6).
+  U3 adds `AddStatusPanel` and `AddHullWarningBanner`, following
+  `AddBuilderPanel`'s shape, called from `BuildHudCanvasPrefab`
+  alongside it; `AddStatusPanel` instantiates `ChannelBar.prefab` three
+  times (thrust, reverse, steer) as nested children. Neither view's
+  `demoMode` field can be wired at build time (the prefab is built
+  standalone, before `DemoScene`'s `Demo` object exists), so
+  `WireDemoScene` wires it after instantiating `HudCanvas` into the
+  scene, the same way it wires `BuilderHud.controller`.
 
-**Adding a panel** (U2/U3): write one more `AddXxxPanel(GameObject
+**Adding a panel**: write one more `AddXxxPanel(GameObject
 canvasRoot)` method following `AddBuilderPanel`'s shape (build the
 hierarchy, wire any view component's serialized fields via
 `SerializedObject`, save it as its own nested prefab, return the panel
 root), then call it from `BuildHudCanvasPrefab` alongside the existing
-`AddBuilderPanel` call.
+`AddBuilderPanel` call. If the view needs a `DemoMode` reference, wire
+it in `WireDemoScene` instead (see `AddStatusPanel`/`AddHullWarningBanner`).
 
 ## 4. Work units and owners
 

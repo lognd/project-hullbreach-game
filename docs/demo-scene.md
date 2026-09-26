@@ -11,7 +11,7 @@ it beyond "it parses and CI's tree check passes".
 Five hand-authored root GameObjects, fileIDs grouped by the thousands
 digit so it is obvious which object a component belongs to just from its
 fileID, plus a `HudCanvas` instance and an `EventSystem` added on top by
-`HudPrefabBuilder` (U1, see "The uGUI HUD (U1)" below; these two get
+`HudPrefabBuilder` (U1, see "The uGUI HUD (U1-U3)" below; these two get
 Unity-assigned fileIDs, not hand-authored ones):
 
 | fileID prefix | Object | Components (in order) |
@@ -23,7 +23,7 @@ Unity-assigned fileIDs, not hand-authored ones):
 | `2003xxx` | **TargetShip** | Transform, `Rigidbody2D`, **`ShipController`**, **`ShipRenderer`**, **`ShipCollider`**, **`ShipStructure`**, **`OrbitStarter`** (no `BuilderController`; it is never edited) |
 | `2004xxx` | **Gravity** | Transform, **`GravityWorld`** |
 | `2005xxx` | **Powerups** | Transform, **`PowerupSpawner`** |
-| n/a | **HudCanvas** (instance of `Assets/Prefabs/UI/HudCanvas.prefab`) | Canvas, CanvasScaler, GraphicRaycaster, nested `BuilderPanel` with **`BuilderHud`** |
+| n/a | **HudCanvas** (instance of `Assets/Prefabs/UI/HudCanvas.prefab`) | Canvas, CanvasScaler, GraphicRaycaster, **`StatusPanelView`**, **`HullWarningBanner`**, nested `BuilderPanel` with **`BuilderHud`**, nested `StatusPanel` with three `ChannelBar` instances, nested `HullWarningBanner` panel |
 | n/a | **EventSystem** | EventSystem, StandaloneInputModule |
 
 `DemoMode` (on **Demo**, fileID `2001003`) wires everything by direct
@@ -79,7 +79,7 @@ noting if the two ever need to diverge on purpose).
   `(0, -26)` seeking thruster (Thruster variant 1), `(6, -30)`
   anti-gravity gun (Cannon variant 2), each radius `0.6`.
 
-## Controls (see also `DemoMode.OnGUI`'s always-on panel)
+## Controls (see also the always-on `StatusPanel` uGUI view)
 
 **Build mode** (starting mode; player ship frozen):
 
@@ -126,10 +126,11 @@ screen over a flying ship.
 `Stress` (green-to-red by `max(DuctileRatio, BrittleRatio)`),
 `LoadBearing` (magenta on articulation points), `Damage` (white-to-black
 by `DamageFraction`), `Buckling` (blue-to-red by `BlockStress
-.BucklingRatio`). The always-on `OnGUI` panel (bottom-left) shows mode,
-per-mode controls, current overlay, mass, block count, and in Fly mode:
-speed, angular speed, three control-channel bars, and one line per
-active powerup (`DemoMode.DrawActivePowerups`, e.g. "Cannon (0,2):
+.BucklingRatio`). The always-on `StatusPanel` uGUI view (bottom-left,
+`StatusPanelView` over `StatusPanelModel`) shows mode, per-mode
+controls, current overlay, mass, block count, and in Fly mode: speed,
+angular speed, three control-channel bars, and one line per active
+powerup (gathered by `DemoMode.ActivePowerups`, e.g. "Cannon (0,2):
 Gravity gun 6.2 s").
 
 The **control bars** read straight off `ShipBody.ForwardThrottleMean`,
@@ -141,7 +142,8 @@ centered tick). All three RAMP rather than snapping, over the ~1 s
 `ThrusterUpgrades` ramp time for stock parts.
 
 A separate **structural readout** sits top-center in Fly mode
-(`DemoMode.DrawHullWarning`): green `Hull: OK` below 0.5 of yield,
+(`HullWarningBanner` over `HullWarningModel`, sourced from `DemoMode`'s
+warning properties): green `Hull: OK` below 0.5 of yield,
 yellow `Hull: STRAIN` from 0.5, flashing red `Hull: CRITICAL` from 0.8
 or whenever the critical load factor drops below 1.5. When it is not OK
 it also names how many blocks are in the red, the worst one's type, and
@@ -150,22 +152,31 @@ any overlay, `ShipRenderer` pulses any block at or above
 `FlashRatioThreshold` (0.8) toward alarm red, so the player can see
 WHERE the problem is without switching to the Stress overlay.
 
-## The uGUI HUD (U1)
+## The uGUI HUD (U1-U3)
 
 <!-- frob:describes Assets/Scripts/Hullbreach.Game/BuilderHud.cs::BuilderHud -->
 
-The builder palette panel (top-left) is a uGUI view now, not `OnGUI`
-(the IMGUI-to-uGUI port, `docs/design/ui-port.md`, U1). `DemoScene` gains
-a `HudCanvas` instance (`Assets/Prefabs/UI/HudCanvas.prefab`, nested
-`BuilderPanel.prefab`) and an `EventSystem`
+The whole HUD is uGUI now, not immediate-mode drawing (the IMGUI-to-uGUI
+port, `docs/design/ui-port.md`, U1-U3). `DemoScene` gains a `HudCanvas`
+instance (`Assets/Prefabs/UI/HudCanvas.prefab`, nested `BuilderPanel`,
+`StatusPanel` and `HullWarningBanner` prefabs) and an `EventSystem`
 (`StandaloneInputModule`), both added by
-`Assets/Editor/Hullbreach.Editor/HudPrefabBuilder.cs`. The `BuilderHud`
-component now lives on the `HudCanvas` instance instead of `Demo`, and
-`DemoMode`'s `builderHud` field points at it; `DemoMode.ApplyState`
-enabling/disabling that component still shows/hides the panel exactly as
-before (its `OnEnable`/`OnDisable` toggle the panel's root GameObject).
-The status panel and hull warning banner (U2/U3) are still drawn by
-`DemoMode.OnGUI` until those units land.
+`Assets/Editor/Hullbreach.Editor/HudPrefabBuilder.cs`. The `BuilderHud`,
+`StatusPanelView` and `HullWarningBanner` components all live on the
+`HudCanvas` instance instead of `Demo`; `DemoMode`'s `builderHud` field
+still points at `BuilderHud`, and `DemoMode.ApplyState`
+enabling/disabling that component still shows/hides the palette panel
+exactly as before (its `OnEnable`/`OnDisable` toggle the panel's root
+GameObject). `StatusPanelView` and `HullWarningBanner` instead read
+`DemoMode`'s public state (`State`, `PlayerShip`, `PlayerRenderer`,
+`Warning`, `MaxStressRatio`, `CriticalBlockCount`, `CriticalBlockName`,
+`ActivePowerups()`) every `LateUpdate` and toggle their own visibility
+(status panel always on; hull warning banner Fly-only), so nothing in
+`DemoMode` needs to know these views exist. `DemoMode` no longer has an
+`OnGUI` at all (D8): the drawing methods, `StatusPanelHeight` and the
+bar-texture helpers were deleted; `DemoMode` keeps computing
+`Warning`/`MaxStressRatio`/`CriticalBlockCount` (`Hullbreach.Hud
+.HullWarning` now, moved out of `Hullbreach.Game`).
 
 ## Resetting
 

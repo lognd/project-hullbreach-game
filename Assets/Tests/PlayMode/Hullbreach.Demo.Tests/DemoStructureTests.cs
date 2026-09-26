@@ -5,6 +5,7 @@ using UnityEngine;
 using UnityEngine.TestTools;
 using Hullbreach.Core;
 using Hullbreach.Game;
+using Hullbreach.Hud;
 
 namespace Hullbreach.Demo.Tests
 {

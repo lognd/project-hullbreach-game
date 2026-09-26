@@ -94,7 +94,7 @@ Concretely, from each `.asmdef`'s `references`:
   adapters: `ShipController`, `BuilderController`, `ShipRenderer`,
   `ShipStructure`, `WorldSink`, `GravityWorld`, `Powerup`/`PowerupSpawner`,
   `Projectile`/`ProjectileSpawner`, `DemoMode`, `BuilderHud`,
-  `CameraFollow`.
+  `StatusPanelView`, `HullWarningBanner`, `ChannelBar`, `CameraFollow`.
 
 If you find yourself wanting to `using UnityEngine` inside `Ship`,
 `Structure`, `Builder`, `Core`, `World`, `Net`, or `Hud`, that is a sign the code
