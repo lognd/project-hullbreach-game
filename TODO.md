@@ -75,3 +75,12 @@ S46 (win by breaching the core), S48, and the E14 stretch goals.
       job that runs `frob check` once that release ships. See
       [docs/frob.md](docs/frob.md) and
       [docs/design/frob-and-backlog.md](docs/design/frob-and-backlog.md).
+- [ ] frob: `frob sys audit` exits non-zero on the two ticket-bound
+      SYS114 waivers (T-0041) because frob double-counts them as stale
+      (frob T-draft-cdd9d556, 0.534.0). The reliability view already
+      reports them as waived; treat that exit as a known false gap.
+- [ ] frob: `frob ticket new --points` drops the points (frob
+      T-draft-e0ce4669, 0.534.0); set points with `frob ticket points`.
+- [ ] frob: the three Sprint 0 tickets (label `jira-status:done`) stay
+      queued until frob can close pre-frob work without evidence
+      (`close --historical`, frob T-draft-d3c3c73a, 0.535.0).
