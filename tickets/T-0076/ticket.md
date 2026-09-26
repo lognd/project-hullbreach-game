@@ -1,5 +1,5 @@
 ---
-id: T-draft-28b6c62d
+id: T-0076
 title: 'S37-1: Stress and load-bearing overlays in ShipRenderer tinting blocks by
   failure ratio'
 state: queued
