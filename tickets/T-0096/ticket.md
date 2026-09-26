@@ -1,5 +1,5 @@
 ---
-id: T-draft-c176ce6d
+id: T-0096
 title: 'S44-1: SeekingThrusterBehaviour: homing shot that welds a firing thruster
   onto the target'
 state: queued
