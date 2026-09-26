@@ -24,5 +24,7 @@
   teammate-facing companion to `design/frob-and-backlog.md` above --
   what frob is here, the comment rules, the ticket workflow, and the
   current CHECK001 blocker.
+- `backlog.md`: the Jira -> frob ticket cross-reference for this repo,
+  one row per imported issue.
 - `reference/`: one page per assembly, the target of every
   `// frob:doc` link in the code.
