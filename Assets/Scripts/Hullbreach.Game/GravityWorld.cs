@@ -5,11 +5,8 @@ using Hullbreach.World;
 
 namespace Hullbreach.Game
 {
-    /// <summary>
-    /// One planet/moon authored in the Inspector: its GravityBody plus the
-    /// color used for its runtime-generated disc, so the scene needs no
-    /// baked sprites to show planets.
-    /// </summary>
+    // One planet/moon authored in the Inspector; see the reference page.
+    // frob:doc docs/reference/hullbreach-game.md#planetspec
     [Serializable]
     public struct PlanetSpec
     {
@@ -45,31 +42,21 @@ namespace Hullbreach.Game
         }
     }
 
-    /// <summary>
-    /// Scene-level gravity setup: builds a single GravityField from the
-    /// Inspector-authored PlanetSpec list on Awake and exposes it as a
-    /// static singleton so ShipController and Projectile can pick it up
-    /// without a scene-graph reference. Also spawns one visible disc per
-    /// planet, since the field itself is invisible plain data.
-    ///
-    /// "Singleton-ish": Field is null until some GravityWorld's Awake has
-    /// run, and DemoMode/ShipController read it lazily (null-safe) rather
-    /// than requiring load order: there is exactly one GravityWorld in
-    /// any scene that uses gravity, same convention as the rest of the demo.
-    /// </summary>
+    // Scene-level gravity setup, exposed as a static singleton;
+    // see the reference page for the load-order contract.
+    // frob:doc docs/reference/hullbreach-game.md#gravityworld
     [DefaultExecutionOrder(-200)]
     public sealed class GravityWorld : MonoBehaviour
     {
         [SerializeField] PlanetSpec[] planets = Array.Empty<PlanetSpec>();
 
-        /// <summary>Restitution used for every planet's surface bounce.
-        /// A single tunable rather than per-planet, since the demo has no
-        /// need yet for a bouncy moon next to a sticky one.</summary>
+        // A single tunable rather than per-planet, since the demo has no
+        // need yet for a bouncy moon next to a sticky one.
         [SerializeField] float surfaceRestitution = 0.2f;
 
-        /// <summary>The live field this scene's ships and projectiles pull
-        /// from. Null before any GravityWorld's Awake runs, or in a scene
-        /// with no GravityWorld at all (e.g. RocketScene).</summary>
+        // Null before any GravityWorld's Awake runs, or in a scene with no
+        // GravityWorld at all (e.g. RocketScene).
+        // frob:doc docs/reference/hullbreach-game.md#gravityworld
         public static GravityField Field { get; private set; }
 
         void Awake()
@@ -77,9 +64,8 @@ namespace Hullbreach.Game
             var field = new GravityField();
             foreach (var planet in planets)
             {
-                // A freshly-resized Inspector array serializes softRadiusFactor
-                // as 0, not the constructor's default, so treat <= 0 as "use
-                // the default factor" rather than a literal zero soft radius.
+                // A freshly-resized array serializes softRadiusFactor as 0,
+                // so treat <= 0 as "use the default factor".
                 float factor = planet.softRadiusFactor > 0f
                     ? planet.softRadiusFactor
                     : GravityBody.DefaultSoftRadiusFactor;
@@ -94,9 +80,8 @@ namespace Hullbreach.Game
 
         void OnDestroy()
         {
-            // Only clear the static if we are the GravityWorld that set it,
-            // so tearing down a second, unrelated instance (e.g. during
-            // scene-transition tests) cannot blank out a still-live field.
+            // Only clear the static if we are the instance that set it,
+            // so tearing down an unrelated one cannot blank a live field.
             if (ReferenceEquals(Field, null)) return;
             Field = null;
         }
