@@ -2,21 +2,14 @@ using UnityEngine;
 
 namespace Hullbreach.Game
 {
-    /// <summary>
-    /// Smoothly follows a target transform on the XY plane, keeping the
-    /// camera's own Z (its distance from the 2D scene). Orthographic size is
-    /// left to the Inspector/scene value rather than hardcoded here, so
-    /// designers can still tune framing without touching code.
-    /// </summary>
+    // frob:doc docs/reference/hullbreach-game.md#camerafollow
     public sealed class CameraFollow : MonoBehaviour
     {
         [SerializeField] Transform target;
 
-        /// <summary>Higher is snappier; lower drifts more before catching up.</summary>
         [SerializeField] float smoothing = 5f;
 
-        /// <summary>Assign a new follow target at runtime, e.g. after
-        /// switching which ship is "the player".</summary>
+        // frob:doc docs/reference/hullbreach-game.md#camerafollow
         public void SetTarget(Transform newTarget) => target = newTarget;
 
         void LateUpdate()

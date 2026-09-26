@@ -5,20 +5,20 @@ using Hullbreach.Hud;
 
 namespace Hullbreach.Game
 {
-    /// <summary>Which of the two demo scene states is active.</summary>
+    // frob:doc docs/reference/hullbreach-game.md#demostate
     public enum DemoState { Build, Fly }
 
-    /// <summary>
-    /// Top-level demo scene conductor: toggles between Build (ship frozen
-    /// exactly where it is, BuilderController editing the live grid) and Fly
-    /// (simulation on, WASD + arrows + Space + O + R). The status panel and
-    /// hull warning banner are uGUI views (StatusPanelView,
-    /// HullWarningBanner) driven by the read-only state exposed here (D8).
-    ///
-    /// Build mode PAUSES the ship rather than resetting it: switching modes
-    /// must never move the ship (that was the "Tab teleports me" bug). Only R
-    /// repositions anything.
-    /// </summary>
+    // Top-level demo scene conductor: toggles between Build (ship frozen
+    // exactly where it is, BuilderController editing the live grid) and Fly
+    // (simulation on, WASD + arrows + Space + O + R). The status panel and
+    // hull warning banner are uGUI views (StatusPanelView,
+    // HullWarningBanner) driven by the read-only state exposed here (D8,
+    // see ui-port.md#2-decisions).
+    //
+    // Build mode PAUSES the ship rather than resetting it: switching modes
+    // must never move the ship (that was the "Tab teleports me" bug). Only R
+    // repositions anything.
+    // frob:doc docs/reference/hullbreach-game.md#demomode
     public sealed class DemoMode : MonoBehaviour
     {
         [SerializeField] ShipController playerShip;
@@ -28,33 +28,27 @@ namespace Hullbreach.Game
         [SerializeField] ShipRenderer playerRenderer;
         [SerializeField] ShipStructure playerStructure;
 
-        /// <summary>When set, the ship STARTS on (and the R key returns it
-        /// to) a preset circular orbit (orbitStartPosition around
-        /// orbitBodyIndex) instead of dead rest at the origin. Off by default
-        /// so scenes without a GravityWorld (RocketScene) behave exactly as
-        /// before.</summary>
+        // When set, the ship STARTS on (and the R key returns it to) a
+        // preset circular orbit (orbitStartPosition around orbitBodyIndex)
+        // instead of dead rest at the origin. Off by default so scenes
+        // without a GravityWorld (RocketScene) behave exactly as before.
         [SerializeField] bool startInOrbit = false;
 
-        /// <summary>World-space position the ship starts at, and that the R
-        /// key resets to, when startInOrbit is set; the orbital velocity is
-        /// computed from this position, not authored separately, so moving
-        /// the start point in the Inspector can never leave a mismatched
-        /// velocity behind.</summary>
+        // The orbital velocity is computed from this position, not
+        // authored separately, so moving the start point in the Inspector
+        // can never leave a mismatched velocity behind.
         [SerializeField] Vector2 orbitStartPosition = Vector2.zero;
 
-        /// <summary>Index (in GravityWorld's planet list / add order) of the
-        /// body the orbit start position orbits.</summary>
         [SerializeField] int orbitBodyIndex = 0;
 
-        /// <summary>Current mode, Build until the player presses Tab.</summary>
+        // frob:doc docs/reference/hullbreach-game.md#demomode
         public DemoState State { get; private set; } = DemoState.Build;
 
-        /// <summary>
-        /// Where player intent comes from. Defaults to the legacy Input
-        /// Manager bindings; a play-mode test swaps in a ScriptedDemoInput.
-        /// Assigning this also pushes the same source onto the player's
-        /// ShipController, so a test only has to wire one object.
-        /// </summary>
+        // Defaults to the legacy Input Manager bindings; a play-mode test
+        // swaps in a ScriptedDemoInput. Assigning this also pushes the same
+        // source onto the player's ShipController, so a test only has to
+        // wire one object.
+        // frob:doc docs/reference/hullbreach-game.md#demomode
         public IDemoInput InputSource
         {
             get => _inputSource;
@@ -67,48 +61,41 @@ namespace Hullbreach.Game
 
         IDemoInput _inputSource = LegacyDemoInput.Instance;
 
-        /// <summary>The player's ShipController, exposed so play-mode tests
-        /// (and any future HUD) can reach the live ship without a scene
-        /// search that depends on GameObject names.</summary>
+        // frob:doc docs/reference/hullbreach-game.md#demomode
         public ShipController PlayerShip => playerShip;
 
-        /// <summary>The player's ShipRenderer; see <see cref="PlayerShip"/>.</summary>
+        // frob:doc docs/reference/hullbreach-game.md#demomode
         public ShipRenderer PlayerRenderer => playerRenderer;
 
-        /// <summary>The player's ShipStructure; see <see cref="PlayerShip"/>.</summary>
+        // frob:doc docs/reference/hullbreach-game.md#demomode
         public ShipStructure PlayerStructure => playerStructure;
 
-        /// <summary>The scene's BuilderController; see <see cref="PlayerShip"/>.</summary>
+        // frob:doc docs/reference/hullbreach-game.md#demomode
         public BuilderController Builder => builder;
 
-        /// <summary>Where R sends the ship when startInOrbit is set.</summary>
+        // frob:doc docs/reference/hullbreach-game.md#demomode
         public Vector2 OrbitStartPosition => orbitStartPosition;
 
-        /// <summary>Whether this scene starts the player on a circular orbit.</summary>
+        // frob:doc docs/reference/hullbreach-game.md#demomode
         public bool StartsInOrbit => startInOrbit;
 
-        /// <summary>The structural warning band computed on the most recent
-        /// frame, exposed so a play-mode test can assert the player is warned
-        /// BEFORE blocks start coming off.</summary>
+        // Exposed so a play-mode test can assert the player is warned
+        // BEFORE blocks start coming off.
+        // frob:doc docs/reference/hullbreach-game.md#demomode
         public HullWarning Warning { get; private set; } = HullWarning.Ok;
 
-        /// <summary>Max of DuctileRatio/BrittleRatio/BucklingRatio across the
-        /// player's blocks on the most recent frame; the number behind
-        /// <see cref="Warning"/>.</summary>
+        // frob:doc docs/reference/hullbreach-game.md#demomode
         public float MaxStressRatio { get; private set; }
 
-        /// <summary>How many of the player's blocks are above the flashing-red
-        /// threshold (0.8) right now.</summary>
+        // frob:doc docs/reference/hullbreach-game.md#demomode
         public int CriticalBlockCount { get; private set; }
 
-        /// <summary>Name of the first critical block found on the most
-        /// recent frame (empty if none); the "worst block" named by the
-        /// hull warning banner.</summary>
+        // frob:doc docs/reference/hullbreach-game.md#demomode
         public string CriticalBlockName => _criticalBlockName;
 
-        /// <summary>The active powerups on the player's ship right now, as
-        /// plain data StatusPanelModel can consume without a ShipBody
-        /// reference (D3).</summary>
+        // Plain data StatusPanelModel can consume without a ShipBody
+        // reference (D3).
+        // frob:doc docs/reference/hullbreach-game.md#demomode
         public System.Collections.Generic.IReadOnlyList<ActivePowerup> ActivePowerups()
         {
             var result = new System.Collections.Generic.List<ActivePowerup>();
@@ -129,15 +116,13 @@ namespace Hullbreach.Game
             return result;
         }
 
-        /// <summary>Ratio at or above which a block is "in the red": flashed
-        /// by ShipRenderer and counted in <see cref="CriticalBlockCount"/>.</summary>
+        // frob:doc docs/reference/hullbreach-game.md#demomode
         public const float CriticalRatio = 0.8f;
 
-        /// <summary>Ratio at or above which the HUD reads STRAIN.</summary>
+        // frob:doc docs/reference/hullbreach-game.md#demomode
         public const float StrainRatio = 0.5f;
 
-        /// <summary>Critical load factor below which buckling alone escalates
-        /// the warning to CRITICAL, however low the stress ratios are.</summary>
+        // frob:doc docs/reference/hullbreach-game.md#demomode
         public const float CriticalLoadFactorFloor = 1.5f;
 
         string _criticalBlockName = string.Empty;
@@ -162,27 +147,22 @@ namespace Hullbreach.Game
             ApplyState();
         }
 
-        /// <summary>
-        /// Switches mode and applies it. Public so a play-mode test can drive
-        /// the toggle without synthesising a Tab key press. Switching modes
-        /// never moves the ship: Build pauses it in place, Fly resumes it.
-        /// </summary>
+        // Public so a play-mode test can drive the toggle without
+        // synthesising a Tab key press. Switching modes never moves the
+        // ship: Build pauses it in place, Fly resumes it.
+        // frob:doc docs/reference/hullbreach-game.md#demomode
         public void SetState(DemoState state)
         {
             State = state;
             ApplyState();
         }
 
-        /// <summary>Toggles Build and Fly, exactly as pressing Tab does.</summary>
+        // frob:doc docs/reference/hullbreach-game.md#demomode
         public void ToggleState() => SetState(State == DemoState.Build ? DemoState.Fly : DemoState.Build);
 
-        /// <summary>
-        /// Puts the player back on the start state: the preset circular orbit
-        /// when startInOrbit is set (velocity derived from the position, so
-        /// the two can never disagree), otherwise dead rest at the origin.
-        /// This is the ONLY thing that moves the ship without the player
-        /// flying it, and it is bound to R alone.
-        /// </summary>
+        // The ONLY thing that moves the ship without the player flying it,
+        // bound to R alone.
+        // frob:doc docs/reference/hullbreach-game.md#demomode
         public void ResetPlayer()
         {
             if (playerShip == null) return;
@@ -198,10 +178,9 @@ namespace Hullbreach.Game
             }
         }
 
-        /// <summary>The circular-orbit velocity implied by orbitStartPosition,
-        /// or zero when this scene has no gravity field. Exposed so a test can
-        /// assert the reset lands on exactly this velocity rather than
-        /// recomputing the formula itself.</summary>
+        // Exposed so a test can assert the reset lands on exactly this
+        // velocity rather than recomputing the formula itself.
+        // frob:doc docs/reference/hullbreach-game.md#demomode
         public Vector2 OrbitStartVelocity()
         {
             var field = GravityWorld.Field;
@@ -231,11 +210,8 @@ namespace Hullbreach.Game
             UpdateWarning();
         }
 
-        /// <summary>
-        /// Recomputes the structural warning band from this frame's solve and
-        /// tells ShipRenderer which blocks to flash. Runs every frame in both
-        /// modes so the player is never looking at a stale "OK".
-        /// </summary>
+        // Runs every frame in both modes so the player is never looking at
+        // a stale "OK".
         void UpdateWarning()
         {
             MaxStressRatio = 0f;
@@ -282,12 +258,10 @@ namespace Hullbreach.Game
             _ => OverlayMode.None,
         };
 
-        /// <summary>
-        /// Applies the current mode. Build freezes the ship IN PLACE: the
-        /// plain-C# simulation stops stepping AND the Rigidbody2D stops
-        /// simulating, so neither can drift away from the other while the
-        /// player is editing. Fly resumes both from exactly that state.
-        /// </summary>
+        // Build freezes the ship IN PLACE: the plain-C# simulation stops
+        // stepping AND the Rigidbody2D stops simulating, so neither can
+        // drift away from the other while the player is editing. Fly
+        // resumes both from exactly that state.
         void ApplyState()
         {
             bool building = State == DemoState.Build;
