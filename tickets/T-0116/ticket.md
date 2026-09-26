@@ -1,5 +1,5 @@
 ---
-id: T-draft-02b7fcf6
+id: T-0116
 title: 'S51-1: Pickup spawning at documented intervals, collected on touch'
 state: queued
 kind: feature
