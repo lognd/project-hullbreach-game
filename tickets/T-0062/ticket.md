@@ -1,5 +1,5 @@
 ---
-id: T-draft-af3c1e51
+id: T-0062
 title: 'S32-1: Core-seeding placement rule: an empty grid accepts only a core, and
   the core cannot be removed'
 state: queued
