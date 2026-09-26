@@ -1,5 +1,5 @@
 ---
-id: T-draft-75a2c31e
+id: T-0053
 title: 'S28-3: Ready-up handshake and match start with both ships visible'
 state: queued
 kind: feature
