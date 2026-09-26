@@ -1,7 +1,7 @@
 ---
 id: T-draft-935f1161
 title: 'S0-1: Create a couple drawing mock-ups of what the game will look like.'
-state: queued
+state: in-progress
 kind: feature
 origin: human
 created: '2026-09-26'
@@ -23,8 +23,8 @@ tokens_cache_read: null
 usage: null
 runs_last_parallel_safe: false
 runs_last_parallel_safe_reason: null
-worktree: null
-branch: null
+worktree: /home/logan/projects/project-hullbreach/game
+branch: mcnairrobotics/backlog-epics
 scope_breadth_ack: false
 scope_breadth_ack_reason: null
 no_scope_declared: true
