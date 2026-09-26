@@ -20,7 +20,9 @@ namespace Hullbreach.Ship.Behaviours
             float2 r = ctx.LocalCenter - com;
             float crossRPerp = r.x * perp.y - r.y * perp.x;
 
-            float2 direction = (crossRPerp >= 0f) == (updated >= 0f) ? perp : -perp;
+            // Steer +1 must yield clockwise (negative) torque, so the fin
+            // pushes opposite to the lever-arm sign that would match steer.
+            float2 direction = (crossRPerp >= 0f) != (updated >= 0f) ? perp : -perp;
             float2 force = direction * math.abs(updated) * ctx.Ship.FinForce;
             ctx.AddForceLocal(force);
         }

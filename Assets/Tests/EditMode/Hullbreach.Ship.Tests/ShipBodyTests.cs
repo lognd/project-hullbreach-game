@@ -167,7 +167,7 @@ namespace Hullbreach.Ship.Tests
         }
 
         [Test]
-        public void FinPair_TorqueMatchesSteerSign_WithNoNetLinearForce()
+        public void FinPair_SteerRightTurnsClockwise_WithNoNetLinearForce()
         {
             var ship = new ShipBody();
             ship.Grid.TryAdd(BlockKey.Pack(0, 0), new Block(BlockTypes.Core));
@@ -179,10 +179,28 @@ namespace Hullbreach.Ship.Tests
             // Fast ramp (level 3) so a handful of steps reach near-full authority.
             for (int i = 0; i < 30; i++) ship.Step(new ShipInput(0f, 1f, false), 1f / 60f);
 
-            Assert.Greater(ship.LastAngularAcceleration, 0f,
-                "steer = +1 must produce torque with the sign of the requested turn");
+            Assert.Less(ship.LastAngularAcceleration, 0f,
+                "steer = +1 must produce clockwise (negative) torque");
             Assert.AreEqual(0f, ship.LastLinearAcceleration.y, 1e-3f,
                 "a symmetric fin pair must be a pure couple: no net linear force");
+        }
+
+        [Test]
+        public void FinPair_SteerRight_DecreasesRotation_SteerLeft_IncreasesRotation()
+        {
+            var right = new ShipBody();
+            right.Grid.TryAdd(BlockKey.Pack(0, 0), new Block(BlockTypes.Core));
+            right.Grid.TryAdd(BlockKey.Pack(2, 0), new Block(BlockTypes.Fin, 0b1101));
+            right.Grid.TryAdd(BlockKey.Pack(-2, 0), new Block(BlockTypes.Fin, 0b1101));
+            for (int i = 0; i < 30; i++) right.Step(new ShipInput(0f, 1f, false), 1f / 60f);
+            Assert.Less(right.Rotation, 0f, "steer = +1 must turn the ship clockwise");
+
+            var left = new ShipBody();
+            left.Grid.TryAdd(BlockKey.Pack(0, 0), new Block(BlockTypes.Core));
+            left.Grid.TryAdd(BlockKey.Pack(2, 0), new Block(BlockTypes.Fin, 0b1101));
+            left.Grid.TryAdd(BlockKey.Pack(-2, 0), new Block(BlockTypes.Fin, 0b1101));
+            for (int i = 0; i < 30; i++) left.Step(new ShipInput(0f, -1f, false), 1f / 60f);
+            Assert.Greater(left.Rotation, 0f, "steer = -1 must turn the ship counter-clockwise");
         }
 
         [Test]
