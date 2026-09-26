@@ -1,5 +1,5 @@
 ---
-id: T-draft-5bd4290b
+id: T-0028
 title: 'S39: Fly a ship that handles like it was built'
 state: queued
 kind: feature
