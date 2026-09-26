@@ -1,5 +1,5 @@
 ---
-id: T-draft-35a383c1
+id: T-0017
 title: 'S28: Host or join a LAN match'
 state: queued
 kind: feature
