@@ -1,5 +1,5 @@
 ---
-id: T-draft-6d78ff59
+id: T-0063
 title: 'S32-2: Detect a destroyed or isolated core through the connectivity analysis'
 state: queued
 kind: feature
