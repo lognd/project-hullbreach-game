@@ -80,7 +80,7 @@ S46 (win by breaching the core), S48, and the E14 stretch goals.
       (frob T-6584, 0.534.0). The reliability view already
       reports them as waived; treat that exit as a known false gap.
 - [ ] frob: `frob ticket new --points` drops the points (frob
-      T-6586, 0.534.0); set points with `frob ticket points`.
+      T-5815, landed on frob dev; reaches the tool at its next refresh); set points with `frob ticket points`.
 - [ ] frob: the three Sprint 0 tickets (label `jira-status:done`) stay
       queued until frob can close pre-frob work without evidence
       (`close --historical`, frob T-6585, 0.535.0).
