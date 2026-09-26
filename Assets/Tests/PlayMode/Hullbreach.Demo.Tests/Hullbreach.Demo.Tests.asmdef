@@ -9,6 +9,7 @@
         "Hullbreach.Builder",
         "Hullbreach.Net",
         "Hullbreach.Game",
+        "Hullbreach.Hud",
         "Unity.Mathematics",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner"
