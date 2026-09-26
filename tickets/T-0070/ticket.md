@@ -1,5 +1,5 @@
 ---
-id: T-draft-abf6e46c
+id: T-0070
 title: 'S35-1: BlockGrid design serialization and validation on load'
 state: queued
 kind: feature
