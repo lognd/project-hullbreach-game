@@ -100,10 +100,7 @@ namespace Hullbreach.Net.Tests
         [Test]
         public void Jitter_CanReorderTwoReliableMessages()
         {
-            // With a wide jitter window and a fixed seed that is known to
-            // reorder, the second message sent can arrive before the first.
-            // ClientReplica.ApplyReliable is what makes that safe; this test
-            // only proves the transport is actually capable of doing it.
+            // A wide jitter window with a fixed seed known to reorder.
             var hub = new LoopbackTransport(seed: 42) { DelayTicks = 1, JitterTicks = 10 };
             var a = hub.CreateEndpoint(out int idA);
             var b = hub.CreateEndpoint(out int idB);

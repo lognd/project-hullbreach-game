@@ -76,9 +76,8 @@ namespace Hullbreach.Net.Tests
         [Test]
         public void ShipState_BackToBack_InOneSharedBuffer_DoNotOverlap()
         {
-            // Writes N random ShipStates consecutively into one buffer (as a
-            // real batched send might) and reads them back in order, proving
-            // Write/Read agree exactly on how many bytes each message takes.
+            // Writes N ShipStates back-to-back into one buffer, proving
+            // Write/Read agree on how many bytes each message takes.
             var rng = NewRng(4);
             const int count = 64;
             var buf = new byte[ShipState.ByteSize * count];
@@ -242,9 +241,8 @@ namespace Hullbreach.Net.Tests
             var buf = new byte[32];
             for (int i = 0; i < Iterations; i++)
             {
-                // Wide range on purpose, including values well past the
-                // wire's representable range, to exercise FromFloats'
-                // saturation as well as ordinary in-range values.
+                // Includes values past the wire's representable range,
+                // to exercise FromFloats' saturation too.
                 float px = (float)(rng.NextDouble() * 2000.0 - 1000.0);
                 float py = (float)(rng.NextDouble() * 2000.0 - 1000.0);
                 float mu = (float)(rng.NextDouble() * 400000.0 - 200000.0);

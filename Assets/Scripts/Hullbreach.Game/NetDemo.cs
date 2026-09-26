@@ -6,16 +6,8 @@ using Hullbreach.Net;
 
 namespace Hullbreach.Game
 {
-    // Runs a whole ServerSimulation + two ClientReplica instances in-process
-    // over a jittery LoopbackTransport, purely so a handoff engineer can see
-    // the netcode pipeline moving in the Editor without standing up a real
-    // transport. Deliberately tiny: hardcodes two ship designs, drives one
-    // with WASD-style axes and fires the other's cannon on a timer, and
-    // renders each replica as one colored quad per block using
-    // runtime-generated GameObjects (no prefabs, independent of ShipRenderer
-    // since ShipRenderer requires a ShipController/Rigidbody2D this demo's
-    // replica ships deliberately do not have). Does not touch DemoScene;
-    // drop this on an empty GameObject in any scene to see it run.
+    // Runs a whole netcode pipeline in-process for a handoff engineer to
+    // watch move in the Editor; see the reference page.
     // frob:doc docs/reference/hullbreach-net.md#netdemo
     public sealed class NetDemo : MonoBehaviour
     {
@@ -135,9 +127,7 @@ namespace Hullbreach.Game
                 replica.ApplyReceived(buf, length, _clientTick);
         }
 
-        // Creates a quad per block lazily and never touches a block's visual
-        // once placed beyond moving it with its ship: cheap, and good
-        // enough for a handoff demo.
+        // Creates a quad per block lazily; see the reference page.
         void RefreshVisuals(ClientReplica replica)
         {
             if (replica == null) return;

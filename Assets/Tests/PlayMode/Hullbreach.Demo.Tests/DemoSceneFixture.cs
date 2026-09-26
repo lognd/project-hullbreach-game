@@ -9,10 +9,8 @@ using Hullbreach.Game;
 
 namespace Hullbreach.Demo.Tests
 {
-    // Shared setup for every demo play-mode test: loads DemoScene, injects a
-    // ScriptedDemoInput, and fails the test if anything is logged as an
-    // error/exception, since a NullReference in the log is the first
-    // symptom of most "play mode instantly breaks" bugs.
+    // Shared setup for demo play-mode tests: loads DemoScene, injects a
+    // ScriptedDemoInput, and fails on any logged error/exception.
     public abstract class DemoSceneFixture
     {
         protected DemoMode Demo { get; private set; }
@@ -84,9 +82,8 @@ namespace Hullbreach.Demo.Tests
             return new Vector2(f.x, f.y);
         }
 
-        // Highest max(ductile, brittle, buckling) ratio across the player's
-        // blocks right now, with the worst block's name, for calibration
-        // assertions and the run log.
+        // Highest max(ductile, brittle, buckling) ratio right now, with
+        // the worst block's name.
         protected float MaxStressRatio(out string worstBlock)
         {
             worstBlock = "none";
@@ -109,9 +106,8 @@ namespace Hullbreach.Demo.Tests
             return worst;
         }
 
-        // The three failure channels separately, since "the max ratio is
-        // 3.7" says nothing about WHICH mechanism is firing, and they are
-        // calibrated by different knobs (LoadScale vs MaterialStiffnessScale).
+        // The three failure channels separately: they are calibrated by
+        // different knobs (LoadScale vs MaterialStiffnessScale).
         protected void StressBreakdown(out float ductile, out float brittle, out float buckling)
         {
             ductile = 0f;

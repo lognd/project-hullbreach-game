@@ -2,9 +2,7 @@ using System;
 
 namespace Hullbreach.Net
 {
-    // The one interface a real transport (Unity Transport, Netcode for
-    // GameObjects, a raw socket) must implement; see the reference page for
-    // the full delivery/ordering contract (also covered in docs/netcode.md).
+    // The interface a real transport must implement; see the reference page.
     // frob:doc docs/reference/hullbreach-net.md#itransport
     public interface ITransport
     {

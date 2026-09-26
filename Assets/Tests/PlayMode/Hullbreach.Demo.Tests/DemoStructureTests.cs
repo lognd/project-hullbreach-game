@@ -9,9 +9,8 @@ using Hullbreach.Hud;
 
 namespace Hullbreach.Demo.Tests
 {
-    // The two ends of the structural calibration, both required at once: the
-    // stock ship must never break itself with its own controls, and a badly
-    // built ship must still come apart, with the HUD warning the player first.
+    // The two ends of the structural calibration: the stock ship must
+    // never break itself, and a badly built ship must still come apart.
     public sealed class DemoStructureTests : DemoSceneFixture
     {
         const float SafeRatio = 0.4f;
@@ -45,9 +44,8 @@ namespace Hullbreach.Demo.Tests
                 Input.Thrust = combo.thrust;
                 Input.SteerAxis = combo.steer;
 
-                // Sampled every fixed step, not just at the end: a transient
-                // spike that sheds a block and then relaxes would otherwise
-                // be invisible in the final reading.
+                // Sampled every fixed step, so a transient spike is not
+                // missed at the end.
                 float ratio = 0f;
                 string worstBlock = "none";
                 float clf = float.PositiveInfinity;
@@ -164,9 +162,8 @@ namespace Hullbreach.Demo.Tests
                                  + $"(peak ratio only {worstSeen:0.000})");
         }
 
-        // A deliberately bad ship: a 1-wide, 12-cell hull arm with a thruster
-        // at the tip, so the arm carries the whole thrust in bending -- the
-        // shape the structural model exists to punish.
+        // A deliberately bad ship: a 1-wide arm carries the whole thrust
+        // in bending.
         static List<AuthoredBlock> LongArmShip()
         {
             var blocks = new List<AuthoredBlock> { new AuthoredBlock(0, 0, BlockTypes.Core) };
@@ -182,9 +179,8 @@ namespace Hullbreach.Demo.Tests
                 }
             }
 
-            // The arm: 12 hull cells running out +x from the body at y = 0,
-            // then a thruster on its tip. The thruster pushes ship-local +y,
-            // so the arm is loaded in pure bending over its whole length.
+            // The arm: 12 hull cells +x from the body, thruster at the tip,
+            // loaded in pure bending.
             const int armLength = 12;
             for (int i = 1; i <= armLength; i++)
             {

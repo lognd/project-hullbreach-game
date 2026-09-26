@@ -13,14 +13,8 @@ namespace Hullbreach.Net.Tests
         const int DelayTicks = 1;
         const int JitterTicks = 3;
 
-        // Because ShipState is unreliable/unordered by design (see
-        // ITransport's contract), a replica's applied pose after any given
-        // Tick is whatever the most recently ARRIVED message says, not
-        // necessarily the most recently SENT one: a jittery transport can
-        // let an older update overtake a newer one. So "matches the server
-        // within quantization error" is checked against the whole recent
-        // window of server poses the transport could plausibly still be
-        // delivering, not against the single latest server pose.
+        // Checked against the recent lag window, not just the latest pose,
+        // since ShipState is unreliable/unordered and can arrive out of order.
         const int Lookback = DelayTicks + JitterTicks + 2;
 
         static ShipSnapshot Design(SnapshotBlock[] blocks) => new ShipSnapshot(0, 0, blocks, 0, 0, 0, 0, 0, 0);
@@ -100,10 +94,8 @@ namespace Hullbreach.Net.Tests
                 PumpClientInbound(client1Transport, replica1, clientTick);
                 PumpClientInbound(client2Transport, replica2, clientTick);
 
-                // "Replica poses match server poses within quantization
-                // error after every state message": once a snapshot has
-                // established the ship, its pose must always be explained
-                // by SOME server pose from the recent lag window.
+                // Once established, pose must be explained by SOME recent
+                // server pose within quantization error.
                 if (replica1.Ships.TryGetValue((ushort)peerThruster, out var repA))
                     AssertPoseExplainedByRecentHistory(repA.Position, historyA, tick);
                 if (replica2.Ships.TryGetValue((ushort)peerCannon, out var repB))

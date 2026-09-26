@@ -6,14 +6,10 @@ namespace Hullbreach.Net
     // frob:doc docs/reference/hullbreach-net.md#netmessages
     public static class NetMessages
     {
-        // See ByteWriter/ByteReader (Wire.cs) for the little-endian primitive
-        // encoding, ITransport for the two delivery channels, ServerSimulation
-        // for the emitting side, and ClientReplica for the consuming side.
+        // See Wire.cs/ITransport/ServerSimulation/ClientReplica for the pieces.
     }
 
-    // One byte identifying which message struct follows. Kept as its own
-    // byte (not folded into a discriminated union) so a receiver can
-    // dispatch with a single switch before deserializing anything.
+    // Kept as its own byte, not a discriminated union, for single-switch dispatch.
     // frob:doc docs/reference/hullbreach-net.md#messagekind
     public enum MessageKind : byte
     {
@@ -28,9 +24,7 @@ namespace Hullbreach.Net
         GravityWellSpawned = 9,
     }
 
-    // Client -> server, unreliable, one per tick: this tick's player intent.
-    // Latest-wins on the server, so dropping one is harmless. See
-    // docs/netcode.md#message-table for the layout.
+    // Client -> server, unreliable: this tick's intent. Latest-wins on drop.
     // frob:doc docs/reference/hullbreach-net.md#inputmessage
     public readonly struct InputMessage
     {
@@ -142,11 +136,7 @@ namespace Hullbreach.Net
         }
     }
 
-    // Server -> client, reliable, sent once on join or respawn: the full
-    // block layout plus current pose/velocity. Raw 5 bytes/block; block
-    // grids deflate ~10:1 under a reliable transport's own compression, so a
-    // 10k-block ship is a few KB. Fine as a one-off; never sent per tick.
-    // See docs/netcode.md#message-table for the layout.
+    // Server -> client, reliable, sent once on join/respawn: the full design.
     // frob:doc docs/reference/hullbreach-net.md#shipsnapshot
     public readonly struct ShipSnapshot
     {
@@ -247,9 +237,7 @@ namespace Hullbreach.Net
         }
     }
 
-    // Server -> client, unreliable, ~30-50 Hz: this tick's pose. Losing one
-    // is harmless since the next one supersedes it. See
-    // docs/netcode.md#message-table for the layout and quantization.
+    // Server -> client, unreliable, ~30-50 Hz: this tick's pose.
     // frob:doc docs/reference/hullbreach-net.md#shipstate
     public readonly struct ShipState
     {
@@ -317,9 +305,7 @@ namespace Hullbreach.Net
         }
     }
 
-    // Server -> client, reliable ordered: a block was placed. Carries a
-    // sequence number because placement order matters for which cell wins a
-    // race, like destruction order matters for FindDetached.
+    // Server -> client, reliable ordered: a block was placed.
     // frob:doc docs/reference/hullbreach-net.md#blockplaced
     public readonly struct BlockPlaced
     {
@@ -378,10 +364,7 @@ namespace Hullbreach.Net
         }
     }
 
-    // Server -> client, reliable ordered: a block died. This is the whole
-    // point of the design: both sides run Connectivity.FindDetached after
-    // applying this and derive the identical fragments without a block list
-    // ever crossing the wire. See docs/netcode.md#the-governing-rule.
+    // Server -> client, reliable ordered: a block died; see the reference page.
     // frob:doc docs/reference/hullbreach-net.md#blockdestroyed
     public readonly struct BlockDestroyed
     {
@@ -428,10 +411,7 @@ namespace Hullbreach.Net
         }
     }
 
-    // Server -> client, reliable ordered: a detached component (from a
-    // FindDetached split) is spawned as its own body. Carries NO block list:
-    // both sides already know which blocks left, since they ran the same
-    // flood fill after applying the same ordered destruction events first.
+    // Server -> client, reliable ordered: a detached component is spawned.
     // frob:doc docs/reference/hullbreach-net.md#fragmentspawned
     public readonly struct FragmentSpawned
     {
@@ -509,10 +489,7 @@ namespace Hullbreach.Net
         }
     }
 
-    // Server -> client, reliable ordered: a block took damage but did not
-    // die. Damage is a CAUSE the client cannot derive on its own (the FE
-    // solve that computed it is not bit-identical across machines), so
-    // unlike destruction it must be sent explicitly rather than recomputed.
+    // Server -> client, reliable ordered: damage, a CAUSE the client can't derive.
     // frob:doc docs/reference/hullbreach-net.md#blockdamaged
     public readonly struct BlockDamaged
     {
@@ -565,10 +542,7 @@ namespace Hullbreach.Net
         }
     }
 
-    // Server -> client, reliable ordered: a temporary variant transform
-    // (ShipBody.ApplyPowerup) landed on a block. Seconds are sent as tenths
-    // of a second in a u16 so a multi-minute buff still fits without a
-    // float on the wire.
+    // Server -> client, reliable ordered: a powerup transform landed.
     // frob:doc docs/reference/hullbreach-net.md#powerupapplied
     public readonly struct PowerupApplied
     {

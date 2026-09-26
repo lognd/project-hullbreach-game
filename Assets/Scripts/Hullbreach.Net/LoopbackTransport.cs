@@ -3,14 +3,8 @@ using System.Collections.Generic;
 
 namespace Hullbreach.Net
 {
-    // In-memory transport hub for tests and local (same-process) play: no
-    // sockets, no threads. Deliberately simulates a lossy, jittery network
-    // (see UnreliableDropRate/DelayTicks/JitterTicks): unreliable sends may
-    // be dropped, and both channels may be delivered out of send order, like
-    // a real transport's internal channels can. Reliable messages are never
-    // dropped or duplicated here, only reordered and delayed, which is why
-    // ClientReplica buffers reliable events by sequence number rather than
-    // trusting arrival order.
+    // In-memory transport hub for tests/local play; deliberately lossy and
+    // jittery on purpose, see the reference page for why.
     // frob:doc docs/reference/hullbreach-net.md#loopbacktransport
     public sealed class LoopbackTransport
     {
@@ -21,9 +15,7 @@ namespace Hullbreach.Net
             public byte[] Data;
         }
 
-        // One participant's view of the hub: the ITransport a caller
-        // actually holds. Thin: the real bookkeeping (timing, drop,
-        // delivery) lives on the owning LoopbackTransport hub.
+        // Thin view of the hub; the real bookkeeping lives on the owner.
         sealed class Endpoint : ITransport
         {
             public readonly int Id;
@@ -75,9 +67,7 @@ namespace Hullbreach.Net
         // frob:doc docs/reference/hullbreach-net.md#loopbacktransport
         public int DelayTicks;
 
-        // Added independently per send on top of DelayTicks: this is what
-        // lets two reliable messages sent in order arrive out of order,
-        // exercising ClientReplica's sequence buffering.
+        // Added independently per send on top of DelayTicks.
         // frob:doc docs/reference/hullbreach-net.md#loopbacktransport
         public int JitterTicks;
 

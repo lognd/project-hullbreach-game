@@ -433,6 +433,22 @@ carrying the detached block set over from `RunLocalDetach`'s own
 `Connectivity.SplitIntoComponents` call, kept minimal since the wire
 contract is what deliverable 6 tests.
 
+`RunLocalDetach` (private) locally derives the same detached-component
+split the server derived, removing every stranded block from the replica
+grid: this is the entire reason `FragmentSpawned` never needs a block list
+on the wire, since both sides ran the identical integer flood fill after
+applying the identical ordered `BlockDestroyed` events.
+
+`ApplyState` is unreliable and unordered by design: an out-of-order or
+duplicate `ShipState` simply becomes the new "newer" interpolation sample
+regardless of tick, since a missed/duplicated pose update is harmless.
+`ApplyReceived` is the convenience entry point a transport pump should call
+for every payload received: it dispatches `ShipSnapshot`/`ShipState`
+straight through, applies `GravityWellSpawned` immediately (it carries no
+sequence number), and routes every other reliable event through
+`ApplyReliable`, which applies a message immediately if it is exactly the
+next expected sequence and then drains whatever the gap closing unblocks.
+
 ### ServerSimulation
 
 <!-- frob:describes Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation -->
@@ -459,10 +475,21 @@ knowing sockets exist.
 
 `Join` re-broadcasts the new ship's snapshot (reliable) to every OTHER
 connected peer so they can build a replica for it; the joining peer
-already has its own design locally and does not need it echoed back.
-`Tick` advances every ship by one fixed tick in a fixed, deterministic
-order (peer id, then event kind) so sequence numbers are reproducible
-given the same inputs. `DebugDestroyBlock` is a test/debug hook that goes
+already has its own design locally and does not need it echoed back. It
+catches the newcomer up on every ship that already exists BEFORE adding
+theirs to the peer table, so the later loop that broadcasts the
+newcomer's own snapshot to everyone else never doubles back and resends
+an existing ship to itself; that later loop includes the joiner itself,
+since it needs a snapshot of its own ship exactly like everyone else
+does. `SetInput` is latest-wins: a peer that sends every tick simply
+always has fresh input, and one that drops a packet loses nothing but
+that tick's precision.
+
+`Tick` advances every ship by one fixed tick (apply latest input, step
+the body, tick its structural solver, resolve damage/detachment/
+buckling, then emit poses and events) in a fixed, deterministic order
+(peer id, then event kind) so sequence numbers are reproducible given
+the same inputs. `DebugDestroyBlock` is a test/debug hook that goes
 through the exact same broadcast + detach-resolution path a real
 projectile impact would, letting a test force a split without simulating
 ballistics.
@@ -473,7 +500,18 @@ ballistics.
 grid without individually announcing them (clients derive the same set
 from the `BlockDestroyed` events already broadcast), and broadcasts one
 `FragmentSpawned` per resulting component so both sides spawn matching
-debris bodies.
+debris bodies. `BroadcastReliable` (private) sends to every connected
+peer, not just a ship's own owner, since everyone needs to know every
+ship's destruction/damage/fragment events to keep their replicas in
+sync.
+
+`ServerWorldSink` (private nested) is the server's own `IWorldSink`:
+spawns cannon shots as simple point bodies (no rigid body, no scene
+object) and routes gravity-well drops into the shared field while
+broadcasting the cause. `BlockGridExtensions.CoreKeyOrDefault` (a small
+file-private helper) returns an out-of-range sentinel when the grid has
+no core key, so a comparison against a candidate key never needs a
+separate `HasValue` branch.
 
 ### NetDemo
 
@@ -489,3 +527,7 @@ replica as one colored quad per block using runtime-generated
 `ShipRenderer` requires a `ShipController`/`Rigidbody2D` this demo's
 replica ships deliberately do not have). Does not touch `DemoScene`; drop
 this on an empty `GameObject` in any scene to see it run.
+
+`RefreshVisuals` (private) creates a quad per block lazily and never
+touches a block's visual once placed beyond moving it with its ship:
+cheap, and good enough for a handoff demo.

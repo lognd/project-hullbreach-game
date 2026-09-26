@@ -2,9 +2,7 @@ using System;
 
 namespace Hullbreach.Net
 {
-    // No allocation per message: every Write call takes a ByteWriter wrapping
-    // a buffer the caller already owns. Throws IndexOutOfRangeException on
-    // overflow rather than growing, since growing would allocate.
+    // No allocation per message; see the reference page for why.
     // frob:doc docs/reference/hullbreach-net.md#bytewriter
     public struct ByteWriter
     {

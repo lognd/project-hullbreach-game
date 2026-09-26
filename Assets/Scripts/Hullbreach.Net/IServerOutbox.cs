@@ -2,15 +2,11 @@ using System.Collections.Generic;
 
 namespace Hullbreach.Net
 {
-    // Everything ServerSimulation emits in one Tick, before it touches an
-    // ITransport. Keeping this as a plain (peer, reliable, bytes) list lets
-    // a test inspect the outbox with no transport at all.
+    // Everything ServerSimulation emits in one Tick; see the reference page.
     // frob:doc docs/reference/hullbreach-net.md#iserveroutbox
     public interface IServerOutbox
     {
-        // Queues already-written `bytes` (length = the message's own size)
-        // for `peer`. The implementation owns copying if it must outlive the
-        // caller's buffer.
+        // Queues already-written `bytes` for `peer`.
         // frob:doc docs/reference/hullbreach-net.md#iserveroutbox
         void Send(int peer, bool reliable, byte[] bytes, int length);
     }
@@ -37,9 +33,7 @@ namespace Hullbreach.Net
         }
     }
 
-    // The default IServerOutbox: a plain list a caller drains once per tick
-    // and clears; whatever pumps the real ITransport reads Entries and
-    // forwards each one, then calls Clear.
+    // The default IServerOutbox; see the reference page.
     // frob:doc docs/reference/hullbreach-net.md#serveroutbox
     public sealed class ServerOutbox : IServerOutbox
     {

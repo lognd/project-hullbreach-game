@@ -51,9 +51,7 @@ namespace Hullbreach.Net
     }
 
     // Two poses timestamped by tick, for cheap linear interpolation between
-    // the last two ShipState updates a replica received: rendering at a
-    // point in between (rather than snapping on arrival) is what smooths
-    // ~unreliable, ~30-50 Hz updates into motion that does not stutter.
+    // the last two ShipState updates a replica received.
     struct PoseSample
     {
         public uint Tick;
@@ -63,14 +61,7 @@ namespace Hullbreach.Net
         public float AngularVelocity;
     }
 
-    // The non-authoritative twin of ServerSimulation: applies ShipSnapshot/
-    // ShipState/reliable events to build and keep replica ShipBody instances
-    // in sync with the server, WITHOUT running a StructuralSolver (clients
-    // never decide a block breaks; see StructuralSolver.BuckledBlocks).
-    // Reliable events are buffered by sequence number and applied only when
-    // contiguous from the last applied sequence (see ApplyReliable), which
-    // is what makes this correct against a transport that reorders reliable
-    // messages (see docs/netcode.md#ordering...).
+    // The non-authoritative twin of ServerSimulation; see the reference page.
     // frob:doc docs/reference/hullbreach-net.md#clientreplica
     public sealed class ClientReplica
     {
@@ -100,9 +91,7 @@ namespace Hullbreach.Net
             }
         }
 
-        // A snapshot's own sequence becomes the new baseline: any buffered
-        // reliable event at or below it was already folded into the
-        // snapshot server-side, so it is discarded rather than reapplied.
+        // A snapshot's own sequence becomes the new baseline; see reference page.
         // frob:doc docs/reference/hullbreach-net.md#clientreplica
         public void ApplySnapshot(ShipSnapshot snapshot)
         {
@@ -138,9 +127,7 @@ namespace Hullbreach.Net
             }
         }
 
-        // Unreliable and unordered: an out-of-order or duplicate ShipState
-        // simply becomes the new "newer" sample regardless of tick, since a
-        // missed/duplicated pose update is harmless by design.
+        // Unreliable and unordered by design; see the reference page.
         // frob:doc docs/reference/hullbreach-net.md#clientreplica
         public void ApplyState(ShipState state, uint tick)
         {
@@ -179,11 +166,7 @@ namespace Hullbreach.Net
             return true;
         }
 
-        // The convenience entry point a transport pump should call for every
-        // payload TryReceive hands back: dispatches ShipSnapshot/ShipState
-        // straight through (idempotent/unordered by design), applies
-        // GravityWellSpawned immediately (it carries no sequence number),
-        // and routes every other reliable event through ApplyReliable.
+        // Entry point a transport pump should call for every received payload.
         // frob:doc docs/reference/hullbreach-net.md#clientreplica
         public void ApplyReceived(byte[] into, int length, uint clientTick = 0)
         {
@@ -210,8 +193,7 @@ namespace Hullbreach.Net
                 }
                 default:
                 {
-                    // Every remaining reliable-ordered kind carries its u32
-                    // sequence number right after the kind byte.
+                    // u32 sequence number right after the kind byte.
                     uint sequence = (uint)(into[1] | (into[2] << 8) | (into[3] << 16) | (into[4] << 24));
                     var trimmed = new byte[length];
                     Array.Copy(into, trimmed, length);
@@ -221,10 +203,7 @@ namespace Hullbreach.Net
             }
         }
 
-        // Applies immediately if this is exactly the next expected sequence,
-        // then drains any subsequently-buffered messages the gap closing
-        // makes ready, in order. Pass every reliable payload here regardless
-        // of arrival order rather than decoding it yourself.
+        // Buffers by sequence and applies in order; see the reference page.
         // frob:doc docs/reference/hullbreach-net.md#clientreplica
         public void ApplyReliable(uint sequence, byte[] payload)
         {
@@ -324,15 +303,8 @@ namespace Hullbreach.Net
             _events.Enqueue(new ReplicaEvent(ReplicaEventKind.BlockPlaced, m.NetId, m.X, m.Y, replica.Body.LocalToWorld(BlockGrid.CenterOf(key))));
         }
 
-        // A FragmentSpawned announces that a detached component now exists
-        // as its own ship-like body; since it carries no block list, the
-        // client's own already-applied BlockDestroyed events plus its own
-        // FindDetached run (in ApplyBlockDestroyed) are what determine WHICH
-        // blocks left. This handler only spawns the replica body those
-        // blocks belong in, at the pose the server reports: it creates an
-        // empty-grid placeholder for renderer bookkeeping rather than
-        // carrying the detached block set over (kept minimal here, since the
-        // wire contract is what deliverable 6 tests).
+        // Spawns the replica body for an already-derived detached component;
+        // see the reference page for why it carries no block list.
         void ApplyFragmentSpawned(FragmentSpawned m)
         {
             var fragment = new ShipBody
@@ -362,11 +334,8 @@ namespace Hullbreach.Net
             _events.Enqueue(new ReplicaEvent(ReplicaEventKind.GravityWellSpawned, 0, 0, 0, new float2(m.PxFloat, m.PyFloat)));
         }
 
-        // Locally derives the same detached-component split the server
-        // derived, removing every stranded block from the replica grid.
-        // This is the entire reason FragmentSpawned never needs a block list
-        // on the wire: both sides ran the identical integer flood fill after
-        // applying the identical ordered BlockDestroyed events.
+        // Derives the same detached-component split the server derived;
+        // see the reference page.
         void RunLocalDetach(ReplicaShip replica)
         {
             var stranded = new List<int>();

@@ -84,10 +84,8 @@ namespace Hullbreach.Demo.Tests
                       + $"input source is scripted: {ReferenceEquals(Player.InputSource, Input)}");
 
             Input.Thrust = 1f;
-            // The stock ramp level takes 1 s to reach full throttle, so the
-            // bar must still be climbing at 0.3 s and be at (or very near)
-            // full by 1.2 s. A jump straight to 100% would mean the ramp was
-            // bypassed and the structure eats a step load.
+            // The stock ramp takes 1 s to full throttle; must still be
+            // climbing at 0.3 s, not jump straight to 100%.
             yield return FixedSteps(0.3f);
             float early = Player.Ship.ForwardThrottleMean;
             yield return FixedSteps(2.7f);
@@ -102,10 +100,8 @@ namespace Hullbreach.Demo.Tests
             Assert.Greater(early, 0.05f, "throttle had not started ramping after 0.3 s");
             Assert.Less(early, 0.75f, "throttle jumped instead of ramping over the configured 1 s");
             Assert.Greater(late, 0.95f, "throttle never reached full");
-            // Along the ship's own nose, not raw speed: the demo flies in a
-            // gravity well, and thrusting radially outward from a circular
-            // orbit raises the orbit and LOWERS speed. Asserting "speed went
-            // up" would be asserting that orbital mechanics is wrong.
+            // Along the ship's own nose, not raw speed: thrusting outward
+            // in this gravity well raises orbit and LOWERS speed.
             Assert.Greater(Vector2.Dot(dv, forward), 1f,
                 "thrust did not accelerate the ship along its own forward direction");
             Assert.AreEqual(blocksAtStart, Player.Ship.Grid.Count, "thrusting tore blocks off the ship");
@@ -127,11 +123,8 @@ namespace Hullbreach.Demo.Tests
 
             float fullSteer = Mathf.Abs(Player.Ship.SteerThrottleMean);
 
-            // Peak spin is reached shortly AFTER the key is released: the fin
-            // throttle ramps down over the same second it ramped up, so it is
-            // still applying torque for a moment. Sample the peak across the
-            // release rather than the instant of release, or the test would
-            // be asserting against a number the ship has not reached yet.
+            // Peak spin lands shortly AFTER release, since the fin throttle
+            // still ramps down over the following second.
             Input.SteerAxis = 0f;
             float peakSpin = Mathf.Abs(Player.Ship.AngularVelocity);
             int settleSteps = Mathf.CeilToInt(1.5f / Time.fixedDeltaTime);
@@ -169,9 +162,8 @@ namespace Hullbreach.Demo.Tests
             Assert.IsNotNull(target, "TargetShip has no ShipController.");
             yield return FixedSteps(0.2f);
 
-            // Line the player up dead below the target so its +y cannon points
-            // straight at it, and hold both still: the point of this test is
-            // the fire/hit path, not marksmanship.
+            // Line up dead below so +y cannon points at the target; this
+            // tests the fire/hit path, not marksmanship.
             Vector2 targetPosition = new Vector2(target.Ship.Position.x, target.Ship.Position.y);
             Player.ResetTo(targetPosition - new Vector2(0f, 8f), Vector2.zero);
             yield return new WaitForFixedUpdate();

@@ -9,9 +9,8 @@ using Hullbreach.Game;
 
 namespace Hullbreach.Demo.Tests
 {
-    // Saves PNGs of the demo in each state worth looking at, for a human to
-    // SEE what no numeric assertion covers. Skipped unless HULLBREACH_SHOTS
-    // names a directory, and must be run WITHOUT -nographics.
+    // Saves PNGs of the demo for a human to see. Skipped unless
+    // HULLBREACH_SHOTS names a directory; must run WITHOUT -nographics.
     public sealed class DemoScreenshots : DemoSceneFixture
     {
         public const string OutputVariable = "HULLBREACH_SHOTS";
