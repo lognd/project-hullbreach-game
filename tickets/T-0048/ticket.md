@@ -1,5 +1,5 @@
 ---
-id: T-draft-36eea0a6
+id: T-0048
 title: 'S27-1: Settings screen for master, music, and effects volume and resolution'
 state: queued
 kind: feature
