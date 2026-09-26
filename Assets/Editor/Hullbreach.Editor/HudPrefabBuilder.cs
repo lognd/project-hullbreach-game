@@ -25,9 +25,15 @@ namespace Hullbreach.Editor
         // frob:doc docs/design/ui-port.md#hudprefabbuilder-editor
         public const string DemoScenePath = "Assets/Scenes/DemoScene.unity";
 
-        // Standalone widget prefab (U2); not yet nested into HudCanvas -- U3 does that.
+        // Standalone widget prefab (U2), nested three times under StatusPanel (U3).
         // frob:doc docs/design/ui-port.md#hudprefabbuilder-editor
         public const string ChannelBarPrefabPath = "Assets/Prefabs/UI/ChannelBar.prefab";
+
+        // frob:doc docs/design/ui-port.md#hudprefabbuilder-editor
+        public const string StatusPanelPrefabPath = "Assets/Prefabs/UI/StatusPanel.prefab";
+
+        // frob:doc docs/design/ui-port.md#hudprefabbuilder-editor
+        public const string HullWarningBannerPrefabPath = "Assets/Prefabs/UI/HullWarningBanner.prefab";
 
         // frob:doc docs/design/ui-port.md#hudprefabbuilder-editor
         [MenuItem("Hullbreach/UI/Rebuild default HUD prefabs")]
@@ -81,11 +87,13 @@ namespace Hullbreach.Editor
             canvasGo.AddComponent<GraphicRaycaster>();
 
             AddBuilderPanel(canvasGo);
+            AddStatusPanel(canvasGo);
+            AddHullWarningBanner(canvasGo);
 
             PrefabUtility.SaveAsPrefabAsset(canvasGo, HudCanvasPrefabPath);
             Object.DestroyImmediate(canvasGo);
             AssetDatabase.SaveAssets();
-            Debug.Log($"HudPrefabBuilder: wrote {HudCanvasPrefabPath} and {BuilderPanelPrefabPath}.");
+            Debug.Log($"HudPrefabBuilder: wrote {HudCanvasPrefabPath}, {BuilderPanelPrefabPath}, {StatusPanelPrefabPath} and {HullWarningBannerPrefabPath}.");
         }
 
         // Top-left palette panel: see docs/design/ui-port.md for the layout contract.
@@ -138,6 +146,153 @@ namespace Hullbreach.Editor
             so.ApplyModifiedPropertiesWithoutUndo();
 
             PrefabUtility.SaveAsPrefabAsset(panel, BuilderPanelPrefabPath);
+            return panel;
+        }
+
+        // Bottom-left status panel: see docs/design/ui-port.md for the layout contract.
+        static GameObject AddStatusPanel(GameObject canvasRoot)
+        {
+            var panel = new GameObject("StatusPanel", typeof(RectTransform));
+            var panelRect = panel.GetComponent<RectTransform>();
+            panelRect.SetParent(canvasRoot.transform, false);
+            panelRect.anchorMin = new Vector2(0f, 0f);
+            panelRect.anchorMax = new Vector2(0f, 0f);
+            panelRect.pivot = new Vector2(0f, 0f);
+            panelRect.anchoredPosition = new Vector2(10f, 10f);
+            panelRect.sizeDelta = new Vector2(440f, 240f);
+
+            var image = panel.AddComponent<Image>();
+            image.color = new Color(0f, 0f, 0f, 0.55f);
+
+            var layout = panel.AddComponent<VerticalLayoutGroup>();
+            layout.padding = new RectOffset(8, 8, 8, 8);
+            layout.spacing = 2f;
+            layout.childAlignment = TextAnchor.UpperLeft;
+            layout.childControlWidth = true;
+            layout.childControlHeight = true;
+            layout.childForceExpandWidth = true;
+            layout.childForceExpandHeight = false;
+
+            var fitter = panel.AddComponent<ContentSizeFitter>();
+            fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+            var modeText = AddLabel(panel.transform, "ModeText", "Mode: Build  (Tab to switch)");
+
+            var controlLine1 = AddLabel(panel.transform, "ControlLine1", "Left click: place   Right click: remove");
+            var controlLine2 = AddLabel(panel.transform, "ControlLine2", "Ctrl+Z: undo   Ctrl+Shift+Z: redo   Esc: cancel orientation");
+            var controlLine3 = AddLabel(panel.transform, "ControlLine3", "Keys 1-7: select palette entry");
+
+            var overlayText = AddLabel(panel.transform, "OverlayText", "Overlay: None");
+            var massBlocksText = AddLabel(panel.transform, "MassBlocksText", "Mass: 0.0   Blocks: 0");
+
+            var flightOnlyRoot = new GameObject("FlightOnly", typeof(RectTransform));
+            var flightRect = flightOnlyRoot.GetComponent<RectTransform>();
+            flightRect.SetParent(panel.transform, false);
+            var flightLayout = flightOnlyRoot.AddComponent<VerticalLayoutGroup>();
+            flightLayout.spacing = 2f;
+            flightLayout.childAlignment = TextAnchor.UpperLeft;
+            flightLayout.childControlWidth = true;
+            flightLayout.childControlHeight = true;
+            flightLayout.childForceExpandWidth = true;
+            flightLayout.childForceExpandHeight = false;
+            var flightFitter = flightOnlyRoot.AddComponent<ContentSizeFitter>();
+            flightFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+            var speedText = AddLabel(flightOnlyRoot.transform, "SpeedText", "Speed: 0.0   Angular speed: 0.00");
+
+            var channelBarPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(ChannelBarPrefabPath);
+            var thrustBarGo = (GameObject)PrefabUtility.InstantiatePrefab(channelBarPrefab, flightOnlyRoot.transform);
+            thrustBarGo.name = "ThrustBar";
+            var reverseBarGo = (GameObject)PrefabUtility.InstantiatePrefab(channelBarPrefab, flightOnlyRoot.transform);
+            reverseBarGo.name = "ReverseBar";
+            var steerBarGo = (GameObject)PrefabUtility.InstantiatePrefab(channelBarPrefab, flightOnlyRoot.transform);
+            steerBarGo.name = "SteerBar";
+
+            var powerupContainer = new GameObject("PowerupContainer", typeof(RectTransform));
+            var powerupRect = powerupContainer.GetComponent<RectTransform>();
+            powerupRect.SetParent(flightOnlyRoot.transform, false);
+            var powerupLayout = powerupContainer.AddComponent<VerticalLayoutGroup>();
+            powerupLayout.spacing = 2f;
+            powerupLayout.childAlignment = TextAnchor.UpperLeft;
+            powerupLayout.childControlWidth = true;
+            powerupLayout.childControlHeight = true;
+            powerupLayout.childForceExpandWidth = true;
+            powerupLayout.childForceExpandHeight = false;
+            var powerupFitter = powerupContainer.AddComponent<ContentSizeFitter>();
+            powerupFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+            var powerupRowTemplate = AddLabel(powerupRect, "PowerupRowTemplate", "Cannon (2,0): Gravity gun 7.3 s");
+            powerupRowTemplate.gameObject.SetActive(false);
+
+            // demoMode is wired later by WireDemoScene: this prefab is built
+            // standalone, before DemoScene's Demo object exists to point at.
+            var view = canvasRoot.AddComponent<StatusPanelView>();
+            var so = new SerializedObject(view);
+            so.FindProperty("modeText").objectReferenceValue = modeText;
+            var controlLines = so.FindProperty("controlLineTexts");
+            controlLines.arraySize = 3;
+            controlLines.GetArrayElementAtIndex(0).objectReferenceValue = controlLine1;
+            controlLines.GetArrayElementAtIndex(1).objectReferenceValue = controlLine2;
+            controlLines.GetArrayElementAtIndex(2).objectReferenceValue = controlLine3;
+            so.FindProperty("overlayText").objectReferenceValue = overlayText;
+            so.FindProperty("massBlocksText").objectReferenceValue = massBlocksText;
+            so.FindProperty("flightOnlyRoot").objectReferenceValue = flightOnlyRoot;
+            so.FindProperty("speedText").objectReferenceValue = speedText;
+            so.FindProperty("thrustBar").objectReferenceValue = thrustBarGo.GetComponent<ChannelBar>();
+            so.FindProperty("reverseBar").objectReferenceValue = reverseBarGo.GetComponent<ChannelBar>();
+            so.FindProperty("steerBar").objectReferenceValue = steerBarGo.GetComponent<ChannelBar>();
+            so.FindProperty("powerupContainer").objectReferenceValue = powerupRect;
+            so.FindProperty("powerupRowTemplate").objectReferenceValue = powerupRowTemplate;
+            so.ApplyModifiedPropertiesWithoutUndo();
+
+            PrefabUtility.SaveAsPrefabAsset(panel, StatusPanelPrefabPath);
+            return panel;
+        }
+
+        // Top-center hull warning banner, shown only in Fly: see docs/design/ui-port.md.
+        static GameObject AddHullWarningBanner(GameObject canvasRoot)
+        {
+            var panel = new GameObject("HullWarningBanner", typeof(RectTransform));
+            var panelRect = panel.GetComponent<RectTransform>();
+            panelRect.SetParent(canvasRoot.transform, false);
+            panelRect.anchorMin = new Vector2(0.5f, 1f);
+            panelRect.anchorMax = new Vector2(0.5f, 1f);
+            panelRect.pivot = new Vector2(0.5f, 1f);
+            panelRect.anchoredPosition = new Vector2(0f, -10f);
+            panelRect.sizeDelta = new Vector2(340f, 62f);
+
+            var image = panel.AddComponent<Image>();
+            image.color = new Color(0f, 0f, 0f, 0.55f);
+
+            var layout = panel.AddComponent<VerticalLayoutGroup>();
+            layout.padding = new RectOffset(8, 8, 8, 8);
+            layout.spacing = 2f;
+            layout.childAlignment = TextAnchor.UpperCenter;
+            layout.childControlWidth = true;
+            layout.childControlHeight = true;
+            layout.childForceExpandWidth = true;
+            layout.childForceExpandHeight = false;
+
+            var fitter = panel.AddComponent<ContentSizeFitter>();
+            fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+            var headline = AddLabel(panel.transform, "HeadlineText", "Hull: OK   (max ratio 0.00)");
+            headline.alignment = TextAlignmentOptions.Center;
+            var detail = AddLabel(panel.transform, "DetailText", "0 block(s) in the red, worst: Hull");
+            detail.alignment = TextAlignmentOptions.Center;
+            var hint = AddLabel(panel.transform, "HintText", "ease off thrust");
+            hint.alignment = TextAlignmentOptions.Center;
+
+            // demoMode is wired later by WireDemoScene; see AddStatusPanel.
+            var view = canvasRoot.AddComponent<HullWarningBanner>();
+            var so = new SerializedObject(view);
+            so.FindProperty("panelRoot").objectReferenceValue = panel;
+            so.FindProperty("headlineText").objectReferenceValue = headline;
+            so.FindProperty("detailText").objectReferenceValue = detail;
+            so.FindProperty("hintText").objectReferenceValue = hint;
+            so.ApplyModifiedPropertiesWithoutUndo();
+
+            PrefabUtility.SaveAsPrefabAsset(panel, HullWarningBannerPrefabPath);
             return panel;
         }
 
@@ -253,6 +408,8 @@ namespace Hullbreach.Editor
             }
 
             var newBuilderHud = canvasInstance.GetComponentInChildren<BuilderHud>(true);
+            var statusPanelView = canvasInstance.GetComponentInChildren<StatusPanelView>(true);
+            var hullWarningBanner = canvasInstance.GetComponentInChildren<HullWarningBanner>(true);
 
             var demoGo = GameObject.Find("Demo");
             if (demoGo != null)
@@ -265,6 +422,20 @@ namespace Hullbreach.Editor
                     var so = new SerializedObject(demoMode);
                     so.FindProperty("builderHud").objectReferenceValue = newBuilderHud;
                     so.ApplyModifiedPropertiesWithoutUndo();
+                }
+
+                if (demoMode != null && statusPanelView != null)
+                {
+                    var statusSo = new SerializedObject(statusPanelView);
+                    statusSo.FindProperty("demoMode").objectReferenceValue = demoMode;
+                    statusSo.ApplyModifiedPropertiesWithoutUndo();
+                }
+
+                if (demoMode != null && hullWarningBanner != null)
+                {
+                    var bannerSo = new SerializedObject(hullWarningBanner);
+                    bannerSo.FindProperty("demoMode").objectReferenceValue = demoMode;
+                    bannerSo.ApplyModifiedPropertiesWithoutUndo();
                 }
 
                 var playerShipGo = GameObject.Find("PlayerShip");
