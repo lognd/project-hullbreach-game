@@ -95,7 +95,9 @@ noting if the two ever need to diverge on purpose).
 **Fly mode** (`Tab` to switch from Build):
 
 - `W`/`S` or `Up`/`Down`: forward thrusters / retro thrusters.
-- `A`/`D` or `Left`/`Right`: fins.
+- `A`/`D` or `Left`/`Right`: fins. `D`/`Right` steers right, `A`/`Left`
+  steers left. Do not set `invert` on the keyboard Horizontal axis in
+  `ProjectSettings/InputManager.asset`; it flips this mapping.
 - `Space`: fire every cannon off cooldown.
 - `O`: cycle overlay, `None -> Stress -> LoadBearing -> Damage ->
   Buckling -> None` (`DemoMode.NextOverlay`).
@@ -137,8 +139,9 @@ The **control bars** read straight off `ShipBody.ForwardThrottleMean`,
 `ReverseThrottleMean` and `SteerThrottleMean`, the same aggregates the
 play-mode tests assert on, so what the player sees and what the tests
 check can never drift apart: Thrust 0-100% (red fill), Reverse 0-100%
-(green fill), Steer -100 to +100% (white, filling left or right from a
-centered tick). All three RAMP rather than snapping, over the ~1 s
+(green fill), Steer -100 to +100% (white; steering right, e.g. `D`/`Right`,
+reads "Steer +100%" and fills right from a centered tick, steering left
+reads "Steer -100%" and fills left). All three RAMP rather than snapping, over the ~1 s
 `ThrusterUpgrades` ramp time for stock parts.
 
 A separate **structural readout** sits top-center in Fly mode
