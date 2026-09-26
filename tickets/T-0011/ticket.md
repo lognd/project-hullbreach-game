@@ -54,6 +54,7 @@ component: null
 labels:
 - jira:SCRUM-7
 - owner:mcnairrobotics
+- jira-status:done
 anchor: false
 anchor_reason: null
 land_commit: null
