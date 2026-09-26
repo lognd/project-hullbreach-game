@@ -47,6 +47,19 @@ assets), but it has three costs that now matter:
   `Assets/TextMesh Pro/`. If the import cannot be done headlessly, fall
   back to `UnityEngine.UI.Text` with the built-in `LegacyRuntime.ttf`
   and record that as a deviation here.
+  **Deviation (U1):** headless import was not feasible.
+  `AssetDatabase.ImportPackage` on
+  `com.unity.ugui`'s bundled `TMP Essential Resources.unitypackage` is
+  asynchronous and does not finish before `-quit` ends the process (no
+  `Assets/TextMesh Pro/` folder was ever written, even though the call
+  logged success), and there is no supported way to block on it from
+  `-executeMethod`. U1 uses the fallback as written above: every HUD
+  label is `UnityEngine.UI.Text` with `Resources.GetBuiltinResource
+  <Font>("LegacyRuntime.ttf")`, and `Hullbreach.Game`/`Hullbreach.Editor`
+  do not reference `Unity.TextMeshPro`. A later unit may revisit this by
+  running the import once interactively (no `-quit`) and committing the
+  result, at which point `BuilderHud` and `HudPrefabBuilder` can switch
+  back to `TMP_Text`.
 - **D3: split each HUD into an engine-free model and a thin view,** the
   same split [architecture.md](../architecture.md#the-one-rule-engine-free-simulation-unity-only-adapters)
   mandates for simulation. A new assembly `Hullbreach.Hud` (no
@@ -87,10 +100,33 @@ assets), but it has three costs that now matter:
   views need as read-only properties. `BuilderHud` keeps its class name
   and its enable/disable contract with `DemoMode.ApplyState`, so
   `docs/demo-scene.md` wiring stays recognisable.
+- **D9: comments are plain, docs are linked.** Code comments in anything
+  U1 or later touches are one or two `//` lines, WHY not WHAT, with no
+  XML `<summary>` blocks. Every public type/member instead carries a
+  `// frob:doc docs/<page>.md#<anchor>` line pointing at a docs/ heading,
+  and that heading lists the symbols it documents with one
+  `<!-- frob:describes Assets/Scripts/<Asm>/<File>.cs::<Type>[.<Member>] -->`
+  line each (mirrors `../platform/docs/index.md`'s convention). frob will
+  check these links once it is wired into this repo (see the schedule);
+  until then they are just discoverable cross-references.
 
 ## 3. Module map
 
 ### `Hullbreach.Hud` (new, engine-free, `Assets/Scripts/Hullbreach.Hud/`)
+
+#### Hullbreach.Hud module reference
+
+<!-- frob:describes Assets/Scripts/Hullbreach.Hud/HudColor.cs::HudColor -->
+<!-- frob:describes Assets/Scripts/Hullbreach.Hud/HudColor.cs::HudColor.HudColor -->
+<!-- frob:describes Assets/Scripts/Hullbreach.Hud/HudColor.cs::HudColor.ThrustRed -->
+<!-- frob:describes Assets/Scripts/Hullbreach.Hud/HudColor.cs::HudColor.ReverseGreen -->
+<!-- frob:describes Assets/Scripts/Hullbreach.Hud/HudColor.cs::HudColor.SteerWhite -->
+<!-- frob:describes Assets/Scripts/Hullbreach.Hud/HudColor.cs::HudColor.TrackDark -->
+<!-- frob:describes Assets/Scripts/Hullbreach.Hud/HudColor.cs::HudColor.WarningOkGreen -->
+<!-- frob:describes Assets/Scripts/Hullbreach.Hud/HudColor.cs::HudColor.WarningStrainYellow -->
+<!-- frob:describes Assets/Scripts/Hullbreach.Hud/HudColor.cs::HudColor.WarningCriticalRed -->
+<!-- frob:describes Assets/Scripts/Hullbreach.Hud/BuilderHudModel.cs::BuilderHudModel -->
+<!-- frob:describes Assets/Scripts/Hullbreach.Hud/BuilderHudModel.cs::BuilderHudModel.Build -->
 
 - `HudColor` -- readonly RGBA float struct; the palette constants used
   by the HUD today (thrust red, reverse green, steer white, track dark,
@@ -123,6 +159,19 @@ assets), but it has three costs that now matter:
 - `HullWarningBanner` -- view over `HullWarningModel`; shown only in Fly.
 
 ### Editor (`Assets/Editor/Hullbreach.Editor/`, Editor-only asmdef)
+
+#### HudPrefabBuilder (Editor)
+
+<!-- frob:describes Assets/Editor/Hullbreach.Editor/HudPrefabBuilder.cs::HudPrefabBuilder -->
+<!-- frob:describes Assets/Editor/Hullbreach.Editor/HudPrefabBuilder.cs::HudPrefabBuilder.HudCanvasPrefabPath -->
+<!-- frob:describes Assets/Editor/Hullbreach.Editor/HudPrefabBuilder.cs::HudPrefabBuilder.BuilderPanelPrefabPath -->
+<!-- frob:describes Assets/Editor/Hullbreach.Editor/HudPrefabBuilder.cs::HudPrefabBuilder.DemoScenePath -->
+<!-- frob:describes Assets/Editor/Hullbreach.Editor/HudPrefabBuilder.cs::HudPrefabBuilder.RebuildDefaultHudPrefabsMenuItem -->
+<!-- frob:describes Assets/Editor/Hullbreach.Editor/HudPrefabBuilder.cs::HudPrefabBuilder.Build -->
+<!-- frob:describes Assets/Editor/Hullbreach.Editor/HudPrefabBuilder.cs::HudPrefabBuilder.BuildForce -->
+<!-- frob:describes Assets/Editor/Hullbreach.Editor/HudPrefabBuilder.cs::HudPrefabBuilder.Run -->
+<!-- frob:describes Assets/Editor/Hullbreach.Editor/HudPrefabBuilder.cs::HudPrefabBuilder.BuildHudCanvasPrefab -->
+<!-- frob:describes Assets/Editor/Hullbreach.Editor/HudPrefabBuilder.cs::HudPrefabBuilder.WireDemoScene -->
 
 - `HudPrefabBuilder` -- builds the prefabs and wires `DemoScene` (D6).
 

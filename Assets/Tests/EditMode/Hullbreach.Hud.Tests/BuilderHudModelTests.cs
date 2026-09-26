@@ -5,9 +5,8 @@ using NUnit.Framework;
 
 namespace Hullbreach.Hud.Tests
 {
-    /// <summary>Covers every public member of <see cref="BuilderHudModel"/>
-    /// against a fresh <see cref="BuilderSession"/>, checking the exact text
-    /// the old <c>BuilderHud.OnGUI</c> produced (D7: behaviour parity).</summary>
+    // Covers every public member of BuilderHudModel against a fresh
+    // BuilderSession, checking the exact text the old OnGUI produced (D7).
     public sealed class BuilderHudModelTests
     {
         [Test]
