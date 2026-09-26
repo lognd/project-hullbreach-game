@@ -5,9 +5,7 @@ using Hullbreach.Hud;
 
 namespace Hullbreach.Game
 {
-    // uGUI view over a Hullbreach.Hud.ChannelBarValue (D4): fills the track by
-    // moving the fill RectTransform's anchors, not Image.fillAmount, since
-    // there is no sprite asset for that mode (D2/D5).
+    // uGUI view over a Hullbreach.Hud.ChannelBarValue (D4); see docs for why.
     // frob:doc docs/design/ui-port.md#hullbreachgame-hud-channelbar
     public sealed class ChannelBar : MonoBehaviour
     {

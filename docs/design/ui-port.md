@@ -158,7 +158,9 @@ assets), but it has three costs that now matter:
 - `FlightTelemetryModel` -- from ship telemetry (speed components,
   angular velocity, forward/reverse/steer throttle means): speed line,
   channel bar values (label text + clamped fill, steer as signed
-  -1..1 with center-origin fill).
+  -1..1 with center-origin fill). `Build` copies its format strings and
+  clamp order verbatim from the old `DrawStatusPanel`/`DrawChannelBar`/
+  `DrawSteerBar` so the rendered text is unchanged.
 - `StatusPanelModel` -- mode line, control-hint lines for Build/Fly,
   overlay line, mass/blocks line, and the active powerup lines, built
   from a list of plain `ActivePowerup` structs (type name, x, y, type
