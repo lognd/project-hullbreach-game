@@ -1,5 +1,5 @@
 ---
-id: T-draft-35528289
+id: T-0085
 title: 'S39-4: Physics tests: off-center thruster rotates, doubled mass halves acceleration'
 state: queued
 kind: feature
