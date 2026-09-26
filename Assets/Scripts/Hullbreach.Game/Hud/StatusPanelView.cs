@@ -6,7 +6,7 @@ namespace Hullbreach.Game
 {
     // uGUI view over StatusPanelModel and FlightTelemetryModel (D4): bottom-left,
     // always visible; owns three nested ChannelBar instances and a powerup row list.
-    // frob:doc docs/demo-scene.md#the-ugui-hud-u3
+    // frob:doc docs/demo-scene.md#the-ugui-hud-u1-u3
     public sealed class StatusPanelView : MonoBehaviour
     {
         [SerializeField] DemoMode demoMode;

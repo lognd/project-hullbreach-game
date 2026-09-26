@@ -5,7 +5,7 @@ using Hullbreach.Hud;
 namespace Hullbreach.Game
 {
     // uGUI view over HullWarningModel (D4): top-center, shown only in Fly.
-    // frob:doc docs/demo-scene.md#the-ugui-hud-u3
+    // frob:doc docs/demo-scene.md#the-ugui-hud-u1-u3
     public sealed class HullWarningBanner : MonoBehaviour
     {
         [SerializeField] DemoMode demoMode;

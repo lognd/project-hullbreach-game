@@ -1,15 +1,13 @@
 # Design: port the IMGUI HUD to Unity UI (uGUI)
 
-Status: accepted before implementation. This document is the spec for
-the UI port work units U1-U5 below. Owners implement against it; if the
-code has to deviate, update this page in the same change.
+Status: U0-U4 landed (Sprint 1); the IMGUI HUD is gone. This document
+was the spec for that work; it is kept for the decisions (section 2)
+and as the schedule of record for what follows.
 
 Related: [architecture](../architecture.md) (the engine-free rule this
 design extends), [demo scene layout](../demo-scene.md),
 [testing](../testing.md), [roadmap](../roadmap.md),
 [Jira export](#jira-stories-this-touches).
-
-Status: U0-U4 landed (Sprint 1); the IMGUI HUD is gone.
 
 ## 1. Why
 
@@ -295,8 +293,8 @@ on it. Sprint dates are from the Jira export.
 
 | Target | Owner | Work | Jira |
 | --- | --- | --- | --- |
-| Sprint 1 (by 2026-09-28) | all five | U0-U4 above: IMGUI to uGUI port | SCRUM-108 (S33-2) |
-| Sprint 1 (pulled forward) | all five | frob wiring, comment sweep, Jira backlog import: see [frob-and-backlog.md](frob-and-backlog.md) | P1-1 |
+| Sprint 1 (by 2026-09-28) | all five | **Done.** U0-U4 above: IMGUI to uGUI port | SCRUM-108 (S33-2) |
+| Sprint 1 (pulled forward) | all five | **Done.** frob wiring, comment sweep, Jira backlog import: see [frob-and-backlog.md](frob-and-backlog.md) for what is still open on the frob side | P1-1 |
 | Sprint 2 week 1 (2026-10-05 to 10-09) | Steven | Title screen scene on the `HudCanvas` foundation | SCRUM-130 (S26-1), SCRUM-131 (S26-2) |
 | Sprint 2 week 2 (2026-10-12 to 10-16) | Angie | Title screen art and layout; HUD art pass | SCRUM-132 (S26-3) |
 | Sprint 2 week 2 (2026-10-12 to 10-16) | Steven | Settings screen; sign-in screen | SCRUM-133 (S27-1), SCRUM-100 (S07-2) |

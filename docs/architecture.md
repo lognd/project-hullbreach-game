@@ -51,16 +51,19 @@ let each client independently recompute and risk disagreeing.
 ## Assembly dependency graph
 
 ```
+                     Hullbreach.Editor  (Editor-only; TextMeshPro, UnityEngine.UI)
+                        /   |
+                       /    |
                          Hullbreach.Game  (UnityEngine; MonoBehaviour adapters)
-                        /   |    |    |   \
-                       /    |    |    |    \
-                Builder  Ship  Net World  (Structure, via Ship & directly)
-                     \      \    |   /   /
-                      \      \   |  /   /
-                       \      \  | /   /
-                        \      \ |/   /
-                         \      X    /
-                          \    / \  /
+                        /   |    |    |    |   \
+                       /    |    |    |    |    \
+                Builder  Ship  Net World  Hud  (Structure, via Ship & directly)
+                     \      \    |   /    /   /
+                      \      \   |  /    /   /
+                       \      \  | /    /   /
+                        \      \ |/    /   /
+                         \      X     /   /
+                          \    / \   /   /
                            Structure  (also -> Core)
                               |
                             Core   (Unity.Mathematics, Unity.Collections only)
@@ -95,6 +98,10 @@ Concretely, from each `.asmdef`'s `references`:
   `ShipStructure`, `WorldSink`, `GravityWorld`, `Powerup`/`PowerupSpawner`,
   `Projectile`/`ProjectileSpawner`, `DemoMode`, `BuilderHud`,
   `StatusPanelView`, `HullWarningBanner`, `ChannelBar`, `CameraFollow`.
+- `Hullbreach.Editor` -> `Game`, `Core`, `Builder`, `Hud`, plus
+  `Unity.TextMeshPro` and `UnityEngine.UI`. Editor-only (`includePlatforms:
+  Editor`), so it is stripped from builds; custom inspectors and prefab
+  setup tooling for the uGUI HUD live here.
 
 If you find yourself wanting to `using UnityEngine` inside `Ship`,
 `Structure`, `Builder`, `Core`, `World`, `Net`, or `Hud`, that is a sign the code
