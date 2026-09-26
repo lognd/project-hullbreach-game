@@ -1,5 +1,5 @@
 ---
-id: T-draft-44d04f9d
+id: T-0080
 title: 'S38-2: BucklingAnalysis and GeometricStiffness for compressive failure'
 state: queued
 kind: feature
