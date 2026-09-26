@@ -292,8 +292,7 @@ on it. Sprint dates are from the Jira export.
 | Target | Owner | Work | Jira |
 | --- | --- | --- | --- |
 | Sprint 1 (by 2026-09-28) | all five | U0-U4 above: IMGUI to uGUI port | SCRUM-108 (S33-2) |
-| Sprint 2 week 1 (2026-10-05 to 10-09) | Derrick | Wire frob into the game repo (C# check stage, `frob.toml`, ticket queue) so `frob check` passes | - |
-| Sprint 2 week 1 (2026-10-05 to 10-09) | Logan | Import the Jira backlog (epics, stories, PBIs, points, milestones) into the frob ticket queue | P2 process tasks |
+| Sprint 1 (pulled forward) | all five | frob wiring, comment sweep, Jira backlog import: see [frob-and-backlog.md](frob-and-backlog.md) | P1-1 |
 | Sprint 2 week 1 (2026-10-05 to 10-09) | Steven | Title screen scene on the `HudCanvas` foundation | SCRUM-130 (S26-1), SCRUM-131 (S26-2) |
 | Sprint 2 week 2 (2026-10-12 to 10-16) | Angie | Title screen art and layout; HUD art pass | SCRUM-132 (S26-3) |
 | Sprint 2 week 2 (2026-10-12 to 10-16) | Steven | Settings screen; sign-in screen | SCRUM-133 (S27-1), SCRUM-100 (S07-2) |

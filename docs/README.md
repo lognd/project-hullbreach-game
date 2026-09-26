@@ -17,3 +17,8 @@
   new screen; it is the spec for moving the IMGUI HUD to Unity UI
   (uGUI prefabs), who owns which part, and the dated plan for the
   screens that build on it.
+- `design/frob-and-backlog.md`: read this before touching tickets, frob
+  directives or code comments; it specs the frob wiring, the comment
+  style sweep, and how the Jira backlog maps onto frob tickets.
+- `reference/`: one page per assembly, the target of every
+  `// frob:doc` link in the code.

@@ -67,6 +67,6 @@ S46 (win by breaching the core), S48, and the E14 stretch goals.
 - [x] UI: port the IMGUI HUD (`BuilderHud`, `DemoMode`'s status panel
       and hull banner) to uGUI prefabs. Done, U0-U4:
       [docs/design/ui-port.md](docs/design/ui-port.md).
-- [ ] Tooling: wire frob into this repo so `frob check` passes, then
-      import the Jira backlog as tickets. Scheduled for Sprint 2 week 1
-      in [docs/design/ui-port.md#7-schedule](docs/design/ui-port.md#7-schedule).
+- [ ] Tooling: wire frob into this repo, sweep the comments to D9, and
+      import the Jira backlog as tickets; spec and owners in
+      [docs/design/frob-and-backlog.md](docs/design/frob-and-backlog.md).
