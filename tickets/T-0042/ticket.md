@@ -1,5 +1,5 @@
 ---
-id: T-draft-395b6e6c
+id: T-0042
 title: 'S07-3: Store the session token between launches and present it when joining
   a match'
 state: queued
