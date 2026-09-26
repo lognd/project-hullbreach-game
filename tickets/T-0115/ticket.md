@@ -1,5 +1,5 @@
 ---
-id: T-draft-b08d447b
+id: T-0115
 title: 'S50-2: Co-op match mode with shared victory and defeat conditions'
 state: queued
 kind: feature
