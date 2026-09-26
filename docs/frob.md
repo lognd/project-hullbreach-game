@@ -126,7 +126,7 @@ today, because frob's check stage dispatches only python/typescript/
 cpp/rust project types, not Unity/C# yet, even though its underlying
 parser already understands C#. This is a real gap in frob itself, not a
 misconfiguration here: the frob maintainers confirmed it on 2026-09-26.
-It is tracked upstream as frob T-draft-fcfdafdf (critical, targeted for
+It is tracked upstream as frob T-6590 (critical, targeted for
 frob 0.534.0, adding "unity" and "csharp" project types with the test
 step read from this repo's own `[[test.runner]]`); the strata
 root-module parse gap that made the hand-merged `design/hullbreach_game.strata`
