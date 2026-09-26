@@ -1,5 +1,5 @@
 ---
-id: T-draft-bcead7c1
+id: T-0100
 title: 'S45-3: Per-map hazard frequency configuration'
 state: queued
 kind: feature
