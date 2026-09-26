@@ -1,5 +1,5 @@
 ---
-id: T-draft-707f50fa
+id: T-0084
 title: 'S39-3: ShipController mapping keyboard input to thrusters'
 state: queued
 kind: feature
