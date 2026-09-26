@@ -57,8 +57,8 @@ node net : trusted {
     clearance Internal;
     waive "REL200:f_login_game" reason "planned (Jira SCRUM-100, S07-2); no call site exists yet, see docs/frob.md";
     waive "REL200:f_session_check" reason "planned (Jira SCRUM-100, S07-2); no call site exists yet, see docs/frob.md";
-    waive "SYS114:f_login_game" reason "call site planned for Jira S07-2; host constraint bound when the client lands" ticket "T-draft-5ad91051";
-    waive "SYS114:f_session_check" reason "call site planned for Jira S07-2; host constraint bound when the client lands" ticket "T-draft-5ad91051";
+    waive "SYS114:f_login_game" reason "call site planned for Jira S07-2; host constraint bound when the client lands" ticket "T-0041";
+    waive "SYS114:f_session_check" reason "call site planned for Jira S07-2; host constraint bound when the client lands" ticket "T-0041";
 }
 flow f_net_core : net -> core { label Internal; attr local; attr "Hullbreach.Net.asmdef references Hullbreach.Core"; }
 flow f_net_ship : net -> ship { label Internal; attr local; attr "Hullbreach.Net.asmdef references Hullbreach.Ship"; }
