@@ -38,7 +38,7 @@ Sprint-0 work was completed and marked Done in Jira before frob was wired into t
  tickets/T-0023/ticket.md      | 61 +++++++++++++++++++++++++
  tickets/T-0006/ticket.md      | 45 +++++++++++++++++++
  tickets/T-0002/ticket.md      | 45 +++++++++++++++++++
- tickets/T-draft-d817af46/ticket.md      | 60 +++++++++++++++++++++++++
+ tickets/T-0039/ticket.md      | 60 +++++++++++++++++++++++++
  tickets/T-draft-deadbb61/ticket.md      | 58 ++++++++++++++++++++++++
  tickets/T-0026/ticket.md      | 61 +++++++++++++++++++++++++
  tickets/T-0032/ticket.md      | 61 +++++++++++++++++++++++++
