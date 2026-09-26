@@ -54,6 +54,12 @@ body_changes:
   at: '2026-09-26'
   old_length: 362
   new_length: 432
+- mode: append
+  reason: record Sprint-0 pre-frob completion
+  actor: logan
+  at: '2026-09-26'
+  old_length: 432
+  new_length: 569
 designated_repro_test: null
 threat: null
 component: null
@@ -78,3 +84,5 @@ frob:no-behavior-change reason="done in Jira before frob (Sprint 0)"
 frob:no-behavior-change reason="done in Jira before frob (Sprint 0)"
 
 frob:no-behavior-change reason="done in Jira before frob (Sprint 0)"
+
+Done in Jira Sprint 0, before frob; left queued because frob's close requires bound evidence (reported to frob maintainers 2026-09-26).
