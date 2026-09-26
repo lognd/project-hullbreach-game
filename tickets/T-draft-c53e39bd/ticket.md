@@ -6,7 +6,7 @@ kind: docs
 origin: human
 created: '2026-09-26'
 priority: critical
-parent: T-draft-df4d6b80
+parent: T-0026
 tier: ticket
 sprint: sprint-2
 runs_last: false
