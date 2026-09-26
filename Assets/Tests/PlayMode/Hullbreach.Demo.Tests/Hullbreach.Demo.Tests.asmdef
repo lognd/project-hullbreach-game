@@ -11,6 +11,8 @@
         "Hullbreach.Game",
         "Hullbreach.Hud",
         "Unity.Mathematics",
+        "Unity.TextMeshPro",
+        "UnityEngine.UI",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner"
     ],
