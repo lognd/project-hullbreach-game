@@ -1,5 +1,5 @@
 ---
-id: T-draft-0a94be29
+id: T-0069
 title: 'S34-3: Build cooldown or cost so mid-match building is a trade-off'
 state: queued
 kind: feature
