@@ -84,3 +84,7 @@ S46 (win by breaching the core), S48, and the E14 stretch goals.
 - [ ] frob: the three Sprint 0 tickets (label `jira-status:done`) stay
       queued until frob can close pre-frob work without evidence
       (`close --historical`, frob T-draft-d3c3c73a, 0.535.0).
+- [ ] frob: `frob:tests` bindings in Assets/Tests read as malformed
+      because frob does not yet see Unity test asmdefs as the test side
+      (frob T-draft-317270e0, 0.534.0). Two bindings were removed from
+      BuilderSessionTests and ShipBodyTests; re-add them after it lands.
