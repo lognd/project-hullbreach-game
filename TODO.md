@@ -68,7 +68,7 @@ S46 (win by breaching the core), S48, and the E14 stretch goals.
       [docs/design/ui-port.md](docs/design/ui-port.md).
 - [ ] frob: `frob check` exits `CHECK001` ("unknown project type") on
       this repo until frob 0.534.0 ships the "unity"/"csharp" project
-      types (frob T-draft-fcfdafdf, critical; the strata root-module
+      types (frob T-6590, critical; the strata root-module
       parse gap that forced the hand-merge into
       `design/hullbreach_game.strata` is the same series, frob T-5198).
       `frob graph build` and `frob ticket` already work today; add a CI
@@ -77,14 +77,14 @@ S46 (win by breaching the core), S48, and the E14 stretch goals.
       [docs/design/frob-and-backlog.md](docs/design/frob-and-backlog.md).
 - [ ] frob: `frob sys audit` exits non-zero on the two ticket-bound
       SYS114 waivers (T-0041) because frob double-counts them as stale
-      (frob T-draft-cdd9d556, 0.534.0). The reliability view already
+      (frob T-6584, 0.534.0). The reliability view already
       reports them as waived; treat that exit as a known false gap.
 - [ ] frob: `frob ticket new --points` drops the points (frob
-      T-draft-e0ce4669, 0.534.0); set points with `frob ticket points`.
+      T-6586, 0.534.0); set points with `frob ticket points`.
 - [ ] frob: the three Sprint 0 tickets (label `jira-status:done`) stay
       queued until frob can close pre-frob work without evidence
-      (`close --historical`, frob T-draft-d3c3c73a, 0.535.0).
+      (`close --historical`, frob T-6585, 0.535.0).
 - [ ] frob: `frob:tests` bindings in Assets/Tests read as malformed
       because frob does not yet see Unity test asmdefs as the test side
-      (frob T-draft-317270e0, 0.534.0). Two bindings were removed from
+      (frob T-6570, 0.534.0). Two bindings were removed from
       BuilderSessionTests and ShipBodyTests; re-add them after it lands.
