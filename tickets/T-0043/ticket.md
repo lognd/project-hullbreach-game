@@ -1,5 +1,5 @@
 ---
-id: T-draft-7907320f
+id: T-0043
 title: 'S12-3: Game client renders the active skin on both players'' ships'
 state: queued
 kind: feature
