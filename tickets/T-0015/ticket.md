@@ -1,5 +1,5 @@
 ---
-id: T-draft-0a6506c4
+id: T-0015
 title: 'S26: Start from a title screen'
 state: queued
 kind: feature
