@@ -1,5 +1,5 @@
 ---
-id: T-draft-51c77121
+id: T-0098
 title: 'S45-1: Hazard spawner for asteroids and solar flares applying impact loads
   through the stress model'
 state: queued
