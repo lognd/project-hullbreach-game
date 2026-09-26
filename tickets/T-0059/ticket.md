@@ -1,5 +1,5 @@
 ---
-id: T-draft-47215f25
+id: T-0059
 title: 'S31-1: Detach rule that also removes blocks stranded by a removal'
 state: queued
 kind: feature
