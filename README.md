@@ -150,7 +150,10 @@ Acceptance criteria, from the story:
    acceleration.
 3. Control fins change turning behavior in a way a player can feel.
 
-All of it lives in [`Assets/PlayerSingle.cs`](Assets/PlayerSingle.cs).
+All of it used to live in `Assets/PlayerSingle.cs`, which has since been
+replaced by `Hullbreach.Ship.ShipBody`/`Hullbreach.Game.ShipController`
+(see `docs/architecture.md`); this section is kept for the physics
+reasoning, which still applies.
 The approach there is already the right one for criterion 1:
 `AddForceAtPosition` applies force *at the thruster's world position*, so
 an off-center thruster generates torque as a consequence of the physics
@@ -512,6 +515,9 @@ up next:
   hand-authored without an editor.
 - [docs/testing.md](docs/testing.md): running `tools/plaincs`, what CI
   checks, which assemblies need the editor, and how to write a new test.
+- [docs/netcode.md](docs/netcode.md): the wire message design and
+  quantization in `Hullbreach.Net`, and the "send causes, not effects"
+  server-authority rule; there is no transport wired up yet.
 - [docs/roadmap.md](docs/roadmap.md): sprint status against the GitHub
   story numbers and known engineering debt. `TODO.md` keeps only the
   short version.
