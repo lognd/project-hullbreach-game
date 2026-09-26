@@ -1,7 +1,7 @@
 ---
 id: T-0009
 title: 'S0-1: Create a couple drawing mock-ups of what the game will look like.'
-state: in-progress
+state: queued
 kind: feature
 origin: human
 created: '2026-09-26'
