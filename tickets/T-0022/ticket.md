@@ -1,5 +1,5 @@
 ---
-id: T-draft-aaf9f5da
+id: T-0022
 title: 'S33: Choose from a block palette'
 state: queued
 kind: feature
