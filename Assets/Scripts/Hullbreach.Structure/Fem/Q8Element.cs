@@ -2,55 +2,32 @@ using System;
 
 namespace Hullbreach.Structure
 {
-    /// <summary>
-    /// The 8-node serendipity quadrilateral, and its unit stiffness matrix.
-    ///
-    /// WHY Q8 AND NOT Q4: the bilinear Q4 cannot represent the curvature a
-    /// bending member needs, so it fakes it with spurious shear and comes out
-    /// far too stiff: "shear locking". For a ship made of beams and braces
-    /// that would be disqualifying.
-    ///
-    /// WHY A *UNIT* STIFFNESS: for isotropic plane stress,
-    ///     D = E / (1 - nu^2) * [[1, nu, 0], [nu, 1, 0], [0, 0, (1-nu)/2]]
-    /// so E factors out as a scalar. Since every block is the same axis-aligned
-    /// unit square, K_e = E * KHat(nu) with KHat precomputed ONCE per Poisson
-    /// class at startup. Stiffness upgrades and damage softening are then a
-    /// scalar multiply, never an integration.
-    ///
-    /// The uniform grid also collapses the isoparametric machinery: the map is
-    /// x = x_c + (h/2) * xi, so the Jacobian is the constant (h/2) * I and
-    /// det J = h^2 / 4. No per-Gauss-point Jacobian inversion.
-    /// </summary>
+    // The 8-node serendipity quadrilateral, and its unit stiffness matrix;
+    // see docs/reference/hullbreach-structure.md#q8element for why.
+    // frob:doc docs/reference/hullbreach-structure.md#q8element
     public static class Q8Element
     {
+        // frob:doc docs/reference/hullbreach-structure.md#q8element
         public const int NodeCount = 8;
+        // frob:doc docs/reference/hullbreach-structure.md#q8element
         public const int DofCount = 16;   // 8 nodes x 2 dof
 
-        /// <summary>
-        /// Node positions on the reference square [-1,1]^2, in standard Q8
-        /// order. Tests use these to build rigid-body modes.
-        /// </summary>
+        // Tests use these to build rigid-body modes.
+        // frob:doc docs/reference/hullbreach-structure.md#q8element
         public static readonly float[,] ReferenceNodes =
         {
             { -1f, -1f }, {  1f, -1f }, {  1f,  1f }, { -1f,  1f },   // corners
             {  0f, -1f }, {  1f,  0f }, {  0f,  1f }, { -1f,  0f },   // midsides
         };
 
-        /// <summary>
-        /// Cached unit stiffness per Poisson class, populated lazily on first
-        /// use per (class, h). Keyed by (class &lt;&lt; 8) | quantized h isn't
-        /// needed in practice since h is always 1 in this game, but the API
-        /// still takes h to stay general.
-        /// </summary>
+        // Keyed by (class, h) though h is always 1 in this game; the API
+        // still takes h to stay general.
         static readonly System.Collections.Generic.Dictionary<(byte, float), float[,]> KHatCache
             = new System.Collections.Generic.Dictionary<(byte, float), float[,]>();
 
-        /// <summary>
-        /// Poisson's ratio per quantized class. 0 = ordinary structural steel
-        /// like (0.30), 1 = a softer/rubbery class (0.25), 2 = a stiffer,
-        /// more incompressible class (0.35). Quantized because KHat is not
-        /// linear in nu, so a continuous nu would defeat the precomputation.
-        /// </summary>
+        // Quantized because KHat is not linear in nu, so a continuous nu
+        // would defeat the precomputation.
+        // frob:doc docs/reference/hullbreach-structure.md#q8element
         public static float NuFor(byte poissonClass)
         {
             switch (poissonClass)
@@ -62,11 +39,8 @@ namespace Hullbreach.Structure
             }
         }
 
-        /// <summary>
-        /// The cached unit stiffness matrix (16x16, E=1, thickness 1) for a
-        /// given Poisson class and block side length h. Computed once and
-        /// reused for every block sharing that class.
-        /// </summary>
+        // Computed once and reused for every block sharing that class.
+        // frob:doc docs/reference/hullbreach-structure.md#q8element
         public static float[,] KHatFor(byte poissonClass, float h)
         {
             var key = (poissonClass, h);
@@ -79,9 +53,7 @@ namespace Hullbreach.Structure
             return k;
         }
 
-        /// <summary>
-        /// The 8 shape functions at (xi, eta), written into `into`.
-        /// </summary>
+        // frob:doc docs/reference/hullbreach-structure.md#q8element
         public static void ShapeFunctions(float xi, float eta, float[] into)
         {
             for (int i = 0; i < 4; i++)
@@ -106,10 +78,7 @@ namespace Hullbreach.Structure
             }
         }
 
-        /// <summary>
-        /// dN/dxi and dN/deta at (xi, eta). `dNdXi` and `dNdEta` are each
-        /// length 8.
-        /// </summary>
+        // frob:doc docs/reference/hullbreach-structure.md#q8element
         public static void ShapeDerivatives(float xi, float eta, float[] dNdXi, float[] dNdEta)
         {
             for (int i = 0; i < 4; i++)
@@ -137,10 +106,7 @@ namespace Hullbreach.Structure
             }
         }
 
-        /// <summary>
-        /// The 3x16 strain-displacement matrix at (xi, eta) for a block of
-        /// side `h`.
-        /// </summary>
+        // frob:doc docs/reference/hullbreach-structure.md#q8element
         public static void StrainDisplacement(float xi, float eta, float h, float[,] b)
         {
             var dNdXi = new float[NodeCount];
@@ -165,9 +131,8 @@ namespace Hullbreach.Structure
             }
         }
 
-        /// <summary>
-        /// Plane-stress constitutive matrix divided by E, i.e. D = E * DHat(nu).
-        /// </summary>
+        // D = E * ConstitutiveUnit(nu).
+        // frob:doc docs/reference/hullbreach-structure.md#q8element
         public static void ConstitutiveUnit(float nu, float[,] dHat)
         {
             float factor = 1f / (1f - nu * nu);
@@ -176,10 +141,8 @@ namespace Hullbreach.Structure
             dHat[2, 0] = 0f; dHat[2, 1] = 0f; dHat[2, 2] = factor * (1f - nu) / 2f;
         }
 
-        /// <summary>
-        /// KHat: the 16x16 element stiffness for E = 1, thickness 1, side `h`.
-        /// KHat = integral of B^T DHat B over the element, by 3x3 Gauss.
-        /// </summary>
+        // KHat = integral of B^T DHat B over the element, by 3x3 Gauss.
+        // frob:doc docs/reference/hullbreach-structure.md#q8element
         public static void UnitStiffness(float nu, float h, float[,] kHat)
         {
             for (int i = 0; i < DofCount; i++)
@@ -189,9 +152,8 @@ namespace Hullbreach.Structure
             var dHat = new float[3, 3];
             ConstitutiveUnit(nu, dHat);
 
-            // 3x3 Gauss on [-1,1]^2. 2x2 (reduced integration) would admit a
-            // spurious zero-energy mode per element; this is precomputed once
-            // at startup so the extra cost is irrelevant.
+            // 3x3 Gauss: 2x2 (reduced) would admit a spurious zero-energy
+            // mode; precomputed once so the extra cost is irrelevant.
             float[] pts = { -(float)Math.Sqrt(3.0 / 5.0), 0f, (float)Math.Sqrt(3.0 / 5.0) };
             float[] wts = { 5f / 9f, 8f / 9f, 5f / 9f };
 

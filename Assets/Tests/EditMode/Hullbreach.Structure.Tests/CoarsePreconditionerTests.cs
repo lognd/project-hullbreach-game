@@ -6,22 +6,12 @@ using Hullbreach.Structure;
 
 namespace Hullbreach.Structure.Tests
 {
-    /// <summary>
-    /// Covers CoarsePreconditioner's three load-bearing guarantees: the
-    /// combined M^-1 stays a symmetric operator (required for PCG's
-    /// convergence theory to still apply), the coarse correction is exactly
-    /// zero on the rigid-body modes (the property that avoids the
-    /// Cholesky-of-a-singular-Kc NaN a previous attempt hit, see
-    /// docs/roadmap.md), and it actually cuts iteration count on a case
-    /// built to need many (a slender 1-wide arm, see CgSolver's doc on why
-    /// width drives iteration count).
-    /// </summary>
+    // Covers CoarsePreconditioner's three guarantees: M^-1 stays
+    // symmetric, is exactly zero on rigid modes, and cuts iteration count.
     public class CoarsePreconditionerTests
     {
-        /// <summary>Local Euclidean dot product: CgSolver.Dot is internal
-        /// (a different assembly than this edit-mode test project), so this
-        /// is a tiny, test-only duplicate rather than exposing solver
-        /// internals just for a test helper.</summary>
+        // Local Euclidean dot product: CgSolver.Dot is internal to a
+        // different assembly, so this is a tiny test-only duplicate.
         static float Dot(float[] a, float[] b)
         {
             float s = 0f;
@@ -95,16 +85,8 @@ namespace Hullbreach.Structure.Tests
                 float maxAbs = 0f;
                 for (int i = 0; i < n; i++) maxAbs = Math.Max(maxAbs, Math.Abs(z[i]));
 
-                // Scale-relative, and TIGHT: the correction now projects
-                // its own input and output onto the complement of these
-                // exact modes (see ApplyAdditive), so a rigid mode maps to
-                // zero by construction rather than by Kc^+'s eigenvalue
-                // floor happening to drop the right directions. The old
-                // 5e-3 bound was a data-dependent accommodation of that
-                // floor's leftovers and sat only a few percent above what
-                // Mono actually produced (0.0496 measured against a 0.0456
-                // effective threshold on this grid); 1e-4 relative is a
-                // real assertion about the construction instead.
+                // Scale-relative and TIGHT: ApplyAdditive projects both its
+                // input and output, so a rigid mode maps to zero by construction.
                 float modeNorm = (float)Math.Sqrt(Dot(mode, mode));
                 Assert.Less(maxAbs, 1e-4f * Math.Max(1f, modeNorm),
                     "coarse correction of a rigid mode should be ~0: it must be projected off them by construction");

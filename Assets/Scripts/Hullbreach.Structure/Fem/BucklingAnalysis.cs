@@ -4,139 +4,66 @@ using System.Linq;
 
 namespace Hullbreach.Structure
 {
-    /// <summary>
-    /// One converged buckling mode: a load factor and the DOF shape it
-    /// belongs to, plus which blocks carry the strain energy of that shape.
-    /// </summary>
+    // One converged buckling mode: a load factor, its DOF shape, and which
+    // blocks carry the strain energy of that shape.
+    // frob:doc docs/reference/hullbreach-structure.md#bucklingmode
     public sealed class BucklingMode
     {
-        /// <summary>Smallest positive lambda such that K + lambda*K_G is
-        /// singular along <see cref="Shape"/>. Less than 1 means the CURRENT
-        /// load already exceeds the buckling load for this shape.</summary>
+        // Smallest positive lambda such that K + lambda*K_G is singular
+        // along Shape; less than 1 means the CURRENT load already exceeds it.
+        // frob:doc docs/reference/hullbreach-structure.md#bucklingmode
         public float LoadFactor;
 
-        /// <summary>The mode's DOF displacement vector, normalized so its
-        /// largest-magnitude component is exactly 1 (a shape, not a
-        /// physical displacement: the eigenproblem only fixes it up to
-        /// scale).</summary>
+        // Normalized so its largest-magnitude component is exactly 1 (a
+        // shape, not a physical displacement).
+        // frob:doc docs/reference/hullbreach-structure.md#bucklingmode
         public float[] Shape;
 
-        /// <summary>Per-block fraction (0..1, summing to ~1 over the ship) of
-        /// this mode's strain energy phi^T K phi. Answers WHICH blocks fold
-        /// in this particular mode.</summary>
+        // Per-block fraction (0..1, summing to ~1) of this mode's strain
+        // energy: which blocks fold in this mode.
+        // frob:doc docs/reference/hullbreach-structure.md#bucklingmode
         public Dictionary<int, float> BlockParticipation;
     }
 
-    /// <summary>
-    /// Linearized buckling: the smallest positive load factors lambda solving
-    /// the generalized eigenproblem (K + lambda*K_G) phi = 0, i.e.
-    /// K phi = -lambda*K_G phi.
-    ///
-    /// METHOD: block inverse (subspace) iteration, Bathe-style:
-    ///   1. iterate y_j = K^-1 * (-K_G * v_j) for every vector in the block
-    ///      (CgSolver does the K^-1 apply; K is singular by 3 rigid modes,
-    ///      so every vector and every CG right-hand side is projected onto
-    ///      their complement first, exactly like CgSolver already does for
-    ///      its own residual);
-    ///   2. Gram-Schmidt orthonormalize the block;
-    ///   3. Rayleigh-Ritz: project both K and -K_G onto the block (small
-    ///      m x m matrices) and solve THAT generalized eigenproblem exactly
-    ///      via Cholesky + Jacobi (both dense, ~40 lines, fine at m &lt;= ~8);
-    ///   4. replace the block with the Ritz vectors (sorted by ascending
-    ///      lambda) and repeat.
-    /// The block is m = requested modes + 2 vectors: the two extras give
-    /// the iteration room to sort out near-degenerate modes without losing
-    /// one of the ones actually asked for.
-    ///
-    /// WHY NOT PLAIN POWER ITERATION ON K^-1*(-K_G) DIRECTLY: under uniform
-    /// compression -K_G is positive-semidefinite, and repeated K^-1
-    /// application makes the block converge to the largest eigenvalues of
-    /// that positive operator, i.e. exactly the smallest positive lambda:
-    /// no shift needed. Mixed tension/compression can still put spurious
-    /// large-magnitude negative-lambda directions in the block; the
-    /// non-positive ones are filtered out in <see cref="ExtractModes"/>
-    /// rather than chased by the iteration, which is why the block carries
-    /// two spares.
-    ///
-    /// REAL-TIME / NO PER-TICK ALLOCATION: every work array here is sized
-    /// once by <see cref="Reset"/> (on topology change or mode-count change)
-    /// and reused. <see cref="Step"/> runs at most <see cref="MaxSweepsPerTick"/>
-    /// sweeps and returns without publishing anything until Ritz values stop
-    /// moving; the caller (StructuralSolver) keeps calling Step tick after
-    /// tick and only reads modes out once it returns true, so the subspace is
-    /// warm-started for free across ticks (the load changes smoothly, so
-    /// after the first topology change only a sweep or two is normally
-    /// needed). Sweep budgets are TICK counts, never wall-clock, and the
-    /// only "randomness" is a fixed deterministic seed pattern (no RNG), so
-    /// two runs over identical inputs produce bit-identical output: see
-    /// BucklingTests.Analysis_IsBitDeterministic.
-    ///
-    /// SERVER-ONLY DECISION, CLIENT-SAFE TINT: the float FE solve is not
-    /// guaranteed bit-identical across machines (different CPUs/JIT), so any
-    /// THRESHOLD decision made from it (which load factor crossed 1, which
-    /// blocks therefore break) must be made in exactly one place (the
-    /// authoritative server) and broadcast as an event, never re-derived
-    /// locally. That is what StructuralSolver.BuckledBlocks is: consume it
-    /// only on the authority. Clients may read BlockStress.BucklingRatio (a
-    /// continuous tint, not a decision) freely, because a client's own tint
-    /// disagreeing slightly with another machine's tint is invisible, while
-    /// a client independently deciding a block died is a desync.
-    /// </summary>
+    // Linearized buckling via block inverse (subspace) iteration; see
+    // docs/reference/hullbreach-structure.md#bucklinganalysis for the method.
+    // frob:doc docs/reference/hullbreach-structure.md#bucklinganalysis
     public sealed class BucklingAnalysis
     {
-        /// <summary>Sweeps to run per Step call: the per-tick cost cap.</summary>
+        // frob:doc docs/reference/hullbreach-structure.md#bucklinganalysis
         public int MaxSweepsPerTick = 2;
 
-        /// <summary>Ritz values are considered converged once every tracked
-        /// lambda changes by less than this between sweeps (relative to its
-        /// own magnitude).</summary>
+        // Ritz values are converged once every tracked lambda changes by
+        // less than this between sweeps (relative to its own magnitude).
+        // frob:doc docs/reference/hullbreach-structure.md#bucklinganalysis
         public float Tolerance = 2e-3f;
 
-        /// <summary>Sweeps actually run by the most recent Step call:
-        /// mirrors CgSolver.LastIterationCount.</summary>
+        // frob:doc docs/reference/hullbreach-structure.md#bucklinganalysis
         public int LastSweepCount { get; private set; }
 
-        /// <summary>Tick index (as passed to Step, NOT a wall-clock time) at
-        /// which the subspace last converged and modes were published.</summary>
+        // Tick index (as passed to Step, not wall-clock) at which modes
+        // were last published.
+        // frob:doc docs/reference/hullbreach-structure.md#bucklinganalysis
         public int LastConvergedTick { get; private set; } = -1;
 
-        /// <summary>This analysis's OWN inverse-iteration solver, and
-        /// deliberately its own: it is never handed a
-        /// <see cref="CoarsePreconditioner"/>, so it always runs plain
-        /// Jacobi PCG at CgSolver's tight default tolerance regardless of
-        /// what StructuralSolver.UseCoarseCorrection is set to. Precision
-        /// matters more than speed on this path (the subspace's Rayleigh
-        /// quotients amplify any residual error in K^-1; see
-        /// CgSolver.MaxIterations' doc), and the coarse correction buys
-        /// iteration count at the cost of a different, preconditioner-
-        /// dependent error distribution in the returned displacement.</summary>
+        // Deliberately its own CgSolver, never handed a
+        // CoarsePreconditioner: see the reference page for why.
         readonly CgSolver _cg = new CgSolver();
 
-        /// <summary>CgSolver's own iteration cap, restored per solve when
-        /// no per-tick budget is set.</summary>
         static readonly int DefaultCgIterations = new CgSolver().MaxIterations;
 
-        /// <summary>CG iterations the most recent Step spent in total,
-        /// across every inverse-iteration solve: what
-        /// MaxCgIterationsPerTick actually caps.</summary>
+        // Across every inverse-iteration solve; what MaxCgIterationsPerTick caps.
+        // frob:doc docs/reference/hullbreach-structure.md#bucklinganalysis
         public int LastCgIterationCount { get; private set; }
 
-        /// <summary>Strain-energy floor for publishing a mode, relative to
-        /// max(diag K) * |phi|^2 (the natural scale of phi^T K phi for a
-        /// shape of phi's size). A Ritz slot whose reduced-K pivot went
-        /// near-singular carries essentially no strain energy: its
-        /// a = phi^T K phi falls orders of magnitude below this, and the
-        /// load factor a/b it would publish is pure rounding. Applied ONLY
-        /// here at publish time, never during a sweep: pivots legitimately
-        /// dip mid-sweep and zeroing those rows (a previous attempt) broke
-        /// healthy convergence.</summary>
+        // Strain-energy floor for publishing a mode; see the reference
+        // page for why this is applied only at publish time, never mid-sweep.
+        // frob:doc docs/reference/hullbreach-structure.md#bucklinganalysis
         public float MinStrainEnergyFraction = 1e-7f;
 
-        /// <summary>Compression floor for publishing a mode: b = -phi^T K_G
-        /// phi must exceed this fraction of a = phi^T K phi, i.e. the load
-        /// factor a/b must stay below 1/this. Below it the shape carries no
-        /// meaningful compression and there is no instability to report
-        /// along it.</summary>
+        // Compression floor for publishing a mode (load factor a/b must
+        // stay below 1/this).
+        // frob:doc docs/reference/hullbreach-structure.md#bucklinganalysis
         public float MinCompressionFraction = 1e-9f;
 
         int _dof = -1;
@@ -144,70 +71,27 @@ namespace Hullbreach.Structure
         int _modeCount;
         int _sweepsSinceReset;
 
-        /// <summary>Hard cap, in cumulative sweeps since the last Reset,
-        /// after which Step force-publishes whatever the block currently
-        /// holds even if the per-slot tolerance check has not settled:
-        /// mirrors CgSolver, which also returns its best estimate at
-        /// MaxIterations rather than guaranteeing true convergence. Without
-        /// this, rare transient near-linear-dependence among the block's
-        /// spare vectors (see the per-slot check below) could in principle
-        /// starve publication indefinitely.</summary>
+        // Hard cap on cumulative sweeps since Reset before Step
+        // force-publishes; mirrors CgSolver's MaxIterations behavior.
+        // frob:doc docs/reference/hullbreach-structure.md#bucklinganalysis
         public int ForceConvergeAfterSweeps = 250;
 
-        /// <summary>Sweeps since Reset before Step will EVER report
-        /// converged, tolerance check or force-cap alike. A freshly
-        /// seeded block can pass through a few sweeps of transient
-        /// near-linear-dependence (an accidental, temporary alignment of
-        /// the fixed deterministic seed, not a real fixed point) that can
-        /// otherwise look stable enough to satisfy Tolerance by
-        /// coincidence; a small floor rides past it cheaply.</summary>
+        // Sweeps since Reset before Step will EVER report converged, so a
+        // freshly seeded block cannot pass by coincidence.
+        // frob:doc docs/reference/hullbreach-structure.md#bucklinganalysis
         public int MinSweepsBeforeConvergence = 30;
 
-        /// <summary>True once some sweep since the last Reset has seen at
-        /// least one nonzero mu: distinguishes "this block has never found
-        /// any coupling yet" (legitimate: e.g. no compression anywhere, see
-        /// <see cref="StuckSweepsBeforeReseed"/>'s doc) from "this block HAD
-        /// real signal and then every slot went silent at once" (the
-        /// collapse this fix targets). Only the latter is anomalous enough
-        /// to justify discarding the warm-started subspace.</summary>
+        // True once some sweep since Reset saw a nonzero mu; distinguishes
+        // "never found coupling" from "had signal, then went silent".
         bool _sawNonzeroMu;
 
-        /// <summary>Consecutive sweeps every mu has read exactly 0 SINCE
-        /// <see cref="_sawNonzeroMu"/> went true: see the class doc's Mono
-        /// note on a divide by a near-zero Cholesky pivot occasionally
-        /// landing on a merely-huge-but-finite value rather than the
-        /// intended signed-infinity sentinel. That value then gets mixed by
-        /// Jacobi's plane rotations into every slot, and once the resulting
-        /// subspace vectors have collapsed this way (checked directly
-        /// against a captured failure log) they are a genuine fixed point:
-        /// Gram-Schmidt only rescales a vector whose norm is already
-        /// informative (see Orthonormalize's `norm > 1e-8f` guard), so a
-        /// collapsed all-mu-zero state reproduces itself identically every
-        /// later sweep and no amount of further iteration escapes it. Left
-        /// unchecked, the existing "value hasn't changed" convergence
-        /// tolerance (see the per-slot loop below) would otherwise treat a
-        /// collapsed all-Infinity lambda as trivially settled within just
-        /// 2-3 more sweeps; that tolerance check is separately overridden
-        /// (see its own doc, "post-signal all-mu-zero") so it can never
-        /// publish while a collapse is still ambiguous, which is what buys
-        /// this counter the room to use a patient threshold instead of
-        /// racing that shortcut.</summary>
+        // Consecutive sweeps every mu read exactly 0 since _sawNonzeroMu
+        // went true; see the reference page for the collapse this detects.
         int _stuckSweeps;
 
-        /// <summary>Consecutive post-signal all-mu-zero sweeps (see
-        /// <see cref="_stuckSweeps"/>) before Step gives up warm-starting
-        /// from a collapsed subspace and reseeds it fresh instead. Gated on
-        /// <see cref="_sawNonzeroMu"/> rather than a sweep-count floor (a
-        /// genuinely-uncompressed block's spares can legitimately sit at
-        /// mu=0 indefinitely, see ExtractModes' doc, but never after having
-        /// shown real signal first). Deliberately patient (comfortably
-        /// above the several sweeps a HEALTHY run can legitimately spend
-        /// mid self-correction with every slot transiently silent, observed
-        /// directly in this file's own test suite) now that the tolerance
-        /// override below removes the time pressure to fire fast: a true
-        /// collapse is a permanent fixed point (see this field's doc) and
-        /// will still be sitting at all-mu-zero however long this waits, so
-        /// there is no cost to giving genuine self-correction first crack.</summary>
+        // Consecutive post-signal all-mu-zero sweeps before Step reseeds a
+        // collapsed subspace instead of continuing to warm-start it.
+        // frob:doc docs/reference/hullbreach-structure.md#bucklinganalysis
         public int StuckSweepsBeforeReseed = 100;
 
         float[][] _v;      // current subspace block
@@ -225,54 +109,29 @@ namespace Hullbreach.Structure
         float[] _lambdaPrev; // 1/mu, previous sweep
         int[] _order;        // ascending-lambda permutation
 
-        /// <summary>Last snapshot of _v/_lambda taken on a sweep that
-        /// satisfied the ORDINARY tolerance check (i.e. NOT merely because
-        /// ForceConvergeAfterSweeps ran out of patience). ExtractModes reads
-        /// from this, never from the raw working _v/_lambda, so a force-
-        /// publish never hands out a mid-oscillation value from whatever
-        /// sweep happened to be in flight when the sweep cap fired: see
-        /// TODO.md's note on the Mono-only mu oscillation this fixes, and
-        /// _hasPublishedSnapshot's doc for the case where no such sweep has
-        /// ever happened yet.</summary>
-        // Publish-time Rayleigh-quotient scratch (see ExtractModes): K*phi,
-        // -K_G*phi and diag(K), all dof-sized, allocated once per Reset so
-        // the publish path stays allocation-free like the sweep path.
+        // Last snapshot from a sweep that satisfied the ORDINARY tolerance
+        // check; ExtractModes reads only this, never the raw working state.
         float[] _rqKPhi = Array.Empty<float>();
         float[] _rqKgPhi = Array.Empty<float>();
         float[] _rqDiag = Array.Empty<float>();
 
-        /// <summary>Orthonormalized copy of the rigid-body modes handed to
-        /// <see cref="Reset"/>, kept so <see cref="ExtractModes"/> can clean
-        /// a published shape without the caller having to pass them again
-        /// (they only change when the dof count does, i.e. on the same
-        /// event that forces a Reset).</summary>
+        // Orthonormalized copy of the rigid-body modes handed to Reset, so
+        // ExtractModes can clean a published shape without a re-pass.
         float[][] _rigid = Array.Empty<float[]>();
 
         float[][] _publishedV;
         float[] _publishedLambda;
 
-        /// <summary>True once at least one sweep since the last Reset has
-        /// satisfied the ordinary tolerance check and _publishedV/_publishedLambda
-        /// hold a trustworthy snapshot. A force-publish before this is ever
-        /// true has nothing stable to fall back on, so it does NOT publish
-        /// (see the force-publish branch below): better to keep iterating a
-        /// few more sweeps than to hand out an admittedly-unstable value.</summary>
+        // True once a sweep has satisfied the ordinary tolerance check and
+        // _publishedV/_publishedLambda hold a trustworthy snapshot.
         bool _hasPublishedSnapshot;
 
-        /// <summary>True once the last Step call converged and
-        /// <see cref="ExtractModes"/> is safe to call against the current
-        /// subspace.</summary>
+        // frob:doc docs/reference/hullbreach-structure.md#bucklinganalysis
         public bool Converged { get; private set; }
 
-        /// <summary>
-        /// (Re)allocates every work array for `dof` degrees of freedom and a
-        /// block of `modeCount` + 2 vectors, and reseeds the subspace with a
-        /// fixed deterministic pattern (never a RNG; see the class doc on
-        /// determinism). Call whenever the topology (dof count) or the
-        /// requested mode count changes; StructuralSolver also calls this
-        /// when compression disappears, so a later reappearance starts clean
-        /// rather than warm-starting from a stale, unrelated subspace.
-        /// </summary>
+        // (Re)allocates every work array and reseeds with a fixed
+        // deterministic pattern. Call on topology/mode-count change.
+        // frob:doc docs/reference/hullbreach-structure.md#bucklinganalysis
         public void Reset(int dof, int modeCount, float[][] rigidModes)
         {
             int m = modeCount + 2;
@@ -308,12 +167,8 @@ namespace Hullbreach.Structure
 
             SeedBlock(rigidModes, 0);
 
-            // NaN, not +Infinity: a genuinely converged (near-zero mu)
-            // slot can legitimately report lambda = +Infinity (see
-            // SolveGeneralizedEigen), and comparing that against an
-            // "unset" sentinel of the SAME value would spuriously call
-            // sweep 0 converged. NaN never equals anything, including
-            // itself, so the check below always treats it as unset.
+            // NaN, not +Infinity: a converged slot can legitimately report
+            // lambda = +Infinity, and NaN never equals itself so "unset" stays distinct.
             for (int i = 0; i < _m; i++) _lambdaPrev[i] = float.NaN;
             _sweepsSinceReset = 0;
             _stuckSweeps = 0;
@@ -324,14 +179,8 @@ namespace Hullbreach.Structure
             LastConvergedTick = -1;
         }
 
-        /// <summary>Fills every slot of the current subspace block with the
-        /// same fixed deterministic seed pattern Reset uses (a sum of a few
-        /// incommensurate sinusoids per vector, never an RNG, which is what
-        /// the bit-determinism test depends on), salted by `salt` so a
-        /// mid-run reseed (see Step's stuck-subspace doc) starts from a
-        /// genuinely different point than whatever seed produced the stuck
-        /// state, while staying just as deterministic as sweep 0's seed for
-        /// the same `salt`.</summary>
+        // Fills the subspace block with a fixed deterministic seed pattern
+        // (never RNG), salted so a mid-run reseed differs from the stuck state.
         void SeedBlock(float[][] rigidModes, int salt)
         {
             for (int k = 0; k < _m; k++)
@@ -354,39 +203,19 @@ namespace Hullbreach.Structure
             return a;
         }
 
-        /// <summary>
-        /// Runs up to <see cref="MaxSweepsPerTick"/> subspace-iteration
-        /// sweeps, warm-started from wherever the previous call left off.
-        /// Returns true (and sets <see cref="Converged"/>) once the tracked
-        /// Ritz values stop moving, at which point <paramref name="tick"/>
-        /// is recorded in <see cref="LastConvergedTick"/> and
-        /// <see cref="ExtractModes"/> is safe to call.
-        /// </summary>
-        /// <summary>The coarse correction to hand this analysis's own CG,
-        /// or null for plain Jacobi. Attaching one was long avoided here on
-        /// the grounds that the inverse iteration's Rayleigh quotients
-        /// amplify any preconditioner-dependent error in K^-1; that concern
-        /// predates CoarsePreconditioner.ApplyAdditive projecting BOTH its
-        /// input and its output, which is what made the correction exactly
-        /// rigid-mode-free. With that in place every BucklingTests case
-        /// (including the dense-oracle comparison) passes unchanged, and
-        /// the 100-block benchmark's buckling tick halved, so the precision
-        /// argument no longer buys anything.</summary>
+        // The coarse correction to hand this analysis's own CG, or null
+        // for plain Jacobi; see the reference page.
+        // frob:doc docs/reference/hullbreach-structure.md#bucklinganalysis
         public CoarsePreconditioner Coarse;
 
-        /// <summary>Total CG iterations Step may spend across ALL of its
-        /// inverse-iteration solves in one call: the per-tick cost cap that
-        /// MaxSweepsPerTick alone never was. A sweep runs one CG solve per
-        /// block vector, each previously free to run to CgSolver's own
-        /// 4000-iteration cap, so "2 sweeps" could mean 16 full solves and
-        /// several hundred milliseconds on a ship whose quasi-static solve
-        /// costs 20 (measured: 370-480 ms every 4th tick at 100 blocks).
-        /// Budget exhausted means a block vector keeps its warm start for
-        /// this tick, which costs convergence SPEED (more ticks to publish
-        /// modes) and not correctness: the subspace is carried across ticks
-        /// precisely so it can be advanced a slice at a time.</summary>
+        // Total CG iterations Step may spend across all inverse-iteration
+        // solves in one call; see the reference page.
+        // frob:doc docs/reference/hullbreach-structure.md#bucklinganalysis
         public int MaxCgIterationsPerTick = int.MaxValue;
 
+        // Runs up to MaxSweepsPerTick sweeps, warm-started from the
+        // previous call. Returns true once Ritz values stop moving.
+        // frob:doc docs/reference/hullbreach-structure.md#bucklinganalysis
         public bool Step(StiffnessAssembly k, GeometricStiffness kg, float[][] rigidModes, int tick)
         {
             int sweeps = 0;
@@ -416,25 +245,7 @@ namespace Hullbreach.Structure
                     }
 
                     // PROJECT THE CG SOLUTION, not just its right-hand
-                    // side. CgSolver re-projects only its RESIDUAL, never
-                    // the solution it returns (K annihilates a rigid-body
-                    // component, so `r` is blind to one and CG reports
-                    // ordinary convergence while carrying it), and this
-                    // block is warm-started from `_v`, so whatever leaks in
-                    // is fed straight back in as the next sweep's starting
-                    // point and compounds. That violates the invariant this
-                    // class's own doc states ("every vector and every CG
-                    // right-hand side is projected onto their complement")
-                    // and it is what put a rigid-dominated vector in the
-                    // LOWEST slot of a 12-block column's converged subspace
-                    // under Mono (direction cosines 0.62/-0.68/-0.78
-                    // against the three rigid modes): K annihilates that
-                    // component so phi^T K phi collapses while -phi^T K_G
-                    // phi does not, and the slot published a load factor
-                    // 17x below the true one (0.0086 against the dense
-                    // oracle's 0.149) while the correct mode sat in slot 1.
-                    // Three dots and three axpys per block vector per
-                    // sweep, against a CG solve: free.
+                    // side: see the reference page for the Mono failure this prevents.
                     CgSolver.Project(_y[j], _rigid);
                 }
 
@@ -460,16 +271,8 @@ namespace Hullbreach.Structure
 
                 SolveGeneralizedEigen();
 
-                // STUCK-SUBSPACE DETECTION AND RESEED: see _sawNonzeroMu's
-                // and _stuckSweeps' docs for why "every slot suddenly reads
-                // exactly 0, having shown real signal before" is a genuine
-                // fixed point, not a transient to iterate past. The ordinary
-                // tolerance-based convergence check below is separately
-                // overridden (see its own "post-signal all-mu-zero" doc) so
-                // it can never mistake a frozen all-Infinity lambda for a
-                // settled answer while this counter is still accumulating,
-                // which is what lets StuckSweepsBeforeReseed stay patient
-                // instead of racing that check.
+                // STUCK-SUBSPACE DETECTION AND RESEED: see the reference
+                // page for why this is a genuine fixed point to reseed past.
                 bool allZero = true;
                 for (int i = 0; i < _m; i++)
                 {
@@ -480,9 +283,8 @@ namespace Hullbreach.Structure
                 _stuckSweeps = (allZero && _sawNonzeroMu) ? _stuckSweeps + 1 : 0;
                 if (_stuckSweeps >= StuckSweepsBeforeReseed)
                 {
-                    // Salted by _sweepsSinceReset so the fresh seed is not
-                    // just the sweep-0 seed the stuck state may itself have
-                    // originated from repeating.
+                    // Salted by _sweepsSinceReset so the fresh seed differs
+                    // from whatever seed the stuck state originated from.
                     SeedBlock(rigidModes, _sweepsSinceReset);
                     for (int i = 0; i < _m; i++) _lambdaPrev[i] = float.NaN;
                     _stuckSweeps = 0;
@@ -494,11 +296,8 @@ namespace Hullbreach.Structure
                 for (int a = 0; a < _m; a++) _order[a] = a;
                 Array.Sort(_order, (p, q) => _lambda[p].CompareTo(_lambda[q]));
 
-                // New subspace vectors are the Ritz combinations of _y,
-                // reordered by ascending lambda, written into _v via _rhs
-                // as scratch so we never read a _v slot we are about to
-                // overwrite (Rayleigh-Ritz combines ALL of _y into EVERY
-                // new vector).
+                // New subspace vectors are Ritz combinations of _y, via
+                // _rhs as scratch so we never overwrite a _v slot in use.
                 for (int outIdx = 0; outIdx < _m; outIdx++)
                 {
                     int src = _order[outIdx];
@@ -519,42 +318,12 @@ namespace Hullbreach.Structure
                 for (int outIdx = 0; outIdx < _m; outIdx++)
                     sortedLambda[outIdx] = _lambda[_order[outIdx]];
 
-                // _lambda ITSELF must move to the same ascending-lambda order
-                // as _v, not just this local sortedLambda copy: ExtractModes
-                // reads the class fields _lambda[idx] and _v[idx] together as
-                // ONE mode (see its doc), and _v above was just permuted by
-                // _order while _lambda (last written by SolveGeneralizedEigen
-                // in raw, unsorted Jacobi-output order) was not. Near a
-                // settled convergence that raw order usually already
-                // coincides with ascending order (the subspace feeding
-                // Jacobi is itself already close to sorted from the previous
-                // sweep), which is what let this silently work by
-                // coincidence; ANY sweep where Jacobi's raw order is not
-                // already sorted hands ExtractModes a shape/load-factor pair
-                // for two DIFFERENT modes. Copying the already-computed
-                // sortedLambda over _lambda keeps the two arrays in lockstep
-                // unconditionally, independent of whether this sweep's raw
-                // order happened to be trivial.
+                // _lambda itself must move to the same order as _v:
+                // ExtractModes reads _lambda[idx]/_v[idx] as one mode.
                 Array.Copy(sortedLambda, _lambda, _m);
 
-                // Only the requested modeCount smallest-lambda slots need to
-                // settle for the analysis to be USABLE: the 2 spares exist
-                // purely to give the iteration room and can wander (or sit at
-                // a degenerate near-mu-zero value) indefinitely without that
-                // ever meaning the requested modes have not converged.
-                // Genuinely meaningless tracked values (near-zero or
-                // infinite lambda, "no coupling on this Ritz direction
-                // yet") are NOT specially rejected here: CgSolver's own
-                // tolerance puts a noise floor under Tolerance's precision,
-                // so demanding every tracked slot be simultaneously stable
-                // AND finite AND non-negligible before ever declaring
-                // convergence can starve on that noise indefinitely.
-                // ExtractModes is the actual gate against publishing a
-                // meaningless value: it drops non-positive/non-finite
-                // lambda outright, so a spurious transient here just yields
-                // fewer modes THIS tick, corrected the moment real
-                // compressive signal (which RunBuckling has already
-                // confirmed exists) develops on a later one.
+                // Only the requested modeCount smallest-lambda slots need
+                // to settle; the 2 spares can wander indefinitely.
                 converged = true;
                 int tracked = Math.Min(_modeCount, _m);
                 for (int i = 0; i < tracked; i++)
@@ -578,31 +347,14 @@ namespace Hullbreach.Structure
                 }
                 Array.Copy(sortedLambda, _lambdaPrev, _m);
 
-                // Do NOT let a post-signal all-mu-zero sweep (see the
-                // stuck-subspace doc above) satisfy convergence via the
-                // IsInfinity "value hasn't changed" branch just above: that
-                // branch exists for a legitimately, PERSISTENTLY
-                // uncompressed block (_sawNonzeroMu false the whole run),
-                // not for a subspace that just collapsed FROM real signal,
-                // which can otherwise look "stable" (frozen at the same
-                // Infinity) within 2-3 sweeps of collapsing -- far sooner
-                // than _stuckSweeps could ever reach StuckSweepsBeforeReseed
-                // and actually recover it. This keeps the sweep budget
-                // running (rather than falsely publishing) until either the
-                // block self-corrects on its own (allZero goes false again,
-                // exactly as happens routinely in a healthy run) or the
-                // reseed above gets its chance to fire.
+                // Do NOT let a post-signal all-mu-zero sweep satisfy
+                // convergence via the branch above; see the reference page.
                 if (allZero && _sawNonzeroMu) converged = false;
 
                 if (_sweepsSinceReset < MinSweepsBeforeConvergence) converged = false;
 
                 // PUBLISHED SNAPSHOT: only a sweep that satisfies the
-                // ordinary tolerance check (converged, at this point) is
-                // trustworthy enough for ExtractModes to read; see
-                // _publishedV's doc and TODO.md's Mono note on why a
-                // force-publish must never hand out whichever sweep
-                // happened to be in flight when ForceConvergeAfterSweeps
-                // fired instead.
+                // ordinary tolerance check is trustworthy enough to read.
                 if (converged)
                 {
                     for (int i = 0; i < _m; i++) Array.Copy(_v[i], _publishedV[i], _dof);
@@ -611,10 +363,8 @@ namespace Hullbreach.Structure
                 }
                 else if (_sweepsSinceReset >= ForceConvergeAfterSweeps)
                 {
-                    // Force-publish, but only the last snapshot that was
-                    // actually stable: if none exists yet, there is nothing
-                    // safe to hand out, so this keeps iterating instead
-                    // (see ForceConvergeAfterSweeps' doc).
+                    // Force-publish only the last stable snapshot; if none
+                    // exists yet, keep iterating instead.
                     converged = _hasPublishedSnapshot;
                 }
 
@@ -638,16 +388,8 @@ namespace Hullbreach.Structure
             }
         }
 
-        /// <summary>
-        /// Solves the small projected generalized eigenproblem _gr*c =
-        /// mu*_kr*c (mu approximates an eigenvalue of A = K^-1*(-K_G)) via
-        /// Cholesky(_kr) = L L^T, reduction to the standard symmetric problem
-        /// M = L^-1 * _gr * L^-T, and cyclic Jacobi on M. Writes
-        /// <see cref="_lambda"/> = 1/mu (see the class doc for the
-        /// K phi = -lambda*K_G phi sign) and <see cref="_eigVecs"/> = L^-T *
-        /// (Jacobi eigenvectors), the coefficients back in terms of the
-        /// ORIGINAL block _y.
-        /// </summary>
+        // Solves the small projected generalized eigenproblem via
+        // Cholesky + cyclic Jacobi; see the reference page for the derivation.
         void SolveGeneralizedEigen()
         {
             Cholesky(_kr, _m, _l);
@@ -678,19 +420,8 @@ namespace Hullbreach.Structure
             Symmetrize(m2, _m);
             Array.Copy(m2, _mid, m2.Length);
 
-            // The block carries 2 spare vectors beyond the requested mode
-            // count (see the class doc), and under weak or near-zero stress
-            // (little/no real compression anywhere) those spares have
-            // nothing left to converge toward: Gram-Schmidt normalizes them
-            // out of near-pure numerical noise, Kr picks up a near-zero
-            // diagonal entry for that slot, and dividing Gr through by the
-            // resulting near-zero Cholesky pivot (twice, once per L^-1 and
-            // once per L^-T) can overflow to +-Infinity. Sanitize rather than
-            // chase the ill-conditioning: a spare slot going non-finite here
-            // carries no information the analysis needs (a genuine, well-
-            // conditioned mode never produces one), so it is neutralized to
-            // 0, and Jacobi (which cannot handle non-finite input) never
-            // sees it.
+            // Spare slots under weak stress can drive a near-zero pivot
+            // to +-Infinity; sanitize rather than chase it.
             for (int i = 0; i < _m; i++)
             for (int j = 0; j < _m; j++)
                 if (!float.IsFinite(_mid[i, j])) _mid[i, j] = 0f;
@@ -710,17 +441,8 @@ namespace Hullbreach.Structure
             }
             Array.Copy(coeffs, _eigVecs, coeffs.Length);
 
-            // mu are the Ritz values of A = K^-1*(-K_G) restricted to this
-            // subspace (Gr c = mu*Kr c, i.e. the K-inner-product Rayleigh
-            // quotient of A: see the class doc for why plain power
-            // iteration on A finds the smallest positive lambda first under
-            // uniform compression). A phi = mu*phi with A = K^-1*(-K_G) means
-            // -K_G phi = mu*K phi, i.e. K phi = -(1/mu)*K_G phi, so
-            // lambda = 1/mu, NOT -mu. mu ~ 0 (or negative) means no
-            // meaningful positive lambda along that Ritz direction; represent
-            // it as a signed infinity so it sorts to the correct end and gets
-            // filtered out by ExtractModes without a divide blowing up into
-            // a merely-large finite number that could masquerade as a mode.
+            // mu are Ritz values of A = K^-1*(-K_G); lambda = 1/mu.
+            // Near-zero/negative mu is represented as a signed infinity.
             for (int i = 0; i < _m; i++)
             {
                 float mu = _mu[i];
@@ -730,11 +452,8 @@ namespace Hullbreach.Structure
             }
         }
 
-        /// <summary>Lower-triangular Cholesky, a = l*l^T. `a` is assumed SPD
-        /// (true here: _kr is K projected onto a subspace already clear of
-        /// the rigid modes, and K is positive definite off them). A tiny
-        /// diagonal floor guards only against benign rounding, not a real
-        /// indefinite input: an indefinite _kr would be a programmer bug.</summary>
+        // Lower-triangular Cholesky, a = l*l^T; `a` is assumed SPD (an
+        // indefinite _kr would be a programmer bug).
         static void Cholesky(float[,] a, int n, float[,] l)
         {
             for (int i = 0; i < n; i++)
@@ -752,24 +471,9 @@ namespace Hullbreach.Structure
                 l[i, j] = 0f;
         }
 
-
-        /// <summary>
-        /// Reads the requested number of positive, sub-threshold-safe modes
-        /// out of the converged subspace (call only when <see cref="Step"/>
-        /// last returned true), ascending by load factor. Each published
-        /// load factor is the DIRECT Rayleigh quotient (phi^T K phi) /
-        /// (-phi^T K_G phi) of that mode's own shape against `assembly` and
-        /// `kg`, not the reduced eigenproblem's 1/mu, and a slot failing
-        /// either the strain-energy or the compression floor (see
-        /// <see cref="MinStrainEnergyFraction"/> and
-        /// <see cref="MinCompressionFraction"/>) is rejected outright: see
-        /// the quotient block below for both reasons. Non-positive lambda
-        /// (tension-stabilized or numerical rigid leakage) are skipped, not
-        /// returned, per the task's buckling definition. Blocks are visited in ascending key order so
-        /// the resulting BlockParticipation dictionaries are built
-        /// deterministically (their contents do not depend on iteration
-        /// order, but the summation that produces the floats does).
-        /// </summary>
+        // Reads the requested positive, sub-threshold-safe modes out of
+        // the converged subspace, ascending by load factor.
+        // frob:doc docs/reference/hullbreach-structure.md#bucklinganalysis
         public List<BucklingMode> ExtractModes(Hullbreach.Core.BlockGrid grid, StiffnessAssembly assembly, GeometricStiffness kg, int modeCount)
         {
             var result = new List<BucklingMode>();
@@ -791,49 +495,21 @@ namespace Hullbreach.Structure
             for (int idx = 0; idx < _m && result.Count < modeCount; idx++)
             {
                 // Skip a slot the reduced eigenproblem already called
-                // meaningless (non-positive or non-finite lambda:
-                // tension-stabilized, rigid leakage, or "no coupling found
-                // on this Ritz direction yet", mu ~ 0). That is a cheap
-                // pre-filter only; the load factor actually published comes
-                // from the direct Rayleigh quotients below, not from here.
+                // meaningless; the published load factor comes from below.
                 float reducedLambda = _publishedLambda[idx];
                 if (!(reducedLambda > 1e-6f) || float.IsInfinity(reducedLambda)) continue;
 
                 var shape = (float[])_publishedV[idx].Clone();
-                // Belt and braces with the sweep-time projection above: the
-                // Rayleigh quotients below are only meaningful on a shape
-                // free of the modes K annihilates, so clean it here too
-                // rather than trust every upstream path to have done so.
+                // Belt and braces with the sweep-time projection: clean the
+                // shape here too rather than trust every upstream path.
                 CgSolver.Project(shape, _rigid);
                 float maxAbs = 0f;
                 for (int i = 0; i < _dof; i++) maxAbs = Math.Max(maxAbs, Math.Abs(shape[i]));
                 if (maxAbs > 1e-12f)
                     for (int i = 0; i < _dof; i++) shape[i] /= maxAbs;
 
-                // PUBLISH-TIME RAYLEIGH QUOTIENTS. The load factor handed
-                // out is a / b with a = phi^T K phi and b = -phi^T K_G phi,
-                // evaluated with the SPARSE operators against this exact
-                // published shape (two matvecs, into pre-sized scratch), in
-                // double accumulation. Two reasons, both load-bearing:
-                //
-                // 1. It makes the number independent of the reduced
-                //    problem's rounding path. The reduced route runs the
-                //    shape through Cholesky of K_r, a Jacobi rotation
-                //    sweep, and a 1/mu reciprocal; Mono and .NET keep float
-                //    intermediates at different widths, and on a slender
-                //    column those three stages together diverged far enough
-                //    that Mono published 0.0086 where the dense oracle (and
-                //    .NET) read 0.149, a 17x error on an otherwise sane
-                //    mode shape. The Rayleigh quotient of the SAME shape is
-                //    two dot products and a divide, in double, and both
-                //    runtimes agree on it.
-                // 2. It gives a meaningful rejection test, which the
-                //    reduced route cannot: a Ritz slot whose K_r pivot went
-                //    near-singular still yields a finite, positive,
-                //    perfectly stable-looking lambda, but its shape carries
-                //    essentially no strain energy, which `a` measures
-                //    directly. That is the Mono-only tiny-load-factor
-                //    SmallBlob failure this replaces (see TODO.md).
+                // PUBLISH-TIME RAYLEIGH QUOTIENTS: a = phi^T K phi, b =
+                // -phi^T K_G phi, in double; see the reference page for why.
                 assembly.Multiply(shape, _rqKPhi);
                 kg.Multiply(shape, _rqKgPhi);
 
@@ -908,14 +584,8 @@ namespace Hullbreach.Structure
                 });
             }
 
-            // The subspace hands slots over already sorted by the REDUCED
-            // lambda, but the published load factors are now the direct
-            // Rayleigh quotients (above), which can reorder two nearly
-            // degenerate slots. Callers documented as getting ascending
-            // load factors (StructuralSolver.CriticalLoadFactor reads
-            // element 0) so re-sort on the number actually published;
-            // stable, because the comparison only ever moves a strictly
-            // smaller load factor forward.
+            // Slots come sorted by the REDUCED lambda, but the published
+            // Rayleigh quotients can reorder near-degenerate slots; re-sort.
             for (int i = 1; i < result.Count; i++)
             {
                 var item = result[i];

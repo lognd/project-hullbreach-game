@@ -4,11 +4,8 @@ using Hullbreach.Structure;
 
 namespace Hullbreach.Structure.Tests
 {
-    /// <summary>
-    /// These are cheap and decisive. Write them BEFORE the solver: a KHat with
-    /// the wrong null space is always a bug, and finding it here takes minutes
-    /// whereas finding it through wrong-looking stress takes days.
-    /// </summary>
+    // Cheap and decisive: a KHat with the wrong null space is always a
+    // bug, and finding it here takes minutes instead of days.
     public class Q8ElementTests
     {
         const float Tol = 1e-4f;
@@ -104,9 +101,8 @@ namespace Hullbreach.Structure.Tests
         [Test]
         public void UnitStiffness_StoresEnergyForAStretch()
         {
-            // Uniform stretch in x is a genuine deformation, so it MUST cost
-            // energy. Together with the rigid-mode test this pins the null
-            // space to exactly the three modes it should be.
+            // Uniform stretch in x is a genuine deformation, so it MUST
+            // cost energy (pins the null space to exactly three modes).
             var k = KHat();
             var v = new float[Q8Element.DofCount];
             for (int i = 0; i < 8; i++)
@@ -115,10 +111,8 @@ namespace Hullbreach.Structure.Tests
             Assert.Greater(Quadratic(k, v), Tol);
         }
 
-        // TODO [C2, optional but stronger]: replace the two tests above with a
-        //       symmetric eigensolver (Jacobi rotation is ~40 lines) and assert
-        //       EXACTLY three eigenvalues are zero. More zeros means a spurious
-        //       mechanism, which is what 2x2 reduced integration would give you.
+        // TODO [C2, optional]: replace the two tests above with a symmetric
+        // eigensolver and assert EXACTLY three eigenvalues are zero.
 
         static float[][] RigidModes()
         {

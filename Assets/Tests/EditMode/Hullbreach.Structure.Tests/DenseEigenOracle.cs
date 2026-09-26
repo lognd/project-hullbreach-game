@@ -4,37 +4,12 @@ using Hullbreach.Structure;
 
 namespace Hullbreach.Structure.Tests
 {
-    /// <summary>
-    /// TEST-ONLY dense reference for the linearized buckling eigenproblem
-    /// K phi = -lambda*K_G phi. Independent of BucklingAnalysis's subspace
-    /// iteration: builds full dense K and K_G by probing their sparse
-    /// Multiply with unit vectors, projects both onto the orthogonal
-    /// complement of the three rigid-body modes (so the reduced K is SPD),
-    /// and solves the reduced generalized eigenproblem by Cholesky +
-    /// cyclic Jacobi: an O(n^3) method, fine at the few-hundred-dof sizes
-    /// BucklingTests exercises. Exists so a bug in the geometric stiffness,
-    /// the load case, or the subspace iteration can be told apart from one
-    /// another: if this oracle and BucklingAnalysis agree, the subspace
-    /// iteration is not the problem.
-    ///
-    /// DOUBLE PRECISION THROUGHOUT: the production classes work in float,
-    /// but this oracle's own Gram-Schmidt complement basis (built off the
-    /// n standard basis vectors, not a handful of well-separated seeds) is
-    /// far more exposed to accumulated rounding at a few hundred dof than
-    /// BucklingAnalysis's own better-conditioned subspace iteration:
-    /// float arithmetic here measurably manufactured spurious near-zero
-    /// generalized eigenvalues (an artifact of losing orthogonality against
-    /// the rigid modes, not a real soft mode) that then masqueraded as a
-    /// smaller "true" critical load than either BucklingAnalysis or physics
-    /// agree on. Only the float[]/StiffnessAssembly boundary stays float,
-    /// since that is what the production Multiply signatures require.
-    /// </summary>
+    // TEST-ONLY dense reference for K phi = -lambda*K_G phi, independent
+    // of BucklingAnalysis's subspace iteration; DOUBLE PRECISION throughout.
     public static class DenseEigenOracle
     {
-        /// <summary>Smallest positive lambda solving K phi = -lambda*K_G phi,
-        /// found by dense reduction to the rigid-mode complement. Returns
-        /// +Infinity if no reduced eigenvalue of A = K^-1*(-K_G) is
-        /// positive.</summary>
+        // Smallest positive lambda solving K phi = -lambda*K_G phi by
+        // dense reduction; +Infinity if none is positive.
         public static float SmallestPositiveLambda(StiffnessAssembly k, GeometricStiffness kg, float[][] rigidModes)
         {
             int n = k.DofCount;
@@ -92,12 +67,8 @@ namespace Hullbreach.Structure.Tests
             return (float)best;
         }
 
-        /// <summary>Orthonormal basis (n x (n - modes.Length)) for the
-        /// complement of the given orthonormal `modes`, built by two-pass
-        /// (reorthogonalized) Gram-Schmidt over the standard basis of R^n:
-        /// a single pass loses enough orthogonality against the rigid modes
-        /// at a few hundred dof to manufacture a spurious near-zero
-        /// generalized eigenvalue later (see the class doc).</summary>
+        // Orthonormal basis for the complement of `modes`, via two-pass
+        // Gram-Schmidt (a single pass loses too much orthogonality).
         static double[,] ComplementBasis(double[][] modes, int n)
         {
             var basis = new List<double[]>();
@@ -136,10 +107,8 @@ namespace Hullbreach.Structure.Tests
             return q;
         }
 
-        /// <summary>Gram-Schmidt orthonormalization of `modes` in place:
-        /// a private reimplementation rather than reusing CgSolver's
-        /// internal helper, since this oracle must stay independent of the
-        /// production code path it is checking.</summary>
+        // Gram-Schmidt orthonormalization of `modes`; reimplemented rather
+        // than reusing CgSolver's, so the oracle stays independent.
         static void OrthonormalizeInPlace(double[][] modes, int n)
         {
             for (int i = 0; i < modes.Length; i++)
@@ -164,7 +133,7 @@ namespace Hullbreach.Structure.Tests
             return s;
         }
 
-        /// <summary>q^T * a * q, an m x m dense matrix from an n x n one.</summary>
+        // q^T * a * q, an m x m dense matrix from an n x n one.
         static double[,] Reduce(double[,] a, double[,] q, int n, int m)
         {
             var aq = new double[n, m];
@@ -214,7 +183,7 @@ namespace Hullbreach.Structure.Tests
             return l;
         }
 
-        /// <summary>L^-1 * gr * L^-T.</summary>
+        // L^-1 * gr * L^-T.
         static double[,] ReduceGeneralized(double[,] l, double[,] gr, int n)
         {
             var temp = new double[n, n];

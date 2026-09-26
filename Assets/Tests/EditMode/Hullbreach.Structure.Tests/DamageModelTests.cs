@@ -36,9 +36,8 @@ namespace Hullbreach.Structure.Tests
         [Test]
         public void BrittleRatio_IsAsymmetricInCompressionVsTension()
         {
-            // Same magnitude stress, tension vs. compression, with a
-            // compressive limit far above the spall (tensile) limit: armor
-            // shrugs off compression but not tension.
+            // Same magnitude, tension vs compression: armor shrugs off
+            // compression but not tension.
             float spall = 1f;
             float compressive = 4f;
 

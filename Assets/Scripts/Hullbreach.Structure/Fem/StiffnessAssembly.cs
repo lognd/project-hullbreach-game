@@ -4,25 +4,18 @@ using Unity.Mathematics;
 
 namespace Hullbreach.Structure
 {
-    /// <summary>
-    /// Scatters each element's 16x16 into the sparse global K.
-    ///
-    /// The accumulation at shared nodes IS the structural connection: two
-    /// blocks are joined precisely because they write into the same rows.
-    ///
-    /// K comes out symmetric positive SEMI-definite. It is singular, by three,
-    /// because a free-floating ship has three rigid-body modes: see
-    /// LoadVector for how that is handled rather than papered over.
-    /// </summary>
+    // Scatters each element's 16x16 into the sparse global K; see
+    // docs/reference/hullbreach-structure.md#stiffnessassembly.
+    // frob:doc docs/reference/hullbreach-structure.md#stiffnessassembly
     public sealed class StiffnessAssembly
     {
-        /// <summary>Dense node id -> contiguous index, index*2 is the DOF
-        /// offset. Rebuilt whenever <see cref="Rebuild"/> runs.</summary>
+        // Rebuilt whenever Rebuild runs. index*2 is the DOF offset.
+        // frob:doc docs/reference/hullbreach-structure.md#stiffnessassembly
         public Dictionary<int, int> NodeMap { get; } = new Dictionary<int, int>();
 
-        /// <summary>Rest position of each dense node, in ship-local units
-        /// (lattice coordinate / 2). Needed by LoadVector to locate the
-        /// element containing a point and by rigid-body mode construction.</summary>
+        // Rest position of each dense node (lattice coordinate / 2).
+        // Needed by LoadVector and rigid-body mode construction.
+        // frob:doc docs/reference/hullbreach-structure.md#stiffnessassembly
         public float2[] NodeRestPositions { get; private set; } = Array.Empty<float2>();
 
         // CSR storage: rowPtr has DofCount+1 entries, colIndex/values are
@@ -31,33 +24,22 @@ namespace Hullbreach.Structure
         int[] _colIndex = Array.Empty<int>();
         float[] _values = Array.Empty<float>();
 
-        /// <summary>Number of degrees of freedom (2 per node).</summary>
+        // frob:doc docs/reference/hullbreach-structure.md#stiffnessassembly
         public int DofCount { get; private set; }
 
-        /// <summary>
-        /// The CSR row pointers of K, exposed read-only so a second matrix
-        /// with the SAME sparsity pattern (GeometricStiffness) can be built
-        /// without re-deriving the pattern from the grid. Chosen over
-        /// duplicating StiffnessAssembly's element-loop/BuildCsr machinery
-        /// or making the element matrix pluggable: the sparsity pattern of
-        /// K and K_G is identical (both come from the same node connectivity),
-        /// so sharing the pattern and scattering only values is the smaller,
-        /// more obviously-correct surface. Callers must not mutate this array.
-        /// </summary>
+        // Exposed read-only so GeometricStiffness can share this sparsity
+        // pattern instead of re-deriving it. Callers must not mutate.
+        // frob:doc docs/reference/hullbreach-structure.md#stiffnessassembly
         public int[] RowPointers => _rowPtr;
 
-        /// <summary>Column indices parallel to <see cref="RowPointers"/>, sorted
-        /// ascending within each row: callers may binary-search a row's
-        /// range. See <see cref="RowPointers"/> for why this is shared.</summary>
+        // Sorted ascending within each row: callers may binary-search a
+        // row's range. See RowPointers for why this is shared.
+        // frob:doc docs/reference/hullbreach-structure.md#stiffnessassembly
         public int[] ColumnIndices => _colIndex;
 
-        /// <summary>
-        /// Build sparse K for the whole grid, from scratch. Rebuild only when
-        /// topology is dirty (or after a stiffness-affecting damage change,
-        /// since this recomputes everything rather than rescaling in place:
-        /// simplicity over the incremental-rescale optimization the TODO
-        /// mentions, since assembly at this scale is cheap).
-        /// </summary>
+        // Rebuild only when topology is dirty or damage changed stiffness;
+        // recomputes everything (simplicity, assembly is cheap).
+        // frob:doc docs/reference/hullbreach-structure.md#stiffnessassembly
         public void Rebuild(Hullbreach.Core.BlockGrid grid)
         {
             NodeLattice.BuildNodeMap(grid, NodeMap);
@@ -101,14 +83,8 @@ namespace Hullbreach.Structure
                         int col = dofs[j];
                         float v = e * kHat[i, j];
 
-                        // Every (row,col) pair that shares an element is kept
-                        // in the pattern even when THIS element's value is
-                        // exactly zero (do not skip on v == 0f): the pattern
-                        // must be a superset of every matrix that can ever be
-                        // assembled over the same connectivity, in
-                        // particular GeometricStiffness, whose local 16x16
-                        // is nonzero at some (i,j) where KHat happens to be
-                        // exactly zero. See GeometricStiffness.AttachSparsity.
+                        // Keep every (row,col) pair even when v == 0f: the
+                        // pattern must also fit GeometricStiffness's nonzeros.
                         long key = (long)row * DofCount + col;
                         entries.TryGetValue(key, out float prev);
                         entries[key] = prev + v;
@@ -119,7 +95,6 @@ namespace Hullbreach.Structure
             BuildCsr(entries);
         }
 
-        /// <summary>Converts the accumulated triplets into CSR arrays.</summary>
         void BuildCsr(Dictionary<long, float> entries)
         {
             var perRow = new List<(int col, float val)>[DofCount];
@@ -156,7 +131,8 @@ namespace Hullbreach.Structure
             }
         }
 
-        /// <summary>y = K * x. The only operation CG needs.</summary>
+        // The only operation CG needs.
+        // frob:doc docs/reference/hullbreach-structure.md#stiffnessassembly
         public void Multiply(float[] x, float[] y)
         {
             for (int row = 0; row < DofCount; row++)
@@ -170,8 +146,8 @@ namespace Hullbreach.Structure
             }
         }
 
-        /// <summary>Writes the diagonal of K into `into`, for the Jacobi
-        /// preconditioner.</summary>
+        // For the Jacobi preconditioner.
+        // frob:doc docs/reference/hullbreach-structure.md#stiffnessassembly
         public void Diagonal(float[] into)
         {
             for (int row = 0; row < DofCount; row++)
