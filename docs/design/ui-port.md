@@ -114,10 +114,23 @@ assets), but it has three costs that now matter:
 <!-- frob:describes Assets/Scripts/Hullbreach.Hud/HudColor.cs::HudColor.WarningCriticalRed -->
 <!-- frob:describes Assets/Scripts/Hullbreach.Hud/BuilderHudModel.cs::BuilderHudModel -->
 <!-- frob:describes Assets/Scripts/Hullbreach.Hud/BuilderHudModel.cs::BuilderHudModel.Build -->
+<!-- frob:describes Assets/Scripts/Hullbreach.Hud/HudColor.cs::HudColor.CenterTickGrey -->
+<!-- frob:describes Assets/Scripts/Hullbreach.Hud/FlightTelemetryModel.cs::ChannelBarValue -->
+<!-- frob:describes Assets/Scripts/Hullbreach.Hud/FlightTelemetryModel.cs::ChannelBarValue.Label -->
+<!-- frob:describes Assets/Scripts/Hullbreach.Hud/FlightTelemetryModel.cs::ChannelBarValue.Fill -->
+<!-- frob:describes Assets/Scripts/Hullbreach.Hud/FlightTelemetryModel.cs::ChannelBarValue.Centered -->
+<!-- frob:describes Assets/Scripts/Hullbreach.Hud/FlightTelemetryModel.cs::ChannelBarValue.FillColor -->
+<!-- frob:describes Assets/Scripts/Hullbreach.Hud/FlightTelemetryModel.cs::ChannelBarValue.TrackColor -->
+<!-- frob:describes Assets/Scripts/Hullbreach.Hud/FlightTelemetryModel.cs::FlightTelemetryModel -->
+<!-- frob:describes Assets/Scripts/Hullbreach.Hud/FlightTelemetryModel.cs::FlightTelemetryModel.SpeedLine -->
+<!-- frob:describes Assets/Scripts/Hullbreach.Hud/FlightTelemetryModel.cs::FlightTelemetryModel.Thrust -->
+<!-- frob:describes Assets/Scripts/Hullbreach.Hud/FlightTelemetryModel.cs::FlightTelemetryModel.Reverse -->
+<!-- frob:describes Assets/Scripts/Hullbreach.Hud/FlightTelemetryModel.cs::FlightTelemetryModel.Steer -->
+<!-- frob:describes Assets/Scripts/Hullbreach.Hud/FlightTelemetryModel.cs::FlightTelemetryModel.Build -->
 
 - `HudColor` -- readonly RGBA float struct; the palette constants used
   by the HUD today (thrust red, reverse green, steer white, track dark,
-  OK green, STRAIN yellow, CRITICAL red).
+  OK green, STRAIN yellow, CRITICAL red, center-tick grey).
 - `BuilderHudModel` -- from a `BuilderSession`, the palette
   (`BlockPalette.All()`) and the hover verdict string: title line,
   palette rows (name, mass, cost, selected), total mass, block count,
@@ -137,8 +150,18 @@ assets), but it has three costs that now matter:
 
 ### `Hullbreach.Game` views (`Assets/Scripts/Hullbreach.Game/Hud/`)
 
+#### Hullbreach.Game Hud ChannelBar
+
+<!-- frob:describes Assets/Scripts/Hullbreach.Game/Hud/ChannelBar.cs::ChannelBar -->
+<!-- frob:describes Assets/Scripts/Hullbreach.Game/Hud/ChannelBar.cs::ChannelBar.Set -->
+
 - `ChannelBar` -- `Image` fill driven by a 0..1 or centered -1..1 value
   plus label; reusable by any later meter (S45 radar warning, S27 volume).
+  `Set(ChannelBarValue)` copies the label, clamped fill and colors and
+  moves the fill `RectTransform`'s anchors (0..1, or center-origin when
+  `Centered`); it does not use `Image.fillAmount`, which needs a sprite
+  this project does not have. `Assets/Prefabs/UI/ChannelBar.prefab` is
+  the standalone widget prefab U3 nests three copies of.
 - `BuilderHud` -- rewritten as a view over `BuilderHudModel`; palette
   rows cloned from a row template.
 - `StatusPanelView` -- view over `StatusPanelModel` and
@@ -159,6 +182,10 @@ assets), but it has three costs that now matter:
 <!-- frob:describes Assets/Editor/Hullbreach.Editor/HudPrefabBuilder.cs::HudPrefabBuilder.Run -->
 <!-- frob:describes Assets/Editor/Hullbreach.Editor/HudPrefabBuilder.cs::HudPrefabBuilder.BuildHudCanvasPrefab -->
 <!-- frob:describes Assets/Editor/Hullbreach.Editor/HudPrefabBuilder.cs::HudPrefabBuilder.WireDemoScene -->
+<!-- frob:describes Assets/Editor/Hullbreach.Editor/HudPrefabBuilder.cs::HudPrefabBuilder.ChannelBarPrefabPath -->
+<!-- frob:describes Assets/Editor/Hullbreach.Editor/HudPrefabBuilder.cs::HudPrefabBuilder.BuildChannelBar -->
+<!-- frob:describes Assets/Editor/Hullbreach.Editor/HudPrefabBuilder.cs::HudPrefabBuilder.BuildChannelBarForce -->
+<!-- frob:describes Assets/Editor/Hullbreach.Editor/HudPrefabBuilder.cs::HudPrefabBuilder.BuildChannelBarPrefab -->
 
 - `HudPrefabBuilder` -- builds the prefabs and wires `DemoScene` (D6).
 
