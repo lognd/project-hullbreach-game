@@ -60,6 +60,7 @@ component: null
 labels:
 - jira:SCRUM-5
 - owner:a-carten
+- jira-status:done
 anchor: false
 anchor_reason: null
 land_commit: null
