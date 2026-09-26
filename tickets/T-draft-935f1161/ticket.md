@@ -48,6 +48,12 @@ body_changes:
   at: '2026-09-26'
   old_length: 292
   new_length: 362
+- mode: append
+  reason: 'BUG002 front door (T-2393): done in Jira before frob (Sprint 0)'
+  actor: logan
+  at: '2026-09-26'
+  old_length: 362
+  new_length: 432
 designated_repro_test: null
 threat: null
 component: null
@@ -63,6 +69,8 @@ https://aliens-against-humanity.atlassian.net/browse/SCRUM-5
 **Card**
 We need a good idea of what the game's art style will be, so this is a priority.
 
+
+frob:no-behavior-change reason="done in Jira before frob (Sprint 0)"
 
 frob:no-behavior-change reason="done in Jira before frob (Sprint 0)"
 
