@@ -109,6 +109,7 @@ namespace Hullbreach.Hud.Tests
         {
             var model = FlightTelemetryModel.Build(0f, 0f, 0f, 0f, 0f, 0f);
             Assert.AreEqual(HudColor.SteerWhite.R, model.Steer.FillColor.R);
+            Assert.AreEqual(1f, HudColor.SteerWhite.G);
             Assert.AreEqual(HudColor.TrackDark.A, model.Steer.TrackColor.A);
         }
 

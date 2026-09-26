@@ -36,7 +36,7 @@ namespace Hullbreach.Hud
 
         // Copied verbatim from DemoMode's old literal.
         // frob:doc docs/design/ui-port.md#hullbreachhud-module-reference
-        public static readonly HudColor SteerWhite = new HudColor(0.6f, 0.6f, 0.6f);
+        public static readonly HudColor SteerWhite = new HudColor(1f, 1f, 1f);
 
         // Copied verbatim from DemoMode's old literal.
         // frob:doc docs/design/ui-port.md#hullbreachhud-module-reference
@@ -54,8 +54,7 @@ namespace Hullbreach.Hud
         // frob:doc docs/design/ui-port.md#hullbreachhud-module-reference
         public static readonly HudColor WarningCriticalRed = new HudColor(1f, 0.15f, 0.15f);
 
-        // DrawSteerBar's center-tick mark; same value as SteerWhite today but kept
-        // separate since the two draw calls mean different things.
+        // DrawSteerBar's center-tick mark, dimmer than the white fill so zero stays visible.
         // frob:doc docs/design/ui-port.md#hullbreachhud-module-reference
         public static readonly HudColor CenterTickGrey = new HudColor(0.6f, 0.6f, 0.6f);
     }
