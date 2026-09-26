@@ -8,16 +8,8 @@ namespace Hullbreach.Game
     // frob:doc docs/reference/hullbreach-game.md#demostate
     public enum DemoState { Build, Fly }
 
-    // Top-level demo scene conductor: toggles between Build (ship frozen
-    // exactly where it is, BuilderController editing the live grid) and Fly
-    // (simulation on, WASD + arrows + Space + O + R). The status panel and
-    // hull warning banner are uGUI views (StatusPanelView,
-    // HullWarningBanner) driven by the read-only state exposed here (D8,
-    // see ui-port.md#2-decisions).
-    //
-    // Build mode PAUSES the ship rather than resetting it: switching modes
-    // must never move the ship (that was the "Tab teleports me" bug). Only R
-    // repositions anything.
+    // Top-level demo scene conductor: toggles Build/Fly. See the
+    // reference page for the "Tab teleports me" bug this avoids.
     // frob:doc docs/reference/hullbreach-game.md#demomode
     public sealed class DemoMode : MonoBehaviour
     {
@@ -28,15 +20,12 @@ namespace Hullbreach.Game
         [SerializeField] ShipRenderer playerRenderer;
         [SerializeField] ShipStructure playerStructure;
 
-        // When set, the ship STARTS on (and the R key returns it to) a
-        // preset circular orbit (orbitStartPosition around orbitBodyIndex)
-        // instead of dead rest at the origin. Off by default so scenes
-        // without a GravityWorld (RocketScene) behave exactly as before.
+        // Ship STARTS on a preset circular orbit instead of dead rest
+        // at the origin; off by default (RocketScene has no GravityWorld).
         [SerializeField] bool startInOrbit = false;
 
-        // The orbital velocity is computed from this position, not
-        // authored separately, so moving the start point in the Inspector
-        // can never leave a mismatched velocity behind.
+        // Velocity is derived from this position, not authored
+        // separately, so the two can never disagree.
         [SerializeField] Vector2 orbitStartPosition = Vector2.zero;
 
         [SerializeField] int orbitBodyIndex = 0;
@@ -44,10 +33,8 @@ namespace Hullbreach.Game
         // frob:doc docs/reference/hullbreach-game.md#demomode
         public DemoState State { get; private set; } = DemoState.Build;
 
-        // Defaults to the legacy Input Manager bindings; a play-mode test
-        // swaps in a ScriptedDemoInput. Assigning this also pushes the same
-        // source onto the player's ShipController, so a test only has to
-        // wire one object.
+        // Assigning this also pushes the same source onto the player's
+        // ShipController, so a test only has to wire one object.
         // frob:doc docs/reference/hullbreach-game.md#demomode
         public IDemoInput InputSource
         {
@@ -139,17 +126,13 @@ namespace Hullbreach.Game
 
         void Start()
         {
-            // Put the ship where it is meant to fly BEFORE the first physics
-            // step. Previously the scene authored the ship at the origin and
-            // only R ever moved it onto the orbit, so the demo opened with
-            // the ship falling straight at the planet.
+            // Put the ship where it is meant to fly BEFORE the first
+            // physics step, or it opens falling straight at the planet.
             ResetPlayer();
             ApplyState();
         }
 
-        // Public so a play-mode test can drive the toggle without
-        // synthesising a Tab key press. Switching modes never moves the
-        // ship: Build pauses it in place, Fly resumes it.
+        // Public so a play-mode test can drive the toggle without a key press.
         // frob:doc docs/reference/hullbreach-game.md#demomode
         public void SetState(DemoState state)
         {
@@ -258,18 +241,13 @@ namespace Hullbreach.Game
             _ => OverlayMode.None,
         };
 
-        // Build freezes the ship IN PLACE: the plain-C# simulation stops
-        // stepping AND the Rigidbody2D stops simulating, so neither can
-        // drift away from the other while the player is editing. Fly
-        // resumes both from exactly that state.
+        // Build freezes the ship IN PLACE; see the reference page.
         void ApplyState()
         {
             bool building = State == DemoState.Build;
 
-            // Disable the builder FIRST when leaving Build: its OnDisable is
-            // what hides the hover preview and cancels a pending placement,
-            // and doing it before flight resumes means no frame ever renders
-            // the build cursor over a flying ship.
+            // Disable the builder FIRST so no frame renders the build
+            // cursor over a flying ship.
             if (!building)
             {
                 if (builder != null) builder.enabled = false;
