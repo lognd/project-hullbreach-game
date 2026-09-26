@@ -178,6 +178,15 @@ bar-texture helpers were deleted; `DemoMode` keeps computing
 `Warning`/`MaxStressRatio`/`CriticalBlockCount` (`Hullbreach.Hud
 .HullWarning` now, moved out of `Hullbreach.Game`).
 
+`Assets/Tests/PlayMode/Hullbreach.Demo.Tests/DemoHudTests.cs` (U4) proves
+the canvas/EventSystem singletons, the per-mode panel visibility, and
+that the on-screen text and the thrust bar's fill anchor match the
+models. `ScreenCapture.CaptureScreenshot` writes no file in headless
+`-batchmode` here (see `docs/testing.md`), so its layout test stands in
+for a visual check: it reads each active panel's `RectTransform.GetWorldCorners`
+after `Canvas.ForceUpdateCanvases`, at 1920x1080 and at a short window
+(1920x480), and asserts the active panels' world rects never overlap.
+
 ## Resetting
 
 `R` in Fly mode calls `ShipController.ResetTo`/`ResetToOrigin`. This only

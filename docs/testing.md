@@ -105,6 +105,25 @@ file appears. Run the editor normally (no `-batchmode`) and use the Test
 Runner window, or accept that the numeric assertions are the part CI can
 ever check.
 
+This is why `DemoHudTests.Layout_ActivePanelsDoNotOverlap_AtWideAndShortWindow`
+(below) exists: since headless `-batchmode` writes no screenshot PNG to
+look at, it reads each active panel's `RectTransform.GetWorldCorners`
+after `Canvas.ForceUpdateCanvases`, at 1920x1080 and at a short window,
+and asserts the active panels' world rects never overlap. It is a
+numeric stand-in for the visual check, not a replacement for a human
+looking at the screenshots once in a while.
+
+### HUD play-mode tests
+
+`DemoHudTests` (U4, same folder and fixture as the tests above) proves
+`docs/design/ui-port.md` section 5 criterion 4: `DemoScene` has exactly
+one `HudCanvas` and one `EventSystem`; the builder panel is active only
+in Build mode and the hull warning banner only in Fly mode; the
+on-screen text (`BuilderHud` rows/total mass, the status panel's mode
+and speed lines, the thrust bar's label and fill anchor) matches what
+`BuilderHudModel`/`StatusPanelModel`/`FlightTelemetryModel` compute from
+the same live state; and the layout check described above.
+
 ## What CI checks
 
 `.github/workflows/ci.yml` has three jobs, `tree`, `plaincs`, and `gate`:

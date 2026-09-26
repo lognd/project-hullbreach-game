@@ -64,9 +64,9 @@ S46 (win by breaching the core), S48, and the E14 stretch goals.
 - [ ] Open RocketScene and DemoScene in Unity and confirm the hand-edited
       ShipController/BuilderController wiring, then commit the
       regenerated metas: see docs/demo-scene.md's checklist.
-- [ ] UI: port the IMGUI HUD (`BuilderHud`, `DemoMode`'s status panel
-      and hull banner) to uGUI prefabs. Spec, owners and dated follow-up
-      plan: [docs/design/ui-port.md](docs/design/ui-port.md).
+- [x] UI: port the IMGUI HUD (`BuilderHud`, `DemoMode`'s status panel
+      and hull banner) to uGUI prefabs. Done, U0-U4:
+      [docs/design/ui-port.md](docs/design/ui-port.md).
 - [ ] Tooling: wire frob into this repo so `frob check` passes, then
       import the Jira backlog as tickets. Scheduled for Sprint 2 week 1
       in [docs/design/ui-port.md#7-schedule](docs/design/ui-port.md#7-schedule).
