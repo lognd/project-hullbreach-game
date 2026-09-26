@@ -1,5 +1,5 @@
 ---
-id: T-draft-bddf6912
+id: T-0030
 title: 'S41: Stay inside the arena'
 state: queued
 kind: feature
