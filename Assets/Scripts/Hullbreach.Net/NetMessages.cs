@@ -2,25 +2,8 @@ using System;
 
 namespace Hullbreach.Net
 {
-    /// <summary>
-    /// Wire formats.
-    ///
-    /// THE GOVERNING RULE: send CAUSES, never EFFECTS.
-    ///
-    /// Integer flood fill is bit-deterministic on every platform; the float FE
-    /// solve is not (SIMD width, FMA contraction, iteration counts all
-    /// diverge). So the server sends "block (x,y) died" and BOTH sides
-    /// independently derive which components detached. A hit that splits a
-    /// 10,000-block ship in half puts 4 bytes on the wire, not 5,000 blocks.
-    ///
-    /// The FE result never goes on the wire at all. Clients compute their own
-    /// purely for the S37 tint, where divergence is cosmetic and invisible.
-    ///
-    /// Every message is prefixed by a <see cref="MessageKind"/> byte. Reliable
-    /// ordered messages additionally carry a u32 sequence number right after
-    /// the kind byte, so a receiver can buffer and reorder without touching
-    /// the payload layout below.
-    /// </summary>
+    // Wire formats. Governing rule and message table: docs/netcode.md.
+    // frob:doc docs/reference/hullbreach-net.md#netmessages
     public static class NetMessages
     {
         // See ByteWriter/ByteReader (Wire.cs) for the little-endian primitive
@@ -28,11 +11,10 @@ namespace Hullbreach.Net
         // for the emitting side, and ClientReplica for the consuming side.
     }
 
-    /// <summary>
-    /// One byte identifying which message struct follows in a buffer. Kept
-    /// as its own byte (not folded into a discriminated union) so a receiver
-    /// can dispatch with a single switch before deserializing anything.
-    /// </summary>
+    // One byte identifying which message struct follows. Kept as its own
+    // byte (not folded into a discriminated union) so a receiver can
+    // dispatch with a single switch before deserializing anything.
+    // frob:doc docs/reference/hullbreach-net.md#messagekind
     public enum MessageKind : byte
     {
         Input = 1,
@@ -46,29 +28,34 @@ namespace Hullbreach.Net
         GravityWellSpawned = 9,
     }
 
-    /// <summary>
-    /// Client -> server, unreliable, one per tick: this tick's player intent.
-    /// Latest-wins on the server (ServerSimulation keeps only the newest
-    /// input per peer), so dropping one is harmless.
-    ///
-    /// Layout (8 bytes): kind(1) netId(2) tick(4) thrustAxis(1) steer(1) flags(1).
-    /// </summary>
+    // Client -> server, unreliable, one per tick: this tick's player intent.
+    // Latest-wins on the server, so dropping one is harmless. See
+    // docs/netcode.md#message-table for the layout.
+    // frob:doc docs/reference/hullbreach-net.md#inputmessage
     public readonly struct InputMessage
     {
+        // frob:doc docs/reference/hullbreach-net.md#inputmessage
         public readonly ushort NetId;
+
+        // frob:doc docs/reference/hullbreach-net.md#inputmessage
         public readonly uint Tick;
 
-        /// <summary>Quantized -127..127, unpacked to -1f..1f by /127f.</summary>
+        // Quantized -127..127, unpacked to -1f..1f by /127f.
+        // frob:doc docs/reference/hullbreach-net.md#inputmessage
         public readonly sbyte ThrustAxis;
 
-        /// <summary>Quantized -127..127, unpacked to -1f..1f by /127f.</summary>
+        // Quantized -127..127, unpacked to -1f..1f by /127f.
+        // frob:doc docs/reference/hullbreach-net.md#inputmessage
         public readonly sbyte Steer;
 
-        /// <summary>Bit0 = fire pressed. Other bits reserved.</summary>
+        // Bit0 = fire pressed. Other bits reserved.
+        // frob:doc docs/reference/hullbreach-net.md#inputmessage
         public readonly byte Flags;
 
+        // frob:doc docs/reference/hullbreach-net.md#inputmessage
         public const byte FireBit = 0x01;
 
+        // frob:doc docs/reference/hullbreach-net.md#inputmessage
         public InputMessage(ushort netId, uint tick, sbyte thrustAxis, sbyte steer, byte flags)
         {
             NetId = netId;
@@ -78,8 +65,7 @@ namespace Hullbreach.Net
             Flags = flags;
         }
 
-        /// <summary>Builds an InputMessage from float intent (-1..1), quantizing
-        /// each axis to the nearest representable sbyte.</summary>
+        // frob:doc docs/reference/hullbreach-net.md#inputmessage
         public static InputMessage FromFloats(ushort netId, uint tick, float thrustAxis, float steer, bool firePressed)
         {
             sbyte QuantizeAxis(float v)
@@ -91,16 +77,16 @@ namespace Hullbreach.Net
             return new InputMessage(netId, tick, QuantizeAxis(thrustAxis), QuantizeAxis(steer), flags);
         }
 
-        /// <summary>ThrustAxis unpacked back to -1f..1f.</summary>
+        // frob:doc docs/reference/hullbreach-net.md#inputmessage
         public float ThrustAxisFloat => ThrustAxis / 127f;
 
-        /// <summary>Steer unpacked back to -1f..1f.</summary>
+        // frob:doc docs/reference/hullbreach-net.md#inputmessage
         public float SteerFloat => Steer / 127f;
 
-        /// <summary>Whether the fire bit is set.</summary>
+        // frob:doc docs/reference/hullbreach-net.md#inputmessage
         public bool FirePressed => (Flags & FireBit) != 0;
 
-        /// <summary>Writes this message, including its MessageKind prefix.</summary>
+        // frob:doc docs/reference/hullbreach-net.md#inputmessage
         public void Write(ref ByteWriter w)
         {
             w.WriteU8((byte)MessageKind.Input);
@@ -111,9 +97,8 @@ namespace Hullbreach.Net
             w.WriteU8(Flags);
         }
 
-        /// <summary>Reads an InputMessage; assumes the MessageKind byte has
-        /// already been consumed (or not yet, per Read's convention below:
-        /// this overload reads it FOR you, mirroring Write).</summary>
+        // Reads the MessageKind byte too, mirroring Write.
+        // frob:doc docs/reference/hullbreach-net.md#inputmessage
         public static InputMessage Read(ref ByteReader r)
         {
             r.ReadU8(); // MessageKind
@@ -126,17 +111,27 @@ namespace Hullbreach.Net
         }
     }
 
-    /// <summary>One block as carried by <see cref="ShipSnapshot"/>: position
-    /// (grid-local, fits an sbyte per BlockKey's -128..127 range), type,
-    /// modifiers and accumulated damage.</summary>
+    // One block as carried by ShipSnapshot: grid-local position (fits an
+    // sbyte per BlockKey's -128..127 range), type, modifiers and damage.
+    // frob:doc docs/reference/hullbreach-net.md#snapshotblock
     public readonly struct SnapshotBlock
     {
+        // frob:doc docs/reference/hullbreach-net.md#snapshotblock
         public readonly sbyte X;
+
+        // frob:doc docs/reference/hullbreach-net.md#snapshotblock
         public readonly sbyte Y;
+
+        // frob:doc docs/reference/hullbreach-net.md#snapshotblock
         public readonly byte TypeId;
+
+        // frob:doc docs/reference/hullbreach-net.md#snapshotblock
         public readonly byte Mods;
+
+        // frob:doc docs/reference/hullbreach-net.md#snapshotblock
         public readonly byte Damage;
 
+        // frob:doc docs/reference/hullbreach-net.md#snapshotblock
         public SnapshotBlock(sbyte x, sbyte y, byte typeId, byte mods, byte damage)
         {
             X = x;
@@ -147,28 +142,42 @@ namespace Hullbreach.Net
         }
     }
 
-    /// <summary>
-    /// Server -> client, RELIABLE, sent once on join or respawn: the full
-    /// block layout plus the ship's current pose/velocity. 5 bytes per block
-    /// raw; block grids deflate ~10:1 under a reliable transport's own
-    /// compression, so a 10k-block ship is a few KB. Fine as a one-off; never
-    /// sent per tick.
-    ///
-    /// Layout: kind(1) seq(4) netId(2) count(2) blocks(5*count)
-    ///         px(2) py(2) rot(2) vx(2) vy(2) av(2)   [quantized, see ShipState]
-    /// </summary>
+    // Server -> client, reliable, sent once on join or respawn: the full
+    // block layout plus current pose/velocity. Raw 5 bytes/block; block
+    // grids deflate ~10:1 under a reliable transport's own compression, so a
+    // 10k-block ship is a few KB. Fine as a one-off; never sent per tick.
+    // See docs/netcode.md#message-table for the layout.
+    // frob:doc docs/reference/hullbreach-net.md#shipsnapshot
     public readonly struct ShipSnapshot
     {
+        // frob:doc docs/reference/hullbreach-net.md#shipsnapshot
         public readonly uint Sequence;
+
+        // frob:doc docs/reference/hullbreach-net.md#shipsnapshot
         public readonly ushort NetId;
+
+        // frob:doc docs/reference/hullbreach-net.md#shipsnapshot
         public readonly SnapshotBlock[] Blocks;
+
+        // frob:doc docs/reference/hullbreach-net.md#shipsnapshot
         public readonly short Px;
+
+        // frob:doc docs/reference/hullbreach-net.md#shipsnapshot
         public readonly short Py;
+
+        // frob:doc docs/reference/hullbreach-net.md#shipsnapshot
         public readonly ushort Rot;
+
+        // frob:doc docs/reference/hullbreach-net.md#shipsnapshot
         public readonly short Vx;
+
+        // frob:doc docs/reference/hullbreach-net.md#shipsnapshot
         public readonly short Vy;
+
+        // frob:doc docs/reference/hullbreach-net.md#shipsnapshot
         public readonly ushort Av;
 
+        // frob:doc docs/reference/hullbreach-net.md#shipsnapshot
         public ShipSnapshot(uint sequence, ushort netId, SnapshotBlock[] blocks,
                              short px, short py, ushort rot, short vx, short vy, ushort av)
         {
@@ -183,10 +192,11 @@ namespace Hullbreach.Net
             Av = av;
         }
 
-        /// <summary>Total encoded size in bytes for this snapshot's block count,
-        /// so a caller can size its send buffer without writing twice.</summary>
+        // So a caller can size its send buffer without writing twice.
+        // frob:doc docs/reference/hullbreach-net.md#shipsnapshot
         public int ByteSize => 1 + 4 + 2 + 2 + (Blocks.Length * 5) + 2 + 2 + 2 + 2 + 2 + 2;
 
+        // frob:doc docs/reference/hullbreach-net.md#shipsnapshot
         public void Write(ref ByteWriter w)
         {
             w.WriteU8((byte)MessageKind.ShipSnapshot);
@@ -210,6 +220,7 @@ namespace Hullbreach.Net
             w.WriteU16(Av);
         }
 
+        // frob:doc docs/reference/hullbreach-net.md#shipsnapshot
         public static ShipSnapshot Read(ref ByteReader r)
         {
             r.ReadU8(); // MessageKind
@@ -236,27 +247,37 @@ namespace Hullbreach.Net
         }
     }
 
-    /// <summary>
-    /// Server -> client, UNRELIABLE, ~30-50 Hz: this tick's pose. 17 bytes on
-    /// the wire (kind + netId + 6 quantized fields), so two ships cost well
-    /// under 1 KB/s. Position/velocity quantized at 1/256 world unit
-    /// (Quantization.PackPosition), angle as a 16-bit turn fraction
-    /// (Quantization.PackAngle); losing one is harmless since the next one
-    /// supersedes it.
-    /// </summary>
+    // Server -> client, unreliable, ~30-50 Hz: this tick's pose. Losing one
+    // is harmless since the next one supersedes it. See
+    // docs/netcode.md#message-table for the layout and quantization.
+    // frob:doc docs/reference/hullbreach-net.md#shipstate
     public readonly struct ShipState
     {
+        // frob:doc docs/reference/hullbreach-net.md#shipstate
         public readonly ushort NetId;
+
+        // frob:doc docs/reference/hullbreach-net.md#shipstate
         public readonly short Px;
+
+        // frob:doc docs/reference/hullbreach-net.md#shipstate
         public readonly short Py;
+
+        // frob:doc docs/reference/hullbreach-net.md#shipstate
         public readonly ushort Rot;
+
+        // frob:doc docs/reference/hullbreach-net.md#shipstate
         public readonly short Vx;
+
+        // frob:doc docs/reference/hullbreach-net.md#shipstate
         public readonly short Vy;
+
+        // frob:doc docs/reference/hullbreach-net.md#shipstate
         public readonly ushort Av;
 
-        /// <summary>Encoded size in bytes: 1 kind + 2 netId + 6*2 fields = 15.</summary>
+        // frob:doc docs/reference/hullbreach-net.md#shipstate
         public const int ByteSize = 1 + 2 + 2 + 2 + 2 + 2 + 2 + 2;
 
+        // frob:doc docs/reference/hullbreach-net.md#shipstate
         public ShipState(ushort netId, short px, short py, ushort rot, short vx, short vy, ushort av)
         {
             NetId = netId;
@@ -268,6 +289,7 @@ namespace Hullbreach.Net
             Av = av;
         }
 
+        // frob:doc docs/reference/hullbreach-net.md#shipstate
         public void Write(ref ByteWriter w)
         {
             w.WriteU8((byte)MessageKind.ShipState);
@@ -280,6 +302,7 @@ namespace Hullbreach.Net
             w.WriteU16(Av);
         }
 
+        // frob:doc docs/reference/hullbreach-net.md#shipstate
         public static ShipState Read(ref ByteReader r)
         {
             r.ReadU8();
@@ -294,21 +317,31 @@ namespace Hullbreach.Net
         }
     }
 
-    /// <summary>
-    /// Server -> client, RELIABLE ORDERED: a block was placed. Carries a
-    /// sequence number because placement order matters for which cell wins a
-    /// race, exactly like destruction order matters for FindDetached.
-    /// Layout: kind(1) seq(4) netId(2) x(1) y(1) typeId(1) mods(1) = 11 bytes.
-    /// </summary>
+    // Server -> client, reliable ordered: a block was placed. Carries a
+    // sequence number because placement order matters for which cell wins a
+    // race, like destruction order matters for FindDetached.
+    // frob:doc docs/reference/hullbreach-net.md#blockplaced
     public readonly struct BlockPlaced
     {
+        // frob:doc docs/reference/hullbreach-net.md#blockplaced
         public readonly uint Sequence;
+
+        // frob:doc docs/reference/hullbreach-net.md#blockplaced
         public readonly ushort NetId;
+
+        // frob:doc docs/reference/hullbreach-net.md#blockplaced
         public readonly sbyte X;
+
+        // frob:doc docs/reference/hullbreach-net.md#blockplaced
         public readonly sbyte Y;
+
+        // frob:doc docs/reference/hullbreach-net.md#blockplaced
         public readonly byte TypeId;
+
+        // frob:doc docs/reference/hullbreach-net.md#blockplaced
         public readonly byte Mods;
 
+        // frob:doc docs/reference/hullbreach-net.md#blockplaced
         public BlockPlaced(uint sequence, ushort netId, sbyte x, sbyte y, byte typeId, byte mods)
         {
             Sequence = sequence;
@@ -319,6 +352,7 @@ namespace Hullbreach.Net
             Mods = mods;
         }
 
+        // frob:doc docs/reference/hullbreach-net.md#blockplaced
         public void Write(ref ByteWriter w)
         {
             w.WriteU8((byte)MessageKind.BlockPlaced);
@@ -330,6 +364,7 @@ namespace Hullbreach.Net
             w.WriteU8(Mods);
         }
 
+        // frob:doc docs/reference/hullbreach-net.md#blockplaced
         public static BlockPlaced Read(ref ByteReader r)
         {
             r.ReadU8();
@@ -343,20 +378,26 @@ namespace Hullbreach.Net
         }
     }
 
-    /// <summary>
-    /// Server -> client, RELIABLE ORDERED: a block died. This is the whole
-    /// point of the design: both sides run Connectivity.FindDetached after
-    /// applying this, and derive the identical set of fragments without a
-    /// block list ever crossing the wire. Layout: kind(1) seq(4) netId(2)
-    /// x(1) y(1) = 9 bytes.
-    /// </summary>
+    // Server -> client, reliable ordered: a block died. This is the whole
+    // point of the design: both sides run Connectivity.FindDetached after
+    // applying this and derive the identical fragments without a block list
+    // ever crossing the wire. See docs/netcode.md#the-governing-rule.
+    // frob:doc docs/reference/hullbreach-net.md#blockdestroyed
     public readonly struct BlockDestroyed
     {
+        // frob:doc docs/reference/hullbreach-net.md#blockdestroyed
         public readonly uint Sequence;
+
+        // frob:doc docs/reference/hullbreach-net.md#blockdestroyed
         public readonly ushort NetId;
+
+        // frob:doc docs/reference/hullbreach-net.md#blockdestroyed
         public readonly sbyte X;
+
+        // frob:doc docs/reference/hullbreach-net.md#blockdestroyed
         public readonly sbyte Y;
 
+        // frob:doc docs/reference/hullbreach-net.md#blockdestroyed
         public BlockDestroyed(uint sequence, ushort netId, sbyte x, sbyte y)
         {
             Sequence = sequence;
@@ -365,6 +406,7 @@ namespace Hullbreach.Net
             Y = y;
         }
 
+        // frob:doc docs/reference/hullbreach-net.md#blockdestroyed
         public void Write(ref ByteWriter w)
         {
             w.WriteU8((byte)MessageKind.BlockDestroyed);
@@ -374,6 +416,7 @@ namespace Hullbreach.Net
             w.WriteI8(Y);
         }
 
+        // frob:doc docs/reference/hullbreach-net.md#blockdestroyed
         public static BlockDestroyed Read(ref ByteReader r)
         {
             r.ReadU8();
@@ -385,27 +428,41 @@ namespace Hullbreach.Net
         }
     }
 
-    /// <summary>
-    /// Server -> client, RELIABLE ORDERED: a detached component (from a
-    /// FindDetached split, on the tick's BlockDestroyed/buckling events) is
-    /// spawned as its own body. Carries NO block list: both sides already
-    /// know which blocks left, because they ran the same flood fill after
-    /// applying the same ordered destruction events first. Layout: kind(1)
-    /// seq(4) parentId(2) newId(2) px(2) py(2) rot(2) vx(2) vy(2) av(2)
-    /// = 21 bytes.
-    /// </summary>
+    // Server -> client, reliable ordered: a detached component (from a
+    // FindDetached split) is spawned as its own body. Carries NO block list:
+    // both sides already know which blocks left, since they ran the same
+    // flood fill after applying the same ordered destruction events first.
+    // frob:doc docs/reference/hullbreach-net.md#fragmentspawned
     public readonly struct FragmentSpawned
     {
+        // frob:doc docs/reference/hullbreach-net.md#fragmentspawned
         public readonly uint Sequence;
+
+        // frob:doc docs/reference/hullbreach-net.md#fragmentspawned
         public readonly ushort ParentId;
+
+        // frob:doc docs/reference/hullbreach-net.md#fragmentspawned
         public readonly ushort NewId;
+
+        // frob:doc docs/reference/hullbreach-net.md#fragmentspawned
         public readonly short Px;
+
+        // frob:doc docs/reference/hullbreach-net.md#fragmentspawned
         public readonly short Py;
+
+        // frob:doc docs/reference/hullbreach-net.md#fragmentspawned
         public readonly ushort Rot;
+
+        // frob:doc docs/reference/hullbreach-net.md#fragmentspawned
         public readonly short Vx;
+
+        // frob:doc docs/reference/hullbreach-net.md#fragmentspawned
         public readonly short Vy;
+
+        // frob:doc docs/reference/hullbreach-net.md#fragmentspawned
         public readonly ushort Av;
 
+        // frob:doc docs/reference/hullbreach-net.md#fragmentspawned
         public FragmentSpawned(uint sequence, ushort parentId, ushort newId,
                                 short px, short py, ushort rot, short vx, short vy, ushort av)
         {
@@ -420,6 +477,7 @@ namespace Hullbreach.Net
             Av = av;
         }
 
+        // frob:doc docs/reference/hullbreach-net.md#fragmentspawned
         public void Write(ref ByteWriter w)
         {
             w.WriteU8((byte)MessageKind.FragmentSpawned);
@@ -434,6 +492,7 @@ namespace Hullbreach.Net
             w.WriteU16(Av);
         }
 
+        // frob:doc docs/reference/hullbreach-net.md#fragmentspawned
         public static FragmentSpawned Read(ref ByteReader r)
         {
             r.ReadU8();
@@ -450,21 +509,29 @@ namespace Hullbreach.Net
         }
     }
 
-    /// <summary>
-    /// Server -> client, RELIABLE ORDERED: a block took damage but did not
-    /// die. Damage is a CAUSE the client cannot derive on its own (the FE
-    /// solve that computed it is not bit-identical across machines), so
-    /// unlike destruction it must be sent explicitly rather than recomputed
-    /// locally. Layout: kind(1) seq(4) netId(2) x(1) y(1) damage(1) = 10 bytes.
-    /// </summary>
+    // Server -> client, reliable ordered: a block took damage but did not
+    // die. Damage is a CAUSE the client cannot derive on its own (the FE
+    // solve that computed it is not bit-identical across machines), so
+    // unlike destruction it must be sent explicitly rather than recomputed.
+    // frob:doc docs/reference/hullbreach-net.md#blockdamaged
     public readonly struct BlockDamaged
     {
+        // frob:doc docs/reference/hullbreach-net.md#blockdamaged
         public readonly uint Sequence;
+
+        // frob:doc docs/reference/hullbreach-net.md#blockdamaged
         public readonly ushort NetId;
+
+        // frob:doc docs/reference/hullbreach-net.md#blockdamaged
         public readonly sbyte X;
+
+        // frob:doc docs/reference/hullbreach-net.md#blockdamaged
         public readonly sbyte Y;
+
+        // frob:doc docs/reference/hullbreach-net.md#blockdamaged
         public readonly byte Damage;
 
+        // frob:doc docs/reference/hullbreach-net.md#blockdamaged
         public BlockDamaged(uint sequence, ushort netId, sbyte x, sbyte y, byte damage)
         {
             Sequence = sequence;
@@ -474,6 +541,7 @@ namespace Hullbreach.Net
             Damage = damage;
         }
 
+        // frob:doc docs/reference/hullbreach-net.md#blockdamaged
         public void Write(ref ByteWriter w)
         {
             w.WriteU8((byte)MessageKind.BlockDamaged);
@@ -484,6 +552,7 @@ namespace Hullbreach.Net
             w.WriteU8(Damage);
         }
 
+        // frob:doc docs/reference/hullbreach-net.md#blockdamaged
         public static BlockDamaged Read(ref ByteReader r)
         {
             r.ReadU8();
@@ -496,22 +565,32 @@ namespace Hullbreach.Net
         }
     }
 
-    /// <summary>
-    /// Server -> client, RELIABLE ORDERED: a temporary variant transform
-    /// (ShipBody.ApplyPowerup) landed on a block. Layout: kind(1) seq(4)
-    /// netId(2) x(1) y(1) variant(1) seconds10(2) = 12 bytes. Seconds are
-    /// sent as tenths of a second in a u16 (seconds10 = seconds*10) so a
-    /// multi-minute buff still fits without a float on the wire.
-    /// </summary>
+    // Server -> client, reliable ordered: a temporary variant transform
+    // (ShipBody.ApplyPowerup) landed on a block. Seconds are sent as tenths
+    // of a second in a u16 so a multi-minute buff still fits without a
+    // float on the wire.
+    // frob:doc docs/reference/hullbreach-net.md#powerupapplied
     public readonly struct PowerupApplied
     {
+        // frob:doc docs/reference/hullbreach-net.md#powerupapplied
         public readonly uint Sequence;
+
+        // frob:doc docs/reference/hullbreach-net.md#powerupapplied
         public readonly ushort NetId;
+
+        // frob:doc docs/reference/hullbreach-net.md#powerupapplied
         public readonly sbyte X;
+
+        // frob:doc docs/reference/hullbreach-net.md#powerupapplied
         public readonly sbyte Y;
+
+        // frob:doc docs/reference/hullbreach-net.md#powerupapplied
         public readonly byte Variant;
+
+        // frob:doc docs/reference/hullbreach-net.md#powerupapplied
         public readonly ushort Seconds10;
 
+        // frob:doc docs/reference/hullbreach-net.md#powerupapplied
         public PowerupApplied(uint sequence, ushort netId, sbyte x, sbyte y, byte variant, ushort seconds10)
         {
             Sequence = sequence;
@@ -522,9 +601,10 @@ namespace Hullbreach.Net
             Seconds10 = seconds10;
         }
 
-        /// <summary>Seconds10 unpacked back to seconds.</summary>
+        // frob:doc docs/reference/hullbreach-net.md#powerupapplied
         public float Seconds => Seconds10 / 10f;
 
+        // frob:doc docs/reference/hullbreach-net.md#powerupapplied
         public void Write(ref ByteWriter w)
         {
             w.WriteU8((byte)MessageKind.PowerupApplied);
@@ -536,6 +616,7 @@ namespace Hullbreach.Net
             w.WriteU16(Seconds10);
         }
 
+        // frob:doc docs/reference/hullbreach-net.md#powerupapplied
         public static PowerupApplied Read(ref ByteReader r)
         {
             r.ReadU8();
@@ -549,29 +630,32 @@ namespace Hullbreach.Net
         }
     }
 
-    /// <summary>
-    /// Server -> client, RELIABLE ORDERED: a temporary gravity well/anti-well
-    /// (IWorldSink.AddTemporaryGravity) was dropped into the world field.
-    /// Layout: kind(1) seq(4) px(2) py(2) mu(2) radius(1) seconds10(2)
-    /// = 14 bytes. Mu is quantized as a signed 16-bit fixed point at 1/16
-    /// per unit (i.e. Mu/16f), wide enough for both attraction and the
-    /// anti-gravity gun's negative Mu, and radius is a single unsigned byte
-    /// since well radii never need sub-unit precision.
-    /// </summary>
+    // Server -> client, reliable ordered: a temporary gravity well/anti-well
+    // (IWorldSink.AddTemporaryGravity) was dropped into the world field.
+    // frob:doc docs/reference/hullbreach-net.md#gravitywellspawned
     public readonly struct GravityWellSpawned
     {
+        // frob:doc docs/reference/hullbreach-net.md#gravitywellspawned
         public readonly short Px;
+
+        // frob:doc docs/reference/hullbreach-net.md#gravitywellspawned
         public readonly short Py;
+
+        // frob:doc docs/reference/hullbreach-net.md#gravitywellspawned
         public readonly short Mu;
+
+        // frob:doc docs/reference/hullbreach-net.md#gravitywellspawned
         public readonly byte Radius;
+
+        // frob:doc docs/reference/hullbreach-net.md#gravitywellspawned
         public readonly ushort Seconds10;
 
-        /// <summary>Fixed-point scale for Mu: one unit of Mu16 is 1/16 of a
-        /// world Mu unit, giving a range of roughly +-2048 with 1/16
-        /// resolution, comfortably covering both gravity-gun wells and
-        /// anti-gravity anti-wells.</summary>
+        // 1/16 of a world Mu unit per Mu16 unit: roughly +-2048 range at
+        // 1/16 resolution, covering both gravity wells and anti-wells.
+        // frob:doc docs/reference/hullbreach-net.md#gravitywellspawned
         public const float MuScale = 16f;
 
+        // frob:doc docs/reference/hullbreach-net.md#gravitywellspawned
         public GravityWellSpawned(short px, short py, short mu, byte radius, ushort seconds10)
         {
             Px = px;
@@ -581,8 +665,7 @@ namespace Hullbreach.Net
             Seconds10 = seconds10;
         }
 
-        /// <summary>Builds from float world units, quantizing Mu and rounding
-        /// radius/seconds into their wire representations.</summary>
+        // frob:doc docs/reference/hullbreach-net.md#gravitywellspawned
         public static GravityWellSpawned FromFloats(float px, float py, float mu, float radius, float seconds)
         {
             short qmu = (short)Math.Round(Math.Max(short.MinValue, Math.Min(short.MaxValue, mu * MuScale)), MidpointRounding.AwayFromZero);
@@ -591,12 +674,22 @@ namespace Hullbreach.Net
             return new GravityWellSpawned(Quantization.PackPosition(px), Quantization.PackPosition(py), qmu, qradius, qseconds10);
         }
 
+        // frob:doc docs/reference/hullbreach-net.md#gravitywellspawned
         public float MuFloat => Mu / MuScale;
+
+        // frob:doc docs/reference/hullbreach-net.md#gravitywellspawned
         public float RadiusFloat => Radius;
+
+        // frob:doc docs/reference/hullbreach-net.md#gravitywellspawned
         public float SecondsFloat => Seconds10 / 10f;
+
+        // frob:doc docs/reference/hullbreach-net.md#gravitywellspawned
         public float PxFloat => Quantization.UnpackPosition(Px);
+
+        // frob:doc docs/reference/hullbreach-net.md#gravitywellspawned
         public float PyFloat => Quantization.UnpackPosition(Py);
 
+        // frob:doc docs/reference/hullbreach-net.md#gravitywellspawned
         public void Write(ref ByteWriter w)
         {
             w.WriteU8((byte)MessageKind.GravityWellSpawned);
@@ -607,6 +700,7 @@ namespace Hullbreach.Net
             w.WriteU16(Seconds10);
         }
 
+        // frob:doc docs/reference/hullbreach-net.md#gravitywellspawned
         public static GravityWellSpawned Read(ref ByteReader r)
         {
             r.ReadU8();

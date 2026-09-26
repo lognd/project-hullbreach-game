@@ -6,19 +6,8 @@ using Hullbreach.Net;
 
 namespace Hullbreach.Net.Tests
 {
-    /// <summary>
-    /// The full pipeline over LoopbackTransport: a ServerSimulation with two
-    /// ships, and one ClientReplica per ship, run for 200 ticks with
-    /// scripted input (one ship thrusting, one firing). Exercises every
-    /// deliverable together: message encoding, transport delivery with
-    /// simulated jitter/reorder, server authority, and client-side
-    /// derivation of detachment from ordered destruction events alone.
-    ///
-    /// Peer ids are the ids LoopbackTransport itself assigns each endpoint
-    /// (there is no separate "player id" concept in this design): whatever
-    /// id the hub hands the server for a given client's messages IS the peer
-    /// key ServerSimulation.Join/SetInput/Leave use.
-    /// </summary>
+    // The full pipeline over LoopbackTransport: server + two ClientReplica
+    // instances run for 200 scripted ticks with simulated jitter/reorder.
     public class ServerClientEndToEndTests
     {
         const int DelayTicks = 1;

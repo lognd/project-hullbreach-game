@@ -4,15 +4,8 @@ using Hullbreach.Net;
 
 namespace Hullbreach.Net.Tests
 {
-    /// <summary>
-    /// Large-scale randomized round-trips on top of MessageRoundTripTests'
-    /// hand-picked extremes: thousands of iterations per message type over
-    /// the FULL range of every field (a fixed seed, so a failure is
-    /// reproducible), plus back-to-back writes of several messages into one
-    /// shared buffer to catch any off-by-one in how much space a Write
-    /// actually consumes. Hand-picked extremes catch the cases a human
-    /// thinks of; this catches the ones nobody thought to write down.
-    /// </summary>
+    // Randomized round-trips over the FULL field range (fixed seed, so a
+    // failure reproduces), to catch what hand-picked extremes miss.
     public class RandomizedRoundTripTests
     {
         const int Iterations = 5000;

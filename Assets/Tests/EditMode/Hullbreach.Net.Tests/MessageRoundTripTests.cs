@@ -3,14 +3,8 @@ using Hullbreach.Net;
 
 namespace Hullbreach.Net.Tests
 {
-    /// <summary>
-    /// Write-then-read, field-by-field, for every message struct, including
-    /// extreme values (min/max of each integer field) and angle wrap-around.
-    /// A message that fails here would silently desync client and server, so
-    /// every field on every struct gets its own assertion rather than a
-    /// single Assert.AreEqual(original, roundTripped) on the struct (structs
-    /// with array fields, like ShipSnapshot, do not compare usefully anyway).
-    /// </summary>
+    // Write-then-read, field-by-field, for every message struct: a failure
+    // here would silently desync client and server.
     public class MessageRoundTripTests
     {
         static byte[] Buffer(int size = 256) => new byte[size];

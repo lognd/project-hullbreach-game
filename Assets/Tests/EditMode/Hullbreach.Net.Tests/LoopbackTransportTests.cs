@@ -4,9 +4,8 @@ using Hullbreach.Net;
 
 namespace Hullbreach.Net.Tests
 {
-    /// <summary>Exercises LoopbackTransport in isolation, before it is ever
-    /// wired to ServerSimulation/ClientReplica: delivery, delay, drop, and
-    /// peer connect/disconnect events.</summary>
+    // Exercises LoopbackTransport in isolation, before it is wired to
+    // ServerSimulation/ClientReplica.
     public class LoopbackTransportTests
     {
         static byte[] Payload(string s) => Encoding.ASCII.GetBytes(s);
