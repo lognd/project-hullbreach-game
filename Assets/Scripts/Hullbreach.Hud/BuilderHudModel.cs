@@ -4,7 +4,7 @@ using Hullbreach.Builder;
 namespace Hullbreach.Hud
 {
     // Pure function of a BuilderSession (D3): produces the exact text the
-    // old BuilderHud.OnGUI drew, so the uGUI view has no formatting of its own.
+    // old IMGUI HUD drew, so the uGUI view has no formatting of its own.
     // frob:doc docs/design/ui-port.md#hullbreachhud-module-reference
     public readonly struct BuilderHudModel
     {
@@ -19,7 +19,7 @@ namespace Hullbreach.Hud
 
         public readonly string StateLine;
 
-        // Null when there is no hover to report (old OnGUI skipped the line entirely).
+        // Null when there is no hover to report (the old IMGUI HUD skipped the line entirely).
         public readonly string HoverLine;
 
         BuilderHudModel(string title, IReadOnlyList<string> rows, string totalMassLine,

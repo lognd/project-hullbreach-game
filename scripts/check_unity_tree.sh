@@ -52,5 +52,14 @@ if git grep -nIE '(api[_-]?key|secret|password|token)\s*[:=]\s*"[A-Za-z0-9_\-]{1
     fail "something under Assets/ProjectSettings/Packages looks like a hardcoded credential"
 fi
 
+# 6. No IMGUI creeping back into runtime code (docs/design/ui-port.md D8):
+#    OnGUI/GUILayout./GUI. at real code positions, not inside a comment.
+while IFS= read -r -d '' f; do
+    code=$(sed -E 's#//.*$##' "$f")
+    if grep -qE 'OnGUI\(|GUILayout\.|GUI\.' <<<"$code"; then
+        fail "IMGUI use in runtime code: $f"
+    fi
+done < <(git ls-files -z 'Assets/Scripts/*.cs')
+
 if [ "$problems" -eq 0 ]; then echo "unity tree: clean"; fi
 exit "$problems"
