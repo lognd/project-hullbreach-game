@@ -10,6 +10,7 @@
         "Hullbreach.World",
         "Hullbreach.Hud",
         "Unity.Mathematics",
+        "Unity.TextMeshPro",
         "UnityEngine.UI"
     ],
     "includePlatforms": [],

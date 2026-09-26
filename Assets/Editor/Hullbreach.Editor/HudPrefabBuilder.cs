@@ -5,19 +5,13 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using TMPro;
 using Hullbreach.Game;
 
 namespace Hullbreach.Editor
 {
-    // Builds the HUD's uGUI prefabs and wires them into DemoScene (D6);
-    // after the first run, prefabs are owned by hand and this is kept only
-    // as a "reset to default layout" tool. Never overwrites an existing
-    // prefab unless told to.
-    //
-    // Adding a panel for U2/U3: write one more AddXxxPanel(GameObject
-    // canvasRoot) method following AddBuilderPanel's shape (build the
-    // hierarchy, return the panel root) and call it from
-    // BuildHudCanvasPrefab alongside the existing call.
+    // Builds the HUD's uGUI prefabs and wires DemoScene (D6); see
+    // docs/design/ui-port.md for the "adding a panel" how-to.
     // frob:doc docs/design/ui-port.md#hudprefabbuilder-editor
     public static class HudPrefabBuilder
     {
@@ -30,30 +24,18 @@ namespace Hullbreach.Editor
         // frob:doc docs/design/ui-port.md#hudprefabbuilder-editor
         public const string DemoScenePath = "Assets/Scenes/DemoScene.unity";
 
-        // Menu entry: rebuilds both prefabs (refusing to overwrite either if
-        // it already exists) and re-wires DemoScene.
         // frob:doc docs/design/ui-port.md#hudprefabbuilder-editor
         [MenuItem("Hullbreach/UI/Rebuild default HUD prefabs")]
-        public static void RebuildDefaultHudPrefabsMenuItem()
-        {
-            Run(force: false);
-        }
+        public static void RebuildDefaultHudPrefabsMenuItem() => Run(force: false);
 
         // -executeMethod entry point: does not overwrite existing prefabs.
         // frob:doc docs/design/ui-port.md#hudprefabbuilder-editor
-        public static void Build()
-        {
-            Run(force: false);
-        }
+        public static void Build() => Run(force: false);
 
         // -executeMethod entry point that DOES overwrite existing prefabs.
         // frob:doc docs/design/ui-port.md#hudprefabbuilder-editor
-        public static void BuildForce()
-        {
-            Run(force: true);
-        }
+        public static void BuildForce() => Run(force: true);
 
-        // Builds (or rebuilds, if force) the prefabs, then wires DemoScene.
         // frob:doc docs/design/ui-port.md#hudprefabbuilder-editor
         public static void Run(bool force)
         {
@@ -61,8 +43,7 @@ namespace Hullbreach.Editor
             WireDemoScene();
         }
 
-        // Screen Space Overlay canvas at 1920x1080 reference resolution
-        // (match 0.5), with a GraphicRaycaster and the nested BuilderPanel.
+        // Screen Space Overlay canvas, 1920x1080 reference resolution, match 0.5 (D5).
         // frob:doc docs/design/ui-port.md#hudprefabbuilder-editor
         public static void BuildHudCanvasPrefab(bool force)
         {
@@ -87,7 +68,6 @@ namespace Hullbreach.Editor
             canvasGo.AddComponent<GraphicRaycaster>();
 
             AddBuilderPanel(canvasGo);
-            // U2/U3: call your own AddXxxPanel(canvasGo) here, one call each.
 
             PrefabUtility.SaveAsPrefabAsset(canvasGo, HudCanvasPrefabPath);
             Object.DestroyImmediate(canvasGo);
@@ -95,15 +75,12 @@ namespace Hullbreach.Editor
             Debug.Log($"HudPrefabBuilder: wrote {HudCanvasPrefabPath} and {BuilderPanelPrefabPath}.");
         }
 
-        // Top-left palette panel: VerticalLayoutGroup + ContentSizeFitter,
-        // a title, a row template BuilderHud clones per palette entry, and
-        // the total-mass/block-count/state/hover labels.
+        // Top-left palette panel: see docs/design/ui-port.md for the layout contract.
         static GameObject AddBuilderPanel(GameObject canvasRoot)
         {
             var panel = new GameObject("BuilderPanel", typeof(RectTransform));
             var panelRect = panel.GetComponent<RectTransform>();
             panelRect.SetParent(canvasRoot.transform, false);
-            // Top-left anchored, growing down and right from a 10px inset.
             panelRect.anchorMin = new Vector2(0f, 1f);
             panelRect.anchorMax = new Vector2(0f, 1f);
             panelRect.pivot = new Vector2(0f, 1f);
@@ -151,27 +128,19 @@ namespace Hullbreach.Editor
             return panel;
         }
 
-        // D2 fallback: headless TMP Essential Resources import did not
-        // survive -quit in this environment (AssetDatabase.ImportPackage
-        // is asynchronous; the process ended before it wrote anything), so
-        // labels use UI.Text + the built-in LegacyRuntime.ttf instead.
-        static Text AddLabel(Transform parent, string name, string text)
+        static TMP_Text AddLabel(Transform parent, string name, string text)
         {
             var go = new GameObject(name, typeof(RectTransform));
             go.transform.SetParent(parent, false);
-            var label = go.AddComponent<Text>();
+            var label = go.AddComponent<TextMeshProUGUI>();
             label.text = text;
-            label.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
             label.fontSize = 18;
             label.color = Color.white;
             label.raycastTarget = false;
             return label;
         }
 
-        // Adds one HudCanvas instance and one EventSystem to DemoScene, and
-        // rewires Demo's BuilderHud reference, removing the old one so
-        // there is exactly one. Idempotent: running it twice does not
-        // duplicate either object.
+        // Adds one HudCanvas instance and one EventSystem to DemoScene; idempotent.
         // frob:doc docs/design/ui-port.md#hudprefabbuilder-editor
         public static void WireDemoScene()
         {

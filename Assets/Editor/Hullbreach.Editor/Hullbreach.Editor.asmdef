@@ -6,6 +6,7 @@
         "Hullbreach.Core",
         "Hullbreach.Builder",
         "Hullbreach.Hud",
+        "Unity.TextMeshPro",
         "UnityEngine.UI"
     ],
     "includePlatforms": [

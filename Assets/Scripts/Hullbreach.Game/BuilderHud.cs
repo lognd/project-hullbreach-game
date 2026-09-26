@@ -1,98 +1,60 @@
 using UnityEngine;
-using UnityEngine.UI;
+using TMPro;
 using Hullbreach.Hud;
 
 namespace Hullbreach.Game
 {
-    // uGUI view over BuilderHudModel (D4): copies model strings into
-    // serialized Text references every LateUpdate, no formatting or
-    // layout math here. Keeps the old class name and DemoMode.ApplyState's
-    // enable/disable contract (D8).
+    // uGUI view over BuilderHudModel (D4); see docs/design/ui-port.md for the wiring contract.
     // frob:doc docs/demo-scene.md#the-ugui-hud-u1
     public sealed class BuilderHud : MonoBehaviour
     {
         [SerializeField] BuilderController controller;
-
-        // Toggled with this component's enabled state: MonoBehaviour.enabled
-        // alone does not stop uGUI children from rendering.
         [SerializeField] GameObject panelRoot;
-
-        [SerializeField] Text titleText;
-
+        [SerializeField] TMP_Text titleText;
         [SerializeField] RectTransform rowContainer;
+        [SerializeField] TMP_Text rowTemplate;
+        [SerializeField] TMP_Text totalMassText;
+        [SerializeField] TMP_Text blockCountText;
+        [SerializeField] TMP_Text stateText;
+        [SerializeField] TMP_Text hoverText;
 
-        // Cloned once per BlockPalette entry; views never create UI objects
-        // at runtime except rows cloned from a template (D4).
-        [SerializeField] Text rowTemplate;
-
-        [SerializeField] Text totalMassText;
-
-        [SerializeField] Text blockCountText;
-
-        [SerializeField] Text stateText;
-
-        [SerializeField] Text hoverText;
-
-        Text[] _rows;
+        TMP_Text[] _rows;
 
         void Awake()
         {
-            if (rowTemplate != null) rowTemplate.gameObject.SetActive(false);
+            rowTemplate.gameObject.SetActive(false);
+            BuildRows();
         }
 
-        // Matches DemoMode.ApplyState enabling this component.
-        void OnEnable()
-        {
-            if (panelRoot != null) panelRoot.SetActive(true);
-        }
+        // Matches DemoMode.ApplyState's enable/disable of this component (D8).
+        void OnEnable() => panelRoot.SetActive(true);
 
-        // Matches DemoMode.ApplyState disabling this component.
-        void OnDisable()
-        {
-            if (panelRoot != null) panelRoot.SetActive(false);
-        }
+        void OnDisable() => panelRoot.SetActive(false);
 
         void LateUpdate()
         {
-            if (controller == null || controller.Session == null) return;
+            if (controller.Session == null) return;
 
             var model = BuilderHudModel.Build(controller.Session, controller.HoverVerdictText);
 
-            if (titleText != null) titleText.text = model.Title;
+            titleText.text = model.Title;
+            for (int i = 0; i < _rows.Length; i++) _rows[i].text = model.Rows[i];
+            totalMassText.text = model.TotalMassLine;
+            blockCountText.text = model.BlockCountLine;
+            stateText.text = model.StateLine;
 
-            EnsureRowCount(model.Rows.Count);
-            // Bounded by _rows.Length, not model.Rows.Count: if rowTemplate/
-            // rowContainer are not wired yet, EnsureRowCount leaves _rows
-            // empty rather than crashing every frame.
-            int rowCount = _rows.Length < model.Rows.Count ? _rows.Length : model.Rows.Count;
-            for (int i = 0; i < rowCount; i++)
-            {
-                _rows[i].text = model.Rows[i];
-            }
-
-            if (totalMassText != null) totalMassText.text = model.TotalMassLine;
-            if (blockCountText != null) blockCountText.text = model.BlockCountLine;
-            if (stateText != null) stateText.text = model.StateLine;
-
-            if (hoverText != null)
-            {
-                bool hasHover = model.HoverLine != null;
-                hoverText.gameObject.SetActive(hasHover);
-                if (hasHover) hoverText.text = model.HoverLine;
-            }
+            bool hasHover = model.HoverLine != null;
+            hoverText.gameObject.SetActive(hasHover);
+            if (hasHover) hoverText.text = model.HoverLine;
         }
 
-        // The palette never changes size at runtime, so this only ever grows once.
-        void EnsureRowCount(int count)
+        // The palette is fixed-size, so rows are built once, not grown per frame.
+        void BuildRows()
         {
-            if (_rows != null && _rows.Length == count) return;
-            if (rowTemplate == null || rowContainer == null)
-            {
-                _rows = System.Array.Empty<Text>();
-                return;
-            }
+            int count = 0;
+            foreach (var _ in Hullbreach.Builder.BlockPalette.All()) count++;
 
-            _rows = new Text[count];
+            _rows = new TMP_Text[count];
             for (int i = 0; i < count; i++)
             {
                 var row = Instantiate(rowTemplate, rowContainer);

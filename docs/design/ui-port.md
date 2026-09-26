@@ -47,19 +47,6 @@ assets), but it has three costs that now matter:
   `Assets/TextMesh Pro/`. If the import cannot be done headlessly, fall
   back to `UnityEngine.UI.Text` with the built-in `LegacyRuntime.ttf`
   and record that as a deviation here.
-  **Deviation (U1):** headless import was not feasible.
-  `AssetDatabase.ImportPackage` on
-  `com.unity.ugui`'s bundled `TMP Essential Resources.unitypackage` is
-  asynchronous and does not finish before `-quit` ends the process (no
-  `Assets/TextMesh Pro/` folder was ever written, even though the call
-  logged success), and there is no supported way to block on it from
-  `-executeMethod`. U1 uses the fallback as written above: every HUD
-  label is `UnityEngine.UI.Text` with `Resources.GetBuiltinResource
-  <Font>("LegacyRuntime.ttf")`, and `Hullbreach.Game`/`Hullbreach.Editor`
-  do not reference `Unity.TextMeshPro`. A later unit may revisit this by
-  running the import once interactively (no `-quit`) and committing the
-  result, at which point `BuilderHud` and `HudPrefabBuilder` can switch
-  back to `TMP_Text`.
 - **D3: split each HUD into an engine-free model and a thin view,** the
   same split [architecture.md](../architecture.md#the-one-rule-engine-free-simulation-unity-only-adapters)
   mandates for simulation. A new assembly `Hullbreach.Hud` (no
@@ -174,6 +161,13 @@ assets), but it has three costs that now matter:
 <!-- frob:describes Assets/Editor/Hullbreach.Editor/HudPrefabBuilder.cs::HudPrefabBuilder.WireDemoScene -->
 
 - `HudPrefabBuilder` -- builds the prefabs and wires `DemoScene` (D6).
+
+**Adding a panel** (U2/U3): write one more `AddXxxPanel(GameObject
+canvasRoot)` method following `AddBuilderPanel`'s shape (build the
+hierarchy, wire any view component's serialized fields via
+`SerializedObject`, save it as its own nested prefab, return the panel
+root), then call it from `BuildHudCanvasPrefab` alongside the existing
+`AddBuilderPanel` call.
 
 ## 4. Work units and owners
 
