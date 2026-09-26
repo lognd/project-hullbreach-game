@@ -1,0 +1,54 @@
+## Done report
+
+Sprint-0 work (mockups) was completed and marked Done in Jira before frob was wired into this repo; this ticket exists only as a historical record.
+
+### Changed
+```
+ tickets/T-0015/ticket.md | 58 ++++++++++++++++++++++++++++++++++
+ tickets/T-0007/ticket.md | 45 +++++++++++++++++++++++++++
+ tickets/T-0031/ticket.md | 60 +++++++++++++++++++++++++++++++++++
+ tickets/T-0034/ticket.md | 60 +++++++++++++++++++++++++++++++++++
+ tickets/T-0004/ticket.md | 45 +++++++++++++++++++++++++++
+ tickets/T-0008/ticket.md | 45 +++++++++++++++++++++++++++
+ tickets/T-0027/ticket.md | 60 +++++++++++++++++++++++++++++++++++
+ tickets/T-0017/ticket.md | 60 +++++++++++++++++++++++++++++++++++
+ tickets/T-0003/ticket.md | 45 +++++++++++++++++++++++++++
+ tickets/T-0011/ticket.md | 63 +++++++++++++++++++++++++++++++++++++
+ tickets/T-0014/ticket.md | 60 +++++++++++++++++++++++++++++++++++
+ tickets/T-0010/ticket.md | 64 ++++++++++++++++++++++++++++++++++++++
+ tickets/T-0029/ticket.md | 62 ++++++++++++++++++++++++++++++++++++
+ tickets/T-0033/ticket.md | 62 ++++++++++++++++++++++++++++++++++++
+ tickets/T-0005/ticket.md | 45 +++++++++++++++++++++++++++
+ tickets/T-0028/ticket.md | 60 +++++++++++++++++++++++++++++++++++
+ tickets/T-0016/ticket.md | 58 ++++++++++++++++++++++++++++++++++
+ tickets/T-0024/ticket.md | 59 +++++++++++++++++++++++++++++++++++
+ tickets/T-0021/ticket.md | 57 +++++++++++++++++++++++++++++++++
+ tickets/T-0018/ticket.md | 62 ++++++++++++++++++++++++++++++++++++
+ tickets/T-0019/ticket.md | 62 ++++++++++++++++++++++++++++++++++++
+ tickets/T-0025/ticket.md | 62 ++++++++++++++++++++++++++++++++++++
+ tickets/T-0012/ticket.md | 61 ++++++++++++++++++++++++++++++++++++
+ tickets/T-0009/ticket.md | 63 +++++++++++++++++++++++++++++++++++++
+ tickets/T-0035/ticket.md | 60 +++++++++++++++++++++++++++++++++++
+ tickets/T-0038/ticket.md | 63 +++++++++++++++++++++++++++++++++++++
+ tickets/T-0013/ticket.md | 58 ++++++++++++++++++++++++++++++++++
+ tickets/T-0022/ticket.md | 58 ++++++++++++++++++++++++++++++++++
+ tickets/T-0037/ticket.md | 63 +++++++++++++++++++++++++++++++++++++
+ tickets/T-0030/ticket.md | 57 +++++++++++++++++++++++++++++++++
+ tickets/T-0023/ticket.md | 61 ++++++++++++++++++++++++++++++++++++
+ tickets/T-0006/ticket.md | 45 +++++++++++++++++++++++++++
+ tickets/T-0002/ticket.md | 45 +++++++++++++++++++++++++++
+ tickets/T-0039/ticket.md | 60 +++++++++++++++++++++++++++++++++++
+ tickets/T-0040/ticket.md | 58 ++++++++++++++++++++++++++++++++++
+ tickets/T-0026/ticket.md | 61 ++++++++++++++++++++++++++++++++++++
+ tickets/T-0032/ticket.md | 61 ++++++++++++++++++++++++++++++++++++
+ tickets/T-0020/ticket.md | 58 ++++++++++++++++++++++++++++++++++
+ tickets/T-0036/ticket.md | 62 ++++++++++++++++++++++++++++++++++++
+ 39 files changed, 2248 insertions(+)
+```
+
+### Evidence
+(no evidence recorded)
+
+### Captured claims
+- tests: 0 passed (from 0 evidence id(s))
+- gates: unmeasured (no parsable gate-summary from a fresh check)
