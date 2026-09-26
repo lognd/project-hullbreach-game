@@ -1,5 +1,5 @@
 ---
-id: T-draft-39e7a957
+id: T-0114
 title: 'S50-1: Segmented boss entity with individually destructible segments'
 state: queued
 kind: feature
