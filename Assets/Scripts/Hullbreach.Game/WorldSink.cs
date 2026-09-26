@@ -7,13 +7,8 @@ using Hullbreach.World;
 
 namespace Hullbreach.Game
 {
-    // The game-side IWorldSink: routes block-behaviour requests (spawn a
-    // projectile, drop a temporary gravity well, find the nearest enemy)
-    // onto the actual scene: ProjectileSpawner, GravityWorld.Field, and
-    // every ShipController found in the scene. One instance per scene,
-    // exposed as a static Instance (same convention as GravityWorld.Field)
-    // so ShipController.Awake can wire it up without a scene-graph
-    // reference.
+    // The game-side IWorldSink: routes block-behaviour requests onto
+    // the actual scene. See the reference page.
     // frob:doc docs/reference/hullbreach-game.md#worldsink
     [DefaultExecutionOrder(-150)]
     public sealed class WorldSink : MonoBehaviour, IWorldSink
@@ -44,9 +39,8 @@ namespace Hullbreach.Game
             if (ReferenceEquals(Instance, this)) Instance = null;
         }
 
-        // Call after a ship is spawned or destroyed at runtime; the demo
-        // never does either today, so Start alone is enough for it, but a
-        // later mode (multiplayer lobby, respawn) will need this.
+        // Call after a ship is spawned or destroyed at runtime;
+        // Start alone is enough for the demo today.
         // frob:doc docs/reference/hullbreach-game.md#worldsink
         public void Refresh()
         {

@@ -34,8 +34,7 @@ namespace Hullbreach.Game
     }
 
     // Respawns one at the same place after respawnSeconds once it is
-    // collected: this lets the demo scene keep a fixed lineup of pickups
-    // visible near the player's orbit start without hand-placing prefabs.
+    // collected; see the reference page.
     // frob:doc docs/reference/hullbreach-game.md#powerupspawner
     public sealed class PowerupSpawner : MonoBehaviour
     {
@@ -61,9 +60,8 @@ namespace Hullbreach.Game
             powerup.Configure(preset);
         }
 
-        // No-op for a Powerup this spawner did not create (defensive;
-        // should not happen since Powerup only looks up its own parent
-        // spawner).
+        // No-op for a Powerup this spawner did not create
+        // (defensive; should not happen).
         // frob:doc docs/reference/hullbreach-game.md#powerupspawner
         public void NotifyCollected(Powerup collected)
         {

@@ -3,9 +3,8 @@ using Hullbreach.Ship;
 
 namespace Hullbreach.Game
 {
-    // The Inspector fields below are written into every ship's
-    // ShipBody.Projectile at Start, so one spawner tunes every ship's cannon
-    // uniformly for the demo.
+    // The Inspector fields are written into every ship's
+    // ShipBody.Projectile at Start; see the reference page.
     // frob:doc docs/reference/hullbreach-game.md#projectilespawner
     public sealed class ProjectileSpawner : MonoBehaviour
     {
@@ -44,10 +43,8 @@ namespace Hullbreach.Game
 
         void OnShotFired(ShotRequest shot) => SpawnFromSink(shot);
 
-        // Public so WorldSink.SpawnProjectile can route a block behaviour's
-        // (e.g. the gravity gun's) ShotRequest through the same spawn path
-        // as a ShipController's own ShotFired event, instead of duplicating
-        // spawn logic in two places.
+        // Public so a block behaviour's ShotRequest (e.g. the gravity
+        // gun) can share this spawn path; see the reference page.
         // frob:doc docs/reference/hullbreach-game.md#projectilespawner
         public void SpawnFromSink(ShotRequest shot)
         {
@@ -71,11 +68,8 @@ namespace Hullbreach.Game
 
         ShipCollider FindOwner(ShotRequest shot)
         {
-            // The firing ship is whichever ship's grid still contains the
-            // firing cannon's key with the muzzle world origin close to
-            // where that ship's LocalToWorld would place it. Simpler and
-            // robust enough for the demo's two ships: match by nearest ship
-            // position, since ships are never coincident.
+            // Attributes a shot to the nearest ship position; see the
+            // reference page.
             ShipCollider best = null;
             float bestDist = float.MaxValue;
             foreach (var ship in _ships)

@@ -3,9 +3,8 @@ using Unity.Mathematics;
 
 namespace Hullbreach.Game
 {
-    // Always created by PowerupSpawner.Spawn, which calls Configure
-    // immediately after AddComponent: never place one in a scene directly,
-    // since it has nothing to show/apply until configured.
+    // Always created by PowerupSpawner.Spawn; never place one
+    // in a scene directly. See the reference page for contact resolution.
     // frob:doc docs/reference/hullbreach-game.md#powerup
     [RequireComponent(typeof(CircleCollider2D))]
     public sealed class Powerup : MonoBehaviour
