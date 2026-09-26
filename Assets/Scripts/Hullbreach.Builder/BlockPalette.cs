@@ -3,24 +3,31 @@ using Hullbreach.Core;
 
 namespace Hullbreach.Builder
 {
-    /// <summary>One selectable palette entry (S33 criterion 1).</summary>
+    // One selectable palette entry (S33 criterion 1).
+    // frob:doc docs/reference/hullbreach-builder.md#paletteentry
     public readonly struct PaletteEntry
     {
-        /// <summary>Index into the BlockTypes table.</summary>
+        // frob:doc docs/reference/hullbreach-builder.md#paletteentry
         public readonly byte TypeId;
 
-        /// <summary>Display name, taken straight from BlockTypes.</summary>
+        // Taken straight from BlockTypes.
+        // frob:doc docs/reference/hullbreach-builder.md#paletteentry
         public readonly string Name;
 
-        /// <summary>Mass of one block of this type, shown so a build's total mass is predictable before placing it.</summary>
+        // Shown so a build's total mass is predictable before placing it.
+        // frob:doc docs/reference/hullbreach-builder.md#paletteentry
         public readonly float Mass;
 
-        /// <summary>Builder economy cost. Not physics, so it lives in Builder rather than Core.</summary>
+        // Not physics, so it lives in Builder rather than Core.
+        // frob:doc docs/reference/hullbreach-builder.md#paletteentry
         public readonly int Cost;
 
-        /// <summary>True when the block has no facing, so the two-click flow commits on the first click (S30).</summary>
+        // True when the block has no facing, so the two-click flow commits
+        // on the first click (S30).
+        // frob:doc docs/reference/hullbreach-builder.md#paletteentry
         public readonly bool Symmetric;
 
+        // frob:doc docs/reference/hullbreach-builder.md#paletteentry
         public PaletteEntry(byte typeId, string name, float mass, int cost, bool symmetric)
         {
             TypeId = typeId;
@@ -31,17 +38,12 @@ namespace Hullbreach.Builder
         }
     }
 
-    /// <summary>
-    /// Enumerates every entry in the BlockTypes table with the builder-facing
-    /// cost and symmetry that Core has no reason to know about.
-    /// </summary>
+    // Enumerates every entry in the BlockTypes table with the builder-facing
+    // cost and symmetry that Core has no reason to know about.
+    // frob:doc docs/reference/hullbreach-builder.md#blockpalette
     public static class BlockPalette
     {
-        /// <summary>
-        /// Per-type builder cost. Kept here, not in Core, because cost is
-        /// build economy rather than physics: Core only knows mass and
-        /// structural properties.
-        /// </summary>
+        // Kept here, not in Core: cost is build economy, not physics.
         static readonly int[] Cost =
         {
             0, // Core
@@ -53,16 +55,13 @@ namespace Hullbreach.Builder
             3, // RetroThruster
         };
 
-        /// <summary>
-        /// True when a block type has no facing to orient. Thruster always
-        /// pushes toward ship-local +y and RetroThruster always pushes
-        /// toward -y, so neither has a facing to choose; only Cannon and Fin
-        /// point somewhere and so require the second click.
-        /// </summary>
+        // Thruster/RetroThruster push a fixed ship-local direction, so
+        // only Cannon and Fin need the second (orienting) click.
+        // frob:doc docs/reference/hullbreach-builder.md#blockpalette
         public static bool IsSymmetric(byte typeId)
             => typeId != BlockTypes.Cannon && typeId != BlockTypes.Fin;
 
-        /// <summary>Every palette entry, in BlockTypes table order.</summary>
+        // frob:doc docs/reference/hullbreach-builder.md#blockpalette
         public static IEnumerable<PaletteEntry> All()
         {
             for (byte typeId = 0; typeId < BlockTypes.Count; typeId++)

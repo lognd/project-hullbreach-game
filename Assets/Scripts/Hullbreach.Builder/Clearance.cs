@@ -3,27 +3,14 @@ using Hullbreach.Core;
 
 namespace Hullbreach.Builder
 {
-    /// <summary>
-    /// Per-type "keep this cell empty" / "must be attached here" geometry for
-    /// directional and exhaust-bearing blocks. Lives apart from PlacementRules
-    /// so both "is my own footprint clear" and "am I standing in someone
-    /// else's footprint" can share the exact same cell computation.
-    /// </summary>
+    // Per-type "keep this cell empty" / "must be attached here" geometry;
+    // see docs/reference/hullbreach-builder.md#clearance.
+    // frob:doc docs/reference/hullbreach-builder.md#clearance
     public static class Clearance
     {
-        /// <summary>
-        /// Lists, into `cells` (cleared first), every cell that must stay
-        /// empty for a block of `typeId`/`modifiers` sitting at `key`:
-        /// Thruster reserves its ship-local -y (exhaust) neighbor, Cannon and
-        /// Fin reserve the cell Facing.Ahead of them, and RetroThruster
-        /// reserves its +x and -x neighbors. Plain blocks (Core/Hull/Armor)
-        /// reserve nothing, so `cells` comes back empty. A reserved direction
-        /// that falls outside BlockKey's range is simply omitted: there is
-        /// no cell there to ever be occupied, so it is vacuously satisfied.
-        /// Always returns true; the bool return exists so a caller can read
-        /// this as "the reservation set was computed" without special-casing
-        /// plain types.
-        /// </summary>
+        // Lists cells that must stay empty for a block at `key`; see
+        // docs/reference/hullbreach-builder.md#clearance for per-type rules.
+        // frob:doc docs/reference/hullbreach-builder.md#clearance
         public static bool TryReservedCells(int key, byte typeId, byte modifiers, List<int> cells)
         {
             cells.Clear();
@@ -54,15 +41,9 @@ namespace Hullbreach.Builder
             return true;
         }
 
-        /// <summary>
-        /// True when `typeId` requires an anchoring block on some fixed side
-        /// of it, with `anchorKey` set to that cell (only Fin, whose anchor is
-        /// Facing.Behind, the hull it mounts on). False, with `anchorKey`
-        /// set to -1, for every other type. When the anchor direction itself
-        /// falls outside BlockKey's range, `anchorKey` is -1 even though the
-        /// return value is true, so the caller sees "there is nowhere for the
-        /// required hull to be" and refuses the placement.
-        /// </summary>
+        // True when `typeId` needs an anchor block (only Fin); see
+        // docs/reference/hullbreach-builder.md#clearance.
+        // frob:doc docs/reference/hullbreach-builder.md#clearance
         public static bool RequiredAnchor(int key, byte typeId, byte modifiers, out int anchorKey)
         {
             if (typeId == BlockTypes.Fin)

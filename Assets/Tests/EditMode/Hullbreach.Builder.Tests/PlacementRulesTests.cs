@@ -126,9 +126,7 @@ namespace Hullbreach.Builder.Tests
         [Test]
         public void Thruster_OnTheShipsSide_IsAccepted()
         {
-            // A thruster does not have to sit on the aft face of the ship;
-            // beside the core is a legal (if wobbly) design as long as its
-            // own -y exhaust neighbor is clear.
+            // Beside the core is legal as long as its own -y exhaust is clear.
             var g = new BlockGrid();
             g.TryAdd(BlockKey.Pack(0, 0), new Block(BlockTypes.Core));
 
