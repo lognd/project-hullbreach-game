@@ -1,5 +1,5 @@
 ---
-id: T-draft-b5b9c872
+id: T-0054
 title: 'S29-2: Queue screen in the game client with cancel'
 state: queued
 kind: feature
