@@ -1,7 +1,7 @@
 ---
 id: T-draft-43b63f0e
 title: 'S0-3: Get the initial repository set up.'
-state: queued
+state: in-progress
 kind: feature
 origin: human
 created: '2026-09-26'
@@ -23,8 +23,8 @@ tokens_cache_read: null
 usage: null
 runs_last_parallel_safe: false
 runs_last_parallel_safe_reason: null
-worktree: null
-branch: null
+worktree: /home/logan/projects/project-hullbreach/game
+branch: mcnairrobotics/backlog-epics
 scope_breadth_ack: false
 scope_breadth_ack_reason: null
 no_scope_declared: true
