@@ -1,5 +1,5 @@
 ---
-id: T-draft-8487ff95
+id: T-0025
 title: 'S36: Compute stress in every block'
 state: queued
 kind: feature

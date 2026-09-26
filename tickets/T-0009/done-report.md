@@ -25,7 +25,7 @@ Sprint-0 work (mockups) was completed and marked Done in Jira before frob was wi
  tickets/T-0021/ticket.md | 57 +++++++++++++++++++++++++++++++++
  tickets/T-0018/ticket.md | 62 ++++++++++++++++++++++++++++++++++++
  tickets/T-0019/ticket.md | 62 ++++++++++++++++++++++++++++++++++++
- tickets/T-draft-8487ff95/ticket.md | 62 ++++++++++++++++++++++++++++++++++++
+ tickets/T-0025/ticket.md | 62 ++++++++++++++++++++++++++++++++++++
  tickets/T-0012/ticket.md | 61 ++++++++++++++++++++++++++++++++++++
  tickets/T-0009/ticket.md | 63 +++++++++++++++++++++++++++++++++++++
  tickets/T-draft-94bbc3f2/ticket.md | 60 +++++++++++++++++++++++++++++++++++
