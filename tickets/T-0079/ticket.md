@@ -1,5 +1,5 @@
 ---
-id: T-draft-0a536dde
+id: T-0079
 title: 'S38-1: StressCriteria and DamageModel detaching a block past its failure threshold'
 state: queued
 kind: feature
