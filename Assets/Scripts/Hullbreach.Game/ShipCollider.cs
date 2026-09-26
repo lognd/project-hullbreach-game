@@ -4,9 +4,7 @@ using Hullbreach.Core;
 
 namespace Hullbreach.Game
 {
-    // One BoxCollider2D per block, sized to one cell and offset to that
-    // cell's center, so Projectile can hit-test against real per-block
-    // geometry instead of one big hull box.
+    // One BoxCollider2D per block; see the reference page.
     // frob:doc docs/reference/hullbreach-game.md#shipcollider
     [RequireComponent(typeof(ShipController))]
     public sealed class ShipCollider : MonoBehaviour
@@ -28,9 +26,8 @@ namespace Hullbreach.Game
             if (controller == null) Debug.LogError("ShipCollider requires a ShipController on the same GameObject.");
         }
 
-        // Call after any edit to the ship's grid so the next LateUpdate
-        // rebuilds colliders (BuilderController after an edit, ShipStructure
-        // after a detach).
+        // Call after any edit to the ship's grid so the next
+        // LateUpdate rebuilds colliders.
         // frob:doc docs/reference/hullbreach-game.md#shipcollider
         public void MarkDirty() => _dirty = true;
 

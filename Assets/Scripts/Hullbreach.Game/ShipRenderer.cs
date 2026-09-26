@@ -20,23 +20,13 @@ namespace Hullbreach.Game
         LoadBearing,
         // White (undamaged) to black (fully damaged) by DamageFraction.
         Damage,
-        // Blue (0) to red (>=1) by BlockStress.BucklingRatio alone (via
-        // ExtraRatioSource), so a player can see where the ship would fold
-        // independent of ordinary ductile/brittle stress.
+        // Blue (0) to red (>=1) by BlockStress.BucklingRatio alone
+        // (via ExtraRatioSource).
         Buckling,
     }
 
-    // Builds and maintains one child GameObject per block on a ship's
-    // BlockGrid, using a runtime-generated 1x1 white sprite tinted per type,
-    // plus small nose/flame children for directional blocks. No prefabs, no
-    // asset dependencies: every visual here is code-generated so the demo
-    // scene needs nothing baked in the Editor.
-    //
-    // Rebuild is driven by MarkDirty, called by whatever mutates the grid
-    // (BuilderController, ShipStructure after a detach); this class does
-    // not poll BlockGrid.TopologyDirty itself since that flag is owned by
-    // ShipBody's own Step/RebuildDerivedViews lifecycle and gets cleared
-    // before a renderer polling on its own schedule could see it.
+    // Builds and maintains one child GameObject per block; no prefabs.
+    // See the reference page for why rebuild is push-driven, not polled.
     // frob:doc docs/reference/hullbreach-game.md#shiprenderer
     [RequireComponent(typeof(ShipController))]
     public sealed class ShipRenderer : MonoBehaviour
@@ -46,9 +36,8 @@ namespace Hullbreach.Game
         // frob:doc docs/reference/hullbreach-game.md#shiprenderer
         public OverlayMode Overlay = OverlayMode.None;
 
-        // Optional extra per-block ratio hook for a later buckling system;
-        // taken as max(...) alongside structural stress in the Stress
-        // overlay. Null means "no extra source".
+        // Optional extra per-block ratio hook for a later buckling
+        // system. Null means "no extra source".
         // frob:doc docs/reference/hullbreach-game.md#shiprenderer
         public Func<int, float> ExtraRatioSource;
 
@@ -57,11 +46,8 @@ namespace Hullbreach.Game
         // frob:doc docs/reference/hullbreach-game.md#shiprenderer
         public Hullbreach.Structure.StructuralSolver Solver;
 
-        // Blocks whose worst stress ratio reaches this threshold pulse
-        // bright red REGARDLESS of the current overlay, so a player flying
-        // with overlays off still sees WHERE the ship is about to fail
-        // instead of only being told THAT it is. Set by DemoMode; zero or
-        // negative disables the flash entirely.
+        // Blocks at or above this ratio pulse bright red regardless of
+        // overlay. Set by DemoMode; zero or negative disables the flash.
         // frob:doc docs/reference/hullbreach-game.md#shiprenderer
         public float FlashRatioThreshold = 0.8f;
 
@@ -225,14 +211,8 @@ namespace Hullbreach.Game
             }
             else if (block.TypeId == BlockTypes.RetroThruster)
             {
-                // A retro thruster pushes the ship backward by exhausting
-                // FORWARD out two SIDE nozzles, so both plumes point +y but
-                // sit outboard at the block's own +x/-x edges. Straight
-                // above the block is where the hull it is bolted to lives
-                // (that is what makes it a retro), so a plume centered there
-                // would be drawn underneath solid hull and never seen;
-                // Clearance reserves the two side cells precisely so these
-                // nozzles have somewhere to fire.
+                // A retro thruster exhausts FORWARD out two SIDE nozzles;
+                // see the reference page for why.
                 visual.Flame = BuildFlame(root.transform, new Vector3(0.5f, 0.25f, 0f), RetroFlameColor);
                 visual.Flame2 = BuildFlame(root.transform, new Vector3(-0.5f, 0.25f, 0f), RetroFlameColor);
                 visual.Exhaust = BuildExhaust(root.transform, new Vector3(0.5f, 0.5f, 0f),
@@ -255,25 +235,22 @@ namespace Hullbreach.Game
         // frob:doc docs/reference/hullbreach-game.md#shiprenderer
         public static readonly Color ForwardFlameColor = new Color(1f, 0.22f, 0.06f);
 
-        // Retro thrusters read GREEN, the opposite channel to the forward
-        // drive's red, so which way the ship is pushing is readable at a
-        // glance without looking at the HUD.
+        // Retro thrusters read GREEN, the opposite channel to the
+        // forward drive's red; see the reference page.
         // frob:doc docs/reference/hullbreach-game.md#shiprenderer
         public static readonly Color RetroFlameColor = new Color(0.15f, 1f, 0.35f);
 
         // Particles per second at full throttle.
         const float ExhaustRateAtFullThrottle = 60f;
 
-        // Particles per second for a fin's steering puff at full
-        // deflection; much thinner than a thruster plume, since a control
-        // surface is not a rocket.
+        // Particles per second for a fin's steering puff; thinner
+        // than a thruster plume.
         const float FinPuffRateAtFullSteer = 18f;
 
         static Material _particleMaterial;
 
-        // Returns null (and the caller skips particles entirely) if the
-        // Sprites/Default shader is not present in the build, which is the
-        // one way this can fail on a stripped player.
+        // Returns null (caller skips particles) if the Sprites/Default
+        // shader is missing from a stripped player.
         static Material ParticleMaterial()
         {
             if (_particleMaterial != null) return _particleMaterial;
@@ -291,9 +268,7 @@ namespace Hullbreach.Game
         }
 
         // Idle until UpdateFlames raises its emission rate. Simulation
-        // space is World deliberately, so the trail is left BEHIND a moving
-        // ship instead of riding along with it, which is most of what makes
-        // thrust read as thrust.
+        // space is World so the trail is left BEHIND a moving ship.
         static ParticleSystem BuildExhaust(Transform parent, Vector3 localPos, Vector2 localDirection, Color color)
         {
             var material = ParticleMaterial();
@@ -449,10 +424,8 @@ namespace Hullbreach.Game
             ApplyCriticalFlash(key, v);
         }
 
-        // Pulses a block's tint toward alarm red when its worst ratio is at
-        // or above FlashRatioThreshold. Applied on top of whatever the
-        // overlay just chose, so it is visible in every mode including
-        // None.
+        // Pulses a block's tint toward alarm red at or above
+        // FlashRatioThreshold, on top of whatever overlay is active.
         void ApplyCriticalFlash(int key, BlockVisual v)
         {
             if (FlashRatioThreshold <= 0f) return;
@@ -467,10 +440,8 @@ namespace Hullbreach.Game
             v.Body.color = Color.Lerp(v.Body.color, new Color(1f, 0.1f, 0.1f), 0.35f + 0.55f * pulse);
         }
 
-        // For a temporarily-transformed block (nonzero BlockVariants bits,
-        // e.g. a gravity-gun cannon) blends toward white with a slow pulse
-        // so an active powerup reads at a glance without a UI element per
-        // block.
+        // For a temporarily-transformed block (nonzero BlockVariants
+        // bits) blends toward white with a slow pulse.
         static Color VariantTint(byte typeId, byte modifiers)
         {
             var baseColor = ColorForType(typeId);

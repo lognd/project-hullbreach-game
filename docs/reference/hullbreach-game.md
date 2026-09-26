@@ -34,6 +34,21 @@ UnityEngine dependency and are exercised in edit-mode tests. NOT compiled by
 `tools/plaincs/run_tests.sh` (it depends on UnityEngine), so keep this file
 thin and let the harness catch regressions in the logic it calls into.
 
+`Awake` builds over the SAME grid a `ShipController` is simulating, when one
+is wired up (otherwise the builder and the flying ship would silently
+diverge onto two different grids), falling back to a private grid so this
+component still works standalone. `OnDisable` hides the hover preview and
+cancels a pending placement: without it the red/green cell outline stayed
+on screen through the whole of Fly mode (Update stops running, so nothing
+ever cleared it) and a pending Orienting state came back the next time
+Build opened. `TryPlaceAt`/`TryRemoveAt` are public because mouse position
+cannot be synthesised in a play-mode test, and a builder only reachable
+through the mouse cannot be proven to work; `PreviewHoverAt` exists for the
+same reason, pinning the hover preview to a key since a test cannot move
+the OS cursor. `UpdateHoverIndicator` builds a runtime-only quad over the
+hovered cell so the preview is visible in a running build, not just the
+Scene view (`OnDrawGizmos` never renders in Play mode's Game view).
+
 ### CameraFollow
 
 <!-- frob:describes Assets/Scripts/Hullbreach.Game/CameraFollow.cs::CameraFollow -->
@@ -301,6 +316,39 @@ This replaces PlayerSingle. Two things it fixes:
 
 See [DemoMode](#demomode) for the "Tab teleports me" bug that
 `SimulationEnabled` fixes.
+
+`Awake` takes ownership of mass (`body.useAutoMass = false`):
+`useAutoMass` recomputes from collider geometry on every change, which is
+slower and gives no control over the value the netcode has to agree on.
+`WorldSink.Instance` is read here rather than assigned eagerly because
+`WorldSink`'s own Awake (`[DefaultExecutionOrder(-150)]`, earlier than this
+class's -100) must run first; a scene with no `WorldSink` falls back to
+`ShipBody`'s `NullWorldSink` field initializer.
+
+`FixedUpdate` only pushes mass properties (`body.mass`, `centerOfMass`,
+`inertia`) when `body.bodyType == Dynamic`: ship bodies are kinematic
+(`ShipBody` integrates them, and `ShipContacts` resolves ship-ship overlap)
+precisely so Box2D never solves for them, so writing mass at a kinematic
+body would be writing numbers nothing reads. `ShipBody` is authoritative for
+ship motion - it is the plain C# sim the headless server (S47) will run too
+- so the `Rigidbody2D` follows it via `MovePosition`/`MoveRotation` (not
+`transform.position`) to stay compatible with interpolation and other
+colliders' contact resolution, while velocity is set directly so
+ricochets/collisions read a physically consistent rigidbody.
+
+`ReplaceBlocks` exists so a play-mode test can fly a SHAPE the demo scene
+does not author: the structural calibration has two ends to prove (a small
+ship must never break itself, a long unsupported arm must break) and only
+one of them can be the scene's default ship. The core is preserved:
+`BlockGrid` refuses to remove it and refuses a second one, so `newBlocks`
+must put its own core where the existing one already is.
+
+`RequestFire` lets a caller (`DemoMode`) bind fire to a key not guaranteed
+to be wired to the "Fire1" virtual axis in the Input Manager, e.g. Space.
+
+`ResetToOrigin`/`ResetTo` are used by `DemoMode`'s R key so a mangled or
+drifted ship can be brought back for another pass, onto dead rest or a
+preset orbital pass respectively.
 
 ### ShipRenderer
 

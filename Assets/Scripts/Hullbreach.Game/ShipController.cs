@@ -7,9 +7,8 @@ using Hullbreach.Ship;
 
 namespace Hullbreach.Game
 {
-    // A plain serializable struct rather than a ScriptableObject or
-    // prefab-per-ship, because Phase A only needs "a ship exists to fly",
-    // not a builder UI (that is Hullbreach.Builder's job later).
+    // A plain struct because Phase A only needs "a ship exists to
+    // fly", not a builder UI yet.
     // frob:doc docs/reference/hullbreach-game.md#authoredblock
     [Serializable]
     public struct AuthoredBlock
@@ -28,22 +27,8 @@ namespace Hullbreach.Game
         }
     }
 
-    // The MonoBehaviour adapter. Lifecycle and Inspector wiring ONLY: every
-    // line of actual simulation belongs in ShipBody, which has no UnityEngine
-    // dependency and is therefore testable in edit mode, Burst-compilable, and
-    // runnable on the headless server.
-    //
-    // This replaces PlayerSingle. Two things it fixes:
-    //
-    //  1. Forces move from Update to FixedUpdate. Update runs once per RENDERED
-    //     frame with a variable delta; the 2D physics step runs on a fixed
-    //     timer. Applying force from Update makes acceleration depend on
-    //     framerate.
-    //
-    //  2. Input is LATCHED. Input.GetButtonDown is true for exactly one
-    //     rendered frame, so polling it from FixedUpdate misses presses
-    //     outright. Read edge-triggered input in Update, store it, consume it
-    //     in FixedUpdate.
+    // The MonoBehaviour adapter. Lifecycle and Inspector wiring ONLY;
+    // see the reference page for what this replaces and why.
     // frob:doc docs/reference/hullbreach-game.md#shipcontroller
     [DefaultExecutionOrder(-100)]
     [RequireComponent(typeof(Rigidbody2D))]
@@ -51,14 +36,11 @@ namespace Hullbreach.Game
     {
         [SerializeField] Rigidbody2D body;
 
-        // [SerializeField] on a private field is the idiomatic choice: visible
-        // and editable in the Inspector without becoming public API. Note Unity
-        // serializes FIELDS only: a property would not show up at all.
+        // [SerializeField] on a private field: visible in the Inspector
+        // without becoming public API.
         [SerializeField] Transform[] thrusterMounts;
 
-        // Tuning knobs mirrored onto ShipBody in Awake. They live here so a
-        // designer can change them in the Inspector without touching the
-        // engine-free simulation code.
+        // Tuning knobs mirrored onto ShipBody in Awake.
         [Header("Tuning")]
         [Tooltip("Force each forward thruster applies at full throttle.")]
         [SerializeField] float thrustPerBlock = 10f;
@@ -71,9 +53,8 @@ namespace Hullbreach.Game
         [Tooltip("Per-second exponential decay on spin, so releasing steer settles the ship.")]
         [SerializeField] float angularDamping = 1.5f;
 
-        // The default lays out a minimal flyable ship: a core, hull
-        // fore/aft, two thrusters at the wingtips facing up, and a cannon
-        // up front.
+        // The default lays out a minimal flyable ship: core, hull,
+        // two thrusters, one cannon.
         [SerializeField]
         AuthoredBlock[] blocks = new[]
         {
@@ -87,36 +68,28 @@ namespace Hullbreach.Game
 
         ShipBody ship;
 
-        // Exposed so the demo scene branch can read state (throttle, mass,
-        // etc.) without ShipController growing pass-through properties for
-        // everything.
+        // Exposed so the demo scene branch can read state without
+        // pass-through properties for everything.
         // frob:doc docs/reference/hullbreach-game.md#shipcontroller
         public ShipBody Ship => ship;
 
-        // Gate for player input, set by DemoMode when switching to Build
-        // mode (where BuilderController drives the same grid instead) so a
-        // frozen ship does not also fight the physics step with stale
-        // thrust/steer/fire input. Defaults to true so existing scenes
-        // (RocketScene) behave exactly as before.
+        // Gate for player input, set by DemoMode when switching to
+        // Build mode. Defaults to true (existing scenes behave as before).
         // frob:doc docs/reference/hullbreach-game.md#shipcontroller
         public bool InputEnabled = true;
 
-        // Gate for the SIMULATION itself, distinct from InputEnabled: while
-        // false, FixedUpdate steps nothing and writes nothing to the
-        // Rigidbody2D. See the reference page for why this exists (the
-        // "Tab teleports me" bug).
+        // Gate for the SIMULATION itself, distinct from InputEnabled.
+        // See the reference page (the "Tab teleports me" bug).
         // frob:doc docs/reference/hullbreach-game.md#shipcontroller
         public bool SimulationEnabled = true;
 
-        // Defaults to the legacy Input Manager bindings; a play-mode test
-        // swaps in a ScriptedDemoInput, since UnityEngine.Input cannot be
-        // driven from a test.
+        // Defaults to the legacy Input Manager bindings; a play-mode
+        // test swaps in a ScriptedDemoInput.
         // frob:doc docs/reference/hullbreach-game.md#shipcontroller
         public IDemoInput InputSource = LegacyDemoInput.Instance;
 
-        // Raised once per PendingShots entry drained in FixedUpdate, so the
-        // demo scene branch can subscribe and spawn a projectile without
-        // ShipController knowing about prefabs.
+        // Raised once per PendingShots entry drained in FixedUpdate,
+        // so the caller can spawn a projectile without prefab knowledge here.
         // frob:doc docs/reference/hullbreach-game.md#shipcontroller
         public event Action<ShotRequest> ShotFired;
 
@@ -129,9 +102,7 @@ namespace Hullbreach.Game
         {
             if (body == null) body = GetComponent<Rigidbody2D>();
 
-            // Take ownership of mass. useAutoMass recomputes from collider
-            // geometry on every change, which is slower and gives no control
-            // over the value the netcode has to agree on.
+            // Take ownership of mass; see the reference page.
             body.useAutoMass = false;
 
             ship = new ShipBody
@@ -151,15 +122,12 @@ namespace Hullbreach.Game
             // so mass/CoM are already valid for the very first FixedUpdate.
             ship.RebuildDerivedViews();
 
-            // Null-safe: a scene with no GravityWorld (e.g. RocketScene)
-            // leaves this null, and ShipBody.Step already treats a null
-            // Gravity as "no gravity" rather than requiring a stub.
+            // Null-safe: ShipBody.Step treats a null Gravity as
+            // "no gravity" rather than requiring a stub.
             ship.Gravity = GravityWorld.Field;
 
-            // WorldSink.Instance is set by its own Awake, which must run
-            // before this one: see [DefaultExecutionOrder(-150)] there vs
-            // -100 here. Falls back to NullWorldSink's default (already set
-            // by ShipBody's field initializer) in a scene with no WorldSink.
+            // WorldSink.Instance is set by its own earlier-ordered Awake;
+            // see the reference page.
             if (WorldSink.Instance != null) ship.World = WorldSink.Instance;
         }
 
@@ -199,25 +167,16 @@ namespace Hullbreach.Game
 
             ship.Step(input, Time.fixedDeltaTime);
 
-            // Drain PendingShots: ShipBody only records intent and applies
-            // its own recoil, so spawning the actual projectile is the
-            // caller's job. Cleared every tick regardless of subscribers, so
-            // an un-observed ship cannot leak memory into the list.
+            // Drain PendingShots: ShipBody only records intent, spawning
+            // the projectile is the caller's job.
             for (int i = 0; i < ship.PendingShots.Count; i++)
             {
                 ShotFired?.Invoke(ship.PendingShots[i]);
             }
             ship.PendingShots.Clear();
 
-            // Push mass properties from the grid accumulators every tick:
-            // adding/removing a block (combat damage, later builder edits)
-            // changes these, and TopologyDirty already gates the expensive
-            // part (RebuildDerivedViews) inside Step, so this is cheap insurance.
-            // Only meaningful on a DYNAMIC body. Ship bodies are kinematic
-            // (ShipBody integrates them, and ShipContacts resolves ship-ship
-            // overlap) precisely so Box2D never solves for them, so pushing
-            // mass properties at a kinematic body would be writing numbers
-            // nothing reads.
+            // Push mass properties every tick; only meaningful on a DYNAMIC
+            // body. See the reference page for why kinematic bodies skip it.
             if (body.bodyType == RigidbodyType2D.Dynamic)
             {
                 var mass = ship.Grid.Mass;
@@ -227,24 +186,15 @@ namespace Hullbreach.Game
                 body.inertia = mass.InertiaAboutCenterOfMass;
             }
 
-            // ShipBody is authoritative for ship motion: it is the plain C#
-            // sim that the headless server (S47) will run too, so the
-            // Rigidbody2D must follow it rather than the other way around.
-            // MovePosition/MoveRotation (not transform.position) keep this
-            // compatible with Rigidbody2D's interpolation and with other
-            // colliders still resolving contacts against it; velocity is set
-            // directly so ricochets/collisions read a physically consistent
-            // rigidbody even though ShipBody, not Box2D, is doing the
-            // integrating.
+            // ShipBody is authoritative for ship motion; see the reference
+            // page for why Rigidbody2D follows it via Move*.
             body.linearVelocity = new Vector2(ship.Velocity.x, ship.Velocity.y);
             body.angularVelocity = math.degrees(ship.AngularVelocity);
             body.MovePosition(new Vector2(ship.Position.x, ship.Position.y));
             body.MoveRotation(math.degrees(ship.Rotation));
         }
 
-        // World-space wrapper over ShipBody.ApplyImpulseAtWorldPoint, for
-        // callers (e.g. a projectile-hit handler) that only have Unity
-        // Vector2/float2-agnostic types.
+        // World-space wrapper over ShipBody.ApplyImpulseAtWorldPoint.
         // frob:doc docs/reference/hullbreach-game.md#shipcontroller
         public void ApplyImpulse(Vector2 worldPoint, Vector2 impulse)
             => ship.ApplyImpulseAtWorldPoint(new float2(worldPoint.x, worldPoint.y),
@@ -255,14 +205,8 @@ namespace Hullbreach.Game
         public void ApplyDamage(Vector2 worldPoint, byte damage)
             => ship.ApplyDamageAtWorldPoint(new float2(worldPoint.x, worldPoint.y), damage, out _);
 
-        // Exists so a play-mode test can fly a SHAPE the demo scene does not
-        // author: the structural calibration has two ends to prove (a small
-        // ship must never break itself, a long unsupported arm must break)
-        // and only one of them can be the scene's default ship.
-        //
-        // The core is preserved: BlockGrid refuses to remove it and refuses
-        // a second one, so `newBlocks` must put its own core where the
-        // existing one already is.
+        // Lets a play-mode test fly a SHAPE the demo scene does not author;
+        // see the reference page.
         // frob:doc docs/reference/hullbreach-game.md#shipcontroller
         public void ReplaceBlocks(IReadOnlyList<AuthoredBlock> newBlocks)
         {
@@ -286,9 +230,7 @@ namespace Hullbreach.Game
             if (structure != null) structure.Solver.MarkTopologyChanged();
         }
 
-        // Lets a caller (DemoMode) bind fire to a key that is not
-        // guaranteed to be wired to the "Fire1" virtual axis in the Input
-        // Manager, e.g. Space.
+        // Lets a caller bind fire to a key not wired to "Fire1", e.g. Space.
         // frob:doc docs/reference/hullbreach-game.md#shipcontroller
         public void RequestFire()
         {
@@ -314,9 +256,7 @@ namespace Hullbreach.Game
             }
         }
 
-        // Used by DemoMode's R key when startInOrbit is set, so a mangled
-        // or drifted ship can be brought back onto a preset orbital pass
-        // instead of dead rest at the origin.
+        // Used by DemoMode's R key when startInOrbit is set.
         // frob:doc docs/reference/hullbreach-game.md#shipcontroller
         public void ResetTo(Vector2 position, Vector2 velocity)
         {
@@ -334,9 +274,8 @@ namespace Hullbreach.Game
             }
         }
 
-        // Draws each authored block as a wire square in ship-local space,
-        // plus the current center of mass, so the ship is visible in the
-        // editor without needing sprites yet.
+        // Draws each authored block plus the center of mass, so the
+        // ship is visible in the editor without sprites.
         void OnDrawGizmosSelected()
         {
             Gizmos.color = Color.cyan;

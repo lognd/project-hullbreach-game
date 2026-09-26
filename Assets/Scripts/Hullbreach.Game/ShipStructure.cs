@@ -5,9 +5,8 @@ using Hullbreach.Structure;
 
 namespace Hullbreach.Game
 {
-    // Ordered AFTER ShipController (-100) so ship.AppliedForcesThisStep for
-    // this tick is already populated, and BEFORE ShipRenderer (default 0) so
-    // the Stress overlay reads this tick's solve, not the previous one.
+    // Ordered AFTER ShipController (-100) and BEFORE ShipRenderer;
+    // see the reference page for why.
     // frob:doc docs/reference/hullbreach-game.md#shipstructure
     [DefaultExecutionOrder(-50)]
     [RequireComponent(typeof(ShipController))]
@@ -16,37 +15,28 @@ namespace Hullbreach.Game
         [SerializeField] ShipController controller;
         [SerializeField] ShipRenderer renderer_;
 
-        // Forwarded to Solver in Awake so it can be tuned per-ship without
-        // editing StructuralSolver's default. See
-        // StructuralSolver.BucklingEveryNTicks for why this must stay
-        // bounded (the eigen-solve is not free every FixedUpdate).
+        // Forwarded to Solver in Awake; see
+        // StructuralSolver.BucklingEveryNTicks.
         [SerializeField] int bucklingEveryNTicks = 4;
 
         [SerializeField] int bucklingModeCount = 4;
 
-        // Gameplay-force to material-unit conversion, forwarded to
-        // StructuralSolver.LoadScale in Awake; see the reference page for
-        // how this and materialStiffnessScale were calibrated.
+        // Forwarded to StructuralSolver.LoadScale in Awake; see the
+        // reference page for how this was calibrated.
         [SerializeField] float loadScale = DefaultLoadScale;
 
         // frob:doc docs/reference/hullbreach-game.md#shipstructure
         public const float DefaultLoadScale = 0.06f;
 
-        // E-over-yield ratio missing from BlockType's normalized material
-        // table, forwarded to StructuralSolver.MaterialStiffnessScale in
+        // Forwarded to StructuralSolver.MaterialStiffnessScale in
         // Awake; see the reference page for how this was calibrated.
         [SerializeField] float materialStiffnessScale = DefaultMaterialStiffnessScale;
 
         // frob:doc docs/reference/hullbreach-game.md#shipstructure
         public const float DefaultMaterialStiffnessScale = 40f;
 
-        // Only the authoritative simulation may act on Solver.BuckledBlocks
-        // by detaching blocks: the FE solve is not bit-identical across
-        // machines, so a client independently detaching from BuckledBlocks
-        // can desync from the server (see StructuralSolver.BuckledBlocks).
-        // Non-authoritative instances (clients) still tint BucklingRatio via
-        // ShipRenderer but skip the break here; they act only on explicit
-        // block-died events broadcast by the server (see NetMessages.cs).
+        // Only the authoritative sim may detach from Solver.BuckledBlocks;
+        // see the reference page for why (desync risk).
         // frob:doc docs/reference/hullbreach-game.md#shipstructure
         public bool Authoritative = true;
 
@@ -55,9 +45,8 @@ namespace Hullbreach.Game
         // frob:doc docs/reference/hullbreach-game.md#shipstructure
         public StructuralSolver Solver { get; } = new StructuralSolver();
 
-        // Seconds a block must stay in the solver's BuckledBlocks set
-        // before it actually comes off; see the reference page for why
-        // this hold exists.
+        // Seconds a block must stay buckled before it comes off;
+        // see the reference page for why.
         [SerializeField] float bucklingHoldSeconds = 0.4f;
 
         readonly Dictionary<int, float> _buckledFor = new Dictionary<int, float>();
@@ -140,10 +129,8 @@ namespace Hullbreach.Game
             }
         }
 
-        // A block that stops buckling (the player eased off, or load
-        // redistributed) loses its accumulated time entirely rather than
-        // keeping partial credit: it survived, and the next overload starts
-        // the clock again.
+        // A block that stops buckling loses its accumulated time
+        // entirely: it survived, and the clock starts again.
         void TickBucklingHold(float dt)
         {
             _buckledLongEnough.Clear();
@@ -178,11 +165,8 @@ namespace Hullbreach.Game
 
         void DetachAndCleanUp(BlockGrid grid) => DetachAndCleanUp(grid, _toDetach);
 
-        // Same break path as the ductile/brittle stress failure above,
-        // reused for buckled blocks: remove the given keys, then remove
-        // whatever that stranded, rebuild derived views and mark the
-        // renderer/collider dirty. Only called for BuckledBlocks when
-        // Authoritative: see the Authoritative comment above.
+        // Same break path as the ductile/brittle stress failure
+        // above, reused for buckled blocks (see Authoritative).
         void DetachAndCleanUp(BlockGrid grid, IReadOnlyList<int> keys)
         {
             foreach (int key in keys)

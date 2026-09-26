@@ -4,14 +4,8 @@ using Hullbreach.Builder;
 
 namespace Hullbreach.Game
 {
-    // The MonoBehaviour adapter for BuilderSession (S30-S33). Lifecycle,
-    // mouse-to-grid conversion and Gizmo drawing ONLY: every rule about
-    // what is a legal click lives in BuilderSession/PlacementRules, which
-    // have no UnityEngine dependency and are exercised in edit-mode tests.
-    //
-    // NOT compiled by tools/plaincs/run_tests.sh (it depends on UnityEngine),
-    // so keep this file thin and let the harness catch regressions in the
-    // logic it calls into.
+    // Lifecycle, mouse-to-grid conversion and Gizmo drawing ONLY; see the
+    // reference page for what this adapter deliberately leaves out.
     // frob:doc docs/reference/hullbreach-game.md#buildercontroller
     public sealed class BuilderController : MonoBehaviour
     {
@@ -43,10 +37,8 @@ namespace Hullbreach.Game
 
         void Awake()
         {
-            // Build over the SAME grid a ShipController is simulating, when
-            // one is wired up. Otherwise the builder and the flying ship
-            // would silently diverge onto two different grids. Falls back to
-            // a private grid so this component still works standalone.
+            // Shares the ShipController's grid when one is wired up; see
+            // the reference page.
             Session = shipController != null && shipController.Ship != null
                 ? new BuilderSession(shipController.Ship.Grid)
                 : new BuilderSession();
@@ -61,10 +53,7 @@ namespace Hullbreach.Game
             if (Session != null) Session.Changed -= OnSessionChanged;
         }
 
-        // Without this the red/green cell outline stayed on screen through
-        // the whole of Fly mode (Update stops running, so nothing ever
-        // cleared it) and a pending Orienting state came back the next time
-        // Build opened.
+        // See the reference page for why this matters in Fly mode.
         void OnDisable()
         {
             _hasHover = false;
@@ -83,9 +72,7 @@ namespace Hullbreach.Game
             if (shipController != null && shipController.Ship != null) shipController.Ship.RebuildDerivedViews();
         }
 
-        // Public because mouse position cannot be synthesised in a
-        // play-mode test, and a builder that is only reachable through the
-        // mouse is a builder that cannot be proven to work.
+        // Public so a play-mode test can drive it; see the reference page.
         // frob:doc docs/reference/hullbreach-game.md#buildercontroller
         public bool TryPlaceAt(int key) => Session != null && Session.Click(key);
 
@@ -96,9 +83,7 @@ namespace Hullbreach.Game
         public Hullbreach.Builder.PlacementVerdict VerdictAt(int key)
             => Session != null ? Session.Hover(key).Verdict : Hullbreach.Builder.PlacementVerdict.OutOfRange;
 
-        // Lets a screenshot test show the green/red placement indicator;
-        // there is no way to move the OS cursor from a play-mode test.
-        // Pass null to hand the hover back to the mouse.
+        // Pass null to hand the hover back to the mouse; see the reference page.
         // frob:doc docs/reference/hullbreach-game.md#buildercontroller
         public void PreviewHoverAt(int? key) => _hoverOverride = key;
 
@@ -106,9 +91,8 @@ namespace Hullbreach.Game
 
         void Update()
         {
-            // TODO [A5]: migrate to the new Input System alongside S27; the
-            //            legacy calls below rely on activeInputHandler being
-            //            "Both".
+            // TODO [A5]: migrate to the new Input System alongside S27
+            //            (activeInputHandler must stay "Both" until then).
             for (int i = 0; i < 9 && i < BlockTypes.Count; i++)
             {
                 if (Input.GetKeyDown(KeyCode.Alpha1 + i))
@@ -184,9 +168,7 @@ namespace Hullbreach.Game
             return true;
         }
 
-        // Runtime-only quad over the hovered cell, so the green/red preview
-        // is visible in a running build, not just the Scene view
-        // (OnDrawGizmos never renders in Play mode's Game view).
+        // See the reference page for why this exists separately from Gizmos.
         void UpdateHoverIndicator()
         {
             if (_hoverIndicator == null)
