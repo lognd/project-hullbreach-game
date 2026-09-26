@@ -1,5 +1,5 @@
 ---
-id: T-draft-909f39c3
+id: T-0097
 title: 'S44-2: Builder rule preventing removal of a welded thruster'
 state: queued
 kind: feature
