@@ -1,5 +1,5 @@
 ---
-id: T-draft-40b7b72c
+id: T-0105
 title: 'S47-2: Input and snapshot message serialization (ShipSnapshot, BlockPlaced,
   BlockDestroyed, FragmentSpawned)'
 state: queued
