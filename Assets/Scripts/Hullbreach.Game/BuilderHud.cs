@@ -5,7 +5,7 @@ using Hullbreach.Hud;
 namespace Hullbreach.Game
 {
     // uGUI view over BuilderHudModel (D4); see docs/design/ui-port.md for the wiring contract.
-    // frob:doc docs/demo-scene.md#the-ugui-hud-u1
+    // frob:doc docs/demo-scene.md#the-ugui-hud-u1-u3
     public sealed class BuilderHud : MonoBehaviour
     {
         [SerializeField] BuilderController controller;
