@@ -1,5 +1,5 @@
 ---
-id: T-draft-88c3a168
+id: T-0046
 title: 'S26-2: Show the signed-in username on the title screen'
 state: queued
 kind: feature
