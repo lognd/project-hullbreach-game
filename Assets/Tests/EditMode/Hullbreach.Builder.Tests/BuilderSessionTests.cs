@@ -187,7 +187,6 @@ namespace Hullbreach.Builder.Tests
             Assert.AreEqual(6, session.BlockCount);
         }
 
-        // frob:tests Assets/Scripts/Hullbreach.Builder/BuilderSession.cs::BuilderSession.BuilderSession
         [Test]
         public void ExternalGrid_PlacementsLandOnCallersGrid()
         {
