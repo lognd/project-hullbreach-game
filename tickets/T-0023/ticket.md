@@ -1,5 +1,5 @@
 ---
-id: T-draft-bf13aca5
+id: T-0023
 title: 'S34: Build during a fight'
 state: queued
 kind: feature
