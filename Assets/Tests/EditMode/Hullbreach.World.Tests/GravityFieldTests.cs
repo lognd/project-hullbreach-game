@@ -4,8 +4,8 @@ using Hullbreach.World;
 
 namespace Hullbreach.World.Tests
 {
-    /// <summary>Covers GravityField's acceleration summation, softening,
-    /// and temporary-body expiry.</summary>
+    // Covers GravityField's acceleration summation, softening,
+    // and temporary-body expiry.
     public class GravityFieldTests
     {
         [Test]
