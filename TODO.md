@@ -1,8 +1,9 @@
 # TODO
 
-frob does not run on this repo yet (its check stage dispatches python,
-typescript, cpp and rust only, even though it can parse C#), so deferred
-work lives here instead of in tickets.
+frob's ticket queue and strata model are wired into this repo (unit W,
+docs/design/frob-and-backlog.md); `frob check` does not gate it yet (see
+the frob bullet below), so deferred work still lives here instead of in
+tickets.
 
 - [x] CI: run the edit-mode tests without a Unity license. Done via
       `tools/plaincs`, which compiles the engine-free assemblies and the
@@ -37,8 +38,6 @@ work lives here instead of in tickets.
       every `BucklingEveryNTicks`-th tick instead of being spread across
       them. Splitting one sweep's per-vector solves across consecutive
       ticks, or raising `BucklingEveryNTicks`, would hide it.
-- [ ] frob: add a C# check stage so `frob check` gates this repo the way
-      it gates platform. Tracked in frob itself.
 - [ ] Replace the template's FPS gameplay (weapons, character, spectator)
       with ship building and hull breaching.
 - [ ] Server: report match results to the platform API over HTTPS.
@@ -67,6 +66,12 @@ S46 (win by breaching the core), S48, and the E14 stretch goals.
 - [x] UI: port the IMGUI HUD (`BuilderHud`, `DemoMode`'s status panel
       and hull banner) to uGUI prefabs. Done, U0-U4:
       [docs/design/ui-port.md](docs/design/ui-port.md).
-- [ ] Tooling: wire frob into this repo, sweep the comments to D9, and
-      import the Jira backlog as tickets; spec and owners in
+- [ ] frob: `frob check` exits `CHECK001` ("unknown project type") on
+      this repo until frob 0.534.0 ships the "unity"/"csharp" project
+      types (frob T-draft-fcfdafdf, critical; the strata root-module
+      parse gap that forced the hand-merge into
+      `design/hullbreach_game.strata` is the same series, frob T-5198).
+      `frob graph build` and `frob ticket` already work today; add a CI
+      job that runs `frob check` once that release ships. See
+      [docs/frob.md](docs/frob.md) and
       [docs/design/frob-and-backlog.md](docs/design/frob-and-backlog.md).
