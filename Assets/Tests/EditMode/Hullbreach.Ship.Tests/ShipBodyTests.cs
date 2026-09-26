@@ -293,7 +293,6 @@ namespace Hullbreach.Ship.Tests
             Assert.Less(ship.Throttle(retro), 0.2f, "retro's own (slower) rate must not jump to full in one tick");
         }
 
-        // frob:tests Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.AppliedForcesThisStep
         [Test]
         public void Step_RecordsOneAppliedForcePerThruster()
         {
