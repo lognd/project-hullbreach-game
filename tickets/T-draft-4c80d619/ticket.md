@@ -2,7 +2,7 @@
 id: T-draft-4c80d619
 title: 'S0-2: Create the "customer requirements" for what the central game mechanics
   will be.'
-state: queued
+state: in-progress
 kind: feature
 origin: human
 created: '2026-09-26'
@@ -24,8 +24,8 @@ tokens_cache_read: null
 usage: null
 runs_last_parallel_safe: false
 runs_last_parallel_safe_reason: null
-worktree: null
-branch: null
+worktree: /home/logan/projects/project-hullbreach/game
+branch: mcnairrobotics/backlog-epics
 scope_breadth_ack: false
 scope_breadth_ack_reason: null
 no_scope_declared: true
