@@ -1,5 +1,5 @@
 ---
-id: T-draft-68c3ff56
+id: T-0055
 title: 'S29-3: Game server allocation and handoff of both players into the match'
 state: queued
 kind: feature
