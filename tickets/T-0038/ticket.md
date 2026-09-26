@@ -1,5 +1,5 @@
 ---
-id: T-draft-9a028cc5
+id: T-0038
 title: 'S49: Favor the defender and forgive honest lag'
 state: queued
 kind: feature
