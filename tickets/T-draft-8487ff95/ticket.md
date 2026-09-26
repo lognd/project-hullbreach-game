@@ -6,7 +6,7 @@ kind: feature
 origin: human
 created: '2026-09-26'
 priority: critical
-parent: T-draft-2a99d859
+parent: T-0004
 tier: story
 sprint: sprint-2
 runs_last: false
