@@ -53,5 +53,10 @@ namespace Hullbreach.Hud
         // Copied verbatim from DemoMode's old literal, before the CRITICAL pulse is applied.
         // frob:doc docs/design/ui-port.md#hullbreachhud-module-reference
         public static readonly HudColor WarningCriticalRed = new HudColor(1f, 0.15f, 0.15f);
+
+        // DrawSteerBar's center-tick mark; same value as SteerWhite today but kept
+        // separate since the two draw calls mean different things.
+        // frob:doc docs/design/ui-port.md#hullbreachhud-module-reference
+        public static readonly HudColor CenterTickGrey = new HudColor(0.6f, 0.6f, 0.6f);
     }
 }
