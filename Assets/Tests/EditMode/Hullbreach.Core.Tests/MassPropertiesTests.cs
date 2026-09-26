@@ -4,10 +4,8 @@ using Hullbreach.Core;
 
 namespace Hullbreach.Core.Tests
 {
-    /// <summary>
-    /// Every expected value here is derived analytically, so a failure means
-    /// the code is wrong rather than the test being stale.
-    /// </summary>
+    // Every expected value here is derived analytically, so a failure means
+    // the code is wrong rather than the test being stale.
     public class MassPropertiesTests
     {
         const float Tol = 1e-4f;
@@ -50,10 +48,8 @@ namespace Hullbreach.Core.Tests
         [Test]
         public void FourByTwoSlab_MatchesAnalyticSlab()
         {
-            // 8 unit blocks of mass 1 filling [0,4] x [0,2].
-            // Total mass 8, center (2,1), and because the assembly IS a solid
-            // 4x2 rectangle, its inertia must equal the closed form for one:
-            //     I = m (w^2 + h^2) / 12 = 8 * 20 / 12 = 40/3
+            // 8 unit blocks filling [0,4] x [0,2]; a solid 4x2 rectangle, so
+            // its inertia must equal the closed form: I = m(w^2+h^2)/12 = 40/3.
             var m = new MassProperties();
             for (int x = 0; x < 4; x++)
             for (int y = 0; y < 2; y++)

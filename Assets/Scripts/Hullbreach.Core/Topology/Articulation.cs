@@ -3,25 +3,13 @@ using System.Collections.Generic;
 
 namespace Hullbreach.Core
 {
-    /// <summary>
-    /// Cut vertices of the block adjacency graph: blocks whose removal would
-    /// disconnect the ship.
-    ///
-    /// This is the optimization that makes removal cheap. Removing a block that
-    /// is NOT an articulation point cannot split anything, so the flood fill is
-    /// skipped outright. Ships are mostly 2-connected blobs, so most removals
-    /// take the fast path.
-    ///
-    /// It doubles as UI: these are exactly the load-bearing blocks, which pairs
-    /// naturally with the S37 stress tint.
-    /// </summary>
+    // Cut vertices of the block adjacency graph: blocks whose removal would
+    // disconnect the ship. See docs/reference/hullbreach-core.md#articulation.
+    // frob:doc docs/reference/hullbreach-core.md#articulation
     public static class Articulation
     {
-        /// <summary>
-        /// One DFS-stack frame. Kept as a class (not a struct) so the `into`
-        /// neighbor buffer and the running child index can be mutated in
-        /// place while the frame sits in the stack.
-        /// </summary>
+        // Kept as a class so the `into` neighbor buffer and child index can
+        // be mutated in place while the frame sits in the stack.
         sealed class Frame
         {
             public int Node;
@@ -31,14 +19,9 @@ namespace Hullbreach.Core
             public readonly int[] Neighbors = new int[4];
         }
 
-        /// <summary>
-        /// Tarjan's algorithm, O(V + E), once per topology change. Uses an
-        /// ITERATIVE DFS: a recursive one would blow the stack on a large
-        /// ship. Works with no core (any block can serve as the DFS root,
-        /// since articulation points are a property of the adjacency graph
-        /// alone) and correctly reports no articulation points for a single
-        /// block (a root is only a cut vertex when it has 2+ DFS children).
-        /// </summary>
+        // Tarjan's algorithm, O(V + E); ITERATIVE DFS so a large ship
+        // cannot blow the stack. See docs/reference/hullbreach-core.md#articulation.
+        // frob:doc docs/reference/hullbreach-core.md#articulation
         public static void Compute(BlockGrid grid, HashSet<int> articulationPoints)
         {
             articulationPoints.Clear();
@@ -78,10 +61,8 @@ namespace Hullbreach.Core
                         if (!grid.Contains(child)) continue;
                         if (child == frame.Parent)
                         {
-                            // Skip exactly the one edge back to the immediate
-                            // tree parent; 4-connected grid adjacency has at
-                            // most one such edge, so this cannot also eat a
-                            // legitimate back-edge to an ancestor further up.
+                            // Skip only the one edge back to the immediate
+                            // tree parent (4-connected adjacency has at most one).
                             continue;
                         }
 
