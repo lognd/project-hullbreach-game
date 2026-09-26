@@ -1,5 +1,5 @@
 ---
-id: T-draft-88c72b63
+id: T-0058
 title: 'S30-3: Edit-mode tests for placement rules and the builder session'
 state: queued
 kind: feature
