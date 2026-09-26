@@ -1,5 +1,5 @@
 ---
-id: T-draft-7009dc6b
+id: T-0113
 title: 'S49-2: Per-client trust level that tightens tolerances instead of disconnecting'
 state: queued
 kind: feature
