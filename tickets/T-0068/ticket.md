@@ -1,5 +1,5 @@
 ---
-id: T-draft-a3d36ca0
+id: T-0068
 title: 'S34-2: Replicate BlockPlaced mid-match to the opponent'
 state: queued
 kind: feature
