@@ -1,5 +1,5 @@
 ---
-id: T-draft-f37c6a9a
+id: T-0020
 title: 'S31: Remove and undo blocks'
 state: queued
 kind: feature
