@@ -1,5 +1,5 @@
 ---
-id: T-draft-94ada0e8
+id: T-0049
 title: 'S27-2: Rebindable keys, migrating from the legacy Input class to the Input
   System package'
 state: queued
