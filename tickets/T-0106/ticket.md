@@ -1,5 +1,5 @@
 ---
-id: T-draft-08a5e132
+id: T-0106
 title: 'S47-3: Client timeout, disconnect handling, and match resolution on drop'
 state: queued
 kind: feature
