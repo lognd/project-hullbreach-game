@@ -1,5 +1,5 @@
 ---
-id: T-draft-7239c6b3
+id: T-0021
 title: 'S32: Build around a core'
 state: queued
 kind: feature
