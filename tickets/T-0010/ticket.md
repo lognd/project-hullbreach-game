@@ -55,6 +55,7 @@ component: null
 labels:
 - jira:SCRUM-6
 - owner:lognd
+- jira-status:done
 anchor: false
 anchor_reason: null
 land_commit: null
