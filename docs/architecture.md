@@ -8,8 +8,8 @@ traces back to one rule stated once here.
 ## The one rule: engine-free simulation, Unity-only adapters
 
 `Hullbreach.Core`, `Hullbreach.World`, `Hullbreach.Structure`,
-`Hullbreach.Ship`, `Hullbreach.Builder`, and `Hullbreach.Net` contain
-**no `UnityEngine` reference at all**. They are plain C#: `Unity.Mathematics`
+`Hullbreach.Ship`, `Hullbreach.Builder`, `Hullbreach.Net`, and
+`Hullbreach.Hud` contain **no `UnityEngine` reference at all**. They are plain C#: `Unity.Mathematics`
 for vector math (it is a math library, not an engine dependency) and
 nothing else. `Hullbreach.Game` is the only assembly that references
 `UnityEngine`, and it is deliberately thin: `MonoBehaviour` adapters that
@@ -85,6 +85,11 @@ Concretely, from each `.asmdef`'s `references`:
   purely a grid-geometry question.
 - `Hullbreach.Net` -> `Core`. Wire messages and quantization; not wired to
   a transport yet (see `docs/roadmap.md`, S47/S48).
+- `Hullbreach.Hud` -> `Core`, `Builder`. Engine-free HUD models (D3 in
+  `docs/design/ui-port.md`): pure functions and value types that turn
+  simulation state into the exact strings/colors a uGUI view shows.
+  Compiled by `tools/plaincs` and covered by edit-mode tests like every
+  other plain assembly.
 - `Hullbreach.Game` -> all of the above, plus `UnityEngine`. Scene-facing
   adapters: `ShipController`, `BuilderController`, `ShipRenderer`,
   `ShipStructure`, `WorldSink`, `GravityWorld`, `Powerup`/`PowerupSpawner`,
@@ -92,7 +97,7 @@ Concretely, from each `.asmdef`'s `references`:
   `CameraFollow`.
 
 If you find yourself wanting to `using UnityEngine` inside `Ship`,
-`Structure`, `Builder`, `Core`, `World`, or `Net`, that is a sign the code
+`Structure`, `Builder`, `Core`, `World`, `Net`, or `Hud`, that is a sign the code
 belongs in `Hullbreach.Game` instead, or that the plain assembly needs a
 new interface (like `IWorldSink`) that `Game` implements.
 

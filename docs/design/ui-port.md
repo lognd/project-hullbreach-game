@@ -87,10 +87,33 @@ assets), but it has three costs that now matter:
   views need as read-only properties. `BuilderHud` keeps its class name
   and its enable/disable contract with `DemoMode.ApplyState`, so
   `docs/demo-scene.md` wiring stays recognisable.
+- **D9: comments are plain, docs are linked.** Code comments in anything
+  U1 or later touches are one or two `//` lines, WHY not WHAT, with no
+  XML `<summary>` blocks. Every public type/member instead carries a
+  `// frob:doc docs/<page>.md#<anchor>` line pointing at a docs/ heading,
+  and that heading lists the symbols it documents with one
+  `<!-- frob:describes Assets/Scripts/<Asm>/<File>.cs::<Type>[.<Member>] -->`
+  line each (mirrors `../platform/docs/index.md`'s convention). frob will
+  check these links once it is wired into this repo (see the schedule);
+  until then they are just discoverable cross-references.
 
 ## 3. Module map
 
 ### `Hullbreach.Hud` (new, engine-free, `Assets/Scripts/Hullbreach.Hud/`)
+
+#### Hullbreach.Hud module reference
+
+<!-- frob:describes Assets/Scripts/Hullbreach.Hud/HudColor.cs::HudColor -->
+<!-- frob:describes Assets/Scripts/Hullbreach.Hud/HudColor.cs::HudColor.HudColor -->
+<!-- frob:describes Assets/Scripts/Hullbreach.Hud/HudColor.cs::HudColor.ThrustRed -->
+<!-- frob:describes Assets/Scripts/Hullbreach.Hud/HudColor.cs::HudColor.ReverseGreen -->
+<!-- frob:describes Assets/Scripts/Hullbreach.Hud/HudColor.cs::HudColor.SteerWhite -->
+<!-- frob:describes Assets/Scripts/Hullbreach.Hud/HudColor.cs::HudColor.TrackDark -->
+<!-- frob:describes Assets/Scripts/Hullbreach.Hud/HudColor.cs::HudColor.WarningOkGreen -->
+<!-- frob:describes Assets/Scripts/Hullbreach.Hud/HudColor.cs::HudColor.WarningStrainYellow -->
+<!-- frob:describes Assets/Scripts/Hullbreach.Hud/HudColor.cs::HudColor.WarningCriticalRed -->
+<!-- frob:describes Assets/Scripts/Hullbreach.Hud/BuilderHudModel.cs::BuilderHudModel -->
+<!-- frob:describes Assets/Scripts/Hullbreach.Hud/BuilderHudModel.cs::BuilderHudModel.Build -->
 
 - `HudColor` -- readonly RGBA float struct; the palette constants used
   by the HUD today (thrust red, reverse green, steer white, track dark,
@@ -124,7 +147,27 @@ assets), but it has three costs that now matter:
 
 ### Editor (`Assets/Editor/Hullbreach.Editor/`, Editor-only asmdef)
 
+#### HudPrefabBuilder (Editor)
+
+<!-- frob:describes Assets/Editor/Hullbreach.Editor/HudPrefabBuilder.cs::HudPrefabBuilder -->
+<!-- frob:describes Assets/Editor/Hullbreach.Editor/HudPrefabBuilder.cs::HudPrefabBuilder.HudCanvasPrefabPath -->
+<!-- frob:describes Assets/Editor/Hullbreach.Editor/HudPrefabBuilder.cs::HudPrefabBuilder.BuilderPanelPrefabPath -->
+<!-- frob:describes Assets/Editor/Hullbreach.Editor/HudPrefabBuilder.cs::HudPrefabBuilder.DemoScenePath -->
+<!-- frob:describes Assets/Editor/Hullbreach.Editor/HudPrefabBuilder.cs::HudPrefabBuilder.RebuildDefaultHudPrefabsMenuItem -->
+<!-- frob:describes Assets/Editor/Hullbreach.Editor/HudPrefabBuilder.cs::HudPrefabBuilder.Build -->
+<!-- frob:describes Assets/Editor/Hullbreach.Editor/HudPrefabBuilder.cs::HudPrefabBuilder.BuildForce -->
+<!-- frob:describes Assets/Editor/Hullbreach.Editor/HudPrefabBuilder.cs::HudPrefabBuilder.Run -->
+<!-- frob:describes Assets/Editor/Hullbreach.Editor/HudPrefabBuilder.cs::HudPrefabBuilder.BuildHudCanvasPrefab -->
+<!-- frob:describes Assets/Editor/Hullbreach.Editor/HudPrefabBuilder.cs::HudPrefabBuilder.WireDemoScene -->
+
 - `HudPrefabBuilder` -- builds the prefabs and wires `DemoScene` (D6).
+
+**Adding a panel** (U2/U3): write one more `AddXxxPanel(GameObject
+canvasRoot)` method following `AddBuilderPanel`'s shape (build the
+hierarchy, wire any view component's serialized fields via
+`SerializedObject`, save it as its own nested prefab, return the panel
+root), then call it from `BuildHudCanvasPrefab` alongside the existing
+`AddBuilderPanel` call.
 
 ## 4. Work units and owners
 

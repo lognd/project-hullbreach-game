@@ -403,7 +403,38 @@ to understand the surrounding math.
 editing them risks breaking every other block on every ship, not just
 your new one.
 
-## 6. Checking you did not break anything
+## 6. Editing the HUD
+
+The builder palette panel is a normal uGUI screen now (the IMGUI-to-uGUI
+port, see `docs/design/ui-port.md`), so you can move, resize or restyle
+it in the editor without touching code.
+
+1. In the Project window, open `Assets/Prefabs/UI/BuilderPanel.prefab`
+   (double-click to enter Prefab Mode). This is the panel itself: the
+   background, the title, the row template, and the total
+   mass/block-count/state/hover labels.
+2. Select any child (for example `TotalMassText`) and use the normal
+   Inspector fields to change its font size, color or position. The
+   panel uses a Vertical Layout Group, so rows re-flow automatically;
+   you do not need to move anything by hand to keep them from
+   overlapping.
+3. `Assets/Prefabs/UI/HudCanvas.prefab` is the root: the `Canvas`, its
+   `CanvasScaler` (which keeps the layout readable at any window size),
+   and `BuilderPanel` as a child. Open this one only if you need to
+   change where the whole panel sits on screen or add a new panel
+   alongside it; leave the `Canvas`/`CanvasScaler` settings alone unless
+   you know why you are changing them.
+4. **Do not touch** `Assets/Editor/Hullbreach.Editor/HudPrefabBuilder.cs`
+   or the `RowTemplate` child's `SetActive` state (it must stay
+   unchecked in the prefab; `BuilderHud` turns rows on itself). The
+   builder script only exists to regenerate these prefabs from scratch
+   (`Hullbreach > UI > Rebuild default HUD prefabs`) if they are ever
+   lost; it is not part of the normal editing workflow and running it
+   will refuse to overwrite what you already have.
+5. Save the prefab (Ctrl+S) and press Play to see your change in the
+   demo scene.
+
+## 7. Checking you did not break anything
 
 After any change to a `.cs` file (skip this step if you only changed
 numbers in the Inspector and did not touch a code file):
@@ -429,7 +460,7 @@ open). Any message shown in **red** means something went wrong: stop,
 read the message, and undo your most recent change if you do not
 understand it, rather than continuing to build on top of it.
 
-## 7. Where to look next
+## 8. Where to look next
 
 - `docs/architecture.md`: how the code is organized and why, for when you
   are ready to read code, not just copy it.

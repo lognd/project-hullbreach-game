@@ -20,6 +20,7 @@
     <Compile Include="../../../Assets/Scripts/Hullbreach.Structure/**/*.cs" />
     <Compile Include="../../../Assets/Scripts/Hullbreach.Builder/**/*.cs" />
     <Compile Include="../../../Assets/Scripts/Hullbreach.Net/**/*.cs" />
+    <Compile Include="../../../Assets/Scripts/Hullbreach.Hud/**/*.cs" />
     <Compile Include="../.deps/um/src/Unity.Mathematics/**/*.cs" />
     <Compile Remove="../.deps/um/src/Unity.Mathematics/math_unity_conversion.cs" />
     <Compile Remove="../.deps/um/src/Unity.Mathematics/PropertyAttributes.cs" />

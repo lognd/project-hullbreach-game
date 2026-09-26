@@ -137,7 +137,8 @@ references `UnityEngine`
 `Assets/Tests/EditMode` at all. Notice `Assets/Tests/EditMode` has one
 `.Tests` folder per plain assembly (`Hullbreach.Builder.Tests`,
 `Hullbreach.Core.Tests`, `Hullbreach.Net.Tests`, `Hullbreach.Ship.Tests`,
-`Hullbreach.Structure.Tests`, `Hullbreach.World.Tests`) and no
+`Hullbreach.Structure.Tests`, `Hullbreach.World.Tests`,
+`Hullbreach.Hud.Tests`) and no
 `Hullbreach.Game.Tests`. Anything that only exists in `Hullbreach.Game`
 (scene wiring, `DemoMode`'s state machine, `ShipRenderer`'s actual pixel
 output, `Powerup`'s `OnTriggerEnter2D`) can only be exercised by opening

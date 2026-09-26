@@ -1,50 +1,66 @@
 using UnityEngine;
-using Hullbreach.Core;
-using Hullbreach.Builder;
+using TMPro;
+using Hullbreach.Hud;
 
 namespace Hullbreach.Game
 {
-    /// <summary>
-    /// Minimal OnGUI HUD for the builder (S33): lists the palette with mass
-    /// and cost, shows total mass and block count, and highlights the current
-    /// selection. Deliberately OnGUI, not a Canvas: it needs no scene setup
-    /// and is only meant to make the palette/criteria testable by hand.
-    /// </summary>
+    // uGUI view over BuilderHudModel (D4); see docs/design/ui-port.md for the wiring contract.
+    // frob:doc docs/demo-scene.md#the-ugui-hud-u1
     public sealed class BuilderHud : MonoBehaviour
     {
-        /// <summary>The controller whose session this HUD reflects.</summary>
         [SerializeField] BuilderController controller;
+        [SerializeField] GameObject panelRoot;
+        [SerializeField] TMP_Text titleText;
+        [SerializeField] RectTransform rowContainer;
+        [SerializeField] TMP_Text rowTemplate;
+        [SerializeField] TMP_Text totalMassText;
+        [SerializeField] TMP_Text blockCountText;
+        [SerializeField] TMP_Text stateText;
+        [SerializeField] TMP_Text hoverText;
 
-        void OnGUI()
+        TMP_Text[] _rows;
+
+        void Awake()
         {
-            if (controller == null || controller.Session == null) return;
-            var session = controller.Session;
+            rowTemplate.gameObject.SetActive(false);
+            BuildRows();
+        }
 
-            // Clamped to the space DemoMode's bottom-left panel leaves, so
-            // the palette and the status panel never draw over each other on
-            // a short window (they did at 341 px tall, which is what a
-            // batch-mode screenshot run produces).
-            float available = Screen.height - DemoMode.StatusPanelHeight(true) - 20f;
-            float height = Mathf.Clamp(available, 120f, 400f);
-            GUILayout.BeginArea(new Rect(10, 10, 260, height), GUI.skin.box);
-            GUILayout.Label("Palette (keys 1-7)");
+        // Matches DemoMode.ApplyState's enable/disable of this component (D8).
+        void OnEnable() => panelRoot.SetActive(true);
 
-            foreach (var entry in BlockPalette.All())
+        void OnDisable() => panelRoot.SetActive(false);
+
+        void LateUpdate()
+        {
+            if (controller.Session == null) return;
+
+            var model = BuilderHudModel.Build(controller.Session, controller.HoverVerdictText);
+
+            titleText.text = model.Title;
+            for (int i = 0; i < _rows.Length; i++) _rows[i].text = model.Rows[i];
+            totalMassText.text = model.TotalMassLine;
+            blockCountText.text = model.BlockCountLine;
+            stateText.text = model.StateLine;
+
+            bool hasHover = model.HoverLine != null;
+            hoverText.gameObject.SetActive(hasHover);
+            if (hasHover) hoverText.text = model.HoverLine;
+        }
+
+        // The palette is fixed-size, so rows are built once, not grown per frame.
+        void BuildRows()
+        {
+            int count = 0;
+            foreach (var _ in Hullbreach.Builder.BlockPalette.All()) count++;
+
+            _rows = new TMP_Text[count];
+            for (int i = 0; i < count; i++)
             {
-                bool selected = entry.TypeId == session.SelectedTypeId;
-                string marker = selected ? "> " : "  ";
-                GUILayout.Label($"{marker}{entry.Name}  mass {entry.Mass:0.0}  cost {entry.Cost}");
+                var row = Instantiate(rowTemplate, rowContainer);
+                row.gameObject.SetActive(true);
+                _rows[i] = row;
             }
-
-            GUILayout.Space(8);
-            GUILayout.Label($"Total mass: {session.TotalMass:0.0}");
-            GUILayout.Label($"Block count: {session.BlockCount}");
-            GUILayout.Label($"State: {session.State}");
-            if (!string.IsNullOrEmpty(controller.HoverVerdictText))
-            {
-                GUILayout.Label($"Hover: {controller.HoverVerdictText}");
-            }
-            GUILayout.EndArea();
         }
     }
 }
