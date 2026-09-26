@@ -7,7 +7,7 @@ kind: feature
 origin: human
 created: '2026-09-26'
 priority: critical
-parent: T-draft-24db153d
+parent: T-0031
 tier: ticket
 sprint: sprint-1
 runs_last: false

@@ -1,5 +1,5 @@
 ---
-id: T-draft-24db153d
+id: T-0031
 title: 'S42: Shoot a basic cannon'
 state: queued
 kind: feature
