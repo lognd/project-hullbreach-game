@@ -84,8 +84,8 @@ S46 (win by breaching the core), S48, and the E14 stretch goals.
       SYS114 waivers (T-0041) because frob double-counts them as stale
       (frob T-6584, 0.534.0). The reliability view already
       reports them as waived; treat that exit as a known false gap.
-- [ ] frob: `frob ticket new --points` drops the points (frob
-      T-5815, landed on frob dev; reaches the tool at its next refresh); set points with `frob ticket points`.
+- [x] frob: `frob ticket new --points` dropped the points (frob
+      T-5815); fixed in frob 0.531.1.dev351, points now persist on `new`.
 - [ ] frob: the three Sprint 0 tickets (label `jira-status:done`) stay
       queued until frob can close pre-frob work without evidence
       (`close --historical`, frob T-6585, 0.535.0).
