@@ -1,7 +1,10 @@
 using System.IO;
 using System.Linq;
 using Hullbreach.NetCode.Entities;
+using Hullbreach.Game;
 using TMPro;
+using Unity.NetCode;
+using Unity.Scenes;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -17,6 +20,8 @@ namespace Hullbreach.Editor
         public const string LobbyPrefabPath = "Assets/Prefabs/UI/LobbyCanvas.prefab";
         public const string LobbyScenePath = "Assets/Scenes/LobbyScene.unity";
         public const string GameScenePath = "Assets/Scenes/MultiplayerGame.unity";
+        public const string GhostPrefabPath = "Assets/Prefabs/NetCode/HullbreachGameplayGhost.prefab";
+        public const string GhostSubScenePath = "Assets/Scenes/MultiplayerGhosts.unity";
 
         [MenuItem("Hullbreach/Online/Rebuild lobby and multiplayer scenes")]
         public static void RebuildMenu() => Build(force: true);
@@ -24,10 +29,13 @@ namespace Hullbreach.Editor
         public static void Build(bool force)
         {
             Directory.CreateDirectory("Assets/Prefabs/UI");
+            Directory.CreateDirectory("Assets/Prefabs/NetCode");
             Directory.CreateDirectory("Assets/Scenes");
 
             if (force || !File.Exists(LobbyPrefabPath)) BuildLobbyPrefab();
             if (force || !File.Exists(LobbyScenePath)) BuildLobbyScene();
+            if (force || !File.Exists(GhostPrefabPath)) BuildGhostPrefab();
+            if (force || !File.Exists(GhostSubScenePath)) BuildGhostSubScene();
             if (force || !File.Exists(GameScenePath)) BuildGameScene();
             UpdateBuildSettings();
             AssetDatabase.SaveAssets();
@@ -178,14 +186,35 @@ namespace Hullbreach.Editor
 
         static void BuildGameScene()
         {
-            Scene scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
-            scene.name = HullbreachLobbyService.DefaultGameScene;
-            Camera camera = CreateCamera(new Color(0.015f, 0.02f, 0.035f));
+            Scene scene = EditorSceneManager.OpenScene("Assets/Scenes/DemoScene.unity", OpenSceneMode.Single);
+            EditorSceneManager.SaveScene(scene, GameScenePath);
+
+            foreach (string rootName in new[] { "Demo", "PlayerShip", "TargetShip", "Powerups", "HudCanvas", "EventSystem" })
+            {
+                GameObject root = GameObject.Find(rootName);
+                if (root != null) Object.DestroyImmediate(root);
+            }
+
+            Camera camera = Camera.main;
+            if (camera == null) camera = CreateCamera(new Color(0.015f, 0.02f, 0.035f));
+            CameraFollow oldFollow = camera.GetComponent<CameraFollow>();
+            if (oldFollow != null) Object.DestroyImmediate(oldFollow);
             camera.orthographic = true;
-            camera.orthographicSize = 14f;
+            camera.orthographicSize = 16f;
 
             var presenter = new GameObject("NetworkShipPresenter");
             presenter.AddComponent<HullbreachNetCodeView>();
+
+            var gameplay = new GameObject("NetworkGameplay");
+            HullbreachNetworkGameplayController controller = gameplay.AddComponent<HullbreachNetworkGameplayController>();
+            SerializedObject controllerSerialized = new SerializedObject(controller);
+            Set(controllerSerialized, "gameplayCamera", camera);
+            controllerSerialized.ApplyModifiedPropertiesWithoutUndo();
+
+            var subSceneObject = new GameObject("MultiplayerGhosts");
+            SubScene subScene = subSceneObject.AddComponent<SubScene>();
+            subScene.SceneAsset = AssetDatabase.LoadAssetAtPath<SceneAsset>(GhostSubScenePath);
+            subScene.AutoLoadScene = true;
 
             GameObject canvasGo = new GameObject("NetworkHudCanvas", typeof(RectTransform));
             Canvas canvas = canvasGo.AddComponent<Canvas>();
@@ -195,7 +224,7 @@ namespace Hullbreach.Editor
             scaler.referenceResolution = new Vector2(1920f, 1080f);
             canvasGo.AddComponent<GraphicRaycaster>();
 
-            GameObject statusPanel = AddPanel(canvasGo.transform, "NetworkStatusPanel", new Vector2(600f, 96f),
+            GameObject statusPanel = AddPanel(canvasGo.transform, "NetworkStatusPanel", new Vector2(900f, 130f),
                 new Color(0.04f, 0.065f, 0.11f, 0.92f));
             RectTransform statusRect = statusPanel.GetComponent<RectTransform>();
             statusRect.anchorMin = statusRect.anchorMax = statusRect.pivot = new Vector2(0f, 1f);
@@ -221,6 +250,32 @@ namespace Hullbreach.Editor
 
             CreateEventSystem();
             EditorSceneManager.SaveScene(scene, GameScenePath);
+        }
+
+        static void BuildGhostPrefab()
+        {
+            var root = new GameObject("HullbreachGameplayGhost");
+            root.AddComponent<HullbreachGameplayGhostAuthoring>();
+            GhostAuthoringComponent ghost = root.AddComponent<GhostAuthoringComponent>();
+            ghost.SupportedGhostModes = GhostModeMask.Interpolated;
+            ghost.DefaultGhostMode = GhostMode.Interpolated;
+            ghost.OptimizationMode = GhostOptimizationMode.Dynamic;
+            ghost.Importance = 100;
+            ghost.MaxSendRate = HullbreachNetCodeConstants.SimulationTickRate;
+            ghost.HasOwner = true;
+            ghost.SupportAutoCommandTarget = false;
+            ghost.TrackInterpolationDelay = true;
+            PrefabUtility.SaveAsPrefabAsset(root, GhostPrefabPath);
+            Object.DestroyImmediate(root);
+        }
+
+        static void BuildGhostSubScene()
+        {
+            Scene scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+            var root = new GameObject("HullbreachGhostPrefabs");
+            HullbreachGhostPrefabAuthoring authoring = root.AddComponent<HullbreachGhostPrefabAuthoring>();
+            authoring.GhostPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(GhostPrefabPath);
+            EditorSceneManager.SaveScene(scene, GhostSubScenePath);
         }
 
         static void UpdateBuildSettings()

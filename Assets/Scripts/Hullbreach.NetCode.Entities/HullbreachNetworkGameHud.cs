@@ -19,8 +19,12 @@ namespace Hullbreach.NetCode.Entities
         {
             var replica = HullbreachNetCodeClient.Replica;
             int shipCount = replica?.Ships.Count ?? 0;
+            string mode = HullbreachNetworkGameplayController.IsBuildMode ? "BUILD" : "FLIGHT";
+            string controls = HullbreachNetworkGameplayController.IsBuildMode
+                ? $"1-7 select • click place • right-click remove • Tab fly\n{HullbreachNetworkGameplayController.BuildStatus}"
+                : "W/S thrust • A/D steer • Space/click fire • Tab build";
             statusText.text = HullbreachNetCodeClient.IsConnected
-                ? $"Connected as #{HullbreachNetCodeClient.LocalNetworkId}  •  Replicated ships: {shipCount}"
+                ? $"Connected as #{HullbreachNetCodeClient.LocalNetworkId}  •  Replicated ships: {shipCount}  •  {mode}\n{controls}"
                 : "Waiting for Netcode connection...";
         }
 

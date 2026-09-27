@@ -5,14 +5,32 @@ using Unity.Collections;
 using Unity.Entities;
 using Unity.NetCode;
 using UnityEngine;
+using Unity.Mathematics;
 
 namespace Hullbreach.NetCode.Entities
 {
     /// <summary>Shared client-side state for presentation code in the GameObject world.</summary>
     public static class HullbreachNetCodeClient
     {
+        public readonly struct ProjectileVisual
+        {
+            public readonly ushort OwnerNetId;
+            public readonly float2 Position;
+            public readonly float2 Velocity;
+            public readonly float Radius;
+
+            public ProjectileVisual(ushort ownerNetId, float2 position, float2 velocity, float radius)
+            {
+                OwnerNetId = ownerNetId;
+                Position = position;
+                Velocity = velocity;
+                Radius = radius;
+            }
+        }
+
         public static ClientReplica Replica { get; internal set; }
         public static ushort LocalNetworkId { get; internal set; }
+        public static IReadOnlyDictionary<uint, ProjectileVisual> Projectiles { get; internal set; }
         public static bool IsConnected => Replica != null && LocalNetworkId != 0;
     }
 
@@ -33,6 +51,9 @@ namespace Hullbreach.NetCode.Entities
         readonly Dictionary<uint, PendingPayload> _pending = new Dictionary<uint, PendingPayload>();
         ClientReplica _replica;
         EntityQuery _payloadQuery;
+        EntityQuery _ghostQuery;
+        readonly Dictionary<uint, HullbreachNetCodeClient.ProjectileVisual> _projectiles =
+            new Dictionary<uint, HullbreachNetCodeClient.ProjectileVisual>();
         uint _clientTick;
 
         protected override void OnCreate()
@@ -40,8 +61,13 @@ namespace Hullbreach.NetCode.Entities
             _payloadQuery = GetEntityQuery(
                 ComponentType.ReadOnly<HullbreachPayloadRpc>(),
                 ComponentType.ReadOnly<ReceiveRpcCommandRequest>());
+            _ghostQuery = GetEntityQuery(ComponentType.ReadOnly<HullbreachGhostPose>());
             _replica = new ClientReplica();
-            if (!World.IsThinClient()) HullbreachNetCodeClient.Replica = _replica;
+            if (!World.IsThinClient())
+            {
+                HullbreachNetCodeClient.Replica = _replica;
+                HullbreachNetCodeClient.Projectiles = _projectiles;
+            }
             RequireForUpdate<NetworkStreamDriver>();
         }
 
@@ -51,30 +77,46 @@ namespace Hullbreach.NetCode.Entities
             {
                 HullbreachNetCodeClient.Replica = null;
                 HullbreachNetCodeClient.LocalNetworkId = 0;
+                HullbreachNetCodeClient.Projectiles = null;
             }
             _pending.Clear();
+            _projectiles.Clear();
         }
 
         protected override void OnUpdate()
         {
             ReceivePayloads();
+            ReceiveGhostPoses();
 
             if (!SystemAPI.TryGetSingleton<NetworkId>(out var networkId))
             {
-                HullbreachNetCodeClient.LocalNetworkId = 0;
+                if (!World.IsThinClient()) HullbreachNetCodeClient.LocalNetworkId = 0;
                 return;
             }
 
-            HullbreachNetCodeClient.LocalNetworkId = (ushort)networkId.Value;
             if (World.IsThinClient()) return;
+            HullbreachNetCodeClient.LocalNetworkId = (ushort)networkId.Value;
+
+            // Lobby connections intentionally carry no gameplay traffic. The
+            // controller only exists in MultiplayerGame after the host starts.
+            if (!HullbreachNetworkGameplayController.Active) return;
+
+            Entity connection = SystemAPI.GetSingletonEntity<NetworkId>();
+            if (!EntityManager.HasComponent<NetworkStreamInGame>(connection))
+                EntityManager.AddComponent<NetworkStreamInGame>(connection);
 
             _clientTick++;
-            InputMessage input = ClientReplica.BuildInput(
+            bool building = HullbreachNetworkGameplayController.IsBuildMode;
+            InputMessage basicInput = ClientReplica.BuildInput(
                 (ushort)networkId.Value,
                 _clientTick,
-                Input.GetAxisRaw("Vertical"),
-                Input.GetAxisRaw("Horizontal"),
-                Input.GetMouseButton(0));
+                !building ? Input.GetAxisRaw("Vertical") : 0f,
+                !building ? Input.GetAxisRaw("Horizontal") : 0f,
+                !building && (Input.GetKey(KeyCode.Space) || Input.GetMouseButton(0)));
+            byte flags = basicInput.Flags;
+            if (building) flags |= InputMessage.BuildModeBit;
+            InputMessage input = new InputMessage(basicInput.NetId, basicInput.Tick,
+                basicInput.ThrustAxis, basicInput.Steer, flags);
 
             Entity rpcEntity = EntityManager.CreateEntity();
             EntityManager.AddComponentData(rpcEntity, new HullbreachInputRpc
@@ -85,6 +127,49 @@ namespace Hullbreach.NetCode.Entities
                 Flags = input.Flags,
             });
             EntityManager.AddComponentData(rpcEntity, new SendRpcCommandRequest { TargetConnection = Entity.Null });
+
+            while (HullbreachNetworkGameplayController.TryDequeueBuild(out var build))
+            {
+                Entity buildEntity = EntityManager.CreateEntity();
+                EntityManager.AddComponentData(buildEntity, new HullbreachBuildRpc
+                {
+                    X = build.X,
+                    Y = build.Y,
+                    TypeId = build.TypeId,
+                    Modifiers = build.Modifiers,
+                    Action = (byte)build.Action,
+                });
+                EntityManager.AddComponentData(buildEntity,
+                    new SendRpcCommandRequest { TargetConnection = Entity.Null });
+            }
+        }
+
+        void ReceiveGhostPoses()
+        {
+            if (World.IsThinClient()) return;
+
+            using var poses = _ghostQuery.ToComponentDataArray<HullbreachGhostPose>(Allocator.Temp);
+            var liveProjectiles = new HashSet<uint>();
+            for (int i = 0; i < poses.Length; i++)
+            {
+                HullbreachGhostPose pose = poses[i];
+                if (pose.Kind == (byte)HullbreachGhostKind.Ship)
+                {
+                    _replica.ApplyGhostPose(pose.NetId, pose.Position, pose.Rotation,
+                        pose.Velocity, pose.AngularVelocity, _clientTick);
+                }
+                else if (pose.Kind == (byte)HullbreachGhostKind.Projectile)
+                {
+                    liveProjectiles.Add(pose.SimulationId);
+                    _projectiles[pose.SimulationId] = new HullbreachNetCodeClient.ProjectileVisual(
+                        pose.NetId, pose.Position, pose.Velocity, pose.Radius);
+                }
+            }
+
+            var stale = new List<uint>();
+            foreach (uint id in _projectiles.Keys)
+                if (!liveProjectiles.Contains(id)) stale.Add(id);
+            foreach (uint id in stale) _projectiles.Remove(id);
         }
 
         void ReceivePayloads()

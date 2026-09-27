@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Unity.Mathematics;
 using Hullbreach.Core;
+using Hullbreach.Builder;
 using Hullbreach.Ship;
 using Hullbreach.Ship.Behaviours;
 using Hullbreach.Structure;
@@ -23,6 +24,11 @@ namespace Hullbreach.Net
         // frob:doc docs/reference/hullbreach-net.md#serversimulation
         public float TimeoutSeconds = 5f;
 
+        // Netcode for Entities ghosts carry high-frequency pose data in the
+        // Unity adapter. Plain transports and existing tests keep the legacy
+        // ShipState stream enabled by default.
+        public bool EmitPoseMessages = true;
+
         float Dt => 1f / TickRate;
 
         readonly GravityField _gravity = new GravityField();
@@ -40,6 +46,7 @@ namespace Hullbreach.Net
             public InputMessage LatestInput;
             public bool HasFreshInput;
             public float SecondsSinceInput;
+            public bool IsBuilding;
             public readonly Dictionary<int, bool> Failing = new Dictionary<int, bool>();
         }
 
@@ -52,6 +59,8 @@ namespace Hullbreach.Net
 
         sealed class ProjectileBody
         {
+            public uint Id;
+            public int OwnerPeer;
             public float2 Position;
             public float2 Velocity;
             public ProjectileSpec Spec;
@@ -59,6 +68,25 @@ namespace Hullbreach.Net
         }
 
         readonly List<ProjectileBody> _projectiles = new List<ProjectileBody>();
+        uint _nextProjectileId = 1;
+
+        public readonly struct ProjectileSnapshot
+        {
+            public readonly uint Id;
+            public readonly int OwnerPeer;
+            public readonly float2 Position;
+            public readonly float2 Velocity;
+            public readonly float Radius;
+
+            public ProjectileSnapshot(uint id, int ownerPeer, float2 position, float2 velocity, float radius)
+            {
+                Id = id;
+                OwnerPeer = ownerPeer;
+                Position = position;
+                Velocity = velocity;
+                Radius = radius;
+            }
+        }
 
         // This server's own IWorldSink; see the reference page.
         readonly ServerWorldSink _sink;
@@ -80,6 +108,79 @@ namespace Hullbreach.Net
                 foreach (var kv in _peers) result[kv.Key] = kv.Value.Ship;
                 return result;
             }
+        }
+
+        public IReadOnlyList<ProjectileSnapshot> Projectiles
+        {
+            get
+            {
+                var result = new List<ProjectileSnapshot>(_projectiles.Count);
+                foreach (var p in _projectiles)
+                    result.Add(new ProjectileSnapshot(p.Id, p.OwnerPeer, p.Position, p.Velocity, p.Spec.Radius));
+                return result;
+            }
+        }
+
+        public void ConfigureDemoArena()
+        {
+            _gravity.Clear();
+            _gravity.Add(new GravityBody(new float2(0f, -60f), 900f, 18f, 0.2f));
+            _gravity.Add(new GravityBody(new float2(45f, 20f), 120f, 6f, 0.2f));
+
+            var peers = new List<int>(_peers.Keys);
+            peers.Sort();
+            for (int i = 0; i < peers.Count; i++)
+            {
+                ShipBody ship = _peers[peers[i]].Ship;
+                float angle = i * math.PI * 0.18f;
+                float2 relative = new float2(math.sin(angle) * 12f, 30f + math.cos(angle) * 2f);
+                ship.Position = new float2(0f, -60f) + relative;
+                float speed = math.sqrt(900f / math.max(1f, math.length(relative)));
+                float2 tangent = math.normalizesafe(new float2(-relative.y, relative.x));
+                ship.Velocity = tangent * speed;
+                ship.Rotation = angle;
+                ship.AngularVelocity = 0f;
+            }
+        }
+
+        public bool TryPlaceBlock(int peer, int x, int y, byte typeId, byte modifiers)
+        {
+            if (!_peers.TryGetValue(peer, out var state) || !state.IsBuilding ||
+                typeId >= BlockTypes.Count || !BlockKey.InRange(x, y)) return false;
+
+            int key = BlockKey.Pack(x, y);
+            if (!PlacementRules.CanPlace(state.Ship.Grid, key, typeId, modifiers, out _)) return false;
+            if (!state.Ship.Grid.TryAdd(key, new Block(typeId, modifiers))) return false;
+
+            state.Ship.RebuildDerivedViews();
+            state.Solver.MarkTopologyChanged();
+            BroadcastReliable(new BlockPlaced(NextSequence(), state.NetId, (sbyte)x, (sbyte)y, typeId, modifiers));
+            return true;
+        }
+
+        public bool TryRemoveBlock(int peer, int x, int y)
+        {
+            if (!_peers.TryGetValue(peer, out var state) || !state.IsBuilding || !BlockKey.InRange(x, y))
+                return false;
+
+            int key = BlockKey.Pack(x, y);
+            if (!PlacementRules.CanRemove(state.Ship.Grid, key)) return false;
+
+            var before = new HashSet<int>();
+            foreach (int existingKey in state.Ship.Grid.SortedKeys) before.Add(existingKey);
+            var removed = new List<int>();
+            if (!PlacementRules.Detach(state.Ship.Grid, key, removed)) return false;
+            removed.Sort();
+            foreach (int removedKey in removed)
+            {
+                if (!before.Contains(removedKey)) continue;
+                BlockKey.Unpack(removedKey, out int rx, out int ry);
+                BroadcastReliable(new BlockDestroyed(NextSequence(), state.NetId, (sbyte)rx, (sbyte)ry));
+                state.Failing.Remove(removedKey);
+            }
+            state.Ship.RebuildDerivedViews();
+            state.Solver.MarkTopologyChanged();
+            return true;
         }
 
         // Re-broadcasts the new snapshot to every other peer; see reference page.
@@ -114,6 +215,8 @@ namespace Hullbreach.Net
                 Solver = new StructuralSolver(),
                 SecondsSinceInput = 0f,
             };
+            state.Solver.LoadScale = 0.06f;
+            state.Solver.MaterialStiffnessScale = 40f;
             _peers[peer] = state;
 
             // Includes the joiner itself; see the reference page.
@@ -131,6 +234,7 @@ namespace Hullbreach.Net
         {
             if (!_peers.TryGetValue(peer, out var state)) return;
             state.LatestInput = input;
+            state.IsBuilding = input.BuildMode;
             state.HasFreshInput = true;
             state.SecondsSinceInput = 0f;
         }
@@ -157,8 +261,18 @@ namespace Hullbreach.Net
                     : new ShipInput(0f, 0f, false);
                 state.HasFreshInput = false;
 
+                if (state.IsBuilding) continue;
+
                 state.Ship.Step(input, dt);
                 DrainShots(peer, state.Ship);
+            }
+
+            ResolveShipContacts(peerIds, dt);
+
+            foreach (int peer in peerIds)
+            {
+                var state = _peers[peer];
+                if (state.IsBuilding) continue;
 
                 var grid = state.Ship.Grid;
                 if (grid.Count == 0) continue;
@@ -171,7 +285,41 @@ namespace Hullbreach.Net
             {
                 if (!_peers.TryGetValue(peer, out var state)) continue; // may have been removed by a timeout above
                 if (state.Ship.Grid.Count == 0) continue;
-                EmitUnreliable(peer, BuildState(state));
+                if (EmitPoseMessages) EmitUnreliable(peer, BuildState(state));
+            }
+        }
+
+        void ResolveShipContacts(List<int> peerIds, float dt)
+        {
+            var before = new Dictionary<int, Dictionary<int, byte>>();
+            foreach (int peer in peerIds)
+            {
+                var damage = new Dictionary<int, byte>();
+                foreach (var block in _peers[peer].Ship.Grid.All) damage[block.Key] = block.Value.Damage;
+                before[peer] = damage;
+            }
+
+            for (int i = 0; i < peerIds.Count; i++)
+            {
+                var a = _peers[peerIds[i]];
+                if (a.IsBuilding) continue;
+                for (int j = i + 1; j < peerIds.Count; j++)
+                {
+                    var b = _peers[peerIds[j]];
+                    if (!b.IsBuilding) ShipContacts.Resolve(a.Ship, b.Ship, dt);
+                }
+            }
+
+            foreach (int peer in peerIds)
+            {
+                var state = _peers[peer];
+                foreach (var block in state.Ship.Grid.All)
+                {
+                    byte oldDamage = before[peer].TryGetValue(block.Key, out byte value) ? value : (byte)0;
+                    if (block.Value.Damage == oldDamage) continue;
+                    BlockKey.Unpack(block.Key, out int x, out int y);
+                    BroadcastReliable(new BlockDamaged(NextSequence(), state.NetId, (sbyte)x, (sbyte)y, block.Value.Damage));
+                }
             }
         }
 
@@ -190,8 +338,23 @@ namespace Hullbreach.Net
 
         void DrainShots(int peer, ShipBody ship)
         {
-            foreach (var shot in ship.PendingShots) _sink.SpawnProjectile(shot);
+            foreach (var shot in ship.PendingShots) SpawnProjectile(peer, ship, shot);
             ship.PendingShots.Clear();
+        }
+
+        void SpawnProjectile(int peer, ShipBody ship, in ShotRequest shot)
+        {
+            uint id = _nextProjectileId++;
+            if (_nextProjectileId == 0) _nextProjectileId = 1;
+            _projectiles.Add(new ProjectileBody
+            {
+                Id = id,
+                OwnerPeer = peer,
+                Position = shot.WorldOrigin,
+                Velocity = shot.WorldDirection * shot.Spec.Speed + ship.Velocity,
+                Spec = shot.Spec,
+                LifeRemaining = shot.Spec.LifetimeSeconds,
+            });
         }
 
         void StepProjectiles(float dt)
@@ -219,6 +382,7 @@ namespace Hullbreach.Net
             peers.Sort();
             foreach (int candidate in peers)
             {
+                if (candidate == p.OwnerPeer) continue;
                 var ship = _peers[candidate].Ship;
                 float2 local = ship.WorldToLocal(p.Position);
                 int x = (int)math.floor(local.x);
@@ -465,8 +629,12 @@ namespace Hullbreach.Net
 
             public void SpawnProjectile(in ShotRequest shot)
             {
+                uint id = _owner._nextProjectileId++;
+                if (_owner._nextProjectileId == 0) _owner._nextProjectileId = 1;
                 _owner._projectiles.Add(new ProjectileBody
                 {
+                    Id = id,
+                    OwnerPeer = -1,
                     Position = shot.WorldOrigin,
                     Velocity = shot.WorldDirection * shot.Spec.Speed,
                     Spec = shot.Spec,

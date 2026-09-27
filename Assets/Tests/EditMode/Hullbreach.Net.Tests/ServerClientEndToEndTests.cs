@@ -17,7 +17,8 @@ namespace Hullbreach.Net.Tests
         // since ShipState is unreliable/unordered and can arrive out of order.
         const int Lookback = DelayTicks + JitterTicks + 2;
 
-        static ShipSnapshot Design(SnapshotBlock[] blocks) => new ShipSnapshot(0, 0, blocks, 0, 0, 0, 0, 0, 0);
+        static ShipSnapshot Design(SnapshotBlock[] blocks, float x)
+            => new ShipSnapshot(0, 0, blocks, Quantization.PackPosition(x), 0, 0, 0, 0, 0);
 
         [Test]
         public void Poses_Events_Ordering_Timeout_And_Bandwidth()
@@ -45,8 +46,10 @@ namespace Hullbreach.Net.Tests
                 new SnapshotBlock(0, 1, BlockTypes.Cannon, 0, 0),
             };
 
-            server.Join(peerThruster, Design(shipA));
-            server.Join(peerCannon, Design(shipB));
+            // Keep this transport/ordering test out of contact range. Ship
+            // collision behavior has its own focused authoritative test.
+            server.Join(peerThruster, Design(shipA, -5f));
+            server.Join(peerCannon, Design(shipB, 5f));
 
             Assert.IsTrue(server.Ships.TryGetValue(peerThruster, out var serverShipA));
             Assert.IsTrue(server.Ships.TryGetValue(peerCannon, out var serverShipB));

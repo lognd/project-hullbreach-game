@@ -166,6 +166,32 @@ namespace Hullbreach.Net
             return true;
         }
 
+        // Netcode for Entities ghosts own the high-frequency pose stream in
+        // the Unity adapter. Reliable topology still arrives through the
+        // existing ordered protocol, so a pose is ignored until its snapshot
+        // has established the ship.
+        public bool ApplyGhostPose(ushort netId, float2 position, float rotation,
+            float2 velocity, float angularVelocity, uint tick)
+        {
+            if (!_ships.TryGetValue(netId, out var replica)) return false;
+
+            var sample = new PoseSample
+            {
+                Tick = tick,
+                Position = position,
+                Rotation = rotation,
+                Velocity = velocity,
+                AngularVelocity = angularVelocity,
+            };
+            replica.Older = replica.Newer;
+            replica.Newer = sample;
+            replica.Body.Position = position;
+            replica.Body.Rotation = rotation;
+            replica.Body.Velocity = velocity;
+            replica.Body.AngularVelocity = angularVelocity;
+            return true;
+        }
+
         // Entry point a transport pump should call for every received payload.
         // frob:doc docs/reference/hullbreach-net.md#clientreplica
         public void ApplyReceived(byte[] into, int length, uint clientTick = 0)

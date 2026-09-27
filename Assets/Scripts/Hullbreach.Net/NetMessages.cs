@@ -48,6 +48,7 @@ namespace Hullbreach.Net
 
         // frob:doc docs/reference/hullbreach-net.md#inputmessage
         public const byte FireBit = 0x01;
+        public const byte BuildModeBit = 0x02;
 
         // frob:doc docs/reference/hullbreach-net.md#inputmessage
         public InputMessage(ushort netId, uint tick, sbyte thrustAxis, sbyte steer, byte flags)
@@ -79,6 +80,8 @@ namespace Hullbreach.Net
 
         // frob:doc docs/reference/hullbreach-net.md#inputmessage
         public bool FirePressed => (Flags & FireBit) != 0;
+
+        public bool BuildMode => (Flags & BuildModeBit) != 0;
 
         // frob:doc docs/reference/hullbreach-net.md#inputmessage
         public void Write(ref ByteWriter w)

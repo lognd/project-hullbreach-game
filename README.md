@@ -220,8 +220,10 @@ is in making the handling deliberate and framerate-independent.
   protocol remains in `Hullbreach.Net`. The pre-game `LobbyScene` uses an
   editable uGUI/TextMesh Pro prefab for Relay hosting, public browsing, join
   codes, private lobbies, optional native Lobby passwords, a waiting room, and
-  host-controlled game start. `MultiplayerGame` visualizes every replicated
-  ship and displays the received ship count. No Asset Store content is required.
+  host-controlled game start. `MultiplayerGame` reuses the demo environment and
+  adds ghost-synchronized ship/projectile motion, server-authoritative flight,
+  collisions, weapons, damage, structural failure, and in-match ship building.
+  No Asset Store content is required.
 - **UI Toolkit** for menus, when menus exist (S26).
 
 ## Getting started with Unity

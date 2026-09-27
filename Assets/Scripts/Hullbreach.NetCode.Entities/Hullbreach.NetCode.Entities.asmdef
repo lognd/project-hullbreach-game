@@ -3,11 +3,13 @@
     "rootNamespace": "Hullbreach.NetCode.Entities",
     "references": [
         "Hullbreach.Core",
+        "Hullbreach.Builder",
         "Hullbreach.Net",
         "Hullbreach.Ship",
         "Unity.Burst",
         "Unity.Collections",
         "Unity.Entities",
+        "Unity.Entities.Hybrid",
         "Unity.Mathematics",
         "Unity.NetCode",
         "Unity.Networking.Transport",

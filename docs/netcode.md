@@ -43,9 +43,12 @@ Use `-hullbreachPort <1-65535>` to select the port and
 `-hullbreachConnect <IPv4-or-IPv6-address>` for a client target; either of the
 latter arguments also enables direct mode.
 
-`HullbreachNetCodeServerSystem` owns the existing `ServerSimulation`. A new
-Netcode `NetworkId` joins with a starter ship, input RPCs feed `SetInput`, and
-each `ServerOutbox` byte payload is forwarded without changing its format.
+`HullbreachNetCodeServerSystem` owns the existing `ServerSimulation`. Gameplay
+does not start while the connection is still in the lobby: loading the
+multiplayer ghost SubScene joins each `NetworkId` with the demo's nine-block
+starter ship, installs the demo planet/moon gravity field, and marks the
+connections in-game. Input RPCs feed `SetInput`, and each `ServerOutbox` byte
+payload is forwarded without changing its format.
 `HullbreachNetCodeClientSystem` reassembles those bytes and hands them to the
 existing `ClientReplica`.
 
@@ -55,19 +58,27 @@ and reassembles up to 1 MiB per message on the client. This is required for
 full `ShipSnapshot` messages: a large ship must not depend on fitting in one
 transport packet.
 
-Netcode for Entities RPCs are reliable, so this first adapter carries both
-`ServerOutbox` channels reliably. That preserves protocol correctness (the
-unreliable messages are latest-wins) but can add head-of-line blocking under
-loss. Moving `ShipState` onto a ghost snapshot is a future bandwidth/latency
-optimization, not a wire-format change.
+Netcode for Entities RPCs carry reliable topology, damage, and build events.
+High-frequency ship and projectile position, rotation, linear velocity, and
+angular velocity use an interpolated `HullbreachGhostPose` snapshot instead of
+the RPC payload bridge. The engine-independent `ShipState` wire format remains
+available for non-Entities transports and tests.
 
 GameObject presentation reads `HullbreachNetCodeClient.Replica`.
-`MultiplayerGame` already contains `HullbreachNetCodeView`; it renders
-collider-free quads and colors the local ship blue and remote ships orange.
-Its editable HUD displays the local Netcode ID and `Replicated ships` count,
-which provides a direct runtime check that snapshots reached the client. With
-two connected players that count should become 2 in both instances. No Asset
-Store content is required.
+`MultiplayerGame` is generated from `DemoScene`, retaining its environment and
+gravity visuals while replacing the single-player ships and controllers with
+the network presenter. `HullbreachNetCodeView` renders block-type-colored ships
+(local blue, remote orange), damage tint, and ghosted projectiles. The editable
+HUD displays the local Netcode ID and replicated ship count. With two connected
+players that count should become 2 in both instances. No Asset Store content is
+required.
+
+The scene starts in **Build** mode. Use `1`-`7` to select a block, left click to
+place, right click to remove, and `Esc` to cancel an oriented placement. Cannons
+and fins use the same two-click facing selection as the demo. Press `Tab` to
+switch between Build and Flight. In Flight, `W/S` control thrust, `A/D` steer,
+and Space or left click fires. Placement/removal, collision resolution,
+projectile hits, damage, structural failure, and gravity are server-authoritative.
 
 ### Unity Services setup
 
@@ -195,13 +206,16 @@ buffer (not arrival order) is what the client trusts.
 2. Tick the shared `GravityField` (expires temporary wells) and step the
    server's own point-body projectile simulation (gravity + block hit
    tests), which is this class's own minimal `IWorldSink`.
-3. For each connected peer, in ascending peer-id order (deterministic):
+3. For each connected peer in flight mode, in ascending peer-id order
+   (deterministic):
    apply its latest buffered input (or a neutral input if none arrived this
    tick), `ShipBody.Step`, drain `PendingShots` into the projectile sim,
-   then `StructuralSolver.Tick` and resolve any resulting damage/detach/
-   buckling exactly like `Hullbreach.Game.ShipStructure` does today, except
-   every destroy/damage/fragment event is broadcast as it happens.
-4. Emit one `ShipState` (unreliable) per surviving ship.
+   and resolve authoritative ship-to-ship block contacts.
+4. Run `StructuralSolver.Tick` and resolve any resulting damage/detach/buckling
+   while broadcasting every topology and damage event. Build-mode ships remain
+   frozen and accept only server-validated placement/removal requests.
+5. Emit one `ShipState` per surviving ship for plain transports. The Entities
+   adapter disables this legacy stream and updates the ghost snapshot instead.
 
 Every reliable event goes through `IServerOutbox`
 (`ServerOutbox`/`OutboxEntry`): `ServerSimulation` never touches
