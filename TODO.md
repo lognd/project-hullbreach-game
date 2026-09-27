@@ -53,8 +53,13 @@ Sprint-2 work landed early), S40 (gravity fields), S42 (basic cannon),
 S43-S44 (gravity gun / anti-gravity gun / seeking thruster powerups,
 Sprint-2/3 work landed early).
 
-Partially done: S28/S47 (NetMessages and Quantization exist; no transport
-or serializer yet).
+Transport integrated: S28/S47 now have the existing NetMessages,
+Quantization, authoritative ServerSimulation, and a Netcode for Entities RPC
+bridge with client/server bootstrapping and large-snapshot chunking. Unity
+Authentication/Lobby/Relay session hosting, public browsing, join codes, and
+optional passwords are integrated. Remaining online work is the production
+menu presentation plus moving latest-wins ShipState traffic to unreliable ghost
+snapshots as an optimization.
 
 Not started: S26/S27 (needs a UI scene), S29/S35/S49 (need the platform
 repo), S34 (build during a fight), S41 (arena bounds), S45 (hazards),

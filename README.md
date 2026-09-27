@@ -26,10 +26,10 @@ planets.
 
 So there are two truths to hold at once:
 
-- **`Packages/manifest.json` and `ProjectSettings/` still describe the
-  template.** Netcode for Entities, Unity Physics, Entities Graphics, the
-  dedicated-server package, UGS, URP, and the Input System are all still
-  installed and configured. Nothing in `Assets/` uses any of them yet.
+- **`Packages/manifest.json` and `ProjectSettings/` still largely describe
+  the template.** Netcode for Entities and Unity Transport are now used by
+  the `Hullbreach.NetCode.Entities` adapter; Unity Physics, Entities Graphics,
+  UGS, URP, and the Input System remain installed from the template.
 - **`Assets/` is a 2D sandbox.** `Rigidbody2D`, the legacy `Input` class,
   sprites. It is the fastest thing that could demonstrate S39, and it is
   what you will be editing.
@@ -214,10 +214,14 @@ is in making the handling deliberate and framerate-independent.
   current scene uses.
 - **Input System** package installed, legacy Input Manager still active
   (`activeInputHandler: 2`, "Both"). The current script uses the legacy one.
-- **Netcode for Entities**, **Entities Graphics**, **Unity Physics**, the
-  **Dedicated Server** package, **Multiplayer Play Mode**, and **Unity
-  Gaming Services** are all installed from the template and are not yet
-  used by anything in `Assets/`. They are for S47 and S28.
+- **Netcode for Entities**, **Unity Transport**, and **Unity Multiplayer
+  Services** back the runtime bridge in
+  `Assets/Scripts/Hullbreach.NetCode.Entities`; the existing engine-free
+  protocol remains in `Hullbreach.Net`. The pre-game `LobbyScene` uses an
+  editable uGUI/TextMesh Pro prefab for Relay hosting, public browsing, join
+  codes, private lobbies, optional native Lobby passwords, a waiting room, and
+  host-controlled game start. `MultiplayerGame` visualizes every replicated
+  ship and displays the received ship count. No Asset Store content is required.
 - **UI Toolkit** for menus, when menus exist (S26).
 
 ## Getting started with Unity
@@ -517,7 +521,7 @@ up next:
   checks, which assemblies need the editor, and how to write a new test.
 - [docs/netcode.md](docs/netcode.md): the wire message design and
   quantization in `Hullbreach.Net`, and the "send causes, not effects"
-  server-authority rule; there is no transport wired up yet.
+  server-authority rule, plus the Netcode for Entities transport bridge.
 - [docs/roadmap.md](docs/roadmap.md): sprint status against the GitHub
   story numbers and known engineering debt. `TODO.md` keeps only the
   short version.

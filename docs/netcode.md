@@ -7,6 +7,85 @@ and Structure do, and for the same reason: a headless server process can
 run `ServerSimulation` with no Unity install, and a transport implementer
 can build and unit-test their half of the wire without touching a scene.
 
+The Unity-specific adapter lives separately under
+`Assets/Scripts/Hullbreach.NetCode.Entities`. It uses Netcode for Entities
+for client/server worlds, Unity Transport connections, and RPC delivery while
+leaving this assembly and its wire contract engine-independent.
+
+## Netcode for Entities adapter
+
+`HullbreachNetCodeBootstrap` creates 50 Hz server and client worlds, but leaves
+their transports idle until the player hosts or joins. `HullbreachLobbyService`
+then uses Unity Authentication plus the Multiplayer Services session API to
+create Lobby and Relay resources; the package's built-in Entities handler
+configures the worlds, starts the host, and connects clients. Relay avoids port
+forwarding and does not expose the host's address.
+
+Online play now begins in `Assets/Scenes/LobbyScene.unity`, before gameplay.
+Its `LobbyCanvas` instance comes from the editable uGUI/TextMesh Pro prefab at
+`Assets/Prefabs/UI/LobbyCanvas.prefab`, so layout, colors, fonts, labels, and
+controls can all be restyled in the Inspector without changing networking
+code. It can create public or code-only private lobbies, optionally protect
+either kind with Unity Lobby's native 8-64 character password, list open public
+lobbies, and join by lobby code. The short `ISession.Code` in the waiting room
+is the player-facing invite code.
+
+Only the host sees the waiting room's **Start Game** button. Pressing it locks
+the lobby and publishes the gameplay scene name as a member-visible session
+property; every member then loads `Assets/Scenes/MultiplayerGame.unity`. The
+Lobby scene is first in Build Settings, and the multiplayer scene is second.
+Use `Hullbreach > Online > Rebuild lobby and multiplayer scenes` only if the
+generated scene/prefab structure needs to be reset; normal visual edits should
+be made directly to the prefab.
+
+Direct/LAN testing remains available by launching with `-hullbreachDirect`.
+Use `-hullbreachPort <1-65535>` to select the port and
+`-hullbreachConnect <IPv4-or-IPv6-address>` for a client target; either of the
+latter arguments also enables direct mode.
+
+`HullbreachNetCodeServerSystem` owns the existing `ServerSimulation`. A new
+Netcode `NetworkId` joins with a starter ship, input RPCs feed `SetInput`, and
+each `ServerOutbox` byte payload is forwarded without changing its format.
+`HullbreachNetCodeClientSystem` reassembles those bytes and hands them to the
+existing `ClientReplica`.
+
+Netcode RPC serialization has a 1 KiB payload ceiling. The bridge therefore
+splits each existing wire message into 900-byte `HullbreachPayloadRpc` chunks
+and reassembles up to 1 MiB per message on the client. This is required for
+full `ShipSnapshot` messages: a large ship must not depend on fitting in one
+transport packet.
+
+Netcode for Entities RPCs are reliable, so this first adapter carries both
+`ServerOutbox` channels reliably. That preserves protocol correctness (the
+unreliable messages are latest-wins) but can add head-of-line blocking under
+loss. Moving `ShipState` onto a ghost snapshot is a future bandwidth/latency
+optimization, not a wire-format change.
+
+GameObject presentation reads `HullbreachNetCodeClient.Replica`.
+`MultiplayerGame` already contains `HullbreachNetCodeView`; it renders
+collider-free quads and colors the local ship blue and remote ships orange.
+Its editable HUD displays the local Netcode ID and `Replicated ships` count,
+which provides a direct runtime check that snapshots reached the client. With
+two connected players that count should become 2 in both instances. No Asset
+Store content is required.
+
+### Unity Services setup
+
+The project already contains `com.unity.services.multiplayer` and its
+Authentication/Lobby/Relay dependencies. No Asset Store download is needed.
+The Unity project must be linked to the intended Dashboard project and that
+project must allow Authentication, Lobby, and Relay. At runtime players sign
+in anonymously; Unity Authentication persists that player identity locally.
+
+For a real two-player check, make two standalone development builds (or use
+Multiplayer Play Mode with isolated player profiles). Both instances begin in
+`LobbyScene`: host in one, then either select its public listing or enter its
+join code in the other. Confirm both names appear in the waiting room, then
+press **Start Game** in the host. Both instances should load the multiplayer
+scene, show two ships, and report `Replicated ships: 2`. A password is optional
+for public and private lobbies, but when present must be 8-64 characters
+because that is the Unity Lobby service contract.
+
 ## The governing rule: send causes, not effects
 
 Integer flood fill (`Hullbreach.Core.Topology.Connectivity`) is

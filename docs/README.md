@@ -13,7 +13,7 @@
   tests.
 - `netcode.md`: read this if you are working on `Hullbreach.Net` or the
   authoritative-server story (S47/S48); it covers the wire message
-  design and quantization, and what is not wired up yet.
+  design, quantization, and the Netcode for Entities runtime bridge.
 - `roadmap.md`: read this if you want to know what is built, in
   progress, or not started yet, against the course's story numbers.
 - `design/ui-port.md`: read this if you are working on the HUD or any

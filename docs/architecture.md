@@ -86,8 +86,11 @@ Concretely, from each `.asmdef`'s `references`:
 - `Hullbreach.Builder` -> `Core`. Placement rules, clearance, undo, the
   palette. Independent of `Ship`/`Structure` because placement validity is
   purely a grid-geometry question.
-- `Hullbreach.Net` -> `Core`. Wire messages and quantization; not wired to
-  a transport yet (see `docs/roadmap.md`, S47/S48).
+- `Hullbreach.Net` -> `Core`, `Ship`, `World`, `Structure`. Engine-free wire
+  messages, quantization, authoritative simulation, and client replication.
+- `Hullbreach.NetCode.Entities` -> `Net`, Unity Entities/NetCode/Transport.
+  Unity-specific client/server bootstrap and RPC bridge; it forwards the
+  existing `Hullbreach.Net` bytes instead of defining a second protocol.
 - `Hullbreach.Hud` -> `Core`, `Builder`. Engine-free HUD models (D3 in
   `docs/design/ui-port.md`): pure functions and value types that turn
   simulation state into the exact strings/colors a uGUI view shows.

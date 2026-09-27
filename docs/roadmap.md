@@ -14,8 +14,8 @@ of Sprint-2 groundwork landed early.
 | --- | --- | --- |
 | #3 S26 title screen (SCRUM-130/131/132, [T-0045](backlog.md)/[T-0046](backlog.md)/[T-0047](backlog.md)) | Not started | Needs a UI scene; nothing under `Assets/Scenes` but `RocketScene.unity`/`DemoScene.unity`. |
 | #4 S27 settings (SCRUM-133, [T-0048](backlog.md)) | Not started | Same UI-scene dependency as S26; also the natural point to migrate off the legacy `Input` class (see engineering debt below). |
-| #5 S28 LAN match | Partially done | `Hullbreach.Net.NetMessages`/`Quantization` exist as wire formats and quantization helpers; no transport (Netcode for Entities/UGS relay/etc.) is wired to anything. See `docs/architecture.md`'s "server authority" section for the design NetMessages already commits to ("send causes, not effects"). |
-| #6 S29 online opponent | Not started, `needs-platform` | Depends on the platform repo's matchmaking API. |
+| #5 S28 LAN match | Transport integrated | `Hullbreach.Net.NetMessages`/`ServerSimulation` remain the authoritative protocol and `Hullbreach.NetCode.Entities` bridges them through Netcode for Entities/Unity Transport. Direct-IP launch arguments remain available for LAN testing. |
+| #6 S29 online opponent | Lobby/Relay integrated | Unity Authentication plus Multiplayer Services provide Relay hosting, public session browsing, join codes, private sessions, and optional native Lobby passwords. Production title-screen presentation and platform-account integration remain. |
 | #8 S30 place a block, two clicks | **Done** | `Hullbreach.Builder.PlacementRules`/`BuilderSession`, `Hullbreach.Game.BuilderController`. Edit-mode tests: `Assets/Tests/EditMode/Hullbreach.Builder.Tests/PlacementRulesTests.cs`, `BuilderSessionTests.cs`. |
 | #9 S31 remove and undo | **Done** | `PlacementRules.Detach` + `Hullbreach.Builder.UndoStack`. Decision recorded in `TODO.md`/`docs/architecture.md`: a removal that strands blocks detaches them too, undone as one action. Tests: `UndoStackTests.cs`. |
 | #10 S32 build around a core | **Done** | `PlacementRules.CanPlace`'s core-seeding rule (empty grid accepts only a core). |

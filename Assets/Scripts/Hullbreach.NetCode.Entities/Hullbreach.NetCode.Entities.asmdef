@@ -1,0 +1,30 @@
+{
+    "name": "Hullbreach.NetCode.Entities",
+    "rootNamespace": "Hullbreach.NetCode.Entities",
+    "references": [
+        "Hullbreach.Core",
+        "Hullbreach.Net",
+        "Hullbreach.Ship",
+        "Unity.Burst",
+        "Unity.Collections",
+        "Unity.Entities",
+        "Unity.Mathematics",
+        "Unity.NetCode",
+        "Unity.Networking.Transport",
+        "Unity.Services.Authentication",
+        "Unity.Services.Core",
+        "Unity.Services.Multiplayer",
+        "Unity.TextMeshPro",
+        "UnityEngine.UI",
+        "Unity.Transforms"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
