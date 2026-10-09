@@ -363,7 +363,13 @@ does not author: the structural calibration has two ends to prove (a small
 ship must never break itself, a long unsupported arm must break) and only
 one of them can be the scene's default ship. The core is preserved:
 `BlockGrid` refuses to remove it and refuses a second one, so `newBlocks`
-must put its own core where the existing one already is.
+must put its own core where the existing one already is. A layout with no
+core at that cell is rejected whole (error logged, grid untouched, returns
+false). Otherwise `ReplaceBlocks` returns true only if every block was
+applied; each rejected block (out of the -128..127 range, occupied cell,
+second core) is logged as a warning. The inspector `blocks` array in
+`Awake` is validated the same way, so a bad authored block is reported
+instead of vanishing.
 
 `RequestFire` lets a caller (`DemoMode`) bind fire to a key not guaranteed
 to be wired to the "Fire1" virtual axis in the Input Manager, e.g. Space.
