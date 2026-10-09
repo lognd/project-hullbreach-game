@@ -1,0 +1,7 @@
+kind = "field"
+field = "acceptance"
+new = ["Given a project without ChannelBar.prefab, when HudPrefabBuilder.Run executes, then ChannelBar is built first and no canvas leaks"]
+moved = []
+at = "2026-10-09T16:56:31Z"
+actor = "a-carten"
+rev = 1
