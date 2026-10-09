@@ -203,6 +203,19 @@ Latest-wins on the server (`ServerSimulation` keeps only the newest input
 per peer), so dropping one is harmless. See docs/netcode.md#message-table
 for the byte layout.
 
+### BuildRequest
+
+Client -> server, RELIABLE: place this block on my ship. Five bytes, no ship
+id (the transport peer decides whose grid is edited, so there is nothing to
+spoof). `Mods` must hold facing bits only; the server refuses variant and
+upgrade bits. See [docs/netcode.md#building-mid-match](../netcode.md#building-mid-match).
+
+### BuildRefusal
+
+Why `ServerSimulation.TryPlaceBlock` said no, or `None` on success:
+`UnknownPeer`, `ShipDestroyed`, `UnknownBlockType`, `ForbiddenModifiers`, or
+`PlacementRules` (the specific `PlacementVerdict` comes back alongside it).
+
 ### SnapshotBlock
 
 <!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::SnapshotBlock -->
@@ -485,6 +498,13 @@ does. `SetInput` is latest-wins: a peer that sends every tick simply
 always has fresh input, and one that drops a packet loses nothing but
 that tick's precision.
 
+`TryPlaceBlock` is the server half of a client's `BuildRequest`: it validates
+with `PlacementRules.CanPlace` and the checks listed in
+[docs/netcode.md#building-mid-match](../netcode.md#building-mid-match), then
+adds the block, rebuilds the ship's derived views, marks the structural
+solver's topology dirty and broadcasts `BlockPlaced`. A refusal changes and
+sends nothing.
+
 `Tick` advances every ship by one fixed tick (apply latest input, step
 the body, tick its structural solver, resolve damage/detachment/
 buckling, then emit poses and events) in a fixed, deterministic order
@@ -529,7 +549,8 @@ and the stop condition injected so tests need no wall time.
 Each tick drains the transport, then ticks the simulation, then forwards
 the outbox. A client controls every inbound byte, so a payload that is
 empty, the wrong length for its kind, or not a client->server kind is
-dropped and logged, never thrown. The sender's transport peer id picks the
+dropped and logged, never thrown. A `BuildRequest` is handed to
+`ServerSimulation.TryPlaceBlock` for the sending peer. The sender's transport peer id picks the
 ship an `InputMessage` drives, not the `NetId` the message claims.
 `Join` takes the design from whatever lobby or handshake owns that
 decision; the join snapshots are forwarded at once.

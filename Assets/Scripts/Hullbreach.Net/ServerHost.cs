@@ -133,6 +133,16 @@ namespace Hullbreach.Net
                     // The transport peer id, not the claimed NetId, picks the ship: a client cannot steer another's.
                     Simulation.SetInput(from, InputMessage.Read(ref reader));
                     return;
+                case MessageKind.BuildRequest:
+                    if (length != BuildRequest.ByteSize)
+                    {
+                        NetLog.Write($"server host: dropped BuildRequest of {length} bytes from peer {from}");
+                        return;
+                    }
+                    var buildReader = new ByteReader(_receiveBuffer);
+                    // Refusals are logged by the simulation; the client learns of a success from the BlockPlaced broadcast.
+                    Simulation.TryPlaceBlock(from, BuildRequest.Read(ref buildReader), out _, out _);
+                    return;
                 default:
                     NetLog.Write($"server host: dropped client->server kind {(byte)kind} from peer {from}");
                     return;
