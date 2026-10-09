@@ -2,11 +2,12 @@
 id = "01M4GR2X3S16BTTFXCJS13QGF8"
 title = "Bound the client reliable reorder window"
 type = "security"
-category = "todo"
+category = "done"
+outcome = "fixed"
 priority = "medium"
 reporter = "lognd"
 created = "2026-10-09T16:31:34Z"
-updated = "2026-10-09T17:02:46Z"
+updated = "2026-10-09T17:08:34Z"
 labels = ["origin:auditor", "security"]
 scope = ["Assets/Scripts/Hullbreach.Net/ClientReplica.cs"]
 
