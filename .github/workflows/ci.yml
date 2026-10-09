@@ -4,7 +4,7 @@ name: CI
 # is no Unity license in CI yet, so the gate checks what can be checked
 # without an editor: the committed tree is consistent, the editor version
 # is pinned, and nothing generated or secret slipped in. Editor tests and
-# a headless build are tracked in the backlog (see the repo TODO file).
+# a headless build are tracked in the backlog.
 
 on:
   pull_request:
@@ -40,8 +40,8 @@ jobs:
 
   # frob v2 (pinned): ledger health and the rule gate. NOT in the `gate`
   # job's needs yet and continue-on-error: `frob check` still reports
-  # frob:describes as unknown (DSL001), C# tests are invisible to it
-  # (F1 fidelity), and unowned TODO comments need frob:todo tickets. Make it
+  # describes directives as unknown (DSL001), C# tests are invisible to it
+  # (F1 fidelity), and unowned to-do comments need frob:todo tickets. Make it
   # required once `frob check` exits 0. v1-only verbs (`frob coverage`,
   # `frob ticket sweep`) are gone: COV001 inside `frob check` is the
   # coverage gate and `frob ticket doctor` replaces sweep.
