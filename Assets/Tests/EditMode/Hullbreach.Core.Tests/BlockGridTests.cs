@@ -181,5 +181,59 @@ namespace Hullbreach.Core.Tests
 
             CollectionAssert.AreEqual(before, after, "TrySet must not change the key set");
         }
+
+        [Test]
+        public void TryAdd_UnknownTypeId_ReturnsFalseAndLeavesGridUnchanged()
+        {
+            var g = new BlockGrid();
+            Assert.IsFalse(g.TryAdd(BlockKey.Pack(0, 0), new Block(255)));
+            Assert.AreEqual(0, g.Count);
+            Assert.IsNull(g.CoreKey);
+            Assert.AreEqual(0f, g.Mass.Total);
+            Assert.IsFalse(g.TopologyDirty);
+
+            Assert.IsFalse(g.TryAdd(BlockKey.Pack(0, 0), new Block((byte)BlockTypes.Count)));
+            Assert.IsTrue(g.TryAdd(BlockKey.Pack(0, 0), new Block(BlockTypes.Core)), "grid still usable");
+        }
+
+        [Test]
+        public void TrySet_UnknownTypeId_ReturnsFalseAndKeepsBlock()
+        {
+            var g = GridWithCore();
+            var k = BlockKey.Pack(1, 0);
+            g.TryAdd(k, new Block(BlockTypes.Hull));
+            float mass = g.Mass.Total;
+
+            Assert.IsFalse(g.TrySet(k, new Block(200)));
+            g.TryGet(k, out var b);
+            Assert.AreEqual(BlockTypes.Hull, b.TypeId);
+            Assert.AreEqual(mass, g.Mass.Total, Tol);
+        }
+
+        [Test]
+        public void TrySet_CannotCreateOrRemoveCoreness()
+        {
+            var g = GridWithCore();
+            var k = BlockKey.Pack(1, 0);
+            g.TryAdd(k, new Block(BlockTypes.Hull));
+
+            Assert.IsFalse(g.TrySet(k, new Block(BlockTypes.Core)), "a second core via TrySet");
+            Assert.IsFalse(g.TrySet(g.CoreKey.Value, new Block(BlockTypes.Hull)), "demoting the core via TrySet");
+            Assert.IsTrue(g.TrySet(k, new Block(BlockTypes.Armor)), "non-core retype is fine");
+        }
+
+        [Test]
+        public void KeyAt_PastKeyCount_ThrowsInsteadOfReturningStaleKey()
+        {
+            var g = GridWithCore();
+            var k = BlockKey.Pack(1, 0);
+            g.TryAdd(k, new Block(BlockTypes.Hull));
+            Assert.AreEqual(2, g.KeyCount);
+            g.TryRemove(k);
+
+            Assert.AreEqual(1, g.KeyCount);
+            Assert.Throws<System.ArgumentOutOfRangeException>(() => g.KeyAt(1));
+            Assert.Throws<System.ArgumentOutOfRangeException>(() => g.KeyAt(-1));
+        }
     }
 }

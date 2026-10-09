@@ -28,9 +28,12 @@ namespace Hullbreach.Core
         // frob:doc docs/reference/hullbreach-core.md#blockgrid
         public int Count => _blocks.Count;
 
-        // Running mass / center of mass / inertia. O(1) per edit.
+        MassProperties _mass;
+
+        // Running mass / center of mass / inertia. O(1) per edit. A COPY:
+        // only TryAdd/TryRemove/TrySet change the live accumulator.
         // frob:doc docs/reference/hullbreach-core.md#blockgrid
-        public MassProperties Mass;
+        public MassProperties Mass => _mass;
 
         // True when a derived view needs rebuilding.
         // frob:doc docs/reference/hullbreach-core.md#blockgrid
@@ -74,11 +77,13 @@ namespace Hullbreach.Core
             }
         }
 
-        // 0 <= i < KeyCount. Rebuilds the sorted view first if stale.
+        // 0 <= i < KeyCount, else ArgumentOutOfRangeException (the backing
+        // buffer can hold stale keys past KeyCount). Rebuilds the sorted view if stale.
         // frob:doc docs/reference/hullbreach-core.md#blockgrid
         public int KeyAt(int i)
         {
             EnsureSortedKeys();
+            if ((uint)i >= (uint)_sortedKeyCount) throw new ArgumentOutOfRangeException(nameof(i));
             return _sortedKeys[i];
         }
 
@@ -109,9 +114,14 @@ namespace Hullbreach.Core
             _keysVersion = _structureVersion;
         }
 
+        // Never throws: an unknown TypeId (e.g. from the wire) or a second
+        // core returns false BEFORE any mutation.
         // frob:doc docs/reference/hullbreach-core.md#blockgrid
         public bool TryAdd(int key, Block block)
         {
+            // Reject unknown types first: BlockTypes.Get would throw after we mutated.
+            if (!BlockTypes.IsValid(block.TypeId)) return false;
+
             // If there is already a block, don't add it.
             if (Contains(key)) return false;
 
@@ -129,7 +139,7 @@ namespace Hullbreach.Core
             float2 center = CenterOf(key);
             float mass = BlockTypes.Get(block.TypeId).Mass;
             float rot_inertia = MassProperties.RectangleInertia(mass, BlockType.Width, BlockType.Height);
-            Mass.Add(mass, center, rot_inertia);
+            _mass.Add(mass, center, rot_inertia);
 
             // Mark topology for recomp.
             TopologyDirty = true;
@@ -148,7 +158,7 @@ namespace Hullbreach.Core
                 float mass = BlockTypes.Get(toRemove.TypeId).Mass;
                 float loc_inertia = MassProperties.RectangleInertia(mass, BlockType.Width, BlockType.Height);
                 // Update accumulators.
-                Mass.Remove(mass, center, loc_inertia);
+                _mass.Remove(mass, center, loc_inertia);
 
                 // Actually remove; leaving it would double-count mass on any
                 // later Add at the same key.
@@ -170,11 +180,18 @@ namespace Hullbreach.Core
         // frob:doc docs/reference/hullbreach-core.md#blockgrid
         public bool Contains(int key) => _blocks.ContainsKey(key);
 
+        // Never throws. Returns false for a missing key, an unknown TypeId,
+        // or an edit that would add/remove Core-ness (use TryAdd/TryRemove).
         // frob:doc docs/reference/hullbreach-core.md#blockgrid
         public bool TrySet(int key, Block block)
         {
+            if (!BlockTypes.IsValid(block.TypeId)) return false;
+
             if (_blocks.TryGetValue(key, out Block toModify))
             {
+                // The one-core invariant and CoreKey are owned by TryAdd/TryRemove.
+                if ((toModify.TypeId == BlockTypes.Core) != (block.TypeId == BlockTypes.Core)) return false;
+
                 float oldMass = BlockTypes.Get(toModify.TypeId).Mass;
                 float newMass = BlockTypes.Get(block.TypeId).Mass;
 
@@ -185,8 +202,8 @@ namespace Hullbreach.Core
                     float oldInertia = MassProperties.RectangleInertia(oldMass, BlockType.Width, BlockType.Height);
                     float newInertia = MassProperties.RectangleInertia(newMass, BlockType.Width, BlockType.Height);
 
-                    Mass.Remove(oldMass, center, oldInertia);
-                    Mass.Add(newMass, center, newInertia);
+                    _mass.Remove(oldMass, center, oldInertia);
+                    _mass.Add(newMass, center, newInertia);
                 }
 
                 // Write the new block; otherwise the caller's damage/modifier
