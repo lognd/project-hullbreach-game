@@ -1,0 +1,8 @@
+kind = "transition"
+from = "todo"
+to = "done"
+outcome = "duplicate"
+reason = "duplicate of 01M4GR18NK57958FGCH3BV5NSW (GravityWorld.OnDestroy nulls static Field unconditionally)"
+at = "2026-10-09T16:36:20Z"
+actor = "lognd"
+rev = 1
