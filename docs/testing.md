@@ -173,6 +173,43 @@ that overtakes its snapshot is not applied until the next reliable message
 (the tests let the join snapshots land first), and a ship's pose is sent to
 its owner only.
 
+## Performance budget
+
+`SolverBenchmarks.Benchmark_100Blocks` asserts the structural solver's
+frame budget (S36, T-0075) in the default `run_tests.sh` run, not in a
+separate job:
+
+- **The budget.** A 50 Hz tick is 20 ms (`ServerSimulation.TickRate`);
+  the solver may use a quarter of it, **5 ms**, leaving the rest for ship
+  physics, netcode and rendering. The 100-block ship (about 810 DOF) is
+  the agreed size; a 60-block ship (S36 criterion 3) is smaller and so
+  covered.
+- **What is compared.** The MEDIAN of the 19 steady-state ticks of a
+  20-tick Release run, not the max and not the mean. One slow tick from CI
+  noise (a GC pause, a stolen core) cannot move a median of 19, so the test
+  does not flake. The max is excluded on purpose: every 4th tick runs the
+  buckling sweep (29-49 ms, over a frame by itself; tracked in `TODO.md`)
+  and tick 1 pays the CG convergence, so a max bound would fail by design.
+  Tick 0 (the one-time stiffness build) is excluded for the same reason.
+- **Margin.** The measured median is about 0.15 ms, roughly 30x under the
+  budget, so the test fails on an algorithmic regression (a continuation
+  that stops continuing is ~30 ms/tick), not on a slow runner. It stays
+  green even in a Debug build (5-8x slower), though `run_tests.sh` always
+  uses Release.
+- **No fixed "reference laptop".** The margin is wide enough that the
+  assertion does not depend on one machine; the absolute numbers in
+  [roadmap.md](roadmap.md#performance-perfsolver-ticks-2026-09-21) were
+  taken on the dev box and are for trend, the test is the gate.
+- **Not asserted.** The 500-block case (about 100 ms/tick, not real-time)
+  and the `Slow` 2000-block case only print `TICKMS` lines; asserting them
+  would pin a known miss. Tighten the budget or add them once the
+  Burst/chunking work in `TODO.md` lands.
+
+If a CI runner ever proves too noisy even for a median, tag the test
+`[Category("Performance")]` and exclude it from the required run with
+`--filter "TestCategory!=Performance"`, running it as its own job; do not
+loosen the budget.
+
 ## Which assemblies are NOT covered by `tools/plaincs`
 
 **`Hullbreach.Game`**, for EDIT-mode purposes: the only assembly that

@@ -15,6 +15,12 @@ namespace Hullbreach.Structure.Tests
         // generous enough to only catch a REGRESSION, not exact grid walks.
         const long AllocBudgetBytesPerTick = 4096;
 
+        // The 50 Hz server tick (ServerSimulation.TickRate) is 20 ms, and the
+        // solver may take a quarter of it; the rest is physics, netcode and
+        // the renderer. See docs/testing.md#performance-budget.
+        const double FrameMs = 1000.0 / 50.0;
+        const double SolverBudgetMs = FrameMs * 0.25;
+
         // Builds a roughly square plate plus a 1-wide arm split to either
         // side along x, so the ship is both wide and has a slender member.
         static BlockGrid BuildShip(int totalBlocks, out float2 thrusterPoint)
@@ -57,7 +63,8 @@ namespace Hullbreach.Structure.Tests
             return grid;
         }
 
-        static void RunBenchmark(int totalBlocks, int ticks = 20)
+        // Returns the steady-state median tick time in ms.
+        static double RunBenchmark(int totalBlocks, int ticks = 20)
         {
             var grid = BuildShip(totalBlocks, out float2 thrusterPoint);
 
@@ -141,12 +148,24 @@ namespace Hullbreach.Structure.Tests
             Assert.IsTrue(float.IsFinite(solver.ResidualNorm), "residual is NaN/Infinity: likely a projection or assembly bug, not just slow convergence");
             Assert.LessOrEqual(maxTickAlloc, AllocBudgetBytesPerTick,
                 "steady-state Tick allocated far more than the boxed-enumerator floor; see class doc");
+
+            return median;
         }
 
+        // The median, not the max: every 4th tick runs the buckling sweep
+        // (29-49 ms, a known open item in TODO.md) and tick 1 pays the CG
+        // convergence, so a max bound would fail by design. Measured median
+        // is ~0.17 ms against the 5 ms budget, a margin of about 30x that a
+        // noisy CI runner or a Debug build (5-8x slower) does not eat.
+        // Docs: docs/testing.md#performance-budget.
         [Test]
         public void Benchmark_100Blocks()
         {
-            RunBenchmark(100);
+            double median = RunBenchmark(100);
+
+            Assert.LessOrEqual(median, SolverBudgetMs,
+                $"100-block steady-state median tick {median:F2} ms exceeds the {SolverBudgetMs:F1} ms solver budget " +
+                $"({FrameMs:F0} ms frame at 50 Hz, one quarter for the solver)");
         }
 
         [Test]
