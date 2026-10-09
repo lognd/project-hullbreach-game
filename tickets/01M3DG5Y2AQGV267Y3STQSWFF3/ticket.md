@@ -2,13 +2,14 @@
 id = "01M3DG5Y2AQGV267Y3STQSWFF3"
 title = "S36-3: Material properties per block type (hull, armor, thruster)"
 type = "task"
-category = "todo"
+category = "done"
+outcome = "done"
 priority = "critical"
 points = 2
 parent = "01M3DG5Y0SP70ASKR1VP80X976"
 reporter = "human"
 created = "2026-09-26T00:00:00Z"
-updated = "2026-10-09T04:17:38Z"
+updated = "2026-10-09T04:20:19Z"
 aliases = ["T-0074"]
 labels = ["jira:SCRUM-153", "owner:GingerVHS", "game", "physics", "milestone:0.2.0"]
 scope = ["Assets/Scripts/Hullbreach.Core/Grid/BlockType.cs", "Assets/Tests/EditMode/Hullbreach.Core.Tests/**"]
