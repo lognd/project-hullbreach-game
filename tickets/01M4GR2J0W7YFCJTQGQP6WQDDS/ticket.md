@@ -2,11 +2,12 @@
 id = "01M4GR2J0W7YFCJTQGQP6WQDDS"
 title = "ShipBody powerup expiry survives block removal/replacement and reverts the wrong block"
 type = "bug"
-category = "todo"
+category = "done"
+outcome = "fixed"
 priority = "medium"
 reporter = "lognd"
 created = "2026-10-09T16:31:22Z"
-updated = "2026-10-09T17:08:36Z"
+updated = "2026-10-09T17:09:11Z"
 labels = ["origin:auditor", "audit:ship"]
 scope = ["Assets/Scripts/Hullbreach.Ship/ShipBody.cs"]
 
