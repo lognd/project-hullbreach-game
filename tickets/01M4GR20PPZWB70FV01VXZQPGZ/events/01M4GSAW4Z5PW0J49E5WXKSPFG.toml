@@ -1,0 +1,7 @@
+kind = "field"
+field = "acceptance"
+new = ["Given an unknown type id, when Select is called, then it returns false and keeps the selection"]
+moved = []
+at = "2026-10-09T16:53:23Z"
+actor = "stevendangkhoi"
+rev = 1
