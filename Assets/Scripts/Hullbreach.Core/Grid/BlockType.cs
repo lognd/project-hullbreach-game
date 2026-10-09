@@ -96,7 +96,7 @@ namespace Hullbreach.Core
         public static int Count => Table.Length;
 
         // Folds in damage softening; see docs/reference/hullbreach-core.md#blocktypes.
-        // TODO [D3]: the floor (0.05) is a placeholder curve.
+        // frob:todo 01M3DG5Y2FQRFRW3CRWJ24V0FQ the floor (0.05) is a placeholder curve (D3).
         // frob:doc docs/reference/hullbreach-core.md#blocktypes
         public static float EffectiveStiffness(in Block block)
         {
