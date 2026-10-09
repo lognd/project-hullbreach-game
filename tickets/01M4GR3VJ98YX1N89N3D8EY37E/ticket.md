@@ -2,11 +2,12 @@
 id = "01M4GR3VJ98YX1N89N3D8EY37E"
 title = "BuilderController.Update places/removes blocks on mouse clicks that land on HUD panels"
 type = "bug"
-category = "todo"
+category = "done"
+outcome = "fixed"
 priority = "medium"
 reporter = "lognd"
 created = "2026-10-09T16:32:05Z"
-updated = "2026-10-09T16:53:29Z"
+updated = "2026-10-09T16:53:30Z"
 idempotency_key = "audit-game-builder-ui-click"
 labels = ["origin:auditor", "audit:hullbreach-game"]
 scope = ["Assets/Scripts/Hullbreach.Game/BuilderController.cs"]
