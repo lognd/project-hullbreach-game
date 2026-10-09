@@ -1,0 +1,7 @@
+kind = "transition"
+from = "in-progress"
+to = "todo"
+reason = "Implementation committed in 0037d02 and passing (297 tests, mutation-checked); evidence blocked (E-EVIDENCE-TOOL: dotnet not in allowed_tools on 0.532.0). Releasing the lease for the WIP limit of 1."
+at = "2026-10-09T04:08:20Z"
+actor = "GingerVHS"
+rev = 1
