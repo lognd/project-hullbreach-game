@@ -1,0 +1,7 @@
+kind = "field"
+field = "acceptance"
+new = ["Given a GravityField, when acceleration is sampled, then it is attractive inverse-square outside the soft radius, softens to zero at the center, is continuous, and is clamped (GravityFieldTests)", "Given a ship falling onto a planetoid, when ShipBody steps, then it curves toward it and ends outside the surface (ShipGravityTests, OrbitHelperTests; S40 criterion 1)"]
+moved = []
+at = "2026-10-09T04:14:28Z"
+actor = "GingerVHS"
+rev = 1
