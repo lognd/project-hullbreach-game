@@ -1,0 +1,7 @@
+kind = "field"
+field = "acceptance"
+new = ["Stale snapshots do not rewind a ship and one ship's snapshot does not discard another ship's pending events"]
+moved = []
+at = "2026-10-09T17:09:51Z"
+actor = "mcnairrobotics"
+rev = 1

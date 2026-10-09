@@ -1,0 +1,7 @@
+kind = "field"
+field = "acceptance"
+new = ["A malformed or unknown reliable payload never throws and does not stall later sequences"]
+moved = []
+at = "2026-10-09T17:09:25Z"
+actor = "mcnairrobotics"
+rev = 1

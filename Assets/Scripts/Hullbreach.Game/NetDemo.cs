@@ -24,7 +24,11 @@ namespace Hullbreach.Game
         ClientReplica _replica1;
         ClientReplica _replica2;
 
-        readonly Dictionary<(ushort netId, int key), GameObject> _visuals = new Dictionary<(ushort, int), GameObject>();
+        // Keyed by replica too: both clients draw the same netIds, so a shared
+        // key space let the last writer win. Quads not seen in a refresh are destroyed.
+        readonly Dictionary<(int replica, ushort netId, int key), GameObject> _visuals = new Dictionary<(int, ushort, int), GameObject>();
+        readonly HashSet<(int replica, ushort netId, int key)> _seen = new HashSet<(int, ushort, int)>();
+        readonly List<(int replica, ushort netId, int key)> _stale = new List<(int, ushort, int)>();
         float _tickAccumulator;
         uint _clientTick;
         float _fireTimer;
@@ -73,8 +77,17 @@ namespace Hullbreach.Game
                 RunOneTick();
             }
 
-            RefreshVisuals(_replica1);
-            RefreshVisuals(_replica2);
+            _seen.Clear();
+            RefreshVisuals(_replica1, 1);
+            RefreshVisuals(_replica2, 2);
+            DestroyUnseenVisuals();
+        }
+
+        void OnDestroy()
+        {
+            foreach (var go in _visuals.Values)
+                if (go != null) Object.Destroy(go);
+            _visuals.Clear();
         }
 
         void RunOneTick()
@@ -93,8 +106,9 @@ namespace Hullbreach.Game
             var scratch = new byte[512];
             while (_serverTransport.TryReceive(out int from, scratch, out int length))
             {
-                var r = new ByteReader(scratch);
-                _server.SetInput(from, InputMessage.Read(ref r));
+                var r = new ByteReader(scratch, 0, length);
+                var input = InputMessage.Read(ref r);
+                if (!r.Failed) _server.SetInput(from, input);
             }
 
             _server.Tick();
@@ -128,7 +142,7 @@ namespace Hullbreach.Game
         }
 
         // Creates a quad per block lazily; see the reference page.
-        void RefreshVisuals(ClientReplica replica)
+        void RefreshVisuals(ClientReplica replica, int replicaIndex)
         {
             if (replica == null) return;
             foreach (var kv in replica.Ships)
@@ -137,7 +151,8 @@ namespace Hullbreach.Game
                 var ship = kv.Value;
                 foreach (var block in ship.Grid.All)
                 {
-                    var visKey = (netId, block.Key);
+                    var visKey = (replicaIndex, netId, block.Key);
+                    _seen.Add(visKey);
                     if (!_visuals.TryGetValue(visKey, out var go) || go == null)
                     {
                         go = GameObject.CreatePrimitive(PrimitiveType.Quad);
@@ -151,6 +166,19 @@ namespace Hullbreach.Game
                     go.transform.position = new Vector3(world.x, world.y, 0f);
                     go.transform.rotation = Quaternion.Euler(0f, 0f, ship.Rotation * Mathf.Rad2Deg);
                 }
+            }
+        }
+
+        // Destroys quads whose block or ship left the replica this refresh.
+        void DestroyUnseenVisuals()
+        {
+            _stale.Clear();
+            foreach (var kv in _visuals)
+                if (!_seen.Contains(kv.Key)) _stale.Add(kv.Key);
+            foreach (var key in _stale)
+            {
+                if (_visuals[key] != null) Object.Destroy(_visuals[key]);
+                _visuals.Remove(key);
             }
         }
     }

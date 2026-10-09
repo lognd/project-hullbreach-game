@@ -113,6 +113,15 @@ namespace Hullbreach.Structure
         // frob:doc docs/reference/hullbreach-structure.md#structuralsolver
         public Dictionary<int, BlockStress> BlockStresses { get; } = new Dictionary<int, BlockStress>();
 
+        // Calibrated gameplay LoadScale; the server and the Game layer share it
+        // so authoritative stress matches the client tint.
+        // frob:doc docs/reference/hullbreach-structure.md#structuralsolver
+        public const float DefaultLoadScale = 0.06f;
+
+        // Calibrated gameplay MaterialStiffnessScale, shared like DefaultLoadScale.
+        // frob:doc docs/reference/hullbreach-structure.md#structuralsolver
+        public const float DefaultMaterialStiffnessScale = 40f;
+
         // Converts GAMEPLAY force units into the solver's normalized
         // material units before the solve; see the reference page.
         // frob:doc docs/reference/hullbreach-structure.md#structuralsolver

@@ -2,18 +2,18 @@
 
 Per-type reference for `Assets/Scripts/Hullbreach.Structure`, linked from the code by
 `// frob:doc docs/reference/hullbreach-structure.md#<anchor>`. One heading per
-public type; each heading carries the `frob:describes` lines for that
+public type; each heading carries the `describes:` lines for that
 type and its public members. Architecture-level context lives in
 [architecture.md](../architecture.md).
 
 ### DamageModel
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/Failure/DamageModel.cs::DamageModel -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/Failure/DamageModel.cs::DamageModel.FailRatio -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/Failure/DamageModel.cs::DamageModel.RecoverRatio -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/Failure/DamageModel.cs::DamageModel.Accumulate -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/Failure/DamageModel.cs::DamageModel.SofteningFactor -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/Failure/DamageModel.cs::DamageModel.ShouldDetach -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/Failure/DamageModel.cs::DamageModel -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/Failure/DamageModel.cs::DamageModel.FailRatio -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/Failure/DamageModel.cs::DamageModel.RecoverRatio -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/Failure/DamageModel.cs::DamageModel.Accumulate -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/Failure/DamageModel.cs::DamageModel.SofteningFactor -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/Failure/DamageModel.cs::DamageModel.ShouldDetach -->
 
 Damage accumulation as cheap pseudo-plasticity. "Ductile" means YIELD, not
 instant fracture: if blocks snapped the moment von Mises crossed yield it
@@ -41,11 +41,11 @@ solve stays linear. It also reuses the E multiplier the upgrades already need.
 
 ### StressCriteria
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/Failure/StressCriteria.cs::StressCriteria -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/Failure/StressCriteria.cs::StressCriteria.VonMises -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/Failure/StressCriteria.cs::StressCriteria.Principal -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/Failure/StressCriteria.cs::StressCriteria.DuctileRatio -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/Failure/StressCriteria.cs::StressCriteria.BrittleRatio -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/Failure/StressCriteria.cs::StressCriteria -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/Failure/StressCriteria.cs::StressCriteria.VonMises -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/Failure/StressCriteria.cs::StressCriteria.Principal -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/Failure/StressCriteria.cs::StressCriteria.DuctileRatio -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/Failure/StressCriteria.cs::StressCriteria.BrittleRatio -->
 
 Reduces a 2D stress tensor to the scalars the failure model compares
 against. Both invariants are about ten flops from the same tensor, so
@@ -80,13 +80,13 @@ a projectile impact spalls.
 
 ### NodeLattice
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/Fem/NodeLattice.cs::NodeLattice -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/Fem/NodeLattice.cs::NodeLattice.NodesPerElement -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/Fem/NodeLattice.cs::NodeLattice.Offsets -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/Fem/NodeLattice.cs::NodeLattice.PackNode -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/Fem/NodeLattice.cs::NodeLattice.UnpackNode -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/Fem/NodeLattice.cs::NodeLattice.NodesOf -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/Fem/NodeLattice.cs::NodeLattice.BuildNodeMap -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/Fem/NodeLattice.cs::NodeLattice -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/Fem/NodeLattice.cs::NodeLattice.NodesPerElement -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/Fem/NodeLattice.cs::NodeLattice.Offsets -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/Fem/NodeLattice.cs::NodeLattice.PackNode -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/Fem/NodeLattice.cs::NodeLattice.UnpackNode -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/Fem/NodeLattice.cs::NodeLattice.NodesOf -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/Fem/NodeLattice.cs::NodeLattice.BuildNodeMap -->
 
 Global node addressing for the Q8 mesh, on a lattice at TWICE the block
 resolution. Block `(i,j)` owns the 8 doubled-lattice points around it,
@@ -129,17 +129,17 @@ from the lower left, then midsides 5-8 starting between corners 1 and 2.
 
 ### Q8Element
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/Fem/Q8Element.cs::Q8Element -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/Fem/Q8Element.cs::Q8Element.NodeCount -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/Fem/Q8Element.cs::Q8Element.DofCount -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/Fem/Q8Element.cs::Q8Element.ReferenceNodes -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/Fem/Q8Element.cs::Q8Element.NuFor -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/Fem/Q8Element.cs::Q8Element.KHatFor -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/Fem/Q8Element.cs::Q8Element.ShapeFunctions -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/Fem/Q8Element.cs::Q8Element.ShapeDerivatives -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/Fem/Q8Element.cs::Q8Element.StrainDisplacement -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/Fem/Q8Element.cs::Q8Element.ConstitutiveUnit -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/Fem/Q8Element.cs::Q8Element.UnitStiffness -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/Fem/Q8Element.cs::Q8Element -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/Fem/Q8Element.cs::Q8Element.NodeCount -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/Fem/Q8Element.cs::Q8Element.DofCount -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/Fem/Q8Element.cs::Q8Element.ReferenceNodes -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/Fem/Q8Element.cs::Q8Element.NuFor -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/Fem/Q8Element.cs::Q8Element.KHatFor -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/Fem/Q8Element.cs::Q8Element.ShapeFunctions -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/Fem/Q8Element.cs::Q8Element.ShapeDerivatives -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/Fem/Q8Element.cs::Q8Element.StrainDisplacement -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/Fem/Q8Element.cs::Q8Element.ConstitutiveUnit -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/Fem/Q8Element.cs::Q8Element.UnitStiffness -->
 
 The 8-node serendipity quadrilateral, and its unit stiffness matrix.
 
@@ -181,13 +181,13 @@ The uniform grid also collapses the isoparametric machinery: the map is
 
 ### LoadVector
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/Fem/LoadVector.cs::LoadVector -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/Fem/LoadVector.cs::LoadVector.LoadVector -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/Fem/LoadVector.cs::LoadVector.QuasiStatic -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/Fem/LoadVector.cs::LoadVector.Impulsive -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/Fem/LoadVector.cs::LoadVector.AddPointForce -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/Fem/LoadVector.cs::LoadVector.ApplyInertiaRelief -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/Fem/LoadVector.cs::LoadVector.RigidBodyModes -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/Fem/LoadVector.cs::LoadVector -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/Fem/LoadVector.cs::LoadVector.LoadVector -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/Fem/LoadVector.cs::LoadVector.QuasiStatic -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/Fem/LoadVector.cs::LoadVector.Impulsive -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/Fem/LoadVector.cs::LoadVector.AddPointForce -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/Fem/LoadVector.cs::LoadVector.ApplyInertiaRelief -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/Fem/LoadVector.cs::LoadVector.RigidBodyModes -->
 
 Builds the right-hand side, including INERTIA RELIEF.
 
@@ -247,15 +247,15 @@ against the modes if you want to draw the deformed shape.
 
 ### StiffnessAssembly
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/Fem/StiffnessAssembly.cs::StiffnessAssembly -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/Fem/StiffnessAssembly.cs::StiffnessAssembly.NodeMap -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/Fem/StiffnessAssembly.cs::StiffnessAssembly.NodeRestPositions -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/Fem/StiffnessAssembly.cs::StiffnessAssembly.DofCount -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/Fem/StiffnessAssembly.cs::StiffnessAssembly.RowPointers -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/Fem/StiffnessAssembly.cs::StiffnessAssembly.ColumnIndices -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/Fem/StiffnessAssembly.cs::StiffnessAssembly.Rebuild -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/Fem/StiffnessAssembly.cs::StiffnessAssembly.Multiply -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/Fem/StiffnessAssembly.cs::StiffnessAssembly.Diagonal -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/Fem/StiffnessAssembly.cs::StiffnessAssembly -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/Fem/StiffnessAssembly.cs::StiffnessAssembly.NodeMap -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/Fem/StiffnessAssembly.cs::StiffnessAssembly.NodeRestPositions -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/Fem/StiffnessAssembly.cs::StiffnessAssembly.DofCount -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/Fem/StiffnessAssembly.cs::StiffnessAssembly.RowPointers -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/Fem/StiffnessAssembly.cs::StiffnessAssembly.ColumnIndices -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/Fem/StiffnessAssembly.cs::StiffnessAssembly.Rebuild -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/Fem/StiffnessAssembly.cs::StiffnessAssembly.Multiply -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/Fem/StiffnessAssembly.cs::StiffnessAssembly.Diagonal -->
 
 Scatters each element's 16x16 into the sparse global K. The accumulation
 at shared nodes IS the structural connection: two blocks are joined
@@ -294,12 +294,12 @@ rather than papered over.
 
 ### GeometricStiffness
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/Fem/GeometricStiffness.cs::GeometricStiffness -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/Fem/GeometricStiffness.cs::GeometricStiffness.DofCount -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/Fem/GeometricStiffness.cs::GeometricStiffness.AttachSparsity -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/Fem/GeometricStiffness.cs::GeometricStiffness.Rebuild -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/Fem/GeometricStiffness.cs::GeometricStiffness.Multiply -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/Fem/GeometricStiffness.cs::GeometricStiffness.ElementMatrix -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/Fem/GeometricStiffness.cs::GeometricStiffness -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/Fem/GeometricStiffness.cs::GeometricStiffness.DofCount -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/Fem/GeometricStiffness.cs::GeometricStiffness.AttachSparsity -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/Fem/GeometricStiffness.cs::GeometricStiffness.Rebuild -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/Fem/GeometricStiffness.cs::GeometricStiffness.Multiply -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/Fem/GeometricStiffness.cs::GeometricStiffness.ElementMatrix -->
 
 The geometric (initial-stress) stiffness K_G: the part of the tangent
 stiffness that comes from stress already in the structure rather than
@@ -358,15 +358,15 @@ StiffnessAssembly, over K_G's own values.
 
 ### CgState
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/Fem/CgState.cs::CgState -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/Fem/CgState.cs::CgState.LoadChangeTolerance -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/Fem/CgState.cs::CgState.StagnationTicks -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/Fem/CgState.cs::CgState.ResidualGrowthSlack -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/Fem/CgState.cs::CgState.SuspensionTicks -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/Fem/CgState.cs::CgState.DivergenceFactor -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/Fem/CgState.cs::CgState.ContinuedFromLastTick -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/Fem/CgState.cs::CgState.TicksSinceRestart -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/Fem/CgState.cs::CgState.Invalidate -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/Fem/CgState.cs::CgState -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/Fem/CgState.cs::CgState.LoadChangeTolerance -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/Fem/CgState.cs::CgState.StagnationTicks -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/Fem/CgState.cs::CgState.ResidualGrowthSlack -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/Fem/CgState.cs::CgState.SuspensionTicks -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/Fem/CgState.cs::CgState.DivergenceFactor -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/Fem/CgState.cs::CgState.ContinuedFromLastTick -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/Fem/CgState.cs::CgState.TicksSinceRestart -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/Fem/CgState.cs::CgState.Invalidate -->
 
 Caller-owned Krylov state that lets `CgSolver.Solve` CONTINUE one
 conjugate-gradient run across several ticks instead of restarting it
@@ -461,14 +461,14 @@ steady-state tick allocates nothing here.
 
 ### CgSolver
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/Fem/CgSolver.cs::CgSolver -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/Fem/CgSolver.cs::CgSolver.MaxIterations -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/Fem/CgSolver.cs::CgSolver.Tolerance -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/Fem/CgSolver.cs::CgSolver.LastIterationCount -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/Fem/CgSolver.cs::CgSolver.LastResidualNorm -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/Fem/CgSolver.cs::CgSolver.Converged -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/Fem/CgSolver.cs::CgSolver.ContinuedFromLastTick -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/Fem/CgSolver.cs::CgSolver.Solve -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/Fem/CgSolver.cs::CgSolver -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/Fem/CgSolver.cs::CgSolver.MaxIterations -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/Fem/CgSolver.cs::CgSolver.Tolerance -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/Fem/CgSolver.cs::CgSolver.LastIterationCount -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/Fem/CgSolver.cs::CgSolver.LastResidualNorm -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/Fem/CgSolver.cs::CgSolver.Converged -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/Fem/CgSolver.cs::CgSolver.ContinuedFromLastTick -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/Fem/CgSolver.cs::CgSolver.Solve -->
 
 Jacobi-preconditioned conjugate gradient, warm-started.
 
@@ -555,14 +555,14 @@ version becomes the one-chunk case for free.
 
 ### CoarsePreconditioner
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/Fem/CoarsePreconditioner.cs::CoarsePreconditioner -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/Fem/CoarsePreconditioner.cs::CoarsePreconditioner.AggregateBlockSpan -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/Fem/CoarsePreconditioner.cs::CoarsePreconditioner.AggregateCount -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/Fem/CoarsePreconditioner.cs::CoarsePreconditioner.MaxAggregates -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/Fem/CoarsePreconditioner.cs::CoarsePreconditioner.MaxAggregateBlockSpan -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/Fem/CoarsePreconditioner.cs::CoarsePreconditioner.LastAggregateBlockSpan -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/Fem/CoarsePreconditioner.cs::CoarsePreconditioner.Rebuild -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/Fem/CoarsePreconditioner.cs::CoarsePreconditioner.ApplyAdditive -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/Fem/CoarsePreconditioner.cs::CoarsePreconditioner -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/Fem/CoarsePreconditioner.cs::CoarsePreconditioner.AggregateBlockSpan -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/Fem/CoarsePreconditioner.cs::CoarsePreconditioner.AggregateCount -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/Fem/CoarsePreconditioner.cs::CoarsePreconditioner.MaxAggregates -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/Fem/CoarsePreconditioner.cs::CoarsePreconditioner.MaxAggregateBlockSpan -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/Fem/CoarsePreconditioner.cs::CoarsePreconditioner.LastAggregateBlockSpan -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/Fem/CoarsePreconditioner.cs::CoarsePreconditioner.Rebuild -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/Fem/CoarsePreconditioner.cs::CoarsePreconditioner.ApplyAdditive -->
 
 Deflated two-level additive preconditioner: adds a coarse, global
 correction on top of CgSolver's plain Jacobi so information can cross the
@@ -673,10 +673,10 @@ PCG's convergence theory needs M^-1 symmetric: see
 
 ### BucklingMode
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/Fem/BucklingAnalysis.cs::BucklingMode -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/Fem/BucklingAnalysis.cs::BucklingMode.LoadFactor -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/Fem/BucklingAnalysis.cs::BucklingMode.Shape -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/Fem/BucklingAnalysis.cs::BucklingMode.BlockParticipation -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/Fem/BucklingAnalysis.cs::BucklingMode -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/Fem/BucklingAnalysis.cs::BucklingMode.LoadFactor -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/Fem/BucklingAnalysis.cs::BucklingMode.Shape -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/Fem/BucklingAnalysis.cs::BucklingMode.BlockParticipation -->
 
 One converged buckling mode: a load factor and the DOF shape it belongs
 to, plus which blocks carry the strain energy of that shape.
@@ -693,23 +693,23 @@ to, plus which blocks carry the strain energy of that shape.
 
 ### BucklingAnalysis
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/Fem/BucklingAnalysis.cs::BucklingAnalysis -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/Fem/BucklingAnalysis.cs::BucklingAnalysis.MaxSweepsPerTick -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/Fem/BucklingAnalysis.cs::BucklingAnalysis.Tolerance -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/Fem/BucklingAnalysis.cs::BucklingAnalysis.LastSweepCount -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/Fem/BucklingAnalysis.cs::BucklingAnalysis.LastConvergedTick -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/Fem/BucklingAnalysis.cs::BucklingAnalysis.LastCgIterationCount -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/Fem/BucklingAnalysis.cs::BucklingAnalysis.MinStrainEnergyFraction -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/Fem/BucklingAnalysis.cs::BucklingAnalysis.MinCompressionFraction -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/Fem/BucklingAnalysis.cs::BucklingAnalysis.ForceConvergeAfterSweeps -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/Fem/BucklingAnalysis.cs::BucklingAnalysis.MinSweepsBeforeConvergence -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/Fem/BucklingAnalysis.cs::BucklingAnalysis.StuckSweepsBeforeReseed -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/Fem/BucklingAnalysis.cs::BucklingAnalysis.Converged -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/Fem/BucklingAnalysis.cs::BucklingAnalysis.Reset -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/Fem/BucklingAnalysis.cs::BucklingAnalysis.Coarse -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/Fem/BucklingAnalysis.cs::BucklingAnalysis.MaxCgIterationsPerTick -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/Fem/BucklingAnalysis.cs::BucklingAnalysis.Step -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/Fem/BucklingAnalysis.cs::BucklingAnalysis.ExtractModes -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/Fem/BucklingAnalysis.cs::BucklingAnalysis -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/Fem/BucklingAnalysis.cs::BucklingAnalysis.MaxSweepsPerTick -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/Fem/BucklingAnalysis.cs::BucklingAnalysis.Tolerance -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/Fem/BucklingAnalysis.cs::BucklingAnalysis.LastSweepCount -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/Fem/BucklingAnalysis.cs::BucklingAnalysis.LastConvergedTick -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/Fem/BucklingAnalysis.cs::BucklingAnalysis.LastCgIterationCount -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/Fem/BucklingAnalysis.cs::BucklingAnalysis.MinStrainEnergyFraction -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/Fem/BucklingAnalysis.cs::BucklingAnalysis.MinCompressionFraction -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/Fem/BucklingAnalysis.cs::BucklingAnalysis.ForceConvergeAfterSweeps -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/Fem/BucklingAnalysis.cs::BucklingAnalysis.MinSweepsBeforeConvergence -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/Fem/BucklingAnalysis.cs::BucklingAnalysis.StuckSweepsBeforeReseed -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/Fem/BucklingAnalysis.cs::BucklingAnalysis.Converged -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/Fem/BucklingAnalysis.cs::BucklingAnalysis.Reset -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/Fem/BucklingAnalysis.cs::BucklingAnalysis.Coarse -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/Fem/BucklingAnalysis.cs::BucklingAnalysis.MaxCgIterationsPerTick -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/Fem/BucklingAnalysis.cs::BucklingAnalysis.Step -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/Fem/BucklingAnalysis.cs::BucklingAnalysis.ExtractModes -->
 
 Linearized buckling: the smallest positive load factors lambda solving
 the generalized eigenproblem `(K + lambda*K_G) phi = 0`, i.e. `K phi =
@@ -855,16 +855,16 @@ stable-looking lambda despite carrying essentially no strain energy.
 
 ### BlockStress
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/StructuralSolver.cs::BlockStress -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/StructuralSolver.cs::BlockStress.VonMises -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/StructuralSolver.cs::BlockStress.Major -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/StructuralSolver.cs::BlockStress.Minor -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/StructuralSolver.cs::BlockStress.DuctileRatio -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/StructuralSolver.cs::BlockStress.BrittleRatio -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/StructuralSolver.cs::BlockStress.Sxx -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/StructuralSolver.cs::BlockStress.Syy -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/StructuralSolver.cs::BlockStress.Txy -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/StructuralSolver.cs::BlockStress.BucklingRatio -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/StructuralSolver.cs::BlockStress -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/StructuralSolver.cs::BlockStress.VonMises -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/StructuralSolver.cs::BlockStress.Major -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/StructuralSolver.cs::BlockStress.Minor -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/StructuralSolver.cs::BlockStress.DuctileRatio -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/StructuralSolver.cs::BlockStress.BrittleRatio -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/StructuralSolver.cs::BlockStress.Sxx -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/StructuralSolver.cs::BlockStress.Syy -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/StructuralSolver.cs::BlockStress.Txy -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/StructuralSolver.cs::BlockStress.BucklingRatio -->
 
 Per-block stress result for one tick: the S36/S37 API. `VonMises` and the
 principal stresses are read from the QUASI-STATIC solve (ductile); the
@@ -885,30 +885,32 @@ decide it should break.
 
 ### StructuralSolver
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/StructuralSolver.cs::StructuralSolver -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/StructuralSolver.cs::StructuralSolver.StructuralSolver -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/StructuralSolver.cs::StructuralSolver.MaxCgIterationsPerTick -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/StructuralSolver.cs::StructuralSolver.Converged -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/StructuralSolver.cs::StructuralSolver.ResidualNorm -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/StructuralSolver.cs::StructuralSolver.IterationsThisTick -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/StructuralSolver.cs::StructuralSolver.ContinuedFromLastTick -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/StructuralSolver.cs::StructuralSolver.TicksSinceRestart -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/StructuralSolver.cs::StructuralSolver.DofCount -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/StructuralSolver.cs::StructuralSolver.MarkTopologyChanged -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/StructuralSolver.cs::StructuralSolver.UseCoarseCorrection -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/StructuralSolver.cs::StructuralSolver.BlockStresses -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/StructuralSolver.cs::StructuralSolver.LoadScale -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/StructuralSolver.cs::StructuralSolver.MaterialStiffnessScale -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/StructuralSolver.cs::StructuralSolver.Tick -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/StructuralSolver.cs::StructuralSolver.BucklingEnabled -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/StructuralSolver.cs::StructuralSolver.BucklingEveryNTicks -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/StructuralSolver.cs::StructuralSolver.BucklingModeCount -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/StructuralSolver.cs::StructuralSolver.BucklingMaxCgIterationsPerTick -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/StructuralSolver.cs::StructuralSolver.BucklingMaxSweepsPerTick -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/StructuralSolver.cs::StructuralSolver.BucklingParticipationThreshold -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/StructuralSolver.cs::StructuralSolver.BucklingModes -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/StructuralSolver.cs::StructuralSolver.CriticalLoadFactor -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Structure/StructuralSolver.cs::StructuralSolver.BuckledBlocks -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/StructuralSolver.cs::StructuralSolver -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/StructuralSolver.cs::StructuralSolver.StructuralSolver -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/StructuralSolver.cs::StructuralSolver.MaxCgIterationsPerTick -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/StructuralSolver.cs::StructuralSolver.Converged -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/StructuralSolver.cs::StructuralSolver.ResidualNorm -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/StructuralSolver.cs::StructuralSolver.IterationsThisTick -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/StructuralSolver.cs::StructuralSolver.ContinuedFromLastTick -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/StructuralSolver.cs::StructuralSolver.TicksSinceRestart -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/StructuralSolver.cs::StructuralSolver.DofCount -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/StructuralSolver.cs::StructuralSolver.MarkTopologyChanged -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/StructuralSolver.cs::StructuralSolver.UseCoarseCorrection -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/StructuralSolver.cs::StructuralSolver.BlockStresses -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/StructuralSolver.cs::StructuralSolver.DefaultLoadScale -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/StructuralSolver.cs::StructuralSolver.DefaultMaterialStiffnessScale -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/StructuralSolver.cs::StructuralSolver.LoadScale -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/StructuralSolver.cs::StructuralSolver.MaterialStiffnessScale -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/StructuralSolver.cs::StructuralSolver.Tick -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/StructuralSolver.cs::StructuralSolver.BucklingEnabled -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/StructuralSolver.cs::StructuralSolver.BucklingEveryNTicks -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/StructuralSolver.cs::StructuralSolver.BucklingModeCount -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/StructuralSolver.cs::StructuralSolver.BucklingMaxCgIterationsPerTick -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/StructuralSolver.cs::StructuralSolver.BucklingMaxSweepsPerTick -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/StructuralSolver.cs::StructuralSolver.BucklingParticipationThreshold -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/StructuralSolver.cs::StructuralSolver.BucklingModes -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/StructuralSolver.cs::StructuralSolver.CriticalLoadFactor -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/StructuralSolver.cs::StructuralSolver.BuckledBlocks -->
 
 Ties NodeLattice/Q8Element/StiffnessAssembly/LoadVector/CgSolver together
 for one simulation tick, and reduces the resulting displacement field to
@@ -964,6 +966,13 @@ stays linear, stresses scale exactly with it, and the geometric stiffness
 that buckling is built from scales consistently too. Calibrated so the
 stock demo ship at full thrust sits around 0.3 of yield while a long
 unsupported arm still fails.
+
+`DefaultLoadScale` (0.06) and `DefaultMaterialStiffnessScale` (40) are those
+two calibrated values as constants. Both the authoritative `ServerSimulation`
+(which alone decides detachment) and the Game layer's `ShipStructure` assign
+them, so server stress and the client tint agree; neither duplicates the
+numbers. The solver's own field defaults stay 1 so tests of raw solver math
+are unaffected.
 
 `MaterialStiffnessScale` is the ratio of real Young's modulus to yield
 stress that BlockType's normalized material table leaves out, applied to
