@@ -1,0 +1,7 @@
+kind = "field"
+field = "acceptance"
+new = ["Given a scene missing a binding, when WireDemoScene runs, then it reports each miss, leaves the scene unsaved and exits non-zero in batch mode"]
+moved = []
+at = "2026-10-09T16:56:30Z"
+actor = "a-carten"
+rev = 1
