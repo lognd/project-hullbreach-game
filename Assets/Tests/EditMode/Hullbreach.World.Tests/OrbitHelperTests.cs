@@ -11,7 +11,7 @@ namespace Hullbreach.World.Tests
     public class OrbitHelperTests
     {
         [Test]
-        public void CircularOrbitVelocity_HoldsRadius_Within2Percent_Over200Steps()
+        public void TryCircularOrbitVelocity_HoldsRadius_Within2Percent_Over200Steps()
         {
             var field = new GravityField();
             var body = new GravityBody(float2.zero, mu: 400f, radius: 1f, surfaceRestitution: 0.5f);
@@ -24,7 +24,8 @@ namespace Hullbreach.World.Tests
 
             float2 start = new float2(20f, 0f);
             ship.Position = start;
-            ship.Velocity = OrbitHelper.CircularOrbitVelocity(field, bodyIndex: 0, position: start);
+            Assert.IsTrue(OrbitHelper.TryCircularOrbitVelocity(field, 0, start, out var orbitV));
+            ship.Velocity = orbitV;
 
             float startRadius = math.length(start - body.Position);
             float dt = 1f / 60f;
@@ -40,6 +41,22 @@ namespace Hullbreach.World.Tests
 
             Assert.LessOrEqual(maxDeviation, 0.02f,
                 $"orbit radius drifted {maxDeviation:P} from the starting radius over 200 steps");
+        }
+
+        // frob:tests Assets/Scripts/Hullbreach.World/OrbitHelper.cs::OrbitHelper.TryCircularOrbitVelocity
+        [Test]
+        public void TryCircularOrbitVelocity_FailsForBadIndexCenterAndRepellers()
+        {
+            var field = new GravityField();
+            field.Add(new GravityBody(float2.zero, mu: 400f, radius: 1f, surfaceRestitution: 0.5f));
+            field.Add(new GravityBody(new float2(100f, 0f), mu: -40f, radius: 1f, surfaceRestitution: 0.5f));
+
+            Assert.IsFalse(OrbitHelper.TryCircularOrbitVelocity(field, 7, new float2(20f, 0f), out var v));
+            Assert.AreEqual(float2.zero, v);
+            Assert.IsFalse(OrbitHelper.TryCircularOrbitVelocity(field, 0, float2.zero, out _));
+            Assert.IsFalse(OrbitHelper.TryCircularOrbitVelocity(field, 1, new float2(120f, 0f), out v));
+            Assert.AreEqual(float2.zero, v);
+            Assert.IsFalse(float.IsNaN(v.x));
         }
     }
 }
