@@ -1,0 +1,7 @@
+kind = "field"
+field = "acceptance"
+new = ["Given Orienting, when Click(key) is called without Hover, then facing derives from key"]
+moved = []
+at = "2026-10-09T16:53:25Z"
+actor = "stevendangkhoi"
+rev = 1
