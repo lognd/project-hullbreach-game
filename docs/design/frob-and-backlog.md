@@ -8,7 +8,7 @@ ULID ledger entries (v1 ids kept as aliases), `frob.toml` follows the v2
 schema and the strata model is no longer read. What is still open is on
 the frob side, not ours: C# is fidelity F1 in v2 and the other
 frob-tracked gaps listed in the "frob" section of [TODO.md](../../TODO.md)
-and [docs/frob.md](../frob.md#known-gaps-in-frob-0532-on-this-repo).
+and [docs/frob.md](../frob.md#known-gaps-in-frob-0.532.0-on-this-repo).
 The sections below are the original v1-era spec and are kept as history. This page specs the
 three pieces of work that were deferred at the end of the
 [UI port](ui-port.md#7-schedule) and pulled forward: W (frob wiring), C
