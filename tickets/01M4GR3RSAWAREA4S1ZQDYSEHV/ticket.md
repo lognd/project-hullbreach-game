@@ -2,11 +2,12 @@
 id = "01M4GR3RSAWAREA4S1ZQDYSEHV"
 title = "Projectile.OnTriggerEnter2D applies impulse and damage once per block collider hit in the same physics step"
 type = "bug"
-category = "todo"
+category = "done"
+outcome = "fixed"
 priority = "medium"
 reporter = "lognd"
 created = "2026-10-09T16:32:02Z"
-updated = "2026-10-09T17:13:46Z"
+updated = "2026-10-09T17:13:47Z"
 idempotency_key = "audit-game-proj-double-hit"
 labels = ["origin:auditor", "audit:hullbreach-game"]
 scope = ["Assets/Scripts/Hullbreach.Game/Projectile.cs"]
