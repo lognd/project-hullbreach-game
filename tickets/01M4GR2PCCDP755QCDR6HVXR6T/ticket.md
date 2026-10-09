@@ -2,11 +2,12 @@
 id = "01M4GR2PCCDP755QCDR6HVXR6T"
 title = "ServerSimulation.SetInput latest-wins drops the one-tick FirePressed edge"
 type = "bug"
-category = "todo"
+category = "done"
+outcome = "fixed"
 priority = "medium"
 reporter = "lognd"
 created = "2026-10-09T16:31:26Z"
-updated = "2026-10-09T17:10:45Z"
+updated = "2026-10-09T17:11:13Z"
 labels = ["origin:auditor", "audit:ship"]
 scope = ["Assets/Scripts/Hullbreach.Net/ServerSimulation.cs"]
 
