@@ -72,58 +72,65 @@ namespace Hullbreach.Builder
             _redoStack.Clear();
         }
 
-        // Reverses the last action; false when there is nothing to undo.
+        // Reverses the last action; false when there is nothing to undo or
+        // the grid no longer admits it (all-or-nothing; action stays put).
         // frob:doc docs/reference/hullbreach-builder.md#undostack
         public bool TryUndo(BlockGrid grid)
         {
             if (_undoStack.Count == 0) return false;
 
             var action = _undoStack[_undoStack.Count - 1];
+            if (!TryApply(grid, action, reverse: true)) return false;
+
             _undoStack.RemoveAt(_undoStack.Count - 1);
-
-            Apply(grid, action, reverse: true);
-
             _redoStack.Add(action);
             return true;
         }
 
-        // Re-applies the most recently undone action.
+        // Re-applies the most recently undone action; false (action kept)
+        // when there is none or the grid no longer admits it.
         // frob:doc docs/reference/hullbreach-builder.md#undostack
         public bool TryRedo(BlockGrid grid)
         {
             if (_redoStack.Count == 0) return false;
 
             var action = _redoStack[_redoStack.Count - 1];
+            if (!TryApply(grid, action, reverse: false)) return false;
+
             _redoStack.RemoveAt(_redoStack.Count - 1);
-
-            Apply(grid, action, reverse: false);
-
             _undoStack.Add(action);
             return true;
         }
 
-        // Forward (redo) or inverse (undo) effect of one action.
-        static void Apply(BlockGrid grid, Action action, bool reverse)
+        // Forward (redo) or inverse (undo) effect of one action; false and
+        // NO change when any entry cannot apply (e.g. the core, or a grid
+        // edited externally), so the grid and the stacks never diverge.
+        static bool TryApply(BlockGrid grid, Action action, bool reverse)
         {
             // A Place is added on redo and removed on undo; a Remove is
             // removed on redo and restored on undo.
             bool shouldAdd = (action.Kind == Kind.Place && !reverse)
                            || (action.Kind == Kind.Remove && reverse);
 
-            if (shouldAdd)
+            foreach (var entry in action.Entries)
             {
-                foreach (var entry in action.Entries)
-                {
-                    grid.TryAdd(entry.Key, entry.Block);
-                }
+                if (!CanApply(grid, entry, shouldAdd)) return false;
             }
-            else
+
+            foreach (var entry in action.Entries)
             {
-                foreach (var entry in action.Entries)
-                {
-                    grid.TryRemove(entry.Key);
-                }
+                bool ok = shouldAdd ? grid.TryAdd(entry.Key, entry.Block) : grid.TryRemove(entry.Key);
+                if (!ok) throw new System.InvalidOperationException("UndoStack: pre-validated entry failed to apply");
             }
+            return true;
+        }
+
+        // Mirrors TryAdd/TryRemove's refusal rules without mutating.
+        static bool CanApply(BlockGrid grid, Entry entry, bool add)
+        {
+            if (!add) return grid.Contains(entry.Key) && grid.CoreKey != entry.Key;
+            if (grid.Contains(entry.Key)) return false;
+            return entry.Block.TypeId != BlockTypes.Core || !grid.CoreKey.HasValue;
         }
     }
 }

@@ -48,25 +48,25 @@ namespace Hullbreach.Ship.Tests
         }
 
         [Test]
-        public void DoublingMass_HalvesLinearAcceleration()
+        public void MoreMass_ScalesLinearAccelerationInversely()
         {
-            // a = F/M falls straight out of Step; doubling Grid.Mass.Total
-            // isolates that relationship precisely.
+            // a = F/M falls straight out of Step; adding hull mass (thrust
+            // unchanged) isolates that relationship.
             var light = OneOffCenterThruster();
             light.Step(new ShipInput(1f, 0f, false), 1f / 60f);
             float lightAccel = math.length(light.LastLinearAcceleration);
 
             var heavy = OneOffCenterThruster();
-            var heavyMass = heavy.Grid.Mass;
-            heavyMass.Total *= 2f;
-            heavy.Grid.Mass = heavyMass;
+            heavy.Grid.TryAdd(BlockKey.Pack(3, 0), new Block(BlockTypes.Armor));
+            heavy.Grid.TryAdd(BlockKey.Pack(4, 0), new Block(BlockTypes.Armor));
 
             heavy.Step(new ShipInput(1f, 0f, false), 1f / 60f);
             float heavyAccel = math.length(heavy.LastLinearAcceleration);
 
             float ratio = heavyAccel / lightAccel;
-            Assert.AreEqual(0.5f, ratio, 0.01f,
-                "doubling mass must halve linear acceleration for the same thrust");
+            float expected = light.Grid.Mass.Total / heavy.Grid.Mass.Total;
+            Assert.AreEqual(expected, ratio, 0.01f,
+                "linear acceleration must scale inversely with mass for the same thrust");
         }
 
         [Test]

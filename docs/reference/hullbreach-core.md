@@ -42,6 +42,15 @@ TryRemove bump `_structureVersion` (they change the key set); TrySet does
 not (it only rewrites a value in place), so damage accumulation never pays
 for a resort.
 
+TryAdd and TrySet NEVER throw and validate BEFORE any mutation: a TypeId
+outside the table (BlockTypes.IsValid, e.g. a hostile wire byte) returns
+false and leaves the grid, mass and versions untouched. Net callers should
+treat false as a protocol error. TrySet additionally returns false when it
+would create or remove Core-ness (old and new TypeId must agree on being
+Core); CoreKey and the single-core rule belong to TryAdd/TryRemove.
+`Mass` is a get-only copy of the running accumulator. `KeyAt(i)` throws
+ArgumentOutOfRangeException unless 0 <= i < KeyCount.
+
 `CoreKey` is the packed key of the core, or null when this grid is debris.
 A fragment that breaks off has NO core, so connectivity has no root and
 simply does not run for it. This is why the core is nullable rather than
@@ -187,6 +196,7 @@ with something that better matches real ductile softening (TODO D3).
 <!-- describes: Assets/Scripts/Hullbreach.Core/Grid/BlockType.cs::BlockTypes.RetroThruster -->
 <!-- describes: Assets/Scripts/Hullbreach.Core/Grid/BlockType.cs::BlockTypes.Get -->
 <!-- describes: Assets/Scripts/Hullbreach.Core/Grid/BlockType.cs::BlockTypes.Count -->
+<!-- describes: Assets/Scripts/Hullbreach.Core/Grid/BlockType.cs::BlockTypes.IsValid -->
 <!-- describes: Assets/Scripts/Hullbreach.Core/Grid/BlockType.cs::BlockTypes.EffectiveStiffness -->
 <!-- describes: Assets/Scripts/Hullbreach.Core/Grid/BlockType.cs::BlockTypes.SofteningFactor -->
 

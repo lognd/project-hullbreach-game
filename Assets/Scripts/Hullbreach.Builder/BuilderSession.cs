@@ -85,12 +85,16 @@ namespace Hullbreach.Builder
         // frob:doc docs/reference/hullbreach-builder.md#buildersession
         public int BlockCount => Grid.Count;
 
-        // Cancels any pending orientation.
+        // False with no state change for an id outside the BlockTypes table;
+        // otherwise selects it and cancels any pending orientation.
         // frob:doc docs/reference/hullbreach-builder.md#buildersession
-        public void Select(byte typeId)
+        public bool Select(byte typeId)
         {
+            if (!BlockTypes.IsValid(typeId)) return false;
+
             SelectedTypeId = typeId;
             Cancel();
+            return true;
         }
 
         // Previews what would happen at `key` right now; see
@@ -115,6 +119,8 @@ namespace Hullbreach.Builder
         {
             if (State == BuilderState.Orienting)
             {
+                // Self-contained: the facing comes from this click, not a prior Hover.
+                PendingModifiers = FacingTowards(PendingKey, key);
                 return CommitPending();
             }
 
@@ -237,6 +243,7 @@ namespace Hullbreach.Builder
             PlacementVerdict.BlocksFin => "blocks the fin's clearance",
             PlacementVerdict.FinNeedsHull => "a fin needs a hull behind it",
             PlacementVerdict.InsideReservedCell => "sits inside another block's reserved space",
+            PlacementVerdict.UnknownType => "unknown block type",
             _ => "invalid",
         };
 

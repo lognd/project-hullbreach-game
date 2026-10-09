@@ -1,0 +1,7 @@
+kind = "field"
+field = "acceptance"
+new = ["Given the first core placement, when undone, then TryUndo returns false and nothing changes"]
+moved = []
+at = "2026-10-09T16:53:21Z"
+actor = "stevendangkhoi"
+rev = 1

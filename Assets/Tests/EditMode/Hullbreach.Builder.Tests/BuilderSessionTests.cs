@@ -197,5 +197,35 @@ namespace Hullbreach.Builder.Tests
             Assert.IsTrue(session.Click(BlockKey.Pack(0, 0)));
             Assert.IsTrue(grid.Contains(BlockKey.Pack(0, 0)), "placements must be visible on the external grid");
         }
+
+        [Test]
+        public void Select_UnknownTypeId_ReturnsFalseAndKeepsSelection()
+        {
+            var session = new BuilderSession();
+            session.Select(BlockTypes.Hull);
+
+            Assert.IsFalse(session.Select((byte)BlockTypes.Count));
+            Assert.IsFalse(session.Select(255));
+            Assert.AreEqual(BlockTypes.Hull, session.SelectedTypeId);
+            Assert.IsTrue(session.Select(BlockTypes.Core));
+        }
+
+        [Test]
+        public void Click_WhileOrienting_UsesItsOwnKeyNotAPriorHover()
+        {
+            var session = new BuilderSession();
+            session.Select(BlockTypes.Core);
+            session.Click(BlockKey.Pack(0, 0));
+            session.Select(BlockTypes.Hull);
+            session.Click(BlockKey.Pack(1, 0));
+            session.Select(BlockTypes.Cannon);
+            Assert.IsTrue(session.Click(BlockKey.Pack(2, 0)));
+            Assert.AreEqual(BuilderState.Orienting, session.State);
+
+            // No Hover call: the second click alone must pick facing +x.
+            Assert.IsTrue(session.Click(BlockKey.Pack(3, 0)));
+            session.Grid.TryGet(BlockKey.Pack(2, 0), out var cannon);
+            Assert.AreEqual(1, cannon.Modifiers & 3, "facing +x");
+        }
     }
 }

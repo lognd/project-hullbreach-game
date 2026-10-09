@@ -19,6 +19,7 @@ namespace Hullbreach.Builder
         BlocksFin,
         FinNeedsHull,
         InsideReservedCell,
+        UnknownType,
     }
 
     // Placement and removal validity for the two-click builder (S30, S31, S32).
@@ -46,6 +47,12 @@ namespace Hullbreach.Builder
         // frob:doc docs/reference/hullbreach-builder.md#placementrules
         public static bool CanPlace(BlockGrid grid, int key, byte typeId, byte modifiers, out PlacementVerdict why)
         {
+            if (!BlockTypes.IsValid(typeId))
+            {
+                why = PlacementVerdict.UnknownType;
+                return false;
+            }
+
             BlockKey.Unpack(key, out int x, out int y);
             if (!BlockKey.InRange(x, y))
             {
@@ -100,7 +107,8 @@ namespace Hullbreach.Builder
                 int neighborKey = Neighbors[i];
                 if (!grid.TryGet(neighborKey, out Block neighborBlock)) continue;
 
-                Clearance.TryReservedCells(neighborKey, neighborBlock.TypeId, neighborBlock.Modifiers, ReservedScratch);
+                // A neighbor the table cannot describe reserves nothing.
+                if (!Clearance.TryReservedCells(neighborKey, neighborBlock.TypeId, neighborBlock.Modifiers, ReservedScratch)) continue;
                 if (ReservedScratch.Contains(key))
                 {
                     why = PlacementVerdict.InsideReservedCell;
@@ -110,7 +118,11 @@ namespace Hullbreach.Builder
 
             // The new block's own reserved cells (its exhaust, muzzle or
             // clear-ahead space) must be empty.
-            Clearance.TryReservedCells(key, typeId, modifiers, ReservedScratch);
+            if (!Clearance.TryReservedCells(key, typeId, modifiers, ReservedScratch))
+            {
+                why = PlacementVerdict.UnknownType;
+                return false;
+            }
             for (int i = 0; i < ReservedScratch.Count; i++)
             {
                 if (grid.Contains(ReservedScratch[i]))

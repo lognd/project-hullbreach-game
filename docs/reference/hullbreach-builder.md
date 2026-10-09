@@ -75,10 +75,15 @@ verdict re-validates the pending cell with that candidate facing, so an
 orientation that would block its own exhaust/muzzle/fin clearance, or
 lacks a fin's hull anchor, previews as invalid.
 
+`Select` returns false, changing nothing, for a typeId outside the
+BlockTypes table (BlockTypes.IsValid); PlacementRules.CanPlace also refuses
+such ids with the UnknownType verdict as defense in depth.
+
 `Click` is the main two-click gesture: Idle + valid cell commits
 immediately for symmetric types and enters Orienting for asymmetric
 types; while Orienting it commits the pending placement with the facing
-from the last Hover.
+snapped from the pending cell towards the clicked key, so Click is
+self-contained and does not depend on a prior Hover.
 
 `Remove` applies the detach rule and records the whole batch (the
 requested block plus anything it strands) as one undoable action.
@@ -116,9 +121,10 @@ neighbor, Cannon and Fin reserve the cell Facing.Ahead of them, and
 RetroThruster reserves its +x and -x neighbors. Plain blocks
 (Core/Hull/Armor) reserve nothing. A reserved direction that falls
 outside BlockKey's range is simply omitted: there is no cell there to
-ever be occupied, so it is vacuously satisfied. Always returns true; the
-bool return exists so a caller can read this as "the reservation set was
-computed" without special-casing plain types.
+ever be occupied, so it is vacuously satisfied. Returns true when the
+set was computed (an empty set then really means "needs none") and false,
+with the list cleared, for an unknown typeId or out-of-range key;
+PlacementRules turns that into the UnknownType verdict.
 
 `RequiredAnchor` is true when a type requires an anchoring block on some
 fixed side of it (only Fin, whose anchor is Facing.Behind, the hull it
@@ -197,6 +203,12 @@ grid. `TryUndo` reverses the last action: a Place is undone by removing
 its block, a Remove (including a detach batch) is undone by restoring
 every entry exactly. `TryRedo` re-applies the most recently undone
 action.
+
+Undo/redo are all-or-nothing and report failure: if any entry cannot apply
+(undoing the core-seeding Place, since BlockGrid never removes the core, or
+a grid edited externally, e.g. damage removing a block) the grid is left
+untouched, the action stays on its stack, and TryUndo/TryRedo return false,
+so BuilderSession.Undo/Redo do not fire Changed.
 
 <!-- describes: Assets/Scripts/Hullbreach.Builder/UndoStack.cs::UndoStack -->
 <!-- describes: Assets/Scripts/Hullbreach.Builder/UndoStack.cs::UndoStack.MinimumDepth -->
