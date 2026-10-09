@@ -6,9 +6,13 @@ category = "todo"
 priority = "high"
 reporter = "lognd"
 created = "2026-10-09T16:30:36Z"
-updated = "2026-10-09T16:30:36Z"
+updated = "2026-10-09T16:52:55Z"
 labels = ["origin:auditor", "audit:hullbreach-core"]
 scope = ["Assets/Scripts/Hullbreach.Core/Grid/BlockGrid.cs"]
+
+[[acceptance]]
+text = "Given an unknown TypeId, when TryAdd or TrySet is called, then it returns false and the grid is unchanged"
+bound = false
 +++
 
 Contract: TryAdd/TrySet return bool and never throw (BlockGrid.cs:113,174), but BlockTypes.Get(byte) is Table[typeId] (BlockType.cs ~Get) and the table has 7 entries. Net feeds wire bytes straight in: ClientReplica.cs:102,301 and ServerSimulation.cs:102 (new Block(b.TypeId,...)). TypeId>=7 -> IndexOutOfRangeException at BlockGrid.cs:130 AFTER _blocks.Add (l.125) and _structureVersion++ (l.126): block present with no mass accounted, CoreKey possibly set, exception escapes the net handler (remote DoS on client/server). Fix: validate block.TypeId < BlockTypes.Count at top of TryAdd and TrySet and return false (before any mutation); add BlockTypes.IsValid(byte); add Core test with TypeId=255 asserting false and grid unchanged. Callers in Net should then treat false as a protocol error.
