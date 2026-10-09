@@ -64,6 +64,7 @@ flow f_net_core : net -> core { label Internal; attr local; attr "Hullbreach.Net
 flow f_net_ship : net -> ship { label Internal; attr local; attr "Hullbreach.Net.asmdef references Hullbreach.Ship"; }
 flow f_net_structure : net -> structure { label Internal; attr local; attr "Hullbreach.Net.asmdef references Hullbreach.Structure"; }
 flow f_net_world : net -> world { label Internal; attr local; attr "Hullbreach.Net.asmdef references Hullbreach.World"; }
+flow f_net_builder : net -> builder { label Internal; attr local; attr "Hullbreach.Net.asmdef references Hullbreach.Builder"; }
 
 // The one Unity-engine node; the one rule is enforced by ABSENCE of any
 // flow targeting `game` above (see docs/frob.md).
@@ -158,6 +159,7 @@ node net_tests : trusted {
     clearance Internal;
 }
 flow f_net_tests_core : net_tests -> core { label Internal; attr local; attr "Hullbreach.Net.Tests.asmdef references Hullbreach.Core"; }
+flow f_net_tests_builder : net_tests -> builder { label Internal; attr local; attr "Hullbreach.Net.Tests.asmdef references Hullbreach.Builder"; }
 flow f_net_tests_net : net_tests -> net { label Internal; attr local; attr "Hullbreach.Net.Tests.asmdef references Hullbreach.Net"; }
 flow f_net_tests_ship : net_tests -> ship { label Internal; attr local; attr "Hullbreach.Net.Tests.asmdef references Hullbreach.Ship"; }
 flow f_net_tests_structure : net_tests -> structure { label Internal; attr local; attr "Hullbreach.Net.Tests.asmdef references Hullbreach.Structure"; }

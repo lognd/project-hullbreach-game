@@ -42,6 +42,7 @@ too, even though the original design note only called it out for
 | Kind | Channel | Layout (after the kind byte) | Size |
 |---|---|---|---|
 | `InputMessage` | client->server, unreliable | `u16 netId, u32 tick, i8 thrustAxis, i8 steer, u8 flags` | 9 B |
+| `BuildRequest` | client->server, reliable | `i8 x, i8 y, u8 typeId, u8 mods` | 5 B |
 | `ShipSnapshot` | server->client, reliable | `u32 seq, u16 netId, u16 count, {i8 x, i8 y, u8 typeId, u8 mods, u8 damage}[count], i16 px, i16 py, u16 rot, i16 vx, i16 vy, u16 av` | 17 + 5*count B |
 | `ShipState` | server->client, unreliable, ~50 Hz | `u16 netId, i16 px, i16 py, u16 rot, i16 vx, i16 vy, u16 av` | 15 B |
 | `BlockPlaced` | server->client, reliable ordered | `u32 seq, u16 netId, i8 x, i8 y, u8 typeId, u8 mods` | 11 B |
@@ -139,6 +140,30 @@ the newcomer, then broadcasts the newcomer's own ship's snapshot to
 **every** connected peer, including the newcomer itself: a player needs a
 snapshot of their own ship exactly like everyone else does, since the
 server is the only place the authoritative block layout lives.
+
+## Building mid-match
+
+A client never edits a grid; it asks. `BuildRequest` names a cell, a block
+type and facing bits, and nothing else: it carries no ship id, so there is
+no ship id to lie about. `ServerHost` hands it to
+`ServerSimulation.TryPlaceBlock(peer, ...)`, where `peer` is the transport
+peer that sent it, and that peer's own ship is the only grid it can touch.
+
+The server then re-checks everything a client could fake: the peer exists
+and its ship still has blocks (a dead ship cannot re-seed itself with a
+fresh core), the type id is in the block table, the modifier byte holds
+facing bits only (variant and upgrade bits are earned in play, never
+requested), and finally `Hullbreach.Builder.PlacementRules.CanPlace`, the
+exact rule the two-click builder uses, so a mid-match block obeys the same
+validity as a pre-match one (S34 criterion 3). `Hullbreach.Net` therefore
+references `Hullbreach.Builder`; Builder depends only on Core, so there is no
+cycle. A refusal changes nothing, sends nothing and is logged through
+`NetLog` with the reason (`BuildRefusal`, plus the `PlacementVerdict` for a
+rules refusal). There is no refusal message on the wire yet: the requester
+learns of success from the `BlockPlaced` broadcast, which goes to every peer
+including itself, so the opponent sees the block as soon as the reliable
+message arrives and the builder's replica only changes once the server has
+confirmed. Build cost and cooldown (S34-3) are not enforced here yet.
 
 ## The host driver
 

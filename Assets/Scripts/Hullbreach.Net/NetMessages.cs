@@ -22,6 +22,7 @@ namespace Hullbreach.Net
         BlockDamaged = 7,
         PowerupApplied = 8,
         GravityWellSpawned = 9,
+        BuildRequest = 10,
     }
 
     // Client -> server, unreliable: this tick's intent. Latest-wins on drop.
@@ -106,6 +107,60 @@ namespace Hullbreach.Net
             sbyte steer = r.ReadI8();
             byte flags = r.ReadU8();
             return new InputMessage(netId, tick, thrust, steer, flags);
+        }
+    }
+
+    // Client -> server, reliable: "place this block on MY ship". Carries no ship id,
+    // so there is nothing to spoof; the transport peer decides whose grid it edits.
+    // frob:doc docs/reference/hullbreach-net.md#buildrequest
+    public readonly struct BuildRequest
+    {
+        // frob:doc docs/reference/hullbreach-net.md#buildrequest
+        public readonly sbyte X;
+
+        // frob:doc docs/reference/hullbreach-net.md#buildrequest
+        public readonly sbyte Y;
+
+        // frob:doc docs/reference/hullbreach-net.md#buildrequest
+        public readonly byte TypeId;
+
+        // Facing bits only; the server refuses anything else (variants are earned, not requested).
+        // frob:doc docs/reference/hullbreach-net.md#buildrequest
+        public readonly byte Mods;
+
+        // Exact wire size; a receiver rejects any other length before reading.
+        // frob:doc docs/reference/hullbreach-net.md#buildrequest
+        public const int ByteSize = 1 + 1 + 1 + 1 + 1;
+
+        // frob:doc docs/reference/hullbreach-net.md#buildrequest
+        public BuildRequest(sbyte x, sbyte y, byte typeId, byte mods)
+        {
+            X = x;
+            Y = y;
+            TypeId = typeId;
+            Mods = mods;
+        }
+
+        // frob:doc docs/reference/hullbreach-net.md#buildrequest
+        public void Write(ref ByteWriter w)
+        {
+            w.WriteU8((byte)MessageKind.BuildRequest);
+            w.WriteI8(X);
+            w.WriteI8(Y);
+            w.WriteU8(TypeId);
+            w.WriteU8(Mods);
+        }
+
+        // Reads the MessageKind byte too, mirroring Write.
+        // frob:doc docs/reference/hullbreach-net.md#buildrequest
+        public static BuildRequest Read(ref ByteReader r)
+        {
+            r.ReadU8(); // MessageKind
+            sbyte x = r.ReadI8();
+            sbyte y = r.ReadI8();
+            byte typeId = r.ReadU8();
+            byte mods = r.ReadU8();
+            return new BuildRequest(x, y, typeId, mods);
         }
     }
 

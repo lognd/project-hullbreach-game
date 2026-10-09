@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Unity.Mathematics;
+using Hullbreach.Builder;
 using Hullbreach.Core;
 using Hullbreach.Ship;
 using Hullbreach.Ship.Behaviours;
@@ -9,6 +10,18 @@ using Hullbreach.World;
 
 namespace Hullbreach.Net
 {
+    // Why the server refused a BuildRequest; None on success.
+    // frob:doc docs/reference/hullbreach-net.md#buildrefusal
+    public enum BuildRefusal
+    {
+        None,
+        UnknownPeer,
+        ShipDestroyed,
+        UnknownBlockType,
+        ForbiddenModifiers,
+        PlacementRules,
+    }
+
     // The authoritative, plain-C# server loop; see the reference page.
     // frob:doc docs/reference/hullbreach-net.md#serversimulation
     public sealed class ServerSimulation
@@ -124,6 +137,49 @@ namespace Hullbreach.Net
         // Safe to call for an unknown peer (no-op).
         // frob:doc docs/reference/hullbreach-net.md#serversimulation
         public void Leave(int peer) => _peers.Remove(peer);
+
+        // Validates a client's build request with the same PlacementRules the builder
+        // uses, then places and broadcasts; refusals change nothing. See the reference page.
+        // frob:doc docs/reference/hullbreach-net.md#serversimulation
+        public bool TryPlaceBlock(int peer, in BuildRequest request, out BuildRefusal refusal, out PlacementVerdict placement)
+        {
+            placement = PlacementVerdict.Ok;
+            if (!_peers.TryGetValue(peer, out var state))
+            {
+                refusal = BuildRefusal.UnknownPeer;
+                NetLog.Write($"server: build refused for peer {peer}: {refusal}");
+                return false;
+            }
+
+            var grid = state.Ship.Grid;
+            // A ship with no blocks is dead; letting it build would resurrect it with a fresh core.
+            if (grid.Count == 0) return RefuseBuild(peer, request, BuildRefusal.ShipDestroyed, out refusal);
+            if (request.TypeId >= BlockTypes.Count) return RefuseBuild(peer, request, BuildRefusal.UnknownBlockType, out refusal);
+            if ((request.Mods & ~Facing.Mask) != 0) return RefuseBuild(peer, request, BuildRefusal.ForbiddenModifiers, out refusal);
+
+            int key = BlockKey.Pack(request.X, request.Y);
+            if (!PlacementRules.CanPlace(grid, key, request.TypeId, request.Mods, out placement))
+            {
+                refusal = BuildRefusal.PlacementRules;
+                NetLog.Write($"server: build refused for peer {peer} at ({request.X},{request.Y}): {placement}");
+                return false;
+            }
+
+            grid.TryAdd(key, new Block(request.TypeId, request.Mods));
+            state.Ship.RebuildDerivedViews();
+            state.Solver.MarkTopologyChanged();
+            BroadcastReliable(new BlockPlaced(NextSequence(), state.NetId, request.X, request.Y, request.TypeId, request.Mods));
+            NetLog.Write($"server: peer {peer} placed type {request.TypeId} at ({request.X},{request.Y})");
+            refusal = BuildRefusal.None;
+            return true;
+        }
+
+        static bool RefuseBuild(int peer, in BuildRequest request, BuildRefusal why, out BuildRefusal refusal)
+        {
+            refusal = why;
+            NetLog.Write($"server: build refused for peer {peer} at ({request.X},{request.Y}): {why}");
+            return false;
+        }
 
         // Latest-wins; see the reference page.
         // frob:doc docs/reference/hullbreach-net.md#serversimulation
