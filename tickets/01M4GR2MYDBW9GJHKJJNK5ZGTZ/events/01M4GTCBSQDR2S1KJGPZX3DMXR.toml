@@ -1,0 +1,21 @@
+kind = "evidence"
+accepts = [1]
+captured_at = "2026-10-09T17:11:14Z"
+digest = "5e60ac416d10dc402f3b315489b319eec3cdee0248ee082f0188bc78674dc1c7"
+exit_code = 0
+inline = """
+Test run for \\\\wsl.localhost\\Ubuntu-22.04\\tmp\\claude-1000\\-home-logan-projects-project-hullbreach\\4f4062ef-31cf-4df8-bfc8-7c9762f37a9f\\scratchpad\\wt\\game-mcnair\\tools\\plaincs\\Hullbreach.Plain.Tests\\bin\\Release\\net8.0\\Hullbreach.Plain.Tests.dll (.NETCoreApp,Version=v8.0)\r
+A total of 1 test files matched the specified pattern.\r
+\r
+Passed!  - Failed:     0, Passed:     2, Skipped:     0, Total:     2, Duration: 118 ms - Hullbreach.Plain.Tests.dll (net8.0)\r
+\r
+Workload updates are available. Run `dotnet workload list` for more information.\r
+"""
+passed = true
+provider = "command"
+ref = "run_tests.sh --filter FullyQualifiedName~ProjectileHit_HonorsRadius|FullyQualifiedName~CannonProjectile_IgnoresOwner"
+size = 541
+status = "measured"
+at = "2026-10-09T17:11:14Z"
+actor = "mcnairrobotics"
+rev = 1
