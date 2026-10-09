@@ -1,0 +1,11 @@
+kind = "create"
+title = "ServerSimulation.SetInput latest-wins drops the one-tick FirePressed edge"
+type = "bug"
+category = "todo"
+priority = "medium"
+labels = ["origin:auditor", "audit:ship"]
+scope = ["Assets/Scripts/Hullbreach.Net/ServerSimulation.cs"]
+body = "Symbol: ServerSimulation.SetInput (ServerSimulation.cs:130-136) feeding ShipInput.FirePressed. ShipInput documents FirePressed as an EDGE (true only the tick the button goes down), but SetInput overwrites LatestInput, so when two InputMessages arrive between ticks (jitter, 100 ms RTT harness S48-3) the press message is replaced by the following release message and the shot is lost. Also old/out-of-order messages (InputMessage.Tick) are not rejected, so a delayed packet can overwrite newer input. Fix: OR the fire flag into a pending latch cleared when consumed in Tick, and ignore messages whose tick is <= last accepted tick. Add an integration test sending press+release within one tick."
+at = "2026-10-09T16:31:26Z"
+actor = "lognd"
+rev = 1
