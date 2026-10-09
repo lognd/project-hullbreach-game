@@ -2,11 +2,12 @@
 id = "01M4GR2Y7RQYYT7TJVR43Z4XF4"
 title = "Pin tools/plaincs dependency clone to a commit hash"
 type = "security"
-category = "todo"
+category = "done"
+outcome = "fixed"
 priority = "medium"
 reporter = "lognd"
 created = "2026-10-09T16:31:35Z"
-updated = "2026-10-09T17:03:30Z"
+updated = "2026-10-09T17:08:35Z"
 labels = ["origin:auditor", "security"]
 scope = ["tools/plaincs/fetch_deps.sh"]
 
