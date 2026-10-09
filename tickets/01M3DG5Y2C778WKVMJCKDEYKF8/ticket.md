@@ -2,7 +2,8 @@
 id = "01M3DG5Y2C778WKVMJCKDEYKF8"
 title = "S37-1: Stress and load-bearing overlays in ShipRenderer tinting blocks by failure ratio"
 type = "task"
-category = "todo"
+category = "done"
+outcome = "done"
 priority = "critical"
 points = 3
 parent = "01M3DG5Y0TRQYC578FES1WY409"
