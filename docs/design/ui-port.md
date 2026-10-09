@@ -92,7 +92,7 @@ assets), but it has three costs that now matter:
   XML `<summary>` blocks. Every public type/member instead carries a
   `// frob:doc docs/<page>.md#<anchor>` line pointing at a docs/ heading,
   and that heading lists the symbols it documents with one
-  `<!-- frob:describes Assets/Scripts/<Asm>/<File>.cs::<Type>[.<Member>] -->`
+  `<!-- describes: Assets/Scripts/<Asm>/<File>.cs::<Type>[.<Member>] -->`
   line each (mirrors `../platform/docs/index.md`'s convention). frob will
   check these links once it is wired into this repo (see the schedule);
   until then they are just discoverable cross-references.
@@ -103,48 +103,48 @@ assets), but it has three costs that now matter:
 
 #### Hullbreach.Hud module reference
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Hud/HudColor.cs::HudColor -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Hud/HudColor.cs::HudColor.HudColor -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Hud/HudColor.cs::HudColor.ThrustRed -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Hud/HudColor.cs::HudColor.ReverseGreen -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Hud/HudColor.cs::HudColor.SteerWhite -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Hud/HudColor.cs::HudColor.TrackDark -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Hud/HudColor.cs::HudColor.WarningOkGreen -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Hud/HudColor.cs::HudColor.WarningStrainYellow -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Hud/HudColor.cs::HudColor.WarningCriticalRed -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Hud/BuilderHudModel.cs::BuilderHudModel -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Hud/BuilderHudModel.cs::BuilderHudModel.Build -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Hud/HudColor.cs::HudColor.CenterTickGrey -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Hud/FlightTelemetryModel.cs::ChannelBarValue -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Hud/FlightTelemetryModel.cs::ChannelBarValue.Label -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Hud/FlightTelemetryModel.cs::ChannelBarValue.Fill -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Hud/FlightTelemetryModel.cs::ChannelBarValue.Centered -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Hud/FlightTelemetryModel.cs::ChannelBarValue.FillColor -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Hud/FlightTelemetryModel.cs::ChannelBarValue.TrackColor -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Hud/FlightTelemetryModel.cs::FlightTelemetryModel -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Hud/FlightTelemetryModel.cs::FlightTelemetryModel.SpeedLine -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Hud/FlightTelemetryModel.cs::FlightTelemetryModel.Thrust -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Hud/FlightTelemetryModel.cs::FlightTelemetryModel.Reverse -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Hud/FlightTelemetryModel.cs::FlightTelemetryModel.Steer -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Hud/FlightTelemetryModel.cs::FlightTelemetryModel.Build -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Hud/StatusPanelModel.cs::ActivePowerup -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Hud/StatusPanelModel.cs::ActivePowerup.ActivePowerup -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Hud/StatusPanelModel.cs::StatusPanelModel -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Hud/StatusPanelModel.cs::StatusPanelModel.ModeLine -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Hud/StatusPanelModel.cs::StatusPanelModel.ControlLines -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Hud/StatusPanelModel.cs::StatusPanelModel.OverlayLine -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Hud/StatusPanelModel.cs::StatusPanelModel.MassBlocksLine -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Hud/StatusPanelModel.cs::StatusPanelModel.PowerupLines -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Hud/StatusPanelModel.cs::StatusPanelModel.VariantLabel -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Hud/StatusPanelModel.cs::StatusPanelModel.Build -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Hud/HullWarningModel.cs::HullWarning -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Hud/HullWarningModel.cs::HullWarningModel -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Hud/HullWarningModel.cs::HullWarningModel.Headline -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Hud/HullWarningModel.cs::HullWarningModel.Detail -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Hud/HullWarningModel.cs::HullWarningModel.Hint -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Hud/HullWarningModel.cs::HullWarningModel.Color -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Hud/HullWarningModel.cs::HullWarningModel.ShowDetails -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Hud/HullWarningModel.cs::HullWarningModel.Build -->
+<!-- describes: Assets/Scripts/Hullbreach.Hud/HudColor.cs::HudColor -->
+<!-- describes: Assets/Scripts/Hullbreach.Hud/HudColor.cs::HudColor.HudColor -->
+<!-- describes: Assets/Scripts/Hullbreach.Hud/HudColor.cs::HudColor.ThrustRed -->
+<!-- describes: Assets/Scripts/Hullbreach.Hud/HudColor.cs::HudColor.ReverseGreen -->
+<!-- describes: Assets/Scripts/Hullbreach.Hud/HudColor.cs::HudColor.SteerWhite -->
+<!-- describes: Assets/Scripts/Hullbreach.Hud/HudColor.cs::HudColor.TrackDark -->
+<!-- describes: Assets/Scripts/Hullbreach.Hud/HudColor.cs::HudColor.WarningOkGreen -->
+<!-- describes: Assets/Scripts/Hullbreach.Hud/HudColor.cs::HudColor.WarningStrainYellow -->
+<!-- describes: Assets/Scripts/Hullbreach.Hud/HudColor.cs::HudColor.WarningCriticalRed -->
+<!-- describes: Assets/Scripts/Hullbreach.Hud/BuilderHudModel.cs::BuilderHudModel -->
+<!-- describes: Assets/Scripts/Hullbreach.Hud/BuilderHudModel.cs::BuilderHudModel.Build -->
+<!-- describes: Assets/Scripts/Hullbreach.Hud/HudColor.cs::HudColor.CenterTickGrey -->
+<!-- describes: Assets/Scripts/Hullbreach.Hud/FlightTelemetryModel.cs::ChannelBarValue -->
+<!-- describes: Assets/Scripts/Hullbreach.Hud/FlightTelemetryModel.cs::ChannelBarValue.Label -->
+<!-- describes: Assets/Scripts/Hullbreach.Hud/FlightTelemetryModel.cs::ChannelBarValue.Fill -->
+<!-- describes: Assets/Scripts/Hullbreach.Hud/FlightTelemetryModel.cs::ChannelBarValue.Centered -->
+<!-- describes: Assets/Scripts/Hullbreach.Hud/FlightTelemetryModel.cs::ChannelBarValue.FillColor -->
+<!-- describes: Assets/Scripts/Hullbreach.Hud/FlightTelemetryModel.cs::ChannelBarValue.TrackColor -->
+<!-- describes: Assets/Scripts/Hullbreach.Hud/FlightTelemetryModel.cs::FlightTelemetryModel -->
+<!-- describes: Assets/Scripts/Hullbreach.Hud/FlightTelemetryModel.cs::FlightTelemetryModel.SpeedLine -->
+<!-- describes: Assets/Scripts/Hullbreach.Hud/FlightTelemetryModel.cs::FlightTelemetryModel.Thrust -->
+<!-- describes: Assets/Scripts/Hullbreach.Hud/FlightTelemetryModel.cs::FlightTelemetryModel.Reverse -->
+<!-- describes: Assets/Scripts/Hullbreach.Hud/FlightTelemetryModel.cs::FlightTelemetryModel.Steer -->
+<!-- describes: Assets/Scripts/Hullbreach.Hud/FlightTelemetryModel.cs::FlightTelemetryModel.Build -->
+<!-- describes: Assets/Scripts/Hullbreach.Hud/StatusPanelModel.cs::ActivePowerup -->
+<!-- describes: Assets/Scripts/Hullbreach.Hud/StatusPanelModel.cs::ActivePowerup.ActivePowerup -->
+<!-- describes: Assets/Scripts/Hullbreach.Hud/StatusPanelModel.cs::StatusPanelModel -->
+<!-- describes: Assets/Scripts/Hullbreach.Hud/StatusPanelModel.cs::StatusPanelModel.ModeLine -->
+<!-- describes: Assets/Scripts/Hullbreach.Hud/StatusPanelModel.cs::StatusPanelModel.ControlLines -->
+<!-- describes: Assets/Scripts/Hullbreach.Hud/StatusPanelModel.cs::StatusPanelModel.OverlayLine -->
+<!-- describes: Assets/Scripts/Hullbreach.Hud/StatusPanelModel.cs::StatusPanelModel.MassBlocksLine -->
+<!-- describes: Assets/Scripts/Hullbreach.Hud/StatusPanelModel.cs::StatusPanelModel.PowerupLines -->
+<!-- describes: Assets/Scripts/Hullbreach.Hud/StatusPanelModel.cs::StatusPanelModel.VariantLabel -->
+<!-- describes: Assets/Scripts/Hullbreach.Hud/StatusPanelModel.cs::StatusPanelModel.Build -->
+<!-- describes: Assets/Scripts/Hullbreach.Hud/HullWarningModel.cs::HullWarning -->
+<!-- describes: Assets/Scripts/Hullbreach.Hud/HullWarningModel.cs::HullWarningModel -->
+<!-- describes: Assets/Scripts/Hullbreach.Hud/HullWarningModel.cs::HullWarningModel.Headline -->
+<!-- describes: Assets/Scripts/Hullbreach.Hud/HullWarningModel.cs::HullWarningModel.Detail -->
+<!-- describes: Assets/Scripts/Hullbreach.Hud/HullWarningModel.cs::HullWarningModel.Hint -->
+<!-- describes: Assets/Scripts/Hullbreach.Hud/HullWarningModel.cs::HullWarningModel.Color -->
+<!-- describes: Assets/Scripts/Hullbreach.Hud/HullWarningModel.cs::HullWarningModel.ShowDetails -->
+<!-- describes: Assets/Scripts/Hullbreach.Hud/HullWarningModel.cs::HullWarningModel.Build -->
 
 - `HudColor` -- readonly RGBA float struct; the palette constants used
   by the HUD today (thrust red, reverse green, steer white, track dark,
@@ -177,8 +177,8 @@ assets), but it has three costs that now matter:
 
 #### Hullbreach.Game Hud ChannelBar
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/Hud/ChannelBar.cs::ChannelBar -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/Hud/ChannelBar.cs::ChannelBar.Set -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/Hud/ChannelBar.cs::ChannelBar -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/Hud/ChannelBar.cs::ChannelBar.Set -->
 
 - `ChannelBar` -- `Image` fill driven by a 0..1 or centered -1..1 value
   plus label; reusable by any later meter (S45 radar warning, S27 volume).
@@ -190,8 +190,8 @@ assets), but it has three costs that now matter:
 - `BuilderHud` -- rewritten as a view over `BuilderHudModel`; palette
   rows cloned from a row template.
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/Hud/StatusPanelView.cs::StatusPanelView -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/Hud/HullWarningBanner.cs::HullWarningBanner -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/Hud/StatusPanelView.cs::StatusPanelView -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/Hud/HullWarningBanner.cs::HullWarningBanner -->
 
 - `StatusPanelView` -- view over `StatusPanelModel` and
   `FlightTelemetryModel`; owns three nested `ChannelBar` instances
@@ -203,22 +203,22 @@ assets), but it has three costs that now matter:
 
 #### HudPrefabBuilder (Editor)
 
-<!-- frob:describes Assets/Editor/Hullbreach.Editor/HudPrefabBuilder.cs::HudPrefabBuilder -->
-<!-- frob:describes Assets/Editor/Hullbreach.Editor/HudPrefabBuilder.cs::HudPrefabBuilder.HudCanvasPrefabPath -->
-<!-- frob:describes Assets/Editor/Hullbreach.Editor/HudPrefabBuilder.cs::HudPrefabBuilder.BuilderPanelPrefabPath -->
-<!-- frob:describes Assets/Editor/Hullbreach.Editor/HudPrefabBuilder.cs::HudPrefabBuilder.DemoScenePath -->
-<!-- frob:describes Assets/Editor/Hullbreach.Editor/HudPrefabBuilder.cs::HudPrefabBuilder.RebuildDefaultHudPrefabsMenuItem -->
-<!-- frob:describes Assets/Editor/Hullbreach.Editor/HudPrefabBuilder.cs::HudPrefabBuilder.Build -->
-<!-- frob:describes Assets/Editor/Hullbreach.Editor/HudPrefabBuilder.cs::HudPrefabBuilder.BuildForce -->
-<!-- frob:describes Assets/Editor/Hullbreach.Editor/HudPrefabBuilder.cs::HudPrefabBuilder.Run -->
-<!-- frob:describes Assets/Editor/Hullbreach.Editor/HudPrefabBuilder.cs::HudPrefabBuilder.BuildHudCanvasPrefab -->
-<!-- frob:describes Assets/Editor/Hullbreach.Editor/HudPrefabBuilder.cs::HudPrefabBuilder.WireDemoScene -->
-<!-- frob:describes Assets/Editor/Hullbreach.Editor/HudPrefabBuilder.cs::HudPrefabBuilder.ChannelBarPrefabPath -->
-<!-- frob:describes Assets/Editor/Hullbreach.Editor/HudPrefabBuilder.cs::HudPrefabBuilder.BuildChannelBar -->
-<!-- frob:describes Assets/Editor/Hullbreach.Editor/HudPrefabBuilder.cs::HudPrefabBuilder.BuildChannelBarForce -->
-<!-- frob:describes Assets/Editor/Hullbreach.Editor/HudPrefabBuilder.cs::HudPrefabBuilder.BuildChannelBarPrefab -->
-<!-- frob:describes Assets/Editor/Hullbreach.Editor/HudPrefabBuilder.cs::HudPrefabBuilder.StatusPanelPrefabPath -->
-<!-- frob:describes Assets/Editor/Hullbreach.Editor/HudPrefabBuilder.cs::HudPrefabBuilder.HullWarningBannerPrefabPath -->
+<!-- describes: Assets/Editor/Hullbreach.Editor/HudPrefabBuilder.cs::HudPrefabBuilder -->
+<!-- describes: Assets/Editor/Hullbreach.Editor/HudPrefabBuilder.cs::HudPrefabBuilder.HudCanvasPrefabPath -->
+<!-- describes: Assets/Editor/Hullbreach.Editor/HudPrefabBuilder.cs::HudPrefabBuilder.BuilderPanelPrefabPath -->
+<!-- describes: Assets/Editor/Hullbreach.Editor/HudPrefabBuilder.cs::HudPrefabBuilder.DemoScenePath -->
+<!-- describes: Assets/Editor/Hullbreach.Editor/HudPrefabBuilder.cs::HudPrefabBuilder.RebuildDefaultHudPrefabsMenuItem -->
+<!-- describes: Assets/Editor/Hullbreach.Editor/HudPrefabBuilder.cs::HudPrefabBuilder.Build -->
+<!-- describes: Assets/Editor/Hullbreach.Editor/HudPrefabBuilder.cs::HudPrefabBuilder.BuildForce -->
+<!-- describes: Assets/Editor/Hullbreach.Editor/HudPrefabBuilder.cs::HudPrefabBuilder.Run -->
+<!-- describes: Assets/Editor/Hullbreach.Editor/HudPrefabBuilder.cs::HudPrefabBuilder.BuildHudCanvasPrefab -->
+<!-- describes: Assets/Editor/Hullbreach.Editor/HudPrefabBuilder.cs::HudPrefabBuilder.WireDemoScene -->
+<!-- describes: Assets/Editor/Hullbreach.Editor/HudPrefabBuilder.cs::HudPrefabBuilder.ChannelBarPrefabPath -->
+<!-- describes: Assets/Editor/Hullbreach.Editor/HudPrefabBuilder.cs::HudPrefabBuilder.BuildChannelBar -->
+<!-- describes: Assets/Editor/Hullbreach.Editor/HudPrefabBuilder.cs::HudPrefabBuilder.BuildChannelBarForce -->
+<!-- describes: Assets/Editor/Hullbreach.Editor/HudPrefabBuilder.cs::HudPrefabBuilder.BuildChannelBarPrefab -->
+<!-- describes: Assets/Editor/Hullbreach.Editor/HudPrefabBuilder.cs::HudPrefabBuilder.StatusPanelPrefabPath -->
+<!-- describes: Assets/Editor/Hullbreach.Editor/HudPrefabBuilder.cs::HudPrefabBuilder.HullWarningBannerPrefabPath -->
 
 - `HudPrefabBuilder` -- builds the prefabs and wires `DemoScene` (D6).
   U3 adds `AddStatusPanel` and `AddHullWarningBanner`, following

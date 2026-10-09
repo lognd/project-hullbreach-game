@@ -2,21 +2,21 @@
 
 Per-type reference for `Assets/Scripts/Hullbreach.World`, linked from the code by
 `// frob:doc docs/reference/hullbreach-world.md#<anchor>`. One heading per
-public type; each heading carries the `frob:describes` lines for that
+public type; each heading carries the `describes:` lines for that
 type and its public members. Architecture-level context lives in
 [architecture.md](../architecture.md).
 
 ### GravityBody
 
-<!-- frob:describes Assets/Scripts/Hullbreach.World/GravityBody.cs::GravityBody -->
-<!-- frob:describes Assets/Scripts/Hullbreach.World/GravityBody.cs::GravityBody.DefaultSoftRadiusFactor -->
-<!-- frob:describes Assets/Scripts/Hullbreach.World/GravityBody.cs::GravityBody.MinSoftRadius -->
-<!-- frob:describes Assets/Scripts/Hullbreach.World/GravityBody.cs::GravityBody.Position -->
-<!-- frob:describes Assets/Scripts/Hullbreach.World/GravityBody.cs::GravityBody.Mu -->
-<!-- frob:describes Assets/Scripts/Hullbreach.World/GravityBody.cs::GravityBody.Radius -->
-<!-- frob:describes Assets/Scripts/Hullbreach.World/GravityBody.cs::GravityBody.SoftRadius -->
-<!-- frob:describes Assets/Scripts/Hullbreach.World/GravityBody.cs::GravityBody.SurfaceRestitution -->
-<!-- frob:describes Assets/Scripts/Hullbreach.World/GravityBody.cs::GravityBody.GravityBody -->
+<!-- describes: Assets/Scripts/Hullbreach.World/GravityBody.cs::GravityBody -->
+<!-- describes: Assets/Scripts/Hullbreach.World/GravityBody.cs::GravityBody.DefaultSoftRadiusFactor -->
+<!-- describes: Assets/Scripts/Hullbreach.World/GravityBody.cs::GravityBody.MinSoftRadius -->
+<!-- describes: Assets/Scripts/Hullbreach.World/GravityBody.cs::GravityBody.Position -->
+<!-- describes: Assets/Scripts/Hullbreach.World/GravityBody.cs::GravityBody.Mu -->
+<!-- describes: Assets/Scripts/Hullbreach.World/GravityBody.cs::GravityBody.Radius -->
+<!-- describes: Assets/Scripts/Hullbreach.World/GravityBody.cs::GravityBody.SoftRadius -->
+<!-- describes: Assets/Scripts/Hullbreach.World/GravityBody.cs::GravityBody.SurfaceRestitution -->
+<!-- describes: Assets/Scripts/Hullbreach.World/GravityBody.cs::GravityBody.GravityBody -->
 
 One gravitating point mass (a planet, moon, or temporary gravity-gun well):
 position, gravitational parameter (G*M, so the field never has to know G or
@@ -49,18 +49,18 @@ bounce with when it hits the surface.
 
 ### GravityField
 
-<!-- frob:describes Assets/Scripts/Hullbreach.World/GravityField.cs::GravityField -->
-<!-- frob:describes Assets/Scripts/Hullbreach.World/GravityField.cs::GravityField.MaxAcceleration -->
-<!-- frob:describes Assets/Scripts/Hullbreach.World/GravityField.cs::GravityField.Count -->
-<!-- frob:describes Assets/Scripts/Hullbreach.World/GravityField.cs::GravityField.Add -->
-<!-- frob:describes Assets/Scripts/Hullbreach.World/GravityField.cs::GravityField.Remove -->
-<!-- frob:describes Assets/Scripts/Hullbreach.World/GravityField.cs::GravityField.TryGetPermanent -->
-<!-- frob:describes Assets/Scripts/Hullbreach.World/GravityField.cs::GravityField.Clear -->
-<!-- frob:describes Assets/Scripts/Hullbreach.World/GravityField.cs::GravityField.AddTemporary -->
-<!-- frob:describes Assets/Scripts/Hullbreach.World/GravityField.cs::GravityField.Tick -->
-<!-- frob:describes Assets/Scripts/Hullbreach.World/GravityField.cs::GravityField.AccelerationAt -->
-<!-- frob:describes Assets/Scripts/Hullbreach.World/GravityField.cs::GravityField.AccelerationMagnitude -->
-<!-- frob:describes Assets/Scripts/Hullbreach.World/GravityField.cs::GravityField.TryContact -->
+<!-- describes: Assets/Scripts/Hullbreach.World/GravityField.cs::GravityField -->
+<!-- describes: Assets/Scripts/Hullbreach.World/GravityField.cs::GravityField.MaxAcceleration -->
+<!-- describes: Assets/Scripts/Hullbreach.World/GravityField.cs::GravityField.Count -->
+<!-- describes: Assets/Scripts/Hullbreach.World/GravityField.cs::GravityField.Add -->
+<!-- describes: Assets/Scripts/Hullbreach.World/GravityField.cs::GravityField.Remove -->
+<!-- describes: Assets/Scripts/Hullbreach.World/GravityField.cs::GravityField.TryGetPermanent -->
+<!-- describes: Assets/Scripts/Hullbreach.World/GravityField.cs::GravityField.Clear -->
+<!-- describes: Assets/Scripts/Hullbreach.World/GravityField.cs::GravityField.AddTemporary -->
+<!-- describes: Assets/Scripts/Hullbreach.World/GravityField.cs::GravityField.Tick -->
+<!-- describes: Assets/Scripts/Hullbreach.World/GravityField.cs::GravityField.AccelerationAt -->
+<!-- describes: Assets/Scripts/Hullbreach.World/GravityField.cs::GravityField.AccelerationMagnitude -->
+<!-- describes: Assets/Scripts/Hullbreach.World/GravityField.cs::GravityField.TryContact -->
 
 A field of gravitating bodies. Bodies are kept in one dense list (permanent
 bodies added via `Add`, temporary ones via `AddTemporary`) so
@@ -105,8 +105,8 @@ machines and so `ShipBody.ContactsThisStep` is reproducible.
 
 ### OrbitHelper
 
-<!-- frob:describes Assets/Scripts/Hullbreach.World/OrbitHelper.cs::OrbitHelper -->
-<!-- frob:describes Assets/Scripts/Hullbreach.World/OrbitHelper.cs::OrbitHelper.TryCircularOrbitVelocity -->
+<!-- describes: Assets/Scripts/Hullbreach.World/OrbitHelper.cs::OrbitHelper -->
+<!-- describes: Assets/Scripts/Hullbreach.World/OrbitHelper.cs::OrbitHelper.TryCircularOrbitVelocity -->
 
 Helpers for placing something into a circular orbit around a `GravityField`
 body, used by `DemoMode`'s "reset to orbit" key so a player can start (or

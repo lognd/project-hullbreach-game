@@ -21,7 +21,6 @@ namespace Hullbreach.Demo.Tests
             if (_b != null) Object.Destroy(_b);
         }
 
-        // frob:tests Assets/Scripts/Hullbreach.Game/GravityWorld.cs::GravityWorld
         [UnityTest]
         public IEnumerator TemporaryWell_ExpiresInTheClient()
         {
@@ -39,7 +38,6 @@ namespace Hullbreach.Demo.Tests
             Assert.AreEqual(baseline, field.Count, "the temporary well must expire once GravityWorld ticks its field");
         }
 
-        // frob:tests Assets/Scripts/Hullbreach.Game/GravityWorld.cs::GravityWorld
         [UnityTest]
         public IEnumerator DestroyingAStaleInstance_DoesNotBlankTheLiveField()
         {

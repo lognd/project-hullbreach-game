@@ -132,7 +132,6 @@ namespace Hullbreach.Core.Tests
             CollectionAssert.AreEquivalent(keys, components[0]);
         }
 
-        // frob:tests Assets/Scripts/Hullbreach.Core/Grid/BlockKey.cs::BlockKey.Neighbors
         [Test]
         public void FarEdgeCells_AreNotFalselyAdjacent()
         {

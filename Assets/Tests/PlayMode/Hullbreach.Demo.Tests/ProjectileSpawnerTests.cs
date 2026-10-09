@@ -9,7 +9,6 @@ namespace Hullbreach.Demo.Tests
     // Ships created after the spawner's Start must still be wired for shots.
     public sealed class ProjectileSpawnerTests : DemoSceneFixture
     {
-        // frob:tests Assets/Scripts/Hullbreach.Game/ProjectileSpawner.cs::ProjectileSpawner
         [UnityTest]
         public IEnumerator LateShip_IsWiredAndItsShotsSpawnProjectiles()
         {

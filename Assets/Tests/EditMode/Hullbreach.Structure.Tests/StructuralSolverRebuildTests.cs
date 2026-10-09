@@ -32,7 +32,6 @@ namespace Hullbreach.Structure.Tests
             };
         }
 
-        // frob:tests Assets/Scripts/Hullbreach.Structure/StructuralSolver.cs::StructuralSolver.Tick
         [Test]
         public void Damage_TriggersStiffnessRebuild()
         {
@@ -51,7 +50,6 @@ namespace Hullbreach.Structure.Tests
             Assert.IsFalse(solver.ContinuedFromLastTick, "damage changes K, so the solve must restart");
         }
 
-        // frob:tests Assets/Scripts/Hullbreach.Structure/StructuralSolver.cs::StructuralSolver.Tick
         [Test]
         public void RemovedBlock_IsNotListedAsBuckled()
         {

@@ -11,7 +11,6 @@ namespace Hullbreach.Demo.Tests
     // ReplaceBlocks reports what it could not apply instead of dropping blocks silently.
     public sealed class ShipControllerBlocksTests : DemoSceneFixture
     {
-        // frob:tests Assets/Scripts/Hullbreach.Game/ShipController.cs::ShipController.ReplaceBlocks
         [UnityTest]
         public IEnumerator ReplaceBlocks_ReportsRejectedBlocks()
         {

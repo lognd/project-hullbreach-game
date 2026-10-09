@@ -181,7 +181,6 @@ namespace Hullbreach.Ship.Tests
             Assert.AreEqual(1, BlockVariants.Get(block.Modifiers));
         }
 
-        // frob:tests Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.RebuildDerivedViews
         [Test]
         public void PowerupExpiry_DoesNotSurviveBlockRemoval()
         {
@@ -204,7 +203,6 @@ namespace Hullbreach.Ship.Tests
             Assert.AreEqual(2, BlockVariants.Get(block.Modifiers));
         }
 
-        // frob:tests Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.Step
         [Test]
         public void Step_OnEmptyShip_ClearsContactsAndAccumulatedForces()
         {

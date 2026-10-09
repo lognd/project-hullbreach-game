@@ -20,7 +20,6 @@ namespace Hullbreach.Demo.Tests
             return sum;
         }
 
-        // frob:tests Assets/Scripts/Hullbreach.Game/Projectile.cs::Projectile
         [UnityTest]
         public IEnumerator RoundStraddlingTwoBlocks_DamagesOnce()
         {

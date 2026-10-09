@@ -72,7 +72,7 @@ merged back into every open branch.
 The rule is D9 in [ui-port.md](ui-port.md#2-decisions): no XML doc comments,
 `//` comments of one or two lines and only for WHY, and
 `// frob:doc docs/<page>.md#<anchor>` above every public symbol, with a
-matching `<!-- frob:describes Assets/Scripts/<Asm>/<File>.cs::<Sym> -->`
+matching `<!-- describes: Assets/Scripts/<Asm>/<File>.cs::<Sym> -->`
 in the docs page.
 
 - Each owner gets one reference page, `docs/reference/<assembly>.md`

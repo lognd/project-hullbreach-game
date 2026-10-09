@@ -13,7 +13,6 @@ namespace Hullbreach.Demo.Tests
     // blocks must apply once and queue exactly one respawn.
     public sealed class PowerupTests : DemoSceneFixture
     {
-        // frob:tests Assets/Scripts/Hullbreach.Game/Powerup.cs::Powerup
         [UnityTest]
         public IEnumerator PickupStraddlingTwoBlocks_RespawnsOnce()
         {

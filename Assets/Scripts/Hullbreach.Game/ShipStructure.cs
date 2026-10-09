@@ -26,14 +26,14 @@ namespace Hullbreach.Game
         [SerializeField] float loadScale = DefaultLoadScale;
 
         // frob:doc docs/reference/hullbreach-game.md#shipstructure
-        public const float DefaultLoadScale = 0.06f;
+        public const float DefaultLoadScale = StructuralSolver.DefaultLoadScale;
 
         // Forwarded to StructuralSolver.MaterialStiffnessScale in
         // Awake; see the reference page for how this was calibrated.
         [SerializeField] float materialStiffnessScale = DefaultMaterialStiffnessScale;
 
         // frob:doc docs/reference/hullbreach-game.md#shipstructure
-        public const float DefaultMaterialStiffnessScale = 40f;
+        public const float DefaultMaterialStiffnessScale = StructuralSolver.DefaultMaterialStiffnessScale;
 
         // Only the authoritative sim may detach from Solver.BuckledBlocks;
         // see the reference page for why (desync risk).

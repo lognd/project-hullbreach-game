@@ -2,15 +2,15 @@
 
 Per-type reference for `Assets/Scripts/Hullbreach.Ship`, linked from the code by
 `// frob:doc docs/reference/hullbreach-ship.md#<anchor>`. One heading per
-public type; each heading carries the `frob:describes` lines for that
+public type; each heading carries the `describes:` lines for that
 type and its public members. Architecture-level context lives in
 [architecture.md](../architecture.md).
 
 ### BlockFacing
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/BlockFacing.cs::BlockFacing -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/BlockFacing.cs::BlockFacing.Mask -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/BlockFacing.cs::BlockFacing.FromModifiers -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/BlockFacing.cs::BlockFacing -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/BlockFacing.cs::BlockFacing.Mask -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/BlockFacing.cs::BlockFacing.FromModifiers -->
 
 Decodes the low 2 bits of `Block.Modifiers` into a ship-local facing for
 thrusters and cannons. Kept in one place so every system that cares which
@@ -24,9 +24,9 @@ gizmo drawing) agrees on the same encoding: 0 = +y ("up"), 1 = +x, 2 = -y,
 
 ### ThrusterUpgrades
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/ThrusterUpgrades.cs::ThrusterUpgrades -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/ThrusterUpgrades.cs::ThrusterUpgrades.Mask -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/ThrusterUpgrades.cs::ThrusterUpgrades.RampRate -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ThrusterUpgrades.cs::ThrusterUpgrades -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ThrusterUpgrades.cs::ThrusterUpgrades.Mask -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ThrusterUpgrades.cs::ThrusterUpgrades.RampRate -->
 
 Decodes `Modifiers` bits 2-3 (mask `0b1100`) into a throttle ramp rate for
 thrusters, retro thrusters and fins alike: all three ramp their control
@@ -41,12 +41,12 @@ same upgrade encoding so one block-modifier byte can carry both facing
 
 ### ShotRequest
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/ShotRequest.cs::ShotRequest -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/ShotRequest.cs::ShotRequest.Key -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/ShotRequest.cs::ShotRequest.WorldOrigin -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/ShotRequest.cs::ShotRequest.WorldDirection -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/ShotRequest.cs::ShotRequest.Spec -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/ShotRequest.cs::ShotRequest.ShotRequest -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ShotRequest.cs::ShotRequest -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ShotRequest.cs::ShotRequest.Key -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ShotRequest.cs::ShotRequest.WorldOrigin -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ShotRequest.cs::ShotRequest.WorldDirection -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ShotRequest.cs::ShotRequest.Spec -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ShotRequest.cs::ShotRequest.ShotRequest -->
 
 One cannon shot handed off by `ShipBody.Step` for the caller to spawn.
 `ShipBody` only records intent (and applies its own recoil); it never
@@ -55,9 +55,9 @@ drains from `ShipBody.PendingShots`.
 
 ### ProjectileKind
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/ProjectileSpec.cs::ProjectileKind -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/ProjectileSpec.cs::ProjectileKind.None -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/ProjectileSpec.cs::ProjectileKind.GravityWell -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ProjectileSpec.cs::ProjectileKind -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ProjectileSpec.cs::ProjectileKind.None -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ProjectileSpec.cs::ProjectileKind.GravityWell -->
 
 What special payload a projectile carries beyond plain damage. `None` is
 the stock cannon round; `GravityWell` marks a shot whose impact should
@@ -66,12 +66,12 @@ drop a temporary gravity well (positive Mu) or anti-well (negative Mu) via
 
 ### WellSpec
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/ProjectileSpec.cs::WellSpec -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/ProjectileSpec.cs::WellSpec.Mu -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/ProjectileSpec.cs::WellSpec.Radius -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/ProjectileSpec.cs::WellSpec.Seconds -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/ProjectileSpec.cs::WellSpec.WellSpec -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/ProjectileSpec.cs::WellSpec.None -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ProjectileSpec.cs::WellSpec -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ProjectileSpec.cs::WellSpec.Mu -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ProjectileSpec.cs::WellSpec.Radius -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ProjectileSpec.cs::WellSpec.Seconds -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ProjectileSpec.cs::WellSpec.WellSpec -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ProjectileSpec.cs::WellSpec.None -->
 
 Parameters for the temporary gravity well a GravityWell-kind projectile
 drops on impact. Meaningless (and ignored) for `Kind == None`.
@@ -85,17 +85,17 @@ drops on impact. Meaningless (and ignored) for `Kind == None`.
 
 ### ProjectileSpec
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/ProjectileSpec.cs::ProjectileSpec -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/ProjectileSpec.cs::ProjectileSpec.Speed -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/ProjectileSpec.cs::ProjectileSpec.Impulse -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/ProjectileSpec.cs::ProjectileSpec.Damage -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/ProjectileSpec.cs::ProjectileSpec.LifetimeSeconds -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/ProjectileSpec.cs::ProjectileSpec.Radius -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/ProjectileSpec.cs::ProjectileSpec.Kind -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/ProjectileSpec.cs::ProjectileSpec.Well -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/ProjectileSpec.cs::ProjectileSpec.ProjectileSpec -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/ProjectileSpec.cs::ProjectileSpec.Default -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/ProjectileSpec.cs::ProjectileSpec.WithGravityWell -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ProjectileSpec.cs::ProjectileSpec -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ProjectileSpec.cs::ProjectileSpec.Speed -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ProjectileSpec.cs::ProjectileSpec.Impulse -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ProjectileSpec.cs::ProjectileSpec.Damage -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ProjectileSpec.cs::ProjectileSpec.LifetimeSeconds -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ProjectileSpec.cs::ProjectileSpec.Radius -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ProjectileSpec.cs::ProjectileSpec.Kind -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ProjectileSpec.cs::ProjectileSpec.Well -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ProjectileSpec.cs::ProjectileSpec.ProjectileSpec -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ProjectileSpec.cs::ProjectileSpec.Default -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ProjectileSpec.cs::ProjectileSpec.WithGravityWell -->
 
 Immutable description of the projectile a cannon fires. Plain data so the
 demo-scene branch can spawn whatever visual/physics object it wants from a
@@ -112,10 +112,10 @@ demo-scene branch can spawn whatever visual/physics object it wants from a
 
 ### ShipContacts
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/ShipContacts.cs::ShipContacts -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/ShipContacts.cs::ShipContacts.BlockRadius -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/ShipContacts.cs::ShipContacts.Restitution -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/ShipContacts.cs::ShipContacts.Resolve -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ShipContacts.cs::ShipContacts -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ShipContacts.cs::ShipContacts.BlockRadius -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ShipContacts.cs::ShipContacts.Restitution -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ShipContacts.cs::ShipContacts.Resolve -->
 
 Ship-to-ship contact, resolved in plain C# by the same authority that
 integrates the ships.
@@ -148,53 +148,53 @@ in a restitution impulse is not worth an OBB test.
 
 ### ShipBody
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.Grid -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.Position -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.Rotation -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.Velocity -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.AngularVelocity -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.ThrustPerBlock -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.RetroThrustPerBlock -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.FinForce -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.CannonCooldown -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.Projectile -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.Gravity -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.World -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.ContactDamageSpeed -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.ContactDamagePerSpeed -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.Friction -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.AngularDamping -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.ContactClearance -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.ContactsThisStep -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.ThrusterKeys -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.RetroKeys -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.FinKeys -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.WeaponKeys -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.FireRequested -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.PendingShots -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.AppliedForcesThisStep -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.LastLinearAcceleration -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.LastAngularAcceleration -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.RebuildDerivedViews -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.Throttle -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.SteerThrottle -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.ForwardThrottleMean -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.ReverseThrottleMean -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.SteerThrottleMean -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.Step -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.RampThrottleFor -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.TickCooldownFor -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.SetCooldownFor -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.RotateLocalToWorld -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.ApplyPowerup -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.VariantTimeLeft -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.LocalToWorld -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.WorldToLocal -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.WorldVectorToLocal -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.AddForceAtPoint -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.ApplyImpulseAtWorldPoint -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.ApplyDamageAtWorldPoint -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.Grid -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.Position -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.Rotation -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.Velocity -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.AngularVelocity -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.ThrustPerBlock -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.RetroThrustPerBlock -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.FinForce -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.CannonCooldown -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.Projectile -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.Gravity -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.World -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.ContactDamageSpeed -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.ContactDamagePerSpeed -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.Friction -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.AngularDamping -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.ContactClearance -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.ContactsThisStep -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.ThrusterKeys -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.RetroKeys -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.FinKeys -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.WeaponKeys -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.FireRequested -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.PendingShots -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.AppliedForcesThisStep -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.LastLinearAcceleration -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.LastAngularAcceleration -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.RebuildDerivedViews -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.Throttle -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.SteerThrottle -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.ForwardThrottleMean -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.ReverseThrottleMean -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.SteerThrottleMean -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.Step -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.RampThrottleFor -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.TickCooldownFor -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.SetCooldownFor -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.RotateLocalToWorld -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.ApplyPowerup -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.VariantTimeLeft -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.LocalToWorld -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.WorldToLocal -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.WorldVectorToLocal -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.AddForceAtPoint -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.ApplyImpulseAtWorldPoint -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.ApplyDamageAtWorldPoint -->
 
 The ship simulation. PLAIN C# ON PURPOSE: no UnityEngine anywhere in this
 assembly. That constraint buys three things: edit-mode tests that run in
@@ -347,11 +347,11 @@ holding lifecycle and Inspector wiring, and nothing else.
 
 ### ShipInput
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipInput -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipInput.ThrustAxis -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipInput.Steer -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipInput.FirePressed -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipInput.ShipInput -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipInput -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipInput.ThrustAxis -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipInput.Steer -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipInput.FirePressed -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipInput.ShipInput -->
 
 One tick of player intent. A value type, so it is trivially serializable
 for the netcode and trivially constructible in tests.
@@ -363,21 +363,21 @@ for the netcode and trivially constructible in tests.
 
 ### BlockContext
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/Behaviours/BlockContext.cs::BlockContext -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/Behaviours/BlockContext.cs::BlockContext.Ship -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/Behaviours/BlockContext.cs::BlockContext.Key -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/Behaviours/BlockContext.cs::BlockContext.Block -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/Behaviours/BlockContext.cs::BlockContext.LocalCenter -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/Behaviours/BlockContext.cs::BlockContext.WorldCenter -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/Behaviours/BlockContext.cs::BlockContext.Facing -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/Behaviours/BlockContext.cs::BlockContext.Dt -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/Behaviours/BlockContext.cs::BlockContext.Input -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/Behaviours/BlockContext.cs::BlockContext.World -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/Behaviours/BlockContext.cs::BlockContext.AddForceLocal -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/Behaviours/BlockContext.cs::BlockContext.Throttle -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/Behaviours/BlockContext.cs::BlockContext.TickCooldown -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/Behaviours/BlockContext.cs::BlockContext.ResetCooldown -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/Behaviours/BlockContext.cs::BlockContext.Fire -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/Behaviours/BlockContext.cs::BlockContext -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/Behaviours/BlockContext.cs::BlockContext.Ship -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/Behaviours/BlockContext.cs::BlockContext.Key -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/Behaviours/BlockContext.cs::BlockContext.Block -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/Behaviours/BlockContext.cs::BlockContext.LocalCenter -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/Behaviours/BlockContext.cs::BlockContext.WorldCenter -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/Behaviours/BlockContext.cs::BlockContext.Facing -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/Behaviours/BlockContext.cs::BlockContext.Dt -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/Behaviours/BlockContext.cs::BlockContext.Input -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/Behaviours/BlockContext.cs::BlockContext.World -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/Behaviours/BlockContext.cs::BlockContext.AddForceLocal -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/Behaviours/BlockContext.cs::BlockContext.Throttle -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/Behaviours/BlockContext.cs::BlockContext.TickCooldown -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/Behaviours/BlockContext.cs::BlockContext.ResetCooldown -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/Behaviours/BlockContext.cs::BlockContext.Fire -->
 
 Everything an `IBlockBehaviour` needs to act for one block on one Step,
 bundled so `ShipBody.Step` can fill in one instance per block without
@@ -408,8 +408,8 @@ stored past the call that filled it in.
 
 ### IBlockBehaviour
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/Behaviours/IBlockBehaviour.cs::IBlockBehaviour -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/Behaviours/IBlockBehaviour.cs::IBlockBehaviour.Step -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/Behaviours/IBlockBehaviour.cs::IBlockBehaviour -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/Behaviours/IBlockBehaviour.cs::IBlockBehaviour.Step -->
 
 One block's per-Step logic. This is the entire extension point: a new
 weapon or thruster variant is one class implementing this interface plus
@@ -421,11 +421,11 @@ switch case.
 
 ### IWorldSink
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/Behaviours/IWorldSink.cs::IWorldSink -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/Behaviours/IWorldSink.cs::IWorldSink.SpawnProjectile -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/Behaviours/IWorldSink.cs::IWorldSink.AddTemporaryGravity -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/Behaviours/IWorldSink.cs::IWorldSink.TryNearestEnemy -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/Behaviours/IWorldSink.cs::IWorldSink.Ships -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/Behaviours/IWorldSink.cs::IWorldSink -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/Behaviours/IWorldSink.cs::IWorldSink.SpawnProjectile -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/Behaviours/IWorldSink.cs::IWorldSink.AddTemporaryGravity -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/Behaviours/IWorldSink.cs::IWorldSink.TryNearestEnemy -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/Behaviours/IWorldSink.cs::IWorldSink.Ships -->
 
 Everything a block behaviour needs from "the rest of the world": spawning
 projectiles, dropping temporary gravity wells, and finding targets.
@@ -444,12 +444,12 @@ UnityEngine and testable with `NullWorldSink`.
 
 ### NullWorldSink
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/Behaviours/NullWorldSink.cs::NullWorldSink -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/Behaviours/NullWorldSink.cs::NullWorldSink.Instance -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/Behaviours/NullWorldSink.cs::NullWorldSink.SpawnProjectile -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/Behaviours/NullWorldSink.cs::NullWorldSink.AddTemporaryGravity -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/Behaviours/NullWorldSink.cs::NullWorldSink.TryNearestEnemy -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/Behaviours/NullWorldSink.cs::NullWorldSink.Ships -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/Behaviours/NullWorldSink.cs::NullWorldSink -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/Behaviours/NullWorldSink.cs::NullWorldSink.Instance -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/Behaviours/NullWorldSink.cs::NullWorldSink.SpawnProjectile -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/Behaviours/NullWorldSink.cs::NullWorldSink.AddTemporaryGravity -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/Behaviours/NullWorldSink.cs::NullWorldSink.TryNearestEnemy -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/Behaviours/NullWorldSink.cs::NullWorldSink.Ships -->
 
 The do-nothing `IWorldSink`: every `ShipBody` defaults to this so tests
 (and any ship never wired to a real game scene) can `Step` without a null
@@ -461,10 +461,10 @@ no-ops; `TryNearestEnemy` always fails; `Ships` is always empty.
 
 ### BehaviourRegistry
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/Behaviours/BehaviourRegistry.cs::BehaviourRegistry -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/Behaviours/BehaviourRegistry.cs::BehaviourRegistry.Register -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/Behaviours/BehaviourRegistry.cs::BehaviourRegistry.Resolve -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/Behaviours/BehaviourRegistry.cs::BehaviourRegistry.RegisterDefaults -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/Behaviours/BehaviourRegistry.cs::BehaviourRegistry -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/Behaviours/BehaviourRegistry.cs::BehaviourRegistry.Register -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/Behaviours/BehaviourRegistry.cs::BehaviourRegistry.Resolve -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/Behaviours/BehaviourRegistry.cs::BehaviourRegistry.RegisterDefaults -->
 
 The `(TypeId, VariantId) -> IBlockBehaviour` table. This is the whole
 extension mechanism: a new weapon or thruster registers itself here once
@@ -489,24 +489,24 @@ with no explicit setup call needed.
 
 ### ForwardThrusterBehaviour
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/Behaviours/ForwardThrusterBehaviour.cs::ForwardThrusterBehaviour -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/Behaviours/ForwardThrusterBehaviour.cs::ForwardThrusterBehaviour.Step -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/Behaviours/ForwardThrusterBehaviour.cs::ForwardThrusterBehaviour -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/Behaviours/ForwardThrusterBehaviour.cs::ForwardThrusterBehaviour.Step -->
 
 The stock forward thruster: ramps toward full throttle while
 `ThrustAxis > 0` and pushes straight ship-local +y. Thruster variant 0.
 
 ### RetroThrusterBehaviour
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/Behaviours/RetroThrusterBehaviour.cs::RetroThrusterBehaviour -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/Behaviours/RetroThrusterBehaviour.cs::RetroThrusterBehaviour.Step -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/Behaviours/RetroThrusterBehaviour.cs::RetroThrusterBehaviour -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/Behaviours/RetroThrusterBehaviour.cs::RetroThrusterBehaviour.Step -->
 
 The stock retro thruster: ramps toward full throttle while
 `ThrustAxis < 0` and pushes ship-local -y. RetroThruster variant 0.
 
 ### SeekingThrusterBehaviour
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/Behaviours/SeekingThrusterBehaviour.cs::SeekingThrusterBehaviour -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/Behaviours/SeekingThrusterBehaviour.cs::SeekingThrusterBehaviour.Step -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/Behaviours/SeekingThrusterBehaviour.cs::SeekingThrusterBehaviour -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/Behaviours/SeekingThrusterBehaviour.cs::SeekingThrusterBehaviour.Step -->
 
 Thruster variant 1, the "inconvenient thruster": ramps like a normal
 forward thruster while `ThrustAxis > 0`, but pushes toward the nearest
@@ -517,8 +517,8 @@ lone ship in the world).
 
 ### FinBehaviour
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/Behaviours/FinBehaviour.cs::FinBehaviour -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/Behaviours/FinBehaviour.cs::FinBehaviour.Step -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/Behaviours/FinBehaviour.cs::FinBehaviour -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/Behaviours/FinBehaviour.cs::FinBehaviour.Step -->
 
 The stock control fin: ramps its own throttle toward the steer channel
 target, then pushes perpendicular to its facing with a sign chosen so the
@@ -529,9 +529,9 @@ torque fade out smoothly after the steer key is released. Fin variant 0.
 
 ### CannonBehaviourBase
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/Behaviours/CannonBehaviourBase.cs::CannonBehaviourBase -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/Behaviours/CannonBehaviourBase.cs::CannonBehaviourBase.BuildSpec -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/Behaviours/CannonBehaviourBase.cs::CannonBehaviourBase.Step -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/Behaviours/CannonBehaviourBase.cs::CannonBehaviourBase -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/Behaviours/CannonBehaviourBase.cs::CannonBehaviourBase.BuildSpec -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/Behaviours/CannonBehaviourBase.cs::CannonBehaviourBase.Step -->
 
 Shared fire-control for every cannon variant: ticks the per-block
 cooldown, and on `FirePressed` while ready, builds the muzzle
@@ -549,19 +549,19 @@ shot.
 
 ### CannonBehaviour
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/Behaviours/CannonBehaviour.cs::CannonBehaviour -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/Behaviours/CannonBehaviour.cs::CannonBehaviour.BuildSpec -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/Behaviours/CannonBehaviour.cs::CannonBehaviour -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/Behaviours/CannonBehaviour.cs::CannonBehaviour.BuildSpec -->
 
 The stock cannon: fires the ship's own Projectile spec unchanged. Cannon
 variant 0.
 
 ### GravityGunBehaviour
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/Behaviours/GravityGunBehaviour.cs::GravityGunBehaviour -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/Behaviours/GravityGunBehaviour.cs::GravityGunBehaviour.WellMu -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/Behaviours/GravityGunBehaviour.cs::GravityGunBehaviour.WellRadius -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/Behaviours/GravityGunBehaviour.cs::GravityGunBehaviour.WellSeconds -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/Behaviours/GravityGunBehaviour.cs::GravityGunBehaviour.BuildSpec -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/Behaviours/GravityGunBehaviour.cs::GravityGunBehaviour -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/Behaviours/GravityGunBehaviour.cs::GravityGunBehaviour.WellMu -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/Behaviours/GravityGunBehaviour.cs::GravityGunBehaviour.WellRadius -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/Behaviours/GravityGunBehaviour.cs::GravityGunBehaviour.WellSeconds -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/Behaviours/GravityGunBehaviour.cs::GravityGunBehaviour.BuildSpec -->
 
 Cannon variant 1: fires a shot flagged GravityWell with a positive-Mu
 `WellSpec`, so on impact the game drops a short-lived ATTRACTING well at
@@ -569,11 +569,11 @@ the hit point (via `IWorldSink.AddTemporaryGravity`).
 
 ### AntiGravityGunBehaviour
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/Behaviours/AntiGravityGunBehaviour.cs::AntiGravityGunBehaviour -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/Behaviours/AntiGravityGunBehaviour.cs::AntiGravityGunBehaviour.WellMu -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/Behaviours/AntiGravityGunBehaviour.cs::AntiGravityGunBehaviour.WellRadius -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/Behaviours/AntiGravityGunBehaviour.cs::AntiGravityGunBehaviour.WellSeconds -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Ship/Behaviours/AntiGravityGunBehaviour.cs::AntiGravityGunBehaviour.BuildSpec -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/Behaviours/AntiGravityGunBehaviour.cs::AntiGravityGunBehaviour -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/Behaviours/AntiGravityGunBehaviour.cs::AntiGravityGunBehaviour.WellMu -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/Behaviours/AntiGravityGunBehaviour.cs::AntiGravityGunBehaviour.WellRadius -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/Behaviours/AntiGravityGunBehaviour.cs::AntiGravityGunBehaviour.WellSeconds -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/Behaviours/AntiGravityGunBehaviour.cs::AntiGravityGunBehaviour.BuildSpec -->
 
 Cannon variant 2: fires a shot flagged GravityWell with a negative-Mu
 `WellSpec`, so on impact the game drops a short-lived REPULSING well at
