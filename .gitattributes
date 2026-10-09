@@ -180,3 +180,11 @@ LightingData.asset     binary
 
 # Shell scripts must stay LF or bash on WSL/Linux sees "bash\r".
 *.sh                    text eol=lf
+
+# frob v2 ledger: merge by unioning events and refolding (driver installed
+# by `frob init`). The tree must stay LF: frob rejects CRLF ticket files,
+# and core.autocrlf=true on Windows would otherwise rewrite them.
+tickets/**                      text eol=lf
+tickets/**/ticket.md            merge=frob-ledger
+tickets/_milestones/*/milestone.md merge=frob-ledger
+tickets/_cycles/*/cycle.md merge=frob-ledger
