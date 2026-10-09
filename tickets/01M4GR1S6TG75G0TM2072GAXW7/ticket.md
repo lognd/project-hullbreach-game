@@ -2,11 +2,12 @@
 id = "01M4GR1S6TG75G0TM2072GAXW7"
 title = "Authoritative ServerSimulation never configures LoadScale/MaterialStiffnessScale, so server stress and buckling disagree with client"
 type = "bug"
-category = "todo"
+category = "done"
+outcome = "fixed"
 priority = "high"
 reporter = "lognd"
 created = "2026-10-09T16:30:57Z"
-updated = "2026-10-09T17:11:43Z"
+updated = "2026-10-09T17:12:11Z"
 labels = ["origin:auditor", "audit:hullbreach-structure"]
 scope = ["Assets/Scripts/Hullbreach.Net/ServerSimulation.cs"]
 
