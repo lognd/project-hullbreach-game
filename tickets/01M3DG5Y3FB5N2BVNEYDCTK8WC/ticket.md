@@ -15,11 +15,11 @@ scope = ["Assets/Scripts/Hullbreach.Net/ITransport.cs"]
 
 [[acceptance]]
 text = "Given the netcode assemblies, when a component other than a demo composition root sends or receives, then it does so only through ITransport (ServerHost, ClientReplica pumps, the server outbox forwarding), so another transport can replace LoopbackTransport without touching game code"
-bound = false
+bound = true
 
 [[acceptance]]
 text = "Given the full server-to-clients pipeline run with the transport typed only as ITransport, when the edit-mode suite runs, then the end-to-end, host and throttled-link tests pass"
-bound = false
+bound = true
 +++
 
 Transport behind an interface so the C# socket layer can be replaced
