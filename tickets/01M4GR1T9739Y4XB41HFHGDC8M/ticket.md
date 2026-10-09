@@ -6,7 +6,7 @@ category = "todo"
 priority = "medium"
 reporter = "lognd"
 created = "2026-10-09T16:30:58Z"
-updated = "2026-10-09T16:56:31Z"
+updated = "2026-10-09T16:56:44Z"
 labels = ["origin:auditor"]
 scope = ["Assets/Scripts/Hullbreach.Hud/HullWarningModel.cs"]
 
