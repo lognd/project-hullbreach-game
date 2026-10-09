@@ -126,6 +126,12 @@ and `DemoMode`/`ShipController` read it lazily (null-safe) rather than
 requiring load order: there is exactly one `GravityWorld` in any scene that
 uses gravity, same convention as the rest of the demo.
 
+`GravityWorld` also ticks its field in `FixedUpdate`, so temporary wells
+(`GravityField.AddTemporary`, e.g. projectile and gun wells) expire in the
+client; the server ticks its own field. `OnDestroy` clears the static
+`Field` only if it is still the field this instance published, so destroying
+a stale or duplicate `GravityWorld` cannot blank the live one.
+
 ### PlanetSpec
 
 <!-- frob:describes Assets/Scripts/Hullbreach.Game/GravityWorld.cs::PlanetSpec -->
