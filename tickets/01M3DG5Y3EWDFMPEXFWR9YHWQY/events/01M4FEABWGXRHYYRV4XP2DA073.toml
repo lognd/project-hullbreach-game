@@ -1,0 +1,8 @@
+kind = "field"
+field = "acceptance"
+old = ["Given a LoopbackTransport configured by the throttled profile, when pings are echoed and unreliable messages are sent in bulk, then the measured round trip is 100 ms within one tick and the unreliable loss rate is about 2 percent", "Given a server and two clients on the throttled link flying a scripted course, when it runs for several seconds, then each replica's pose stays within a bounded number of ticks of the server's, never jumps by more than a bounded multiple of one tick's motion, and equals the server's pose once the ships stop", "Given reliable build, damage and detach events under the throttled link, when the link settles, then every replica's block grid for every ship equals the server's"]
+new = ["Given a LoopbackTransport configured by the throttled profile, when pings are echoed and unreliable messages are sent in bulk, then the measured round trip is 100 ms within one tick and the unreliable loss rate is about 2 percent", "Given reliable build, damage and detach events under the throttled link, when the link settles, then every replica's block grid for every ship equals the server's", "Given a server and two clients on the throttled link flying a scripted course, when it runs for ten seconds, then each client's own-ship pose always matches a recent server pose within a bounded number of ticks and never jumps by more than a bounded multiple of one tick's motion"]
+moved = [1, 0, 2]
+at = "2026-10-09T04:21:38Z"
+actor = "mcnairrobotics"
+rev = 1
