@@ -84,12 +84,14 @@ namespace Hullbreach.Net.Tests
         public uint ClientTick { get; private set; }
 
         // With pumpClients false the test reads the client endpoints itself and the replicas stay empty.
+        // spareIds burns that many endpoint ids first, pushing peer ids clear of the small ids fragments get.
         // frob:doc docs/testing.md#throttled-connection-harness
-        public NetRig(LinkProfile link, int seed = 1, bool pumpClients = true)
+        public NetRig(LinkProfile link, int seed = 1, bool pumpClients = true, int spareIds = 0)
         {
             _pumpClients = pumpClients;
             Hub = new LoopbackTransport(seed);
             link.ApplyTo(Hub);
+            for (int i = 0; i < spareIds; i++) Hub.CreateEndpoint(out _);
             ServerEndpoint = Hub.CreateEndpoint(out ServerId);
             ClientA = Hub.CreateEndpoint(out IdA);
             ClientB = Hub.CreateEndpoint(out IdB);
