@@ -6,7 +6,7 @@ category = "todo"
 priority = "medium"
 reporter = "lognd"
 created = "2026-10-09T16:30:40Z"
-updated = "2026-10-09T16:30:40Z"
+updated = "2026-10-09T16:50:57Z"
 labels = ["origin:auditor", "audit:hullbreach-core"]
 scope = ["Assets/Scripts/Hullbreach.Core/Grid/BlockKey.cs"]
 +++
