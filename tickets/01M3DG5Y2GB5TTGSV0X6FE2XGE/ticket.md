@@ -2,13 +2,14 @@
 id = "01M3DG5Y2GB5TTGSV0X6FE2XGE"
 title = "S38-2: BucklingAnalysis and GeometricStiffness for compressive failure"
 type = "task"
-category = "todo"
+category = "done"
+outcome = "done"
 priority = "critical"
 points = 5
 parent = "01M3DG5Y0V6ZWSJZQW0H5VM80Z"
 reporter = "human"
 created = "2026-09-26T00:00:00Z"
-updated = "2026-10-09T04:18:19Z"
+updated = "2026-10-09T04:20:19Z"
 aliases = ["T-0080"]
 labels = ["jira:SCRUM-159", "owner:GingerVHS", "game", "physics", "milestone:0.2.0"]
 scope = ["Assets/Scripts/Hullbreach.Structure/Fem/**", "Assets/Tests/EditMode/Hullbreach.Structure.Tests/**"]
