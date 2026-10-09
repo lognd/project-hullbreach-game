@@ -1,0 +1,12 @@
+kind = "create"
+title = "Q8Element rigid-mode test via symmetric eigensolver"
+type = "task"
+category = "todo"
+priority = "medium"
+labels = ["owner:GingerVHS", "game", "physics"]
+scope = ["Assets/Tests/EditMode/Hullbreach.Structure.Tests/Q8ElementTests.cs"]
+acceptance = ["Q8ElementTests asserts exactly three zero eigenvalues of the element stiffness using a symmetric eigensolver, replacing the two rigid-mode tests it supersedes"]
+body = "Optional test hardening left as a TODO [C2] comment in Q8ElementTests.cs; DenseJacobiEigen already exists in Structure/Fem."
+at = "2026-10-09T04:02:25Z"
+actor = "mcnairrobotics"
+rev = 1
