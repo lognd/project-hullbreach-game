@@ -213,6 +213,10 @@ holding lifecycle and Inspector wiring, and nothing else.
   RocketScene, which never wires one up). Set by the caller
   (`ShipController.Awake`) rather than owned here, so the same `ShipBody`
   can be dropped into a field-less test without a stub.
+- `Arena`: the `ArenaBounds` this ship is kept inside, or null for an
+  unbounded arena. Applied in `Step` right after integrating forces, as a
+  direct velocity change (not a force), so it never reaches the structural
+  solver; see [ArenaBounds](hullbreach-world.md#arenabounds).
 - `World`: the game-side sink block behaviours use for spawning
   projectiles, dropping temporary gravity, and finding targets. Defaults
   to `NullWorldSink` so a `ShipBody` built by a test (or the headless

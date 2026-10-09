@@ -45,6 +45,11 @@ namespace Hullbreach.Net
         // frob:doc docs/reference/hullbreach-net.md#serversimulation
         public GravityField Gravity => _gravity;
 
+        // Null for an unbounded arena. Handed to every ship each tick so a
+        // late change reaches ships that joined earlier.
+        // frob:doc docs/reference/hullbreach-net.md#serversimulation
+        public ArenaBounds Arena { get; set; }
+
         sealed class PeerState
         {
             public ushort NetId;
@@ -213,6 +218,7 @@ namespace Hullbreach.Net
                     : new ShipInput(0f, 0f, false);
                 state.HasFreshInput = false;
 
+                state.Ship.Arena = Arena;
                 state.Ship.Step(input, dt);
                 DrainShots(peer, state.Ship);
 

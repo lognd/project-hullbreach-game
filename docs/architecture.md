@@ -203,6 +203,11 @@ server's own tick loop). In order:
    `Rigidbody2D` will eventually feel if/when the two are reconciled (see
    `docs/roadmap.md`'s engineering-debt note on `Rigidbody2D` being driven,
    not simulated).
+   If `ShipBody.Arena` is set, its `ArenaBounds.PushBackAcceleration` is
+   then added to `Velocity` directly (a soft spring back toward the arena
+   edge, damped only while moving outward). It bypasses the force
+   accumulator on purpose, so leaving the arena never loads the structure
+   or damages a block.
 8. **Clear the force/torque accumulators** for the next tick.
 9. **`ResolvePlanetContacts(dt)`**: after integration, tests every block
    center against `Gravity` for surface penetration, pushes the ship out

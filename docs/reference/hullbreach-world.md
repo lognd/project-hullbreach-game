@@ -103,6 +103,29 @@ machines and so `ShipBody.ContactsThisStep` is reproducible.
   (`Radius + clearance - distance`; positive means penetrating). False
   (with default outs) when no body is in range.
 
+### ArenaBounds
+
+A circular arena edge (`Center`, `Radius`) that returns a point to the
+inside with a soft spring instead of a wall or damage (S41, T-0089).
+Immutable, so one instance is shared by every `ShipBody` on a client and by
+`ServerSimulation`, which is what keeps prediction and the authoritative
+step in agreement. Inside `Radius` it does nothing.
+
+- `PushBackAcceleration(point, velocity)`: zero inside; outside, an inward
+  spring `Stiffness * (distance - Radius)` plus damping `Damping` times the
+  OUTWARD speed only, clamped to `MaxAcceleration` (units/s^2). Damping is
+  one-sided on purpose: going out the point is critically damped (the
+  defaults make `Stiffness == Damping`, so it stops within a few units of
+  the line); coming back the spring is undamped, so the point crosses the
+  edge moving inward and ends up inside rather than creeping toward the
+  line forever.
+- `Contains`: whether a point is inside or on the edge.
+- `ShipBody.Arena` adds this acceleration to `Velocity` directly, never to
+  the force accumulator, `LastLinearAcceleration` or `AppliedForcesThisStep`:
+  the structural solver therefore sees no load from the push-back and no
+  block takes damage from it. The point tested is the ship's center of
+  mass.
+
 ### OrbitHelper
 
 <!-- frob:describes Assets/Scripts/Hullbreach.World/OrbitHelper.cs::OrbitHelper -->
