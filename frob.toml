@@ -72,8 +72,8 @@ intangible_share = 0.2
 [pm.wip]
 # Most tickets one holder (actor plus worktree path) may have in progress; 1 makes an agent finish before starting another, 0 is off.
 in_progress_per_identity = 1
-# Most tickets in progress in the repository at once, sized to what the machine can build; the default 2 matches the two-builder rule, and 0 is off.
-in_progress = 2
+# Five owners work in parallel, one ticket each (was the 2-builder default).
+in_progress = 5
 
 [release]
 # When true, a CI result that cannot be read (no checks, `gh` missing or unauthenticated, no network, non-GitHub remote) blocks the release like a red one; false reports it as Unresolved only. Unknown is never treated as green.
@@ -90,5 +90,6 @@ preview = []
 ref = "refs/heads/main"
 # Name of the orphan branch `frob ticket branch init` creates for the ledger (`mirror.md` section 1).
 branch = "frob-tickets"
+# main is PR-only (CONTRIBUTING.md), so ledger commits go to the working branch and travel in the PR.
 # `trunk` commits to `ref`; `branch` commits to the checked-out branch.
-ref_mode = "trunk"
+ref_mode = "branch"
