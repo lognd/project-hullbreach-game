@@ -6,7 +6,7 @@ category = "todo"
 priority = "medium"
 reporter = "lognd"
 created = "2026-10-09T16:30:57Z"
-updated = "2026-10-09T16:56:32Z"
+updated = "2026-10-09T16:56:43Z"
 labels = ["origin:auditor"]
 scope = ["Assets/Scripts/Hullbreach.Hud/FlightTelemetryModel.cs"]
 
