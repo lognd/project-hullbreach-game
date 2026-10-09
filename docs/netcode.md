@@ -140,6 +140,28 @@ too, even though the original design note only called it out for
 | `BlockDamaged` | server->client, reliable | `u32 seq, u16 netId, i8 x, i8 y, u8 damage` | 10 B |
 | `PowerupApplied` | server->client, reliable | `u32 seq, u16 netId, i8 x, i8 y, u8 variant, u16 seconds10` | 12 B |
 | `GravityWellSpawned` | server->client, reliable | `i16 px, i16 py, i16 mu, u8 radius, u16 seconds10` | 10 B |
+| `ShipRemoved` | server->client, reliable ordered | `u32 seq, u16 netId` | 7 B |
+
+### Decoding untrusted bytes
+
+Decoding never trusts the sender (INV-001). `ByteReader` is constructed
+with the received length and, instead of throwing or reading stale bytes,
+sets `Failed` on any overrun. `ShipSnapshot.Read` refuses a count above
+`ShipSnapshot.MaxBlocks` (4096) or larger than the bytes that actually
+arrived before it allocates, and `Write` throws instead of wrapping the u16
+count. `ClientReplica.ApplyReceived` honors `length`, rejects kinds a
+server never sends (including `Input`) and returns a `ReplicaApplyResult`
+rather than throwing.
+
+### Identity and validation
+
+Each peer's `NetId` is its transport id, accepted only in
+`1..ServerSimulation.MaxPeerId` (0x7FFF); fragment ids are allocated from
+`0x8000..0xFFFF`, so the two spaces cannot collide. `Join` returns a
+`JoinResult` and rejects a bad id, a peer that already has a ship, and any
+design `DesignValidator.ValidateDesign` refuses (INV-003). Input axes
+decode into -1..1 (-128 included) and a delayed input older than the last
+accepted one is ignored.
 
 All multi-byte fields are little-endian (`ByteWriter`/`ByteReader` in
 `Wire.cs`). Position/velocity are quantized at 1/256 world unit
@@ -172,10 +194,21 @@ Ordering instead lives in the `u32 Sequence` on `ShipSnapshot`,
 sequence number across ALL of these (not per-message-kind, one global
 counter), and `ClientReplica.ApplyReliable` buffers by sequence, applying a
 message only when it is exactly `lastApplied + 1` and draining whatever that
-unblocks. `ClientReplica.ApplySnapshot`'s own sequence becomes the new
-baseline (a snapshot already reflects every event up to its own sequence,
-so anything buffered at or below it is stale and is discarded, not
-reapplied).
+unblocks. The buffer is bounded: a sequence more than
+`ClientReplica.MaxReliableWindow` (512) past the last applied one is
+dropped (INV-002), so a sender cannot stall delivery and grow memory by
+skipping ahead. A payload that fails to decode still consumes its slot.
+
+Snapshots are per ship, not one global baseline. A snapshot already reflects
+every event for that ship up to its own sequence, so later-arriving events
+for that ship at or below it are skipped, while other ships' events are
+unaffected; a snapshot that is not newer than what the replica has for that
+ship is ignored. The first snapshot the replica sees sets the stream cursor;
+a later one occupies its own slot in the ordered stream. The snapshots a
+joiner receives for existing ships are stamped with the current sequence
+(not a fresh one), and an event that arrives before its ship's snapshot is
+held and replayed when it does. `ShipRemoved` ends a ship's life in the
+same ordered stream.
 
 `ShipState` and `GravityWellSpawned` are the two exceptions:
 
@@ -202,7 +235,9 @@ buffer (not arrival order) is what the client trusts.
 `TickRate`):
 
 1. Time out peers that have gone `TimeoutSeconds` (default 5 s) without a
-   fresh `SetInput` call, removing their ship (S47 criterion 2).
+   fresh `SetInput` call, removing their ship (S47 criterion 2) and
+   broadcasting `ShipRemoved`; the dropped peers are queued for
+   `TryDequeueDroppedPeer` so the host can close the connection.
 2. Tick the shared `GravityField` (expires temporary wells) and step the
    server's own point-body projectile simulation (gravity + block hit
    tests), which is this class's own minimal `IWorldSink`.
@@ -227,7 +262,8 @@ forwards each to `transport.SendReliable`/`SendUnreliable`, and calls
 every `ServerSimulation`-touching test in `MessageRoundTripTests`'
 neighbors).
 
-`Join(peer, ShipSnapshot)` sends every already-connected ship's snapshot to
+`Join(peer, ShipSnapshot)` validates the design (see "Identity and
+validation") and then sends every already-connected ship's snapshot to
 the newcomer, then broadcasts the newcomer's own ship's snapshot to
 **every** connected peer, including the newcomer itself: a player needs a
 snapshot of their own ship exactly like everyone else does, since the

@@ -53,32 +53,66 @@ namespace Hullbreach.Net
         public void WriteF32(float v) => WriteU32((uint)BitConverter.SingleToInt32Bits(v));
     }
 
-    // The exact inverse of ByteWriter; same fail-fast behavior on overrun.
+    // The inverse of ByteWriter, bounded by the received length: an overrun
+    // never throws or reads stale bytes, it sets Failed and yields zeros, so
+    // a decoder checks Failed once after reading (INV-001).
     // frob:doc docs/reference/hullbreach-net.md#bytereader
+    // frob:invariant INV-001
     public struct ByteReader
     {
         readonly byte[] _buffer;
+        readonly int _end;
         int _offset;
+        bool _failed;
 
+        // `length` is the count of valid bytes from `offset` (a transport's
+        // received length); -1 means the rest of the buffer.
         // frob:doc docs/reference/hullbreach-net.md#bytereader
-        public ByteReader(byte[] buffer, int offset = 0)
+        public ByteReader(byte[] buffer, int offset = 0, int length = -1)
         {
             _buffer = buffer;
             _offset = offset;
+            int end = length < 0 ? buffer.Length : offset + length;
+            _end = end > buffer.Length ? buffer.Length : end;
+            _failed = offset < 0 || offset > _end;
         }
 
         // frob:doc docs/reference/hullbreach-net.md#bytereader
         public int Position => _offset;
 
+        // Bytes left to read; 0 once the reader has failed.
         // frob:doc docs/reference/hullbreach-net.md#bytereader
-        public byte ReadU8() => _buffer[_offset++];
+        public int Remaining => _failed ? 0 : _end - _offset;
+
+        // True once any read ran past the end or Fail() was called.
+        // frob:doc docs/reference/hullbreach-net.md#bytereader
+        public bool Failed => _failed;
+
+        // Marks the message malformed (for example an implausible count).
+        // frob:doc docs/reference/hullbreach-net.md#bytereader
+        public void Fail() => _failed = true;
+
+        // Reserves `count` bytes; on shortfall marks the reader failed.
+        bool TryRead(int count)
+        {
+            if (_failed || count > _end - _offset)
+            {
+                _failed = true;
+                return false;
+            }
+            return true;
+        }
 
         // frob:doc docs/reference/hullbreach-net.md#bytereader
-        public sbyte ReadI8() => unchecked((sbyte)_buffer[_offset++]);
+        public byte ReadU8() => TryRead(1) ? _buffer[_offset++] : (byte)0;
+
+        // frob:doc docs/reference/hullbreach-net.md#bytereader
+        public sbyte ReadI8() => unchecked((sbyte)ReadU8());
 
         // frob:doc docs/reference/hullbreach-net.md#bytereader
         public ushort ReadU16()
         {
+            if (!TryRead(2)) return 0;
             ushort v = (ushort)(_buffer[_offset] | (_buffer[_offset + 1] << 8));
             _offset += 2;
             return v;
@@ -90,6 +124,7 @@ namespace Hullbreach.Net
         // frob:doc docs/reference/hullbreach-net.md#bytereader
         public uint ReadU32()
         {
+            if (!TryRead(4)) return 0;
             uint v = (uint)(_buffer[_offset]
                 | (_buffer[_offset + 1] << 8)
                 | (_buffer[_offset + 2] << 16)

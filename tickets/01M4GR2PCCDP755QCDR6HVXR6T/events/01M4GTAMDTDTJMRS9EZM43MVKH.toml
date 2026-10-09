@@ -1,0 +1,7 @@
+kind = "field"
+field = "acceptance"
+new = ["A fire press followed by a release before the tick still fires and stale input is ignored"]
+moved = []
+at = "2026-10-09T17:10:44Z"
+actor = "mcnairrobotics"
+rev = 1

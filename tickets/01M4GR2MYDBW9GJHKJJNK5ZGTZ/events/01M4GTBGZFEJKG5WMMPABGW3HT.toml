@@ -1,0 +1,7 @@
+kind = "field"
+field = "acceptance"
+new = ["Projectile hits honor ProjectileSpec.Radius and never hit the shooter"]
+moved = []
+at = "2026-10-09T17:11:13Z"
+actor = "mcnairrobotics"
+rev = 1
