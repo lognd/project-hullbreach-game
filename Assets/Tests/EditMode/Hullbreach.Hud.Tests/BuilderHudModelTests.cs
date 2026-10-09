@@ -10,11 +10,17 @@ namespace Hullbreach.Hud.Tests
     public sealed class BuilderHudModelTests
     {
         [Test]
-        public void Title_IsFixedPaletteHeading()
+        public void Title_TracksBoundKeyCount()
         {
             var session = new BuilderSession();
             var model = BuilderHudModel.Build(session, string.Empty);
-            Assert.AreEqual("Palette (keys 1-7)", model.Title);
+            Assert.AreEqual($"Palette (keys 1-{System.Math.Min(9, BlockTypes.Count)})", model.Title);
+        }
+
+        [Test]
+        public void Build_NullSession_ThrowsArgumentNull()
+        {
+            Assert.Throws<System.ArgumentNullException>(() => BuilderHudModel.Build(null, string.Empty));
         }
 
         [Test]

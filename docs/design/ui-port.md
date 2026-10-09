@@ -152,7 +152,10 @@ assets), but it has three costs that now matter:
 - `BuilderHudModel` -- from a `BuilderSession`, the palette
   (`BlockPalette.All()`) and the hover verdict string: title line,
   palette rows (name, mass, cost, selected), total mass, block count,
-  state, optional hover line. Format strings identical to today's.
+  state, optional hover line. Format strings identical to today's. The
+  title's key range is `min(9, BlockTypes.Count)`, matching
+  `BuilderController`'s bindings; a null session throws
+  `ArgumentNullException` (callers guard, as `BuilderHud` does).
 - `FlightTelemetryModel` -- from ship telemetry (speed components,
   angular velocity, forward/reverse/steer throttle means): speed line,
   channel bar values (label text + clamped fill, steer as signed
