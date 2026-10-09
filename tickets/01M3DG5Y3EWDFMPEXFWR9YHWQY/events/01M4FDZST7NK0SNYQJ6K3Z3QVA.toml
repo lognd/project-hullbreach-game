@@ -1,0 +1,6 @@
+kind = "field"
+field = "scope"
+new = ["Assets/Tests/EditMode/Hullbreach.Net.Tests/ServerHostTests.cs", "Assets/Tests/EditMode/Hullbreach.Net.Tests/BuildReplicationTests.cs", "docs/testing.md", "docs/netcode.md", "Assets/Tests/EditMode/Hullbreach.Net.Tests/NetRig.cs*", "Assets/Tests/EditMode/Hullbreach.Net.Tests/ThrottledConnectionTests.cs*"]
+at = "2026-10-09T04:15:52Z"
+actor = "mcnairrobotics"
+rev = 1
