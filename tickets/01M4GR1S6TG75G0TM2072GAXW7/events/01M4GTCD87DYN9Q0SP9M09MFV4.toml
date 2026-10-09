@@ -1,0 +1,7 @@
+kind = "field"
+field = "acceptance"
+new = ["The server solver uses the shared calibrated LoadScale and MaterialStiffnessScale"]
+moved = []
+at = "2026-10-09T17:11:42Z"
+actor = "mcnairrobotics"
+rev = 1
