@@ -1,0 +1,7 @@
+kind = "field"
+field = "acceptance"
+new = ["Given a ServerHost over an ITransport with two peers joined and no Unity runtime, when it is advanced by N seconds of host time, then it runs floor(N * TickRate) fixed ticks, each stepping every peer's ShipBody and StructuralSolver", "Given two clients sending InputMessage over the transport, when the host ticks, then the server applies each peer's latest input and returns the authoritative ShipSnapshot and ShipState traffic to the clients over the same transport", "Given a long stall or a payload that is truncated or of unknown kind, when the host runs, then catch-up ticks are bounded and the payload is dropped and logged without stopping the loop"]
+moved = []
+at = "2026-10-09T04:00:29Z"
+actor = "mcnairrobotics"
+rev = 1
