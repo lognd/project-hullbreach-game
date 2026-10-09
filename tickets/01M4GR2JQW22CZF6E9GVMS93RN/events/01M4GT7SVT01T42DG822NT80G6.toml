@@ -1,0 +1,7 @@
+kind = "field"
+field = "acceptance"
+new = ["Given an empty ship, when Step runs, then ContactsThisStep and accumulated forces are cleared"]
+moved = []
+at = "2026-10-09T17:09:12Z"
+actor = "GingerVHS"
+rev = 1
