@@ -111,8 +111,8 @@ namespace Hullbreach.Structure.Tests
             Assert.Greater(Quadratic(k, v), Tol);
         }
 
-        // TODO [C2, optional]: replace the two tests above with a symmetric
-        // eigensolver and assert EXACTLY three eigenvalues are zero.
+        // frob:todo 01M4FD75N08RY9PKE236S86NAC replace the two tests above with a symmetric
+        // eigensolver and assert EXACTLY three eigenvalues are zero (C2, optional).
 
         static float[][] RigidModes()
         {

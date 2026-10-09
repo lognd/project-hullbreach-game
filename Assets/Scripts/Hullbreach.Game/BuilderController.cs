@@ -91,8 +91,8 @@ namespace Hullbreach.Game
 
         void Update()
         {
-            // TODO [A5]: migrate to the new Input System alongside S27
-            //            (activeInputHandler must stay "Both" until then).
+            // frob:todo 01M3DG5Y1H348G5W2FW9KPWZ9J migrate to the new Input System (A5, S27-2);
+            // activeInputHandler must stay "Both" until then.
             for (int i = 0; i < 9 && i < BlockTypes.Count; i++)
             {
                 if (Input.GetKeyDown(KeyCode.Alpha1 + i))

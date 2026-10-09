@@ -34,7 +34,7 @@ namespace Hullbreach.Game
         // frob:doc docs/reference/hullbreach-game.md#legacydemoinput
         public static readonly LegacyDemoInput Instance = new LegacyDemoInput();
 
-        // TODO [A5]: migrate to the new Input System alongside S27.
+        // frob:todo 01M3DG5Y1H348G5W2FW9KPWZ9J migrate to the new Input System (A5, S27-2).
 
         // Raw (unsmoothed): ShipBody does its own throttle ramping.
         // frob:doc docs/reference/hullbreach-game.md#legacydemoinput
