@@ -1,0 +1,6 @@
+kind = "field"
+field = "scope"
+new = ["Assets/Scripts/Hullbreach.World/ArenaBounds.cs*", "Assets/Scripts/Hullbreach.Ship/ShipBody.cs", "Assets/Scripts/Hullbreach.Net/ServerSimulation.cs", "Assets/Tests/EditMode/**", "docs/**", "changelog.d/**"]
+at = "2026-10-09T04:00:18Z"
+actor = "GingerVHS"
+rev = 1

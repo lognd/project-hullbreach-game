@@ -1,0 +1,7 @@
+kind = "field"
+field = "acceptance"
+new = ["Given a ship whose center of mass is outside the arena radius and moving outward, when the shared ShipBody step runs for a few simulated seconds, then it is back inside the radius and no block has taken damage", "Given a ship outside the arena radius on the authoritative server, when ServerSimulation ticks, then it is pushed back by the same ArenaBounds rule as the client ShipBody and the structural solver sees no extra load"]
+moved = []
+at = "2026-10-09T04:00:18Z"
+actor = "GingerVHS"
+rev = 1
