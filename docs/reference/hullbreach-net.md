@@ -509,6 +509,11 @@ The constructor's optional `GravityConfig` (null means
 `GravityConfig.Default`) builds the shared `GravityField` through the same
 `BuildField()` the Unity `GravityWorld` uses.
 
+`ProjectilePositions` is a test and diagnostics read of the live projectiles'
+world positions (they are not on the wire yet); it is how a test proves a
+shot bends under `Gravity`, since `StepProjectiles` adds
+`Gravity.AccelerationAt(position) * dt` to each shot's velocity.
+
 `Arena` (null for unbounded) is copied onto every ship at the start of each
 `Tick`, so the authoritative step applies the same
 [ArenaBounds](hullbreach-world.md#arenabounds) push-back a predicting client

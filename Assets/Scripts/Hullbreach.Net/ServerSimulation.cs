@@ -102,6 +102,18 @@ namespace Hullbreach.Net
             }
         }
 
+        // Test- and diagnostics-only: where each live projectile is now.
+        // frob:doc docs/reference/hullbreach-net.md#serversimulation
+        public IReadOnlyList<float2> ProjectilePositions
+        {
+            get
+            {
+                var result = new List<float2>(_projectiles.Count);
+                foreach (var p in _projectiles) result.Add(p.Position);
+                return result;
+            }
+        }
+
         // Re-broadcasts the new snapshot to every other peer; see reference page.
         // frob:doc docs/reference/hullbreach-net.md#serversimulation
         public void Join(int peer, ShipSnapshot initialDesign)
