@@ -49,7 +49,7 @@ namespace Hullbreach.Hud
                 HullWarning.Strain => "STRAIN",
                 _ => "OK",
             };
-            string headline = $"Hull: {label}   (max ratio {maxRatio:0.00})";
+            string headline = System.FormattableString.Invariant($"Hull: {label}   (max ratio {maxRatio:0.00})");
 
             if (band == HullWarning.Ok)
             {

@@ -30,14 +30,14 @@ namespace Hullbreach.Hud
         internal static ChannelBarValue Uncentered(string label, float value01, HudColor fillColor)
         {
             float clamped = value01 < 0f ? 0f : value01 > 1f ? 1f : value01;
-            return new ChannelBarValue($"{label} {clamped * 100f:0}%", clamped, false, fillColor, HudColor.TrackDark);
+            return new ChannelBarValue(System.FormattableString.Invariant($"{label} {clamped * 100f:0}%"), clamped, false, fillColor, HudColor.TrackDark);
         }
 
         // Clamp then format, matching DrawSteerBar's order and sign format.
         internal static ChannelBarValue Steer(string label, float value)
         {
             float clamped = value < -1f ? -1f : value > 1f ? 1f : value;
-            return new ChannelBarValue($"{label}{clamped * 100f:+0;-0;0}%", clamped, true, HudColor.SteerWhite, HudColor.TrackDark);
+            return new ChannelBarValue(System.FormattableString.Invariant($"{label}{clamped * 100f:+0;-0;0}%"), clamped, true, HudColor.SteerWhite, HudColor.TrackDark);
         }
     }
 
@@ -69,7 +69,7 @@ namespace Hullbreach.Hud
         {
             float speed = System.MathF.Sqrt(velocityX * velocityX + velocityY * velocityY);
             float absAngular = angularVelocity < 0f ? -angularVelocity : angularVelocity;
-            string speedLine = $"Speed: {speed:0.0}   Angular speed: {absAngular:0.00}";
+            string speedLine = System.FormattableString.Invariant($"Speed: {speed:0.0}   Angular speed: {absAngular:0.00}");
 
             var thrust = ChannelBarValue.Uncentered("Thrust ", forwardThrottleMean, HudColor.ThrustRed);
             var reverse = ChannelBarValue.Uncentered("Reverse", reverseThrottleMean, HudColor.ReverseGreen);

@@ -173,6 +173,9 @@ assets), but it has three costs that now matter:
   `HullWarning` enum moved here from `Hullbreach.Game.DemoMode`; the
   play-mode tests' `using Hullbreach.Hud;` picks it up.
 
+All numeric text in these models is formatted with the invariant culture,
+so the HUD reads `12.3` on every OS locale (covered by `HudCultureTests`).
+
 ### `Hullbreach.Game` views (`Assets/Scripts/Hullbreach.Game/Hud/`)
 
 #### Hullbreach.Game Hud ChannelBar

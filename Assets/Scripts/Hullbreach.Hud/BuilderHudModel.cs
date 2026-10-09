@@ -42,7 +42,7 @@ namespace Hullbreach.Hud
             {
                 bool selected = entry.TypeId == session.SelectedTypeId;
                 string marker = selected ? "> " : "  ";
-                rows.Add($"{marker}{entry.Name}  mass {entry.Mass:0.0}  cost {entry.Cost}");
+                rows.Add(System.FormattableString.Invariant($"{marker}{entry.Name}  mass {entry.Mass:0.0}  cost {entry.Cost}"));
             }
 
             string hoverLine = string.IsNullOrEmpty(hoverVerdictText)
@@ -52,8 +52,8 @@ namespace Hullbreach.Hud
             return new BuilderHudModel(
                 "Palette (keys 1-7)",
                 rows,
-                $"Total mass: {session.TotalMass:0.0}",
-                $"Block count: {session.BlockCount}",
+                System.FormattableString.Invariant($"Total mass: {session.TotalMass:0.0}"),
+                System.FormattableString.Invariant($"Block count: {session.BlockCount}"),
                 $"State: {session.State}",
                 hoverLine);
         }
