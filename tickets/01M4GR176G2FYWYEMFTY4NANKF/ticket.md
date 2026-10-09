@@ -2,11 +2,12 @@
 id = "01M4GR176G2FYWYEMFTY4NANKF"
 title = "OrbitHelper.CircularOrbitVelocity returns NaN for negative-Mu bodies and silent zero on invalid index"
 type = "bug"
-category = "todo"
+category = "done"
+outcome = "fixed"
 priority = "medium"
 reporter = "lognd"
 created = "2026-10-09T16:30:39Z"
-updated = "2026-10-09T17:04:07Z"
+updated = "2026-10-09T17:04:44Z"
 labels = ["origin:auditor"]
 scope = ["Assets/Scripts/Hullbreach.World/OrbitHelper.cs"]
 
