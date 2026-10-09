@@ -8,7 +8,7 @@ points = 3
 parent = "01M3DG5Y0X02V7SGJ0Y3J7550F"
 reporter = "human"
 created = "2026-09-26T00:00:00Z"
-updated = "2026-10-09T04:18:44Z"
+updated = "2026-10-09T04:19:06Z"
 aliases = ["T-0086"]
 labels = ["jira:SCRUM-161", "owner:GingerVHS", "game", "physics", "milestone:0.2.0"]
 scope = ["Assets/Scripts/Hullbreach.World/**", "Assets/Tests/EditMode/Hullbreach.World.Tests/**"]
@@ -19,7 +19,7 @@ bound = true
 
 [[acceptance]]
 text = "Given a ship falling onto a planetoid, when ShipBody steps, then it curves toward it and ends outside the surface (ShipGravityTests, OrbitHelperTests; S40 criterion 1)"
-bound = false
+bound = true
 +++
 
 GravityField, GravityBody, and OrbitHelper with the attractive-then-repulsive force law
