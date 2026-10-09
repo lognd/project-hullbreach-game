@@ -2,11 +2,12 @@
 id = "01M4GR1SWPNACYNKGK399K2699"
 title = "StructuralSolver.BuckledBlocks/BucklingModes stay stale after topology rebuild, forcing a K rebuild every tick on the server"
 type = "bug"
-category = "todo"
+category = "done"
+outcome = "fixed"
 priority = "medium"
 reporter = "lognd"
 created = "2026-10-09T16:30:58Z"
-updated = "2026-10-09T17:00:06Z"
+updated = "2026-10-09T17:00:40Z"
 labels = ["origin:auditor", "audit:hullbreach-structure"]
 scope = ["Assets/Scripts/Hullbreach.Structure/StructuralSolver.cs"]
 
