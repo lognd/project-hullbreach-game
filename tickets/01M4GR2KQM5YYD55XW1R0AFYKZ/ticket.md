@@ -2,11 +2,12 @@
 id = "01M4GR2KQM5YYD55XW1R0AFYKZ"
 title = "ShipContacts.Resolve applies contact damage to separating ships and uses only ship A's damage threshold"
 type = "bug"
-category = "todo"
+category = "done"
+outcome = "fixed"
 priority = "medium"
 reporter = "lognd"
 created = "2026-10-09T16:31:24Z"
-updated = "2026-10-09T17:12:11Z"
+updated = "2026-10-09T17:12:55Z"
 labels = ["origin:auditor", "audit:ship"]
 scope = ["Assets/Scripts/Hullbreach.Ship/ShipContacts.cs"]
 
