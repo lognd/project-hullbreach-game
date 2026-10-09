@@ -1,0 +1,7 @@
+kind = "transition"
+from = "todo"
+to = "in-progress"
+reason = "lease: mcnairrobotics in wt/mcnairrobotics-game; scope: Assets/Scripts/Hullbreach.Net/NetMessages.cs, Assets/Scripts/Hullbreach.Net/ServerSimulation.cs, Assets/Scripts/Hullbreach.Net/ServerHost.cs, Assets/Scripts/Hullbreach.Net/Hullbreach.Net.asmdef, Assets/Tests/EditMode/Hullbreach.Net.Tests/Hullbreach.Net.Tests.asmdef, docs/netcode.md, docs/reference/hullbreach-net.md, docs/architecture.md, design/hullbreach_game.strata, Assets/Tests/EditMode/Hullbreach.Net.Tests/BuildReplicationTests.cs*; ttl 7200s"
+at = "2026-10-09T04:09:53Z"
+actor = "mcnairrobotics"
+rev = 1
