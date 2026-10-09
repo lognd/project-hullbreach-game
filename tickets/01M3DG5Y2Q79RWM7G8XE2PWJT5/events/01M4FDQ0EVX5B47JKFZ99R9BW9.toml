@@ -1,0 +1,7 @@
+kind = "field"
+field = "acceptance"
+new = ["Given a planetoid beside a shot's path, when the authoritative server steps a fired projectile, then its path bends toward the planetoid by about half the pull times elapsed time squared and does not bend without the planetoid", "Given the client projectile and the server projectile, when both integrate, then both add GravityField.AccelerationAt to the projectile velocity each step (client wiring needs Unity verification)"]
+moved = []
+at = "2026-10-09T04:11:04Z"
+actor = "GingerVHS"
+rev = 1
