@@ -2,11 +2,12 @@
 id = "01M4GR3SFWQ6X8247Z6QT2QTXJ"
 title = "GravityWorld.OnDestroy clears the static Field even when it belongs to another instance"
 type = "bug"
-category = "todo"
+category = "done"
+outcome = "duplicate"
 priority = "medium"
 reporter = "lognd"
 created = "2026-10-09T16:32:03Z"
-updated = "2026-10-09T16:32:03Z"
+updated = "2026-10-09T16:36:20Z"
 idempotency_key = "audit-game-gravity-destroy"
 labels = ["origin:auditor", "audit:hullbreach-game"]
 scope = ["Assets/Scripts/Hullbreach.Game/GravityWorld.cs"]
