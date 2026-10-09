@@ -29,14 +29,14 @@ namespace Hullbreach.Hud
         // Clamp then format, matching DrawChannelBar's order (clamp before percent text).
         internal static ChannelBarValue Uncentered(string label, float value01, HudColor fillColor)
         {
-            float clamped = value01 < 0f ? 0f : value01 > 1f ? 1f : value01;
+            float clamped = float.IsNaN(value01) ? 0f : value01 < 0f ? 0f : value01 > 1f ? 1f : value01;
             return new ChannelBarValue(System.FormattableString.Invariant($"{label} {clamped * 100f:0}%"), clamped, false, fillColor, HudColor.TrackDark);
         }
 
         // Clamp then format, matching DrawSteerBar's order and sign format.
         internal static ChannelBarValue Steer(string label, float value)
         {
-            float clamped = value < -1f ? -1f : value > 1f ? 1f : value;
+            float clamped = float.IsNaN(value) ? 0f : value < -1f ? -1f : value > 1f ? 1f : value;
             return new ChannelBarValue(System.FormattableString.Invariant($"{label}{clamped * 100f:+0;-0;0}%"), clamped, true, HudColor.SteerWhite, HudColor.TrackDark);
         }
     }
@@ -63,10 +63,14 @@ namespace Hullbreach.Hud
 
         // Pure: no side effects, directly unit-testable (D3). Format strings
         // copied verbatim from DemoMode.DrawStatusPanel/DrawChannelBar/DrawSteerBar.
+        // Non-finite inputs read as 0 (velocity, angular speed) or clamp (throttles, NaN -> 0).
         // frob:doc docs/design/ui-port.md#hullbreachhud-module-reference
         public static FlightTelemetryModel Build(float velocityX, float velocityY, float angularVelocity,
             float forwardThrottleMean, float reverseThrottleMean, float steerThrottleMean)
         {
+            velocityX = Finite(velocityX);
+            velocityY = Finite(velocityY);
+            angularVelocity = Finite(angularVelocity);
             float speed = System.MathF.Sqrt(velocityX * velocityX + velocityY * velocityY);
             float absAngular = angularVelocity < 0f ? -angularVelocity : angularVelocity;
             string speedLine = System.FormattableString.Invariant($"Speed: {speed:0.0}   Angular speed: {absAngular:0.00}");
@@ -77,5 +81,8 @@ namespace Hullbreach.Hud
 
             return new FlightTelemetryModel(speedLine, thrust, reverse, steer);
         }
+
+        // NaN and +/-Infinity read as 0 so one bad frame cannot poison the HUD text.
+        static float Finite(float v) => float.IsFinite(v) ? v : 0f;
     }
 }

@@ -128,5 +128,34 @@ namespace Hullbreach.Hud.Tests
             Assert.AreEqual(0.6f, HudColor.CenterTickGrey.G);
             Assert.AreEqual(0.6f, HudColor.CenterTickGrey.B);
         }
+
+        [Test]
+        public void Build_NaNThrottles_ClampToZeroFill()
+        {
+            float nan = float.NaN;
+            var model = FlightTelemetryModel.Build(0f, 0f, 0f, nan, nan, nan);
+            Assert.AreEqual(0f, model.Thrust.Fill);
+            Assert.AreEqual(0f, model.Reverse.Fill);
+            Assert.AreEqual(0f, model.Steer.Fill);
+            StringAssert.DoesNotContain("NaN", model.Thrust.Label);
+            StringAssert.DoesNotContain("NaN", model.Steer.Label);
+        }
+
+        [Test]
+        public void Build_InfiniteThrottles_ClampToRange()
+        {
+            float inf = float.PositiveInfinity;
+            var model = FlightTelemetryModel.Build(0f, 0f, 0f, inf, -inf, -inf);
+            Assert.AreEqual(1f, model.Thrust.Fill);
+            Assert.AreEqual(0f, model.Reverse.Fill);
+            Assert.AreEqual(-1f, model.Steer.Fill);
+        }
+
+        [Test]
+        public void Build_NonFiniteVelocity_ReadsAsZero()
+        {
+            var model = FlightTelemetryModel.Build(float.NaN, float.PositiveInfinity, float.NegativeInfinity, 0f, 0f, 0f);
+            Assert.AreEqual("Speed: 0.0   Angular speed: 0.00", model.SpeedLine);
+        }
     }
 }

@@ -159,6 +159,9 @@ assets), but it has three costs that now matter:
   -1..1 with center-origin fill). `Build` copies its format strings and
   clamp order verbatim from the old `DrawStatusPanel`/`DrawChannelBar`/
   `DrawSteerBar` so the rendered text is unchanged.
+  Non-finite inputs are sanitised: NaN throttle means clamp to 0 fill,
+  +/-Infinity throttles clamp to the range ends, and non-finite velocity
+  or angular speed reads as 0, so `Fill` is always finite.
 - `StatusPanelModel` -- the exact text the old `DrawStatusPanel`/
   `DrawActivePowerups` drew, minus the control bars (`FlightTelemetryModel`
   already covers those): mode line, control-hint lines for Build/Fly,
