@@ -264,6 +264,8 @@ impulse, damage and any gravity well are delivered once.
 
 <!-- frob:describes Assets/Scripts/Hullbreach.Game/ProjectileSpawner.cs::ProjectileSpawner -->
 <!-- frob:describes Assets/Scripts/Hullbreach.Game/ProjectileSpawner.cs::ProjectileSpawner.SpawnFromSink -->
+<!-- frob:describes Assets/Scripts/Hullbreach.Game/ProjectileSpawner.cs::ProjectileSpawner.Refresh -->
+<!-- frob:describes Assets/Scripts/Hullbreach.Game/ProjectileSpawner.cs::ProjectileSpawner.Register -->
 
 Subscribes to every `ShipController`'s `ShotFired` in the scene and turns
 each `ShotRequest` into a real `Projectile` GameObject. The Inspector fields
@@ -272,6 +274,13 @@ spawner tunes every ship's cannon uniformly for the demo. `FindOwner`
 attributes a shot to whichever ship's position is nearest the shot's world
 origin: simpler and robust enough for the demo's two ships, since ships are
 never coincident.
+
+Ships are wired through `Register` (idempotent: applies the Inspector spec to
+`ShipBody.Projectile` and subscribes to `ShotFired`); `Start` and `Refresh`
+register every `ShipController` in the scene, and `WorldSink.Refresh` calls
+`Refresh`, so a ship spawned after Start is wired too. `SpawnFromSink` is
+safe before Start. `WorldSink.SpawnProjectile` logs one error when no spawner
+is assigned instead of silently dropping shots.
 
 ### ShipCollider
 

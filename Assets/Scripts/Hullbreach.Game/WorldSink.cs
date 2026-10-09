@@ -32,6 +32,9 @@ namespace Hullbreach.Game
             if (spawner == null) spawner = FindFirstObjectByType<ProjectileSpawner>();
         }
 
+        // LogError once, not per shot.
+        bool _warnedNoSpawner;
+
         void Start() => Refresh();
 
         void OnDestroy()
@@ -51,12 +54,24 @@ namespace Hullbreach.Game
                 _controllers.Add(controller);
                 if (controller.Ship != null) _ships.Add(controller.Ship);
             }
+
+            // Ships spawned after the spawner's Start must be wired for shots too.
+            if (spawner != null) spawner.Refresh();
         }
 
         // frob:doc docs/reference/hullbreach-game.md#worldsink
         public void SpawnProjectile(in ShotRequest shot)
         {
-            if (spawner != null) spawner.SpawnFromSink(shot);
+            if (spawner == null)
+            {
+                if (!_warnedNoSpawner)
+                {
+                    _warnedNoSpawner = true;
+                    Debug.LogError("WorldSink.SpawnProjectile: no ProjectileSpawner assigned; shots are dropped.", this);
+                }
+                return;
+            }
+            spawner.SpawnFromSink(shot);
         }
 
         // frob:doc docs/reference/hullbreach-game.md#worldsink
