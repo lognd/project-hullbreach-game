@@ -180,5 +180,43 @@ namespace Hullbreach.Ship.Tests
             Assert.AreEqual(facingAndRamp & ThrusterUpgrades.Mask, block.Modifiers & ThrusterUpgrades.Mask);
             Assert.AreEqual(1, BlockVariants.Get(block.Modifiers));
         }
+
+        [Test]
+        public void PowerupExpiry_DoesNotSurviveBlockRemoval()
+        {
+            var ship = new ShipBody();
+            ship.Grid.TryAdd(BlockKey.Pack(0, 0), new Block(BlockTypes.Core));
+            int key = BlockKey.Pack(0, 1);
+            ship.Grid.TryAdd(key, new Block(BlockTypes.Cannon));
+            Assert.IsTrue(ship.ApplyPowerup(1, BlockTypes.Cannon, new float2(0.5f, 1.5f), 0.1f));
+            ship.Step(new ShipInput(0f, 0f, false), 1f / 60f);
+
+            Assert.IsTrue(ship.Grid.TryRemove(key));
+            ship.Step(new ShipInput(0f, 0f, false), 1f / 60f);
+            Assert.AreEqual(0f, ship.VariantTimeLeft(key), "the timer must go with the block");
+
+            // A fresh block with its own variant at the same key must be left alone.
+            ship.Grid.TryAdd(key, new Block(BlockTypes.Cannon, BlockVariants.With(0, 2)));
+            for (int i = 0; i < 20; i++) ship.Step(new ShipInput(0f, 0f, false), 1f / 60f);
+
+            ship.Grid.TryGet(key, out var block);
+            Assert.AreEqual(2, BlockVariants.Get(block.Modifiers));
+        }
+
+        [Test]
+        public void Step_OnEmptyShip_ClearsContactsAndAccumulatedForces()
+        {
+            // A fresh ship has no blocks, so zero mass.
+            var empty = new ShipBody();
+            empty.ContactsThisStep.Add((0, new float2(0f, 1f), 3f));
+            empty.AddForceAtPoint(new float2(0.5f, 0.5f), new float2(100f, 0f));
+            empty.Step(new ShipInput(0f, 0f, false), 1f / 60f);
+            Assert.AreEqual(0, empty.ContactsThisStep.Count);
+
+            // The stale force must not reach a ship populated afterwards.
+            empty.Grid.TryAdd(BlockKey.Pack(0, 0), new Block(BlockTypes.Core));
+            empty.Step(new ShipInput(0f, 0f, false), 1f / 60f);
+            Assert.AreEqual(0f, math.length(empty.LastLinearAcceleration), Tol);
+        }
     }
 }

@@ -1,0 +1,7 @@
+kind = "field"
+field = "acceptance"
+new = ["Given a ship created after Start, when WorldSink.Refresh runs and the ship fires, then a projectile spawns; and SpawnFromSink does not throw before Start"]
+moved = []
+at = "2026-10-09T17:15:42Z"
+actor = "GingerVHS"
+rev = 1

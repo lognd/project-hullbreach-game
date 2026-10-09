@@ -130,6 +130,12 @@ and `DemoMode`/`ShipController` read it lazily (null-safe) rather than
 requiring load order: there is exactly one `GravityWorld` in any scene that
 uses gravity, same convention as the rest of the demo.
 
+`GravityWorld` also ticks its field in `FixedUpdate`, so temporary wells
+(`GravityField.AddTemporary`, e.g. projectile and gun wells) expire in the
+client; the server ticks its own field. `OnDestroy` clears the static
+`Field` only if it is still the field this instance published, so destroying
+a stale or duplicate `GravityWorld` cannot blank the live one.
+
 ### PlanetSpec
 
 <!-- describes: Assets/Scripts/Hullbreach.Game/GravityWorld.cs::PlanetSpec -->
@@ -220,6 +226,9 @@ Preset.seconds)`, which transforms the ship's nearest block of
 parent `PowerupSpawner` (so a replacement spawns after a delay) and
 destroys itself; if no eligible block was found, the pickup is left in
 place for another attempt.
+A ship has one trigger collider per block, so several can fire in one step
+before `Destroy` takes effect; the first successful pickup marks the powerup
+collected and later triggers are ignored, so it applies and respawns once.
 
 ### PowerupSpawner
 
@@ -250,11 +259,17 @@ carrying it in a straight line, that applies the firing ship's own
 recoil-free hit (impulse + damage) to whatever `ShipCollider` it touches,
 then destroys itself. Spawned only by `ProjectileSpawner`: never construct
 one directly, since `Configure` must run before the first `FixedUpdate`.
+A ship has one trigger collider per block, so a round overlapping several
+blocks gets several `OnTriggerEnter2D` calls before `Destroy` takes effect;
+the first valid hit marks the round spent and later ones are ignored, so
+impulse, damage and any gravity well are delivered once.
 
 ### ProjectileSpawner
 
 <!-- describes: Assets/Scripts/Hullbreach.Game/ProjectileSpawner.cs::ProjectileSpawner -->
 <!-- describes: Assets/Scripts/Hullbreach.Game/ProjectileSpawner.cs::ProjectileSpawner.SpawnFromSink -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/ProjectileSpawner.cs::ProjectileSpawner.Refresh -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/ProjectileSpawner.cs::ProjectileSpawner.Register -->
 
 Subscribes to every `ShipController`'s `ShotFired` in the scene and turns
 each `ShotRequest` into a real `Projectile` GameObject. The Inspector fields
@@ -263,6 +278,13 @@ spawner tunes every ship's cannon uniformly for the demo. `FindOwner`
 attributes a shot to whichever ship's position is nearest the shot's world
 origin: simpler and robust enough for the demo's two ships, since ships are
 never coincident.
+
+Ships are wired through `Register` (idempotent: applies the Inspector spec to
+`ShipBody.Projectile` and subscribes to `ShotFired`); `Start` and `Refresh`
+register every `ShipController` in the scene, and `WorldSink.Refresh` calls
+`Refresh`, so a ship spawned after Start is wired too. `SpawnFromSink` is
+safe before Start. `WorldSink.SpawnProjectile` logs one error when no spawner
+is assigned instead of silently dropping shots.
 
 ### ShipCollider
 
@@ -345,7 +367,13 @@ does not author: the structural calibration has two ends to prove (a small
 ship must never break itself, a long unsupported arm must break) and only
 one of them can be the scene's default ship. The core is preserved:
 `BlockGrid` refuses to remove it and refuses a second one, so `newBlocks`
-must put its own core where the existing one already is.
+must put its own core where the existing one already is. A layout with no
+core at that cell is rejected whole (error logged, grid untouched, returns
+false). Otherwise `ReplaceBlocks` returns true only if every block was
+applied; each rejected block (out of the -128..127 range, occupied cell,
+second core) is logged as a warning. The inspector `blocks` array in
+`Awake` is validated the same way, so a bad authored block is reported
+instead of vanishing.
 
 `RequestFire` lets a caller (`DemoMode`) bind fire to a key not guaranteed
 to be wired to the "Fire1" virtual axis in the Input Manager, e.g. Space.
@@ -408,6 +436,11 @@ when a block's ratios cross `DamageModel`'s thresholds. Ordered AFTER
 `ShipController` (-100) so `ship.AppliedForcesThisStep` for this tick is
 already populated, and BEFORE `ShipRenderer` (default 0) so the Stress
 overlay reads this tick's solve, not the previous one.
+
+While `ShipController.SimulationEnabled` is false (Build mode) the ship is
+frozen and `FixedUpdate` returns early without solving, so the stale
+`AppliedForcesThisStep` cannot keep damaging or detaching blocks; the
+buckling-hold and failing timers are cleared and restart on resume.
 
 **Calibration.** `DefaultLoadScale` (0.06) is the gameplay-force to
 material-unit conversion (`StructuralSolver.LoadScale`); the default is

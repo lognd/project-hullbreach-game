@@ -100,13 +100,14 @@ namespace Hullbreach.Core
         // frob:doc docs/reference/hullbreach-core.md#blocktypes
         public static bool IsValid(byte typeId) => typeId < Table.Length;
 
-        // Folds in damage softening; see docs/reference/hullbreach-core.md#blocktypes.
+        // The one damage-to-stiffness curve (floored so K stays non-singular).
         // frob:todo 01M3DG5Y2FQRFRW3CRWJ24V0FQ the floor (0.05) is a placeholder curve (D3).
         // frob:doc docs/reference/hullbreach-core.md#blocktypes
+        public static float SofteningFactor(float damage) => math.max(0.05f, 1f - damage);
+
+        // Folds in damage softening; see docs/reference/hullbreach-core.md#blocktypes.
+        // frob:doc docs/reference/hullbreach-core.md#blocktypes
         public static float EffectiveStiffness(in Block block)
-        {
-            float softening = math.max(0.05f, 1f - block.DamageFraction);
-            return Get(block.TypeId).YoungsModulus * softening;
-        }
+            => Get(block.TypeId).YoungsModulus * SofteningFactor(block.DamageFraction);
     }
 }

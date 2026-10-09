@@ -227,6 +227,12 @@ against the modes if you want to draw the deformed shape.
 - `AddPointForce`: scatters a force applied at a world (ship-local) point
   into the nodal load vector, distributing it over the containing
   element's nodes by shape-function weight.
+  Nodes absent from the structure (a destroyed block) are skipped and the
+  remaining weights renormalized, so the force magnitude is conserved
+  rather than silently shrinking. Returns false and leaves `target`
+  untouched for a non-finite point or one with no present element node;
+  `StructuralSolver.DroppedPointForces` counts those per tick. Uses cached
+  scratch arrays, so it never allocates.
 - `ApplyInertiaRelief`: applies inertia relief to `target`, in place.
   Returns the rigid-body acceleration it solved for, which the caller
   also wants for integrating the actual ship motion. Net force/torque are
@@ -891,14 +897,13 @@ decide it should break.
 <!-- describes: Assets/Scripts/Hullbreach.Structure/StructuralSolver.cs::StructuralSolver.Converged -->
 <!-- describes: Assets/Scripts/Hullbreach.Structure/StructuralSolver.cs::StructuralSolver.ResidualNorm -->
 <!-- describes: Assets/Scripts/Hullbreach.Structure/StructuralSolver.cs::StructuralSolver.IterationsThisTick -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/StructuralSolver.cs::StructuralSolver.DroppedPointForces -->
 <!-- describes: Assets/Scripts/Hullbreach.Structure/StructuralSolver.cs::StructuralSolver.ContinuedFromLastTick -->
 <!-- describes: Assets/Scripts/Hullbreach.Structure/StructuralSolver.cs::StructuralSolver.TicksSinceRestart -->
 <!-- describes: Assets/Scripts/Hullbreach.Structure/StructuralSolver.cs::StructuralSolver.DofCount -->
 <!-- describes: Assets/Scripts/Hullbreach.Structure/StructuralSolver.cs::StructuralSolver.MarkTopologyChanged -->
 <!-- describes: Assets/Scripts/Hullbreach.Structure/StructuralSolver.cs::StructuralSolver.UseCoarseCorrection -->
 <!-- describes: Assets/Scripts/Hullbreach.Structure/StructuralSolver.cs::StructuralSolver.BlockStresses -->
-<!-- describes: Assets/Scripts/Hullbreach.Structure/StructuralSolver.cs::StructuralSolver.DefaultLoadScale -->
-<!-- describes: Assets/Scripts/Hullbreach.Structure/StructuralSolver.cs::StructuralSolver.DefaultMaterialStiffnessScale -->
 <!-- describes: Assets/Scripts/Hullbreach.Structure/StructuralSolver.cs::StructuralSolver.LoadScale -->
 <!-- describes: Assets/Scripts/Hullbreach.Structure/StructuralSolver.cs::StructuralSolver.MaterialStiffnessScale -->
 <!-- describes: Assets/Scripts/Hullbreach.Structure/StructuralSolver.cs::StructuralSolver.Tick -->
@@ -925,6 +930,14 @@ already rebuilt for the current dirty streak, using its own
 the block count changed since the last rebuild, or the caller explicitly
 asks via `MarkTopologyChanged`, this rebuilds. This avoids ever mutating
 state owned by another module while still not re-assembling every tick.
+
+DAMAGE REBUILDS: `BlockGrid.TrySet` (the damage write) does not mark the
+topology dirty, so Tick also hashes every block's `EffectiveStiffness` and
+rebuilds K when the hash changes; otherwise K would keep the undamaged E
+while block stress uses the softened one. After any rebuild, published
+buckling modes (and `BuckledBlocks`) that name a block no longer in the grid
+are dropped, so they only ever list live blocks; a damage-only rebuild keeps
+them.
 
 PER-TICK CONVERGENCE BUDGET: `MaxCgIterationsPerTick` bounds how much CG
 work one Tick call may spend on the quasi-static solve. A ship large
@@ -1000,6 +1013,8 @@ BucklingTests case (all calibrated against `E = 1`) is untouched.
   CgSolver's tolerance within `MaxCgIterationsPerTick`.
 - `ResidualNorm`: `CgSolver.LastResidualNorm` from the most recent
   Tick's quasi-static solve.
+- `DroppedPointForces`: point forces the last Tick could not place on the
+  structure (see `LoadVector.AddPointForce`); 0 in normal operation.
 - `IterationsThisTick`: `CgSolver.LastIterationCount` from the most
   recent Tick.
 - `ContinuedFromLastTick`: true when this tick's quasi-static solve

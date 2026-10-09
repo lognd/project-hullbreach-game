@@ -12,15 +12,14 @@ namespace Hullbreach.Game
     [RequireComponent(typeof(CircleCollider2D))]
     public sealed class Projectile : MonoBehaviour
     {
-        // Lets a freshly spawned projectile clear the muzzle before trigger
-        // checks turn on against its own firing ship's colliders.
-        const float OwnerIgnoreSeconds = 0.1f;
-
         ProjectileSpec _spec;
         ShipCollider _owner;
-        float _ownerIgnoreUntil;
         float _deathTime;
         bool _configured;
+
+        // Set on the first hit or planet contact: a ship has one trigger collider
+        // per block, so several can fire in one step before Destroy takes effect.
+        bool _spent;
 
         // `direction` must already be normalized.
         // frob:doc docs/reference/hullbreach-game.md#projectile
@@ -28,7 +27,6 @@ namespace Hullbreach.Game
         {
             _spec = spec;
             _owner = owner;
-            _ownerIgnoreUntil = Time.time + OwnerIgnoreSeconds;
             _deathTime = Time.time + spec.LifetimeSeconds;
             _configured = true;
 
@@ -78,8 +76,9 @@ namespace Hullbreach.Game
             float2 accel = field.AccelerationAt(worldPos);
             body.linearVelocity += new Vector2(accel.x, accel.y) * Time.fixedDeltaTime;
 
-            if (field.TryContact(worldPos, _spec.Radius, out _, out _, out _))
+            if (!_spent && field.TryContact(worldPos, _spec.Radius, out _, out _, out _))
             {
+                _spent = true;
                 DropWellIfAny(worldPos);
                 Destroy(gameObject);
             }
@@ -97,16 +96,16 @@ namespace Hullbreach.Game
 
         void OnTriggerEnter2D(Collider2D other)
         {
-            if (!_configured) return;
+            if (!_configured || _spent) return;
 
             var targetCollider = other.GetComponentInParent<ShipCollider>();
             if (targetCollider == null) return;
-            if (targetCollider == _owner && Time.time < _ownerIgnoreUntil) return;
-            if (targetCollider == _owner) return; // never damage the firing ship, even after the grace window
+            if (targetCollider == _owner) return; // never damage the firing ship
 
             var targetController = targetCollider.GetComponent<ShipController>();
             if (targetController == null) return;
 
+            _spent = true;
             Vector2 hitPoint = transform.position;
             Vector2 direction = GetComponent<Rigidbody2D>().linearVelocity.normalized;
 

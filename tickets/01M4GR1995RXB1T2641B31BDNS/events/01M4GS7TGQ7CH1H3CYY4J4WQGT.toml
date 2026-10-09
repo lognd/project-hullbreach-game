@@ -1,0 +1,7 @@
+kind = "field"
+field = "acceptance"
+new = ["Given a cell on the grid edge, when Neighbors is computed, then off-grid neighbors are -1 and no far-edge cell is treated as adjacent"]
+moved = []
+at = "2026-10-09T16:51:44Z"
+actor = "GingerVHS"
+rev = 1

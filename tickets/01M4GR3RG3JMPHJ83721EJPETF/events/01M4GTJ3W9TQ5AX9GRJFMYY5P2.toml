@@ -1,0 +1,5 @@
+kind = "evidence-bypass"
+reason = "Unity-engine-only MonoBehaviour (ShipStructure); no local runner can execute it. PlayMode test ShipStructureBuildModeTests added but unrun."
+at = "2026-10-09T17:14:49Z"
+actor = "GingerVHS"
+rev = 1

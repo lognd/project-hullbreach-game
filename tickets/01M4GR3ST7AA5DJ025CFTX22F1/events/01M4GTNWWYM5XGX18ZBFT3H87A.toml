@@ -1,0 +1,7 @@
+kind = "field"
+field = "acceptance"
+new = ["Given an out-of-range or duplicate authored block, when ShipController applies blocks, then it is logged and ReplaceBlocks returns false"]
+moved = []
+at = "2026-10-09T17:16:53Z"
+actor = "GingerVHS"
+rev = 1

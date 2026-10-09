@@ -75,11 +75,13 @@ namespace Hullbreach.Ship
                 b.ApplyImpulseAtWorldPoint(contactPoint, impulse);
             }
 
-            float impactSpeed = math.abs(closing);
-            if (impactSpeed > a.ContactDamageSpeed)
+            // Damage only for a real closing impact, and each ship is gated on
+            // its own threshold so Resolve(a, b) == Resolve(b, a).
+            if (closing < 0f)
             {
-                ApplyContactDamage(a, keyA, impactSpeed);
-                ApplyContactDamage(b, keyB, impactSpeed);
+                float impactSpeed = -closing;
+                if (impactSpeed > a.ContactDamageSpeed) ApplyContactDamage(a, keyA, impactSpeed);
+                if (impactSpeed > b.ContactDamageSpeed) ApplyContactDamage(b, keyB, impactSpeed);
             }
 
             return true;

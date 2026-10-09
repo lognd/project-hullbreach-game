@@ -2,14 +2,19 @@
 id = "01M4GR3ST7AA5DJ025CFTX22F1"
 title = "ShipController Awake/ReplaceBlocks ignore TryAdd/TryRemove results; core is never replaced and out-of-range or duplicate blocks vanish silently"
 type = "bug"
-category = "todo"
+category = "done"
+outcome = "fixed"
 priority = "medium"
 reporter = "lognd"
 created = "2026-10-09T16:32:03Z"
-updated = "2026-10-09T16:32:03Z"
+updated = "2026-10-09T17:16:54Z"
 idempotency_key = "audit-game-grid-silent-drop"
 labels = ["origin:auditor", "audit:hullbreach-game"]
 scope = ["Assets/Scripts/Hullbreach.Game/ShipController.cs"]
+
+[[acceptance]]
+text = "Given an out-of-range or duplicate authored block, when ShipController applies blocks, then it is logged and ReplaceBlocks returns false"
+bound = false
 +++
 
 ShipController.cs:387-391 (Awake) and 482-494 (ReplaceBlocks). BlockGrid.TryAdd returns false for duplicates, a second core, and BlockKey.Pack (BlockKey.cs:18) aliases x/y outside -128..127 with no check; BlockGrid.TryRemove refuses the core (BlockGrid.cs:144). ReplaceBlocks therefore leaves the old core in place and silently drops the new layout's core (or keeps both layouts' overlap), and returns void so a caller/test cannot tell the resulting ship differs from the requested one. Contract gap: no failure path. Fix: return a Result/bool plus rejected list (or log LogWarning per rejected AuthoredBlock) and range-check via BlockKey.InRange before Pack; for ReplaceBlocks either rebuild the grid (new BlockGrid) or document and reject layouts whose core differs. Same for the inspector 'blocks' array in Awake (validate once, log errors).

@@ -113,11 +113,7 @@ namespace Hullbreach.Game
                 CannonCooldown = cannonCooldown,
                 AngularDamping = angularDamping,
             };
-            foreach (var b in blocks)
-            {
-                int key = BlockKey.Pack(b.x, b.y);
-                ship.Grid.TryAdd(key, new Block(b.typeId, b.modifiers));
-            }
+            AddAuthoredBlocks(blocks, preservedCoreKey: null);
             // Force the initial view build now rather than on the first Step,
             // so mass/CoM are already valid for the very first FixedUpdate.
             ship.RebuildDerivedViews();
@@ -205,21 +201,67 @@ namespace Hullbreach.Game
         public void ApplyDamage(Vector2 worldPoint, byte damage)
             => ship.ApplyDamageAtWorldPoint(new float2(worldPoint.x, worldPoint.y), damage, out _);
 
-        // Lets a play-mode test fly a SHAPE the demo scene does not author;
-        // see the reference page.
-        // frob:doc docs/reference/hullbreach-game.md#shipcontroller
-        public void ReplaceBlocks(IReadOnlyList<AuthoredBlock> newBlocks)
+        // Adds each authored block to the grid, logging a warning per rejected one
+        // (out of range, duplicate cell, or a second core). Returns the rejected count.
+        // A core at preservedCoreKey is skipped silently: that cell already holds it.
+        int AddAuthoredBlocks(IReadOnlyList<AuthoredBlock> authored, int? preservedCoreKey)
         {
+            int rejected = 0;
+            for (int i = 0; i < authored.Count; i++)
+            {
+                var b = authored[i];
+                if (!BlockKey.InRange(b.x, b.y))
+                {
+                    Debug.LogWarning($"{name}: block {i} at ({b.x},{b.y}) is outside the grid ({BlockKey.Min}..{BlockKey.Max}); dropped.", this);
+                    rejected++;
+                    continue;
+                }
+
+                int key = BlockKey.Pack(b.x, b.y);
+                if (b.typeId == BlockTypes.Core && key == preservedCoreKey) continue;
+                if (!ship.Grid.TryAdd(key, new Block(b.typeId, b.modifiers)))
+                {
+                    Debug.LogWarning($"{name}: block {i} ({BlockTypes.Get(b.typeId).Name}) at ({b.x},{b.y}) was rejected (occupied cell or second core); dropped.", this);
+                    rejected++;
+                }
+            }
+            return rejected;
+        }
+
+        // Lets a play-mode test fly a SHAPE the demo scene does not author;
+        // see the reference page. Returns false (grid untouched) if newBlocks
+        // lacks a core at the existing core's cell, and true only if every
+        // block was applied; rejected blocks are logged.
+        // frob:doc docs/reference/hullbreach-game.md#shipcontroller
+        public bool ReplaceBlocks(IReadOnlyList<AuthoredBlock> newBlocks)
+        {
+            int? coreKey = ship.Grid.CoreKey;
+            if (coreKey.HasValue)
+            {
+                bool hasCore = false;
+                for (int i = 0; i < newBlocks.Count && !hasCore; i++)
+                {
+                    var b = newBlocks[i];
+                    hasCore = b.typeId == BlockTypes.Core && BlockKey.InRange(b.x, b.y)
+                              && BlockKey.Pack(b.x, b.y) == coreKey.Value;
+                }
+                if (!hasCore)
+                {
+                    Debug.LogError($"{name}: ReplaceBlocks layout has no core at the existing core's cell; ship left unchanged.", this);
+                    return false;
+                }
+            }
+
             var existing = new List<int>();
             var live = ship.Grid.SortedKeys;
             for (int i = 0; i < live.Length; i++) existing.Add(live[i]);
-            foreach (int key in existing) ship.Grid.TryRemove(key);
-
-            for (int i = 0; i < newBlocks.Count; i++)
+            foreach (int key in existing)
             {
-                var b = newBlocks[i];
-                ship.Grid.TryAdd(BlockKey.Pack(b.x, b.y), new Block(b.typeId, b.modifiers));
+                // The core is refused by design and is kept.
+                if (key != coreKey) ship.Grid.TryRemove(key);
             }
+
+            int rejected = AddAuthoredBlocks(newBlocks, coreKey);
             ship.RebuildDerivedViews();
 
             var shipRenderer = GetComponent<ShipRenderer>();
@@ -228,6 +270,7 @@ namespace Hullbreach.Game
             if (shipCollider != null) shipCollider.MarkDirty();
             var structure = GetComponent<ShipStructure>();
             if (structure != null) structure.Solver.MarkTopologyChanged();
+            return rejected == 0;
         }
 
         // Lets a caller bind fire to a key not wired to "Fire1", e.g. Space.

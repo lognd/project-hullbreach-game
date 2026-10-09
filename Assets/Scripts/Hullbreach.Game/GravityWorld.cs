@@ -59,6 +59,9 @@ namespace Hullbreach.Game
         // frob:doc docs/reference/hullbreach-game.md#gravityworld
         public static GravityField Field { get; private set; }
 
+        // The field this instance published; OnDestroy only clears Field if it is still ours.
+        GravityField _field;
+
         void Awake()
         {
             var field = new GravityField();
@@ -75,15 +78,22 @@ namespace Hullbreach.Game
                                            planet.mu, planet.radius, surfaceRestitution, softRadius));
                 SpawnDisc(planet);
             }
+            _field = field;
             Field = field;
+        }
+
+        // Temporary wells (projectile and gun wells) only expire when ticked;
+        // the server ticks its own field, so the client must tick this one.
+        void FixedUpdate()
+        {
+            _field?.Tick(Time.fixedDeltaTime);
         }
 
         void OnDestroy()
         {
             // Only clear the static if we are the instance that set it,
             // so tearing down an unrelated one cannot blank a live field.
-            if (ReferenceEquals(Field, null)) return;
-            Field = null;
+            if (_field != null && ReferenceEquals(Field, _field)) Field = null;
         }
 
         void SpawnDisc(PlanetSpec planet)

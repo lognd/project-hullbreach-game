@@ -2,13 +2,18 @@
 id = "01M4GR1DN9TSNK0QFR4FXA7VJM"
 title = "GravityWorld.Field is never Ticked: temporary gravity wells never expire in the Unity client"
 type = "bug"
-category = "todo"
+category = "done"
+outcome = "fixed"
 priority = "high"
 reporter = "lognd"
 created = "2026-10-09T16:30:45Z"
-updated = "2026-10-09T16:30:45Z"
+updated = "2026-10-09T17:05:53Z"
 labels = ["origin:auditor"]
 scope = ["Assets/Scripts/Hullbreach.Game/GravityWorld.cs"]
+
+[[acceptance]]
+text = "Given a temporary gravity well in the client, when GravityWorld fixed-updates past its seconds, then the well expires"
+bound = false
 +++
 
 Contract: GravityField.AddTemporary expires after 'seconds' of Tick calls (docs/reference/hullbreach-world.md, GravityField.Tick). Only Net/ServerSimulation.cs:146 calls Tick. Game/WorldSink.cs:65 adds to GravityWorld.Field (Game/GravityWorld.cs:60), and no Game code calls Field.Tick, so wells from Projectile.DropWellIfAny (Projectile.cs:94) and gravity/anti-gravity guns are permanent in single-player and accumulate. No test exercises GravityWorld + WorldSink expiry with a real field. Fix: add FixedUpdate in GravityWorld calling Field.Tick(Time.fixedDeltaTime); add a PlayMode/integration test that drops a well via WorldSink and asserts Field.Count returns to baseline after Seconds.

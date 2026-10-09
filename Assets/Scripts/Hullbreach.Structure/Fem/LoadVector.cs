@@ -28,11 +28,23 @@ namespace Hullbreach.Structure
         // frob:doc docs/reference/hullbreach-structure.md#loadvector
         public float[] Impulsive;
 
-        // Scatters a force at a ship-local point into the nodal load
-        // vector, by shape-function weight over the containing element.
+        // Scratch for AddPointForce, so the per-tick hot path never allocates.
+        readonly float[] _shape = new float[Q8Element.NodeCount];
+        readonly int[] _pointNodeIds = new int[NodeLattice.NodesPerElement];
+
+        // Scatters a force at a ship-local point into the nodal load vector
+        // by shape-function weight over the containing element. Weights of
+        // nodes absent from the structure are renormalized over the present
+        // ones so the force magnitude is conserved. Returns false (target
+        // untouched) for a non-finite or off-structure point.
         // frob:doc docs/reference/hullbreach-structure.md#loadvector
-        public void AddPointForce(float[] target, float2 shipLocalPoint, float2 force)
+        public bool AddPointForce(float[] target, float2 shipLocalPoint, float2 force)
         {
+            // Bounded so the int cast below is defined.
+            const float Limit = 1e6f;
+            if (!math.all(math.isfinite(shipLocalPoint)) || !math.all(math.isfinite(force))) return false;
+            if (math.any(math.abs(shipLocalPoint) > Limit)) return false;
+
             int bx = (int)math.floor(shipLocalPoint.x);
             int by = (int)math.floor(shipLocalPoint.y);
 
@@ -42,19 +54,32 @@ namespace Hullbreach.Structure
             float xi = 2f * fx - 1f;
             float eta = 2f * fy - 1f;
 
-            var n = new float[Q8Element.NodeCount];
+            var n = _shape;
             Q8Element.ShapeFunctions(xi, eta, n);
 
-            var nodeIds = new int[NodeLattice.NodesPerElement];
+            var nodeIds = _pointNodeIds;
             NodeLattice.NodesOf(bx, by, nodeIds);
 
+            // Shape functions sum to 1, so the present subset's sum is the
+            // fraction that would otherwise be lost.
+            float present = 0f;
+            for (int i = 0; i < NodeLattice.NodesPerElement; i++)
+                if (_assembly.NodeMap.ContainsKey(nodeIds[i])) present += n[i];
+            if (present < MinPresentWeight) return false;
+
+            float scale = 1f / present;
             for (int i = 0; i < NodeLattice.NodesPerElement; i++)
             {
                 if (!_assembly.NodeMap.TryGetValue(nodeIds[i], out int dense)) continue;
-                target[2 * dense] += n[i] * force.x;
-                target[2 * dense + 1] += n[i] * force.y;
+                target[2 * dense] += n[i] * scale * force.x;
+                target[2 * dense + 1] += n[i] * scale * force.y;
             }
+            return true;
         }
+
+        // Below this the present nodes carry too little of the point's weight
+        // to renormalize without amplifying noise.
+        const float MinPresentWeight = 1e-3f;
 
         // Returns the rigid-body acceleration solved for; body forces are
         // distributed per block across its 4 corner (lumped-mass) nodes.

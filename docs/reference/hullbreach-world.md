@@ -106,17 +106,18 @@ machines and so `ShipBody.ContactsThisStep` is reproducible.
 ### OrbitHelper
 
 <!-- describes: Assets/Scripts/Hullbreach.World/OrbitHelper.cs::OrbitHelper -->
-<!-- describes: Assets/Scripts/Hullbreach.World/OrbitHelper.cs::OrbitHelper.CircularOrbitVelocity -->
+<!-- describes: Assets/Scripts/Hullbreach.World/OrbitHelper.cs::OrbitHelper.TryCircularOrbitVelocity -->
 
 Helpers for placing something into a circular orbit around a `GravityField`
 body, used by `DemoMode`'s "reset to orbit" key so a player can start (or
 return to) a stable pass without hand-tuning a velocity.
 
-- `CircularOrbitVelocity`: the world-space velocity that puts a massless
+- `TryCircularOrbitVelocity`: the world-space velocity that puts a massless
   object at `position` into a circular orbit around the body at
   `bodyIndex` inside `field`: `v = sqrt(a(r) * r)` tangential,
   counter-clockwise (rotate the outward radial direction +90 degrees),
   where `a(r)` is `GravityField`'s softened acceleration law (so an orbit
   that dips inside `SoftRadius` still balances the actual pull applied
-  there, not the un-softened `Mu / r^2`). Returns zero if the index is out
-  of range or `position` coincides with the body (undefined orbit).
+  there, not the un-softened `Mu / r^2`). Returns false (velocity zero)
+  if the index is out of range, `position` coincides with the body, or the
+  body's `Mu <= 0` (a repeller has no circular orbit); callers log and skip.

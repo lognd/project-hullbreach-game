@@ -27,7 +27,11 @@ namespace Hullbreach.Game
             if (field == null) return;
 
             Vector3 here = transform.position;
-            var velocity = OrbitHelper.CircularOrbitVelocity(field, bodyIndex, new float2(here.x, here.y));
+            if (!OrbitHelper.TryCircularOrbitVelocity(field, bodyIndex, new float2(here.x, here.y), out var velocity))
+            {
+                Debug.LogWarning($"OrbitStarter: no circular orbit around body {bodyIndex} from {here}; leaving the ship where it is.", this);
+                return;
+            }
             ship.ResetTo(new Vector2(here.x, here.y), new Vector2(velocity.x, velocity.y));
         }
     }

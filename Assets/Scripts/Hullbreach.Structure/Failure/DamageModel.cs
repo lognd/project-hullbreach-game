@@ -30,14 +30,11 @@ namespace Hullbreach.Structure
             return (byte)Math.Round(damage * 255f);
         }
 
-        // Floored at 0.05 so a block never reaches exactly zero stiffness
-        // (which would make K singular).
+        // Delegates to BlockTypes.SofteningFactor, the single source of the
+        // 0.05 floor, so DamageModel and EffectiveStiffness cannot drift.
         // frob:doc docs/reference/hullbreach-structure.md#damagemodel
         public static float SofteningFactor(float damage)
-        {
-            const float floor = 0.05f;
-            return Math.Max(floor, 1f - damage);
-        }
+            => Hullbreach.Core.BlockTypes.SofteningFactor(damage);
 
         // Ductile failure hystereses via RecoverRatio; brittle failure is
         // instantaneous (a crack does not partially open).

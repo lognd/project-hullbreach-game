@@ -170,7 +170,11 @@ namespace Hullbreach.Game
             if (!startInOrbit || field == null) return Vector2.zero;
 
             var worldPos = new Unity.Mathematics.float2(orbitStartPosition.x, orbitStartPosition.y);
-            var v = OrbitHelper.CircularOrbitVelocity(field, orbitBodyIndex, worldPos);
+            if (!OrbitHelper.TryCircularOrbitVelocity(field, orbitBodyIndex, worldPos, out var v))
+            {
+                Debug.LogWarning($"DemoMode: no circular orbit around body {orbitBodyIndex} from {worldPos}; starting at rest.", this);
+                return Vector2.zero;
+            }
             return new Vector2(v.x, v.y);
         }
 

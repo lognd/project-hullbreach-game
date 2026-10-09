@@ -1,0 +1,5 @@
+kind = "evidence-bypass"
+reason = "Unity-engine-only MonoBehaviour (Projectile); no local runner can execute it. PlayMode test ProjectileTests added but unrun."
+at = "2026-10-09T17:13:47Z"
+actor = "GingerVHS"
+rev = 1

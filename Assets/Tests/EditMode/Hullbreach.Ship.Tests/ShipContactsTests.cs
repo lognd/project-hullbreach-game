@@ -133,5 +133,38 @@ namespace Hullbreach.Ship.Tests
             var a = SingleBlockShip(float2.zero, float2.zero);
             Assert.IsFalse(ShipContacts.Resolve(a, a, 0.02f), "a ship collided with itself");
         }
+
+        [Test]
+        public void SeparatingOverlap_DealsNoDamage()
+        {
+            var a = SingleBlockShip(new float2(0f, 0f), new float2(-10f, 0f));
+            var b = SingleBlockShip(new float2(0.5f, 0f), new float2(10f, 0f));
+
+            Assert.IsTrue(ShipContacts.Resolve(a, b, 0.02f));
+
+            a.Grid.TryGet(BlockKey.Pack(0, 0), out var blockA);
+            b.Grid.TryGet(BlockKey.Pack(0, 0), out var blockB);
+            Assert.AreEqual(0, blockA.Damage, "a separating ship must not take impact damage");
+            Assert.AreEqual(0, blockB.Damage, "a separating ship must not take impact damage");
+        }
+
+        [Test]
+        public void ContactDamage_IsIndependentOfArgumentOrder_AndUsesEachShipsThreshold()
+        {
+            byte DamageOf(ShipBody s) { s.Grid.TryGet(BlockKey.Pack(0, 0), out var blk); return blk.Damage; }
+
+            ShipBody Tough() { var s = SingleBlockShip(new float2(0.5f, 0f), new float2(-8f, 0f)); s.ContactDamageSpeed = 1000f; return s; }
+            ShipBody Frail() => SingleBlockShip(new float2(0f, 0f), new float2(8f, 0f));
+
+            var frail1 = Frail(); var tough1 = Tough();
+            ShipContacts.Resolve(frail1, tough1, 0.02f);
+            var frail2 = Frail(); var tough2 = Tough();
+            ShipContacts.Resolve(tough2, frail2, 0.02f);
+
+            Assert.Greater(DamageOf(frail1), 0, "the ship with the low threshold should be damaged");
+            Assert.AreEqual(0, DamageOf(tough1), "the ship above its own threshold must not be damaged");
+            Assert.AreEqual(DamageOf(frail1), DamageOf(frail2));
+            Assert.AreEqual(DamageOf(tough1), DamageOf(tough2));
+        }
     }
 }

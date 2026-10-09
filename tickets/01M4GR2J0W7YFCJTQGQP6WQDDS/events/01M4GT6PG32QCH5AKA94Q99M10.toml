@@ -1,0 +1,7 @@
+kind = "field"
+field = "acceptance"
+new = ["Given a powered block that is removed and replaced at the same key, when the ship steps past the old expiry, then the new block's variant is untouched"]
+moved = []
+at = "2026-10-09T17:08:35Z"
+actor = "GingerVHS"
+rev = 1

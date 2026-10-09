@@ -138,8 +138,10 @@ in a restitution impulse is not worth an OBB test.
   step: finds the deepest overlapping block pair, pushes the two ships
   apart along the contact normal in inverse-mass proportion, and applies
   an equal and opposite restitution impulse at the contact point. Above
-  `ShipBody.ContactDamageSpeed` of closing speed both contacting blocks
-  take damage, on the same curve as a planet impact. Returns whether a
+  each ship's own `ShipBody.ContactDamageSpeed` of closing speed its
+  contacting block takes damage, on the same curve as a planet impact;
+  ships already separating take none, and the result does not depend on
+  argument order. Returns whether a
   contact was found. One pair per step is enough: the deepest pair
   dominates the response, and resolving every overlapping pair in one
   pass double-counts the push for a flush face-to-face hit.
@@ -240,7 +242,9 @@ holding lifecycle and Inspector wiring, and nothing else.
 - `ContactsThisStep`: every planet contact resolved this Step: which
   block (grid key), the surface normal at that block, and the impact
   speed along that normal. Cleared and repopulated every Step, for the
-  renderer/audio to react to.
+  renderer/audio to react to. An empty ship (zero mass) skips integration
+  but still clears this list and any force/torque added by
+  `AddForceAtPoint`, so nothing stale carries over to a later ship.
 - `ThrusterKeys`/`RetroKeys`/`FinKeys`/`WeaponKeys`: thruster/retro/fin/
   weapon block keys, rebuilt when topology is dirty. Dense typed lists,
   because systems iterate "all thrusters" rather than dispatching
@@ -270,7 +274,9 @@ holding lifecycle and Inspector wiring, and nothing else.
   only when `Grid.TopologyDirty`, so placing or removing blocks is what
   pays this cost, not every physics tick. Per-key ramp/cooldown state is
   pruned to the surviving keys but otherwise preserved, so placing an
-  unrelated block does not reset an in-progress throttle ramp.
+  unrelated block does not reset an in-progress throttle ramp. Powerup
+  expiry timers are pruned the same way (to keys still in the grid), so a
+  block placed later at a removed powered block's key keeps its variant.
 - `Throttle`: current throttle 0..1 of the thruster/retro at `key`, for
   the renderer to size its flame effect.
 - `SteerThrottle`: current steer throttle -1..1 of the fin at `key`, for

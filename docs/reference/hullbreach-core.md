@@ -108,6 +108,10 @@ GRID CONVENTION: everything downstream depends on this: block (x, y)
 occupies the unit square [x, x+1] x [y, y+1], so its center is at
 (x + 0.5, y + 0.5).
 
+Neighbors writes -1 for a neighbor that falls off the -128..127 grid edge
+(never a real key; Contains(-1) is false), so edge cells do not alias the
+far edge. Pack asserts InRange in debug builds.
+
 <!-- describes: Assets/Scripts/Hullbreach.Core/Grid/BlockKey.cs::BlockKey -->
 <!-- describes: Assets/Scripts/Hullbreach.Core/Grid/BlockKey.cs::BlockKey.Min -->
 <!-- describes: Assets/Scripts/Hullbreach.Core/Grid/BlockKey.cs::BlockKey.Max -->
@@ -177,7 +181,8 @@ The table is normalized against Hull.YieldStress = 1.0:
 stiff so it sheds load to its neighbors, which is what makes ductile
 failure actually read as ductile, without needing a nonlinear solve. This
 one scalar is the entire reason K_e = E * KHat works, so everything that
-changes stiffness must go through here. The floor (0.05) is a placeholder
+changes stiffness must go through here. `SofteningFactor` is the single
+home of the floor (DamageModel.SofteningFactor delegates to it). The floor (0.05) is a placeholder
 curve that just keeps K non-singular; a later DamageModel may replace it
 with something that better matches real ductile softening (TODO D3).
 
@@ -193,6 +198,7 @@ with something that better matches real ductile softening (TODO D3).
 <!-- describes: Assets/Scripts/Hullbreach.Core/Grid/BlockType.cs::BlockTypes.Count -->
 <!-- describes: Assets/Scripts/Hullbreach.Core/Grid/BlockType.cs::BlockTypes.IsValid -->
 <!-- describes: Assets/Scripts/Hullbreach.Core/Grid/BlockType.cs::BlockTypes.EffectiveStiffness -->
+<!-- describes: Assets/Scripts/Hullbreach.Core/Grid/BlockType.cs::BlockTypes.SofteningFactor -->
 
 ### BlockVariants
 

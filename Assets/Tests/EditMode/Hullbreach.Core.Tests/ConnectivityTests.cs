@@ -131,5 +131,18 @@ namespace Hullbreach.Core.Tests
             Assert.AreEqual(1, components.Count);
             CollectionAssert.AreEquivalent(keys, components[0]);
         }
+
+        [Test]
+        public void FarEdgeCells_AreNotFalselyAdjacent()
+        {
+            var g = new BlockGrid();
+            g.TryAdd(BlockKey.Pack(0, BlockKey.Max), new Block(BlockTypes.Core));
+            g.TryAdd(BlockKey.Pack(1, BlockKey.Min), new Block(BlockTypes.Hull));
+
+            var detached = new List<int>();
+            Connectivity.FindDetached(g, detached);
+
+            CollectionAssert.AreEquivalent(new[] { BlockKey.Pack(1, BlockKey.Min) }, detached);
+        }
     }
 }

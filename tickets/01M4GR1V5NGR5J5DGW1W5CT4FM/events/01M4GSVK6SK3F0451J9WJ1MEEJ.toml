@@ -1,0 +1,7 @@
+kind = "field"
+field = "acceptance"
+new = ["Given a point force on an absent block or non-finite point, when AddPointForce runs, then force is conserved over present nodes or rejected with false"]
+moved = []
+at = "2026-10-09T17:02:32Z"
+actor = "GingerVHS"
+rev = 1

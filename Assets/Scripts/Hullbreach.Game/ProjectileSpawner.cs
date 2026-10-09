@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using Hullbreach.Ship;
 
@@ -14,27 +15,41 @@ namespace Hullbreach.Game
         [SerializeField] float lifetime = 3f;
         [SerializeField] float radius = 0.1f;
 
-        ShipController[] _ships;
+        // Initialized inline so SpawnFromSink is safe before Start.
+        readonly List<ShipController> _ships = new List<ShipController>();
 
         void Start()
         {
-            _ships = FindObjectsByType<ShipController>(FindObjectsSortMode.None);
-            if (_ships.Length == 0)
+            Refresh();
+            if (_ships.Count == 0)
             {
                 Debug.LogError("ProjectileSpawner found no ShipControllers in the scene.");
             }
+        }
 
-            var spec = new ProjectileSpec(speed, impulse, damage, lifetime, radius);
-            foreach (var ship in _ships)
-            {
-                if (ship.Ship != null) ship.Ship.Projectile = spec;
-                ship.ShotFired += OnShotFired;
-            }
+        // Wires every ship in the scene that is not wired yet (idempotent);
+        // call after spawning a ship at runtime. WorldSink.Refresh does.
+        // frob:doc docs/reference/hullbreach-game.md#projectilespawner
+        public void Refresh()
+        {
+            foreach (var ship in FindObjectsByType<ShipController>(FindObjectsSortMode.None))
+                Register(ship);
+        }
+
+        // Applies the Inspector spec to the ship and subscribes to its shots;
+        // a repeat call for the same ship is a no-op.
+        // frob:doc docs/reference/hullbreach-game.md#projectilespawner
+        public void Register(ShipController ship)
+        {
+            if (ship == null || _ships.Contains(ship)) return;
+            _ships.Add(ship);
+            if (ship.Ship != null)
+                ship.Ship.Projectile = new ProjectileSpec(speed, impulse, damage, lifetime, radius);
+            ship.ShotFired += OnShotFired;
         }
 
         void OnDestroy()
         {
-            if (_ships == null) return;
             foreach (var ship in _ships)
             {
                 if (ship != null) ship.ShotFired -= OnShotFired;
@@ -74,7 +89,7 @@ namespace Hullbreach.Game
             float bestDist = float.MaxValue;
             foreach (var ship in _ships)
             {
-                if (ship.Ship == null) continue;
+                if (ship == null || ship.Ship == null) continue;
                 float dist = Vector2.Distance(new Vector2(ship.Ship.Position.x, ship.Ship.Position.y),
                                                new Vector2(shot.WorldOrigin.x, shot.WorldOrigin.y));
                 if (dist < bestDist)

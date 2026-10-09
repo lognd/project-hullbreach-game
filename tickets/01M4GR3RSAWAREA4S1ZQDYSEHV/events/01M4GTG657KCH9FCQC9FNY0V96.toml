@@ -1,0 +1,7 @@
+kind = "field"
+field = "acceptance"
+new = ["Given a round overlapping two block colliders, when it triggers, then impulse and damage are applied once"]
+moved = []
+at = "2026-10-09T17:13:46Z"
+actor = "GingerVHS"
+rev = 1

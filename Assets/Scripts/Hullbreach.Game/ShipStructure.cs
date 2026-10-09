@@ -79,6 +79,16 @@ namespace Hullbreach.Game
         void FixedUpdate()
         {
             if (controller == null || controller.Ship == null) return;
+
+            // Build mode freezes the ship; AppliedForcesThisStep is stale then, so
+            // solving would keep damaging and detaching blocks. Reset hold timers too.
+            if (!controller.SimulationEnabled)
+            {
+                _buckledFor.Clear();
+                _failing.Clear();
+                return;
+            }
+
             var ship = controller.Ship;
             var grid = ship.Grid;
             if (grid.Count == 0) return;
