@@ -1,0 +1,5 @@
+kind = "evidence-bypass"
+reason = "Unity-engine-only MonoBehaviour (GravityWorld); no local runner can execute it. PlayMode tests GravityWorldTests added but unrun."
+at = "2026-10-09T17:05:54Z"
+actor = "GingerVHS"
+rev = 1
