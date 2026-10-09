@@ -2,11 +2,12 @@
 id = "01M4GR2XS54Y86KS8TBWF1E9G1"
 title = "Validate client-supplied designs and inputs on the server"
 type = "security"
-category = "todo"
+category = "done"
+outcome = "fixed"
 priority = "high"
 reporter = "lognd"
 created = "2026-10-09T16:31:34Z"
-updated = "2026-10-09T17:03:09Z"
+updated = "2026-10-09T17:08:35Z"
 labels = ["origin:auditor", "security"]
 scope = ["Assets/Scripts/Hullbreach.Net/ServerSimulation.cs", "Assets/Scripts/Hullbreach.Net/NetMessages.cs"]
 
