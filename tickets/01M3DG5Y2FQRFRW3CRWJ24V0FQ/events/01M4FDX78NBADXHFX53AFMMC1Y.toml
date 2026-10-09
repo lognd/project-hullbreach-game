@@ -1,0 +1,7 @@
+kind = "field"
+field = "acceptance"
+new = ["Given a stress tensor, when StressCriteria reduces it, then ductile (von Mises) and brittle (principal) ratios are correct and compression is asymmetric for armor (StressCriteriaTests, DamageModelTests)", "Given a block past its failure ratio, when DamageModel decides, then it detaches with hysteresis, and a brittle failure detaches immediately (DamageModelTests; S38 criterion 1)"]
+moved = []
+at = "2026-10-09T04:14:28Z"
+actor = "GingerVHS"
+rev = 1
