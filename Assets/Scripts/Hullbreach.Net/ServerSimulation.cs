@@ -38,7 +38,7 @@ namespace Hullbreach.Net
 
         float Dt => 1f / TickRate;
 
-        readonly GravityField _gravity = new GravityField();
+        readonly GravityField _gravity;
 
         // Exposed so a test/host can add permanent bodies (planets) before
         // the first Tick.
@@ -81,9 +81,11 @@ namespace Hullbreach.Net
         // This server's own IWorldSink; see the reference page.
         readonly ServerWorldSink _sink;
 
+        // `gravity` null means GravityConfig.Default (no planets, today's constants).
         // frob:doc docs/reference/hullbreach-net.md#serversimulation
-        public ServerSimulation(IServerOutbox outbox)
+        public ServerSimulation(IServerOutbox outbox, GravityConfig gravity = null)
         {
+            _gravity = (gravity ?? GravityConfig.Default).BuildField();
             _outbox = outbox ?? throw new ArgumentNullException(nameof(outbox));
             _sink = new ServerWorldSink(this);
         }

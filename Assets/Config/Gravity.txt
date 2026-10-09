@@ -1,0 +1,11 @@
+# Gravity constants shared by the Unity client (GravityWorld) and the server.
+# Format: one 'key = value' per line; '#' starts a comment.
+#   max_acceleration    cap on the summed pull, units/s^2 (default 40)
+#   surface_restitution bounce off a planet surface, 0..1 (default 0.2)
+#   planet = x y mu radius [soft_radius_factor]   (soft factor default 1.5)
+# Sprites, colors and scale stay on the GravityWorld component, matched by
+# planet order.
+max_acceleration = 40
+surface_restitution = 0.2
+planet = 0 -60 900 18
+planet = 45 20 120 6

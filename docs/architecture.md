@@ -191,7 +191,8 @@ server's own tick loop). In order:
    close together (a ship and a planet, or two overlapping wells) never
    see the inverse-square law diverge toward infinity. The summed
    acceleration is additionally clamped to `GravityField.MaxAcceleration`
-   (40 units/s^2 default) by magnitude, so several overlapping strong
+   (40 units/s^2 default, set through `GravityConfig`, see
+`docs/reference/hullbreach-world.md#gravityconfig`) by magnitude, so several overlapping strong
    wells cannot stack past that same ceiling. `OrbitHelper` uses the
    identical softened law (`GravityField.AccelerationMagnitude`) so a
    requested circular orbit is still consistent even when it dips inside

@@ -9,7 +9,17 @@ namespace Hullbreach.World
     public sealed class GravityField
     {
         // frob:doc docs/reference/hullbreach-world.md#gravityfield
-        public float MaxAcceleration = 40f;
+        public const float DefaultMaxAcceleration = 40f;
+
+        // Set once at construction (from GravityConfig) so client and server cannot drift apart.
+        // frob:doc docs/reference/hullbreach-world.md#gravityfield
+        public float MaxAcceleration { get; }
+
+        // frob:doc docs/reference/hullbreach-world.md#gravityfield
+        public GravityField(float maxAcceleration = DefaultMaxAcceleration)
+        {
+            MaxAcceleration = maxAcceleration;
+        }
 
         // One temporary body plus the seconds remaining before it expires.
         struct TemporaryEntry
