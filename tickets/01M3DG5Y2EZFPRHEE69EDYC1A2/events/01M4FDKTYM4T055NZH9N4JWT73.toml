@@ -1,0 +1,6 @@
+kind = "field"
+field = "scope"
+new = ["docs/stress-colors.md", "docs/README.md", "docs/architecture.md", "changelog.d/**"]
+at = "2026-10-09T04:09:20Z"
+actor = "GingerVHS"
+rev = 1
