@@ -1,0 +1,6 @@
+kind = "field"
+field = "scope"
+new = ["Assets/Scripts/Hullbreach.Core/Grid/BlockType.cs", "Assets/Tests/EditMode/Hullbreach.Core.Tests/**"]
+at = "2026-10-09T04:14:27Z"
+actor = "GingerVHS"
+rev = 1

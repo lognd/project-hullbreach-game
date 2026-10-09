@@ -1,0 +1,7 @@
+kind = "field"
+field = "acceptance"
+new = ["Given the block type table, when materials are read, then hull is the yield reference, armor is heavier and more brittle, and effective stiffness falls monotonically with damage to a floor (BlockTypesTests)"]
+moved = []
+at = "2026-10-09T04:14:27Z"
+actor = "GingerVHS"
+rev = 1
