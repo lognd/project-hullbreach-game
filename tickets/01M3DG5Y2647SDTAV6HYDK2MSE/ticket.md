@@ -8,9 +8,22 @@ points = 2
 parent = "01M3DG5Y0R3XBGSCEYQ0383EDK"
 reporter = "human"
 created = "2026-09-26T00:00:00Z"
-updated = "2026-09-26T00:00:00Z"
+updated = "2026-10-09T03:59:56Z"
 aliases = ["T-0070"]
 labels = ["jira:SCRUM-174", "owner:stevendangkhoi", "game", "platform", "milestone:0.2.0"]
+scope = ["Assets/Scripts/Hullbreach.Builder/**", "Assets/Tests/EditMode/Hullbreach.Builder.Tests/**", "docs/**", "changelog.d/**"]
+
+[[acceptance]]
+text = "Given a BlockGrid built through BuilderSession, when it is written to the versioned design format and read back, then the loaded grid has the same blocks (key, type, modifiers) and the same core"
+bound = false
+
+[[acceptance]]
+text = "Given a design file whose blocks break PlacementRules (floating block, overlapping clearance, second core, out-of-range cell, unknown type, damaged block), when it is loaded, then every problem is reported with its cell and reason and the blocks are not altered"
+bound = false
+
+[[acceptance]]
+text = "Given a corrupt, truncated or newer-version design file, when it is loaded, then load returns an error result naming the line and never throws"
+bound = false
 +++
 
 BlockGrid design serialization and validation on load
