@@ -1,0 +1,7 @@
+kind = "field"
+field = "acceptance"
+new = ["Given a pickup overlapping two block colliders, when it triggers, then the powerup applies once and one respawn is queued"]
+moved = []
+at = "2026-10-09T17:14:18Z"
+actor = "GingerVHS"
+rev = 1
