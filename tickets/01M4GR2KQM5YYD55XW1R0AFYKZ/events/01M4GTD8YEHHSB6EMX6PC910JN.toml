@@ -1,0 +1,7 @@
+kind = "field"
+field = "acceptance"
+new = ["Given overlapping ships that are separating, when Resolve runs, then no damage; and damage is gated per ship, independent of argument order"]
+moved = []
+at = "2026-10-09T17:12:11Z"
+actor = "GingerVHS"
+rev = 1
