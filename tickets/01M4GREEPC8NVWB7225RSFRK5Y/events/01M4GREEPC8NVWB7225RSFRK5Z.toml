@@ -1,0 +1,14 @@
+kind = "create"
+title = "S53: Equip a thruster trail"
+type = "story"
+category = "todo"
+priority = "medium"
+parent = "01M4GRD8ZV5ZNB70YTSK7RH036"
+persona = "player"
+capability = "to choose a cosmetic trail for my thrusters"
+outcome_text = "my ship stands out in flight"
+labels = ["owner:a-carten", "game", "platform", "milestone:0.3.0"]
+acceptance = ["A player can equip any owned trail and cannot equip one they do not own.", "The equipped trail replaces the default thruster flame on both players' screens and scales with throttle like the flame does today.", "Trails never hide blocks, projectiles or the damage/status layers."]
+at = "2026-10-09T16:37:52Z"
+actor = "lognd"
+rev = 1
