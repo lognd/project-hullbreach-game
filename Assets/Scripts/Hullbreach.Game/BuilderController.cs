@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.EventSystems;
 using Hullbreach.Core;
 using Hullbreach.Builder;
 
@@ -109,7 +110,7 @@ namespace Hullbreach.Game
                 _hoverValid = pinned.Valid;
                 _hoverVerdict = pinned.Verdict;
             }
-            else if (TryGetHoveredKey(out int key))
+            else if (!IsPointerOverUi() && TryGetHoveredKey(out int key))
             {
                 _hasHover = true;
                 _hoverKey = key;
@@ -150,6 +151,10 @@ namespace Hullbreach.Game
                 Session.Cancel();
             }
         }
+
+        // HUD panels overlap the grid area; clicks on them must not edit it.
+        static bool IsPointerOverUi()
+            => EventSystem.current != null && EventSystem.current.IsPointerOverGameObject();
 
         bool TryGetHoveredKey(out int key)
         {
@@ -198,11 +203,8 @@ namespace Hullbreach.Game
             Vector3 center = shipRoot.TransformPoint(new Vector3(x + 0.5f, y + 0.5f, 0f));
             Vector3 size = shipRoot.lossyScale;
 
-            bool valid = Session.State == BuilderState.Orienting
-                ? true
-                : PlacementRules.CanPlace(Session.Grid, _hoverKey, Session.SelectedTypeId);
-
-            Gizmos.color = valid ? Color.green : Color.red;
+            // Same authoritative verdict as UpdateHoverIndicator.
+            Gizmos.color = _hoverValid ? Color.green : Color.red;
             Gizmos.DrawWireCube(center, size);
         }
     }

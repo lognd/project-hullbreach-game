@@ -48,6 +48,10 @@ same reason, pinning the hover preview to a key since a test cannot move
 the OS cursor. `UpdateHoverIndicator` builds a runtime-only quad over the
 hovered cell so the preview is visible in a running build, not just the
 Scene view (`OnDrawGizmos` never renders in Play mode's Game view).
+`OnDrawGizmos` colours from the same cached `_hoverValid` verdict, never
+re-running PlacementRules. Hover and mouse clicks are skipped while
+`EventSystem.current.IsPointerOverGameObject()` is true, so clicks on HUD
+panels never edit the grid beneath them.
 
 ### CameraFollow
 
