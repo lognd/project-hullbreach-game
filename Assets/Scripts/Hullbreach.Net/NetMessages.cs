@@ -49,6 +49,10 @@ namespace Hullbreach.Net
         // frob:doc docs/reference/hullbreach-net.md#inputmessage
         public const byte FireBit = 0x01;
 
+        // Exact wire size; a receiver rejects any other length before reading.
+        // frob:doc docs/reference/hullbreach-net.md#inputmessage
+        public const int ByteSize = 1 + 2 + 4 + 1 + 1 + 1;
+
         // frob:doc docs/reference/hullbreach-net.md#inputmessage
         public InputMessage(ushort netId, uint tick, sbyte thrustAxis, sbyte steer, byte flags)
         {

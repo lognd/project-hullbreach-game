@@ -140,6 +140,22 @@ the newcomer, then broadcasts the newcomer's own ship's snapshot to
 snapshot of their own ship exactly like everyone else does, since the
 server is the only place the authoritative block layout lives.
 
+## The host driver
+
+`ServerHost` (`Assets/Scripts/Hullbreach.Net/ServerHost.cs`) is the plain-C#
+process-side half of the tick loop above: it owns the `ServerOutbox`, drains
+an `ITransport` into `ServerSimulation.SetInput` before each tick, and
+forwards the outbox to the transport after it. A process entry point only
+has to construct it over a real transport, `Join` peers as its lobby
+admits them, and call `Run` with a clock and a sleep. See
+[the reference entry](reference/hullbreach-net.md#serverhost) for the
+scheduling rules (exact tick counts, bounded catch-up after a stall).
+
+Two things a client author must know. An input applies for exactly one
+tick, so a held key is one `InputMessage` per tick, not one on press. And
+the server drives the ship belonging to the transport peer that sent the
+input; the `NetId` inside the message is never trusted.
+
 ## What a transport implementer must do
 
 Implement `ITransport` (`SendReliable`, `SendUnreliable`, `TryReceive`,
