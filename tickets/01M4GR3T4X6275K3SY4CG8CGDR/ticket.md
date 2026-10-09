@@ -2,11 +2,12 @@
 id = "01M4GR3T4X6275K3SY4CG8CGDR"
 title = "ProjectileSpawner.SpawnFromSink throws NRE before Start and never wires ships created later; WorldSink.SpawnProjectile silently drops shots without a spawner"
 type = "bug"
-category = "todo"
+category = "done"
+outcome = "fixed"
 priority = "medium"
 reporter = "lognd"
 created = "2026-10-09T16:32:04Z"
-updated = "2026-10-09T17:15:42Z"
+updated = "2026-10-09T17:15:43Z"
 idempotency_key = "audit-game-spawner-lifecycle"
 labels = ["origin:auditor", "audit:hullbreach-game"]
 scope = ["Assets/Scripts/Hullbreach.Game/ProjectileSpawner.cs"]
