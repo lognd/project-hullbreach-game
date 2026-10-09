@@ -1,0 +1,7 @@
+kind = "transition"
+from = "in-progress"
+to = "todo"
+reason = "Criteria implemented and committed; closing is blocked on evidence (dotnet not allowlisted). Releasing the lease so the WIP limit and the docs scope are free for the next ticket."
+at = "2026-10-09T04:09:45Z"
+actor = "mcnairrobotics"
+rev = 1
