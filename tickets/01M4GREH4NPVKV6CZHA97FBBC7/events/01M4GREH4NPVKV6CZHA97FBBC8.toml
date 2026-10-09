@@ -1,0 +1,12 @@
+kind = "create"
+title = "S56-2: Always-on damage visual with discrete wear stages"
+type = "task"
+category = "todo"
+priority = "medium"
+points = 2
+parent = "01M4GREG1Z463PSEZHTRFXDEYB"
+labels = ["owner:a-carten", "game", "milestone:0.3.0"]
+acceptance = ["Blocks show distinct damage stages (for example scuffed, cracked, failing) driven by DamageFraction, drawn over the skin.", "Stage thresholds are named constants shared with the HUD hull warning."]
+at = "2026-10-09T16:37:55Z"
+actor = "lognd"
+rev = 1
