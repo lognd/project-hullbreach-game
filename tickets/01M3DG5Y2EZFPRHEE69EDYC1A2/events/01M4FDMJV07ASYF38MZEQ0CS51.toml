@@ -1,0 +1,11 @@
+kind = "evidence"
+accepts = [1, 2]
+captured_at = "2026-10-09T04:09:45Z"
+digest = "cb3fc85fc74d427933ac471bdfd7a2dd88332f43ddf13811722a7b87eb923293"
+provider = "file"
+ref = "docs/stress-colors.md"
+size = 5308
+status = "measured"
+at = "2026-10-09T04:09:45Z"
+actor = "GingerVHS"
+rev = 1
