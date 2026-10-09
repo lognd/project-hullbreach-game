@@ -4,10 +4,11 @@ title = "S48: Keep the game fluid over the internet"
 type = "story"
 category = "todo"
 priority = "critical"
+points = 13
 parent = "01M3DG5Y07Q4APXVF7R5P60T9Y"
 reporter = "human"
 created = "2026-09-26T00:00:00Z"
-updated = "2026-09-26T00:00:00Z"
+updated = "2026-10-09T04:03:28Z"
 aliases = ["T-0037"]
 labels = ["jira:SCRUM-69", "owner:mcnairrobotics", "game", "netcode", "milestone:0.2.0"]
 
