@@ -2,11 +2,12 @@
 id = "01M4GR2KS7KV38NGT1YA6FDXKJ"
 title = "ClientReplica.ApplyReceived/ApplyReliable: malformed or unknown reliable payload throws and permanently stalls sequence apply"
 type = "bug"
-category = "todo"
+category = "done"
+outcome = "fixed"
 priority = "medium"
 reporter = "lognd"
 created = "2026-10-09T16:31:24Z"
-updated = "2026-10-09T17:09:25Z"
+updated = "2026-10-09T17:09:51Z"
 labels = ["origin:auditor", "audit:hullbreach-net"]
 scope = ["Assets/Scripts/Hullbreach.Net/ClientReplica.cs"]
 
