@@ -152,6 +152,13 @@ namespace Hullbreach.Ship
             PruneStale(_throttleByKey, ThrusterKeys, RetroKeys, FinKeys);
             PruneStale(_cannonCooldownByKey, WeaponKeys);
 
+            // A powerup timer must not outlive its block, or it would revert
+            // an unrelated block later placed at the same key.
+            var removed = new List<int>();
+            foreach (int key in _powerupExpiryByKey.Keys)
+                if (!Grid.Contains(key)) removed.Add(key);
+            foreach (int key in removed) _powerupExpiryByKey.Remove(key);
+
             Grid.ClearDirty();
         }
 
@@ -224,6 +231,11 @@ namespace Hullbreach.Ship
                 // rather than divide by zero.
                 LastLinearAcceleration = float2.zero;
                 LastAngularAcceleration = 0f;
+                // Nothing integrates, so drop stale per-step outputs and
+                // externally added loads rather than leaking them to a later ship.
+                ContactsThisStep.Clear();
+                _forceAccum = float2.zero;
+                _torqueAccum = 0f;
                 ForwardThrottleMean = 0f;
                 ReverseThrottleMean = 0f;
                 SteerThrottleMean = 0f;

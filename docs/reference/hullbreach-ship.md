@@ -240,7 +240,9 @@ holding lifecycle and Inspector wiring, and nothing else.
 - `ContactsThisStep`: every planet contact resolved this Step: which
   block (grid key), the surface normal at that block, and the impact
   speed along that normal. Cleared and repopulated every Step, for the
-  renderer/audio to react to.
+  renderer/audio to react to. An empty ship (zero mass) skips integration
+  but still clears this list and any force/torque added by
+  `AddForceAtPoint`, so nothing stale carries over to a later ship.
 - `ThrusterKeys`/`RetroKeys`/`FinKeys`/`WeaponKeys`: thruster/retro/fin/
   weapon block keys, rebuilt when topology is dirty. Dense typed lists,
   because systems iterate "all thrusters" rather than dispatching
@@ -270,7 +272,9 @@ holding lifecycle and Inspector wiring, and nothing else.
   only when `Grid.TopologyDirty`, so placing or removing blocks is what
   pays this cost, not every physics tick. Per-key ramp/cooldown state is
   pruned to the surviving keys but otherwise preserved, so placing an
-  unrelated block does not reset an in-progress throttle ramp.
+  unrelated block does not reset an in-progress throttle ramp. Powerup
+  expiry timers are pruned the same way (to keys still in the grid), so a
+  block placed later at a removed powered block's key keeps its variant.
 - `Throttle`: current throttle 0..1 of the thruster/retro at `key`, for
   the renderer to size its flame effect.
 - `SteerThrottle`: current steer throttle -1..1 of the fin at `key`, for
