@@ -1,0 +1,7 @@
+kind = "field"
+field = "acceptance"
+new = ["Given a column under compression, when BucklingAnalysis runs, then the critical load factor matches a dense oracle, scales with inverse length squared, and tension has no modes (BucklingTests)", "Given the solver hook, when load is high, then buckled blocks are reported and the analysis is bit-deterministic (BucklingTests)"]
+moved = []
+at = "2026-10-09T04:14:28Z"
+actor = "GingerVHS"
+rev = 1
