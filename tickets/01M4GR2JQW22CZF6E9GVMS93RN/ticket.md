@@ -2,11 +2,12 @@
 id = "01M4GR2JQW22CZF6E9GVMS93RN"
 title = "ShipBody.Step early return on zero mass leaves ContactsThisStep and accumulators stale"
 type = "bug"
-category = "todo"
+category = "done"
+outcome = "fixed"
 priority = "medium"
 reporter = "lognd"
 created = "2026-10-09T16:31:23Z"
-updated = "2026-10-09T17:09:12Z"
+updated = "2026-10-09T17:09:48Z"
 labels = ["origin:auditor", "audit:ship"]
 scope = ["Assets/Scripts/Hullbreach.Ship/ShipBody.cs"]
 
