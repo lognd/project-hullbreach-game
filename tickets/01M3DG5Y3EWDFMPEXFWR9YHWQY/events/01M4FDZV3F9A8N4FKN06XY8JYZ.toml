@@ -1,0 +1,7 @@
+kind = "transition"
+from = "todo"
+to = "in-progress"
+reason = "lease: mcnairrobotics in wt/mcnairrobotics-game; scope: Assets/Tests/EditMode/Hullbreach.Net.Tests/ServerHostTests.cs, Assets/Tests/EditMode/Hullbreach.Net.Tests/BuildReplicationTests.cs, docs/testing.md, docs/netcode.md, Assets/Tests/EditMode/Hullbreach.Net.Tests/NetRig.cs*, Assets/Tests/EditMode/Hullbreach.Net.Tests/ThrottledConnectionTests.cs*; ttl 7200s"
+at = "2026-10-09T04:15:53Z"
+actor = "mcnairrobotics"
+rev = 1
