@@ -4,9 +4,10 @@ title = "S12: Equip a skin"
 type = "story"
 category = "todo"
 priority = "medium"
+parent = "01M4GRD8ZV5ZNB70YTSK7RH036"
 reporter = "human"
 created = "2026-09-26T00:00:00Z"
-updated = "2026-09-26T00:00:00Z"
+updated = "2026-10-09T16:37:25Z"
 aliases = ["T-0013"]
 labels = ["jira:SCRUM-33", "owner:a-carten", "game", "platform", "milestone:0.3.0"]
 
