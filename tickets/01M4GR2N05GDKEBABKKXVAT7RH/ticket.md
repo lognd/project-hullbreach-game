@@ -2,11 +2,12 @@
 id = "01M4GR2N05GDKEBABKKXVAT7RH"
 title = "ServerSimulation.Leave/TimeoutStalePeers remove a ship without telling clients; remote replicas keep ghost ships"
 type = "bug"
-category = "todo"
+category = "done"
+outcome = "fixed"
 priority = "medium"
 reporter = "lognd"
 created = "2026-10-09T16:31:25Z"
-updated = "2026-10-09T17:10:17Z"
+updated = "2026-10-09T17:10:44Z"
 labels = ["origin:auditor", "audit:hullbreach-net"]
 scope = ["Assets/Scripts/Hullbreach.Net/ServerSimulation.cs", "Assets/Scripts/Hullbreach.Net/NetMessages.cs"]
 
