@@ -1,0 +1,14 @@
++++
+id = "01M4GR21R5T9GFZR9YG2Z15YWF"
+title = "Clearance.TryReservedCells always returns true; return value carries no contract, unknown typeId silently yields empty list"
+type = "bug"
+category = "todo"
+priority = "low"
+reporter = "lognd"
+created = "2026-10-09T16:31:06Z"
+updated = "2026-10-09T16:31:06Z"
+labels = ["origin:auditor", "auditor"]
+scope = ["Assets/Scripts/Hullbreach.Builder/Clearance.cs"]
++++
+
+Symbol: Clearance.TryReservedCells (Clearance.cs:143-171). Try-named bool API returns true unconditionally (line 170) and both callers (PlacementRules.cs:363, 373) discard it; an unknown typeId or out-of-range key yields an empty list indistinguishable from 'no clearance needed'. Also Facing.Ahead -1 sentinel is silently dropped for Cannon/Fin. Fix direction: either return void (name Get/Fill ReservedCells) and document that empty means none, or return false for typeId >= BlockTypes.Count / out-of-range key and have CanPlace surface it; update docs/reference/hullbreach-builder.md#clearance. Related hardening: BlockPalette.All (BlockPalette.cs:263) indexes the private Cost[] by typeId and will throw once BlockTypes.Count exceeds 7; add a guard or an invariant test that Cost.Length == BlockTypes.Count (BlockPaletteTests.cs:14 only checks entry count after the throw would occur).
