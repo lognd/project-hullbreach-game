@@ -8,8 +8,8 @@ traces back to one rule stated once here.
 ## The one rule: engine-free simulation, Unity-only adapters
 
 `Hullbreach.Core`, `Hullbreach.World`, `Hullbreach.Structure`,
-`Hullbreach.Ship`, `Hullbreach.Builder`, `Hullbreach.Net`, and
-`Hullbreach.Hud` contain **no `UnityEngine` reference at all**. They are plain C#: `Unity.Mathematics`
+`Hullbreach.Ship`, `Hullbreach.Builder`, `Hullbreach.Net`,
+`Hullbreach.Hud`, and `Hullbreach.Settings` contain **no `UnityEngine` reference at all**. They are plain C#: `Unity.Mathematics`
 for vector math (it is a math library, not an engine dependency) and
 nothing else. `Hullbreach.Game` is the only assembly that references
 `UnityEngine`, and it is deliberately thin: `MonoBehaviour` adapters that
@@ -96,6 +96,10 @@ Concretely, from each `.asmdef`'s `references`:
   simulation state into the exact strings/colors a uGUI view shows.
   Compiled by `tools/plaincs` and covered by edit-mode tests like every
   other plain assembly.
+- `Hullbreach.Settings` -> nothing. Player preferences (volumes, resolution,
+  key-binding placeholder) and their local file; the disk sits behind
+  `ISettingsStorage` so it is testable. See
+  [reference/hullbreach-settings.md](reference/hullbreach-settings.md).
 - `Hullbreach.Game` -> all of the above, plus `UnityEngine`. Scene-facing
   adapters: `ShipController`, `BuilderController`, `ShipRenderer`,
   `ShipStructure`, `WorldSink`, `GravityWorld`, `Powerup`/`PowerupSpawner`,
