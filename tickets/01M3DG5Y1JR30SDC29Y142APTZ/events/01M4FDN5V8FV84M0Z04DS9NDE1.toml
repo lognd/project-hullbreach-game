@@ -1,0 +1,7 @@
+kind = "field"
+field = "scope"
+old = ["Assets/Scripts/Hullbreach.Settings/**", "Assets/Scripts/Hullbreach.Settings.meta", "Assets/Tests/EditMode/Hullbreach.Settings.Tests/**", "Assets/Tests/EditMode/Hullbreach.Settings.Tests.meta", "tools/plaincs/Hullbreach.Plain/Hullbreach.Plain.csproj", "docs/testing.md", "docs/reference/hullbreach-settings.md"]
+new = ["Assets/Scripts/Hullbreach.Settings/**", "Assets/Scripts/Hullbreach.Settings.meta", "Assets/Tests/EditMode/Hullbreach.Settings.Tests/**", "Assets/Tests/EditMode/Hullbreach.Settings.Tests.meta", "tools/plaincs/Hullbreach.Plain/Hullbreach.Plain.csproj", "docs/testing.md", "docs/reference/hullbreach-settings.md", "docs/architecture.md"]
+at = "2026-10-09T04:10:04Z"
+actor = "stevendangkhoi"
+rev = 1
