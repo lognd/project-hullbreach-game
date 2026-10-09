@@ -2,11 +2,12 @@
 id = "01M4GR21R5T9GFZR9YG2Z15YWF"
 title = "Clearance.TryReservedCells always returns true; return value carries no contract, unknown typeId silently yields empty list"
 type = "bug"
-category = "todo"
+category = "done"
+outcome = "fixed"
 priority = "low"
 reporter = "lognd"
 created = "2026-10-09T16:31:06Z"
-updated = "2026-10-09T16:53:26Z"
+updated = "2026-10-09T16:53:27Z"
 labels = ["origin:auditor", "auditor"]
 scope = ["Assets/Scripts/Hullbreach.Builder/Clearance.cs"]
 
