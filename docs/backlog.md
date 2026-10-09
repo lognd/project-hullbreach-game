@@ -2,6 +2,8 @@
 
 One row per Jira issue imported into frob for this repo (unit B, see [docs/design/frob-and-backlog.md](design/frob-and-backlog.md) section 4), sorted epic -> story -> PBI.
 
+The `frob id` column holds the v1 ids, which frob v2 keeps as ticket aliases (`frob ticket show T-0041`). This table is hand-maintained: frob v2 has no generator for it (it was built from v1 `frob ticket list`).
+
 | Jira | frob id | tier | parent | points | sprint | owner |
 | --- | --- | --- | --- | --- | --- | --- |
 | [SCRUM-17](https://aliens-against-humanity.atlassian.net/browse/SCRUM-17) | T-0004 | epic | - | - | - | mcnairrobotics |

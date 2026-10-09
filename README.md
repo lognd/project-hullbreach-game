@@ -316,9 +316,10 @@ manifest is perfectly valid. If you see that locally and the file looks
 fine, that is why: CI runs on Ubuntu, where `python3` exists, and passes.
 
 Editor tests and a headless server build in CI are not there yet; see
-`TODO.md`. frob does not gate this repo either (it can parse C# but has no
-check stage for it), so there are no tickets here, just `TODO.md` and the
-GitHub issues mirrored from Jira.
+`TODO.md`. frob v2 tracks the Jira backlog as tickets under `tickets/`
+(`frob ticket list`, see [docs/frob.md](docs/frob.md)); its `frob check`
+runs in CI as a non-blocking job because C# support is still partial.
+Deferred engineering work lives in `TODO.md`.
 
 ## Things that bite people
 

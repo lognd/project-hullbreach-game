@@ -1,8 +1,8 @@
 # TODO
 
-frob's ticket queue and strata model are wired into this repo (unit W,
-docs/design/frob-and-backlog.md); `frob check` does not gate it yet (see
-the frob bullet below), so deferred work still lives here instead of in
+frob v2's ticket ledger is wired into this repo (unit W,
+docs/design/frob-and-backlog.md); `frob check` does not pass yet (see the
+frob bullets below), so deferred work still lives here instead of in
 tickets.
 
 - [x] CI: run the edit-mode tests without a Unity license. Done via
@@ -66,25 +66,27 @@ S46 (win by breaching the core), S48, and the E14 stretch goals.
 - [x] UI: port the IMGUI HUD (`BuilderHud`, `DemoMode`'s status panel
       and hull banner) to uGUI prefabs. Done, U0-U4:
       [docs/design/ui-port.md](docs/design/ui-port.md).
-- [ ] frob: `frob check` exits `CHECK001` ("unknown project type") on
-      this repo until frob 0.534.0 ships the "unity"/"csharp" project
-      types (frob T-6590, critical; the strata root-module
-      parse gap that forced the hand-merge into
-      `design/hullbreach_game.strata` is the same series, frob T-5198).
-      `frob graph build` and `frob ticket` already work today; add a CI
-      job that runs `frob check` once that release ships. See
-      [docs/frob.md](docs/frob.md) and
-      [docs/design/frob-and-backlog.md](docs/design/frob-and-backlog.md).
-- [ ] frob: `frob sys audit` exits non-zero on the two ticket-bound
-      SYS114 waivers (T-0041) because frob double-counts them as stale
-      (frob T-6584, 0.534.0). The reliability view already
-      reports them as waived; treat that exit as a known false gap.
+- [ ] frob: `frob check` (v2, 0.532.0) exits 1 on this repo. Makes CI's
+      `frob check` job non-blocking until it clears: (1) 800 DSL001
+      findings, `frob:describes` is not a v2 directive (frob must decide
+      what replaces it); (2) C# is fidelity F1, so COV001 warns on every
+      public method and a `frob:tests` binding on a C# test would be
+      TEST001; (3) four bare TODO comments (BlockType.cs, BuilderController.cs,
+      DemoInput.cs, Q8ElementTests.cs) need `frob:todo <ulid>`, which waits
+      for alias resolution in directives (frob ~KP5659Y). Make the CI job
+      required (add it to `gate`'s needs) once it exits 0. See
+      [docs/frob.md](docs/frob.md).
+- [ ] frob: `design/hullbreach_game.strata` (the v1 architecture model) is
+      not read by v2, which models with grimble (`design/model.grmb`).
+      Port it, or delete it, once grimble can express the flows.
+- [ ] frob: 11 Sprint 2 stories (S16, S29, S34-S38, S40, S41, S43, S48) have
+      no story points, so `frob cycle assign` refuses them; size them and
+      assign them to the Sprint 2 cycle.
 - [x] frob: `frob ticket new --points` dropped the points (frob
       T-5815); fixed in frob 0.531.1.dev351, points now persist on `new`.
-- [ ] frob: the three Sprint 0 tickets (label `jira-status:done`) stay
-      queued until frob can close pre-frob work without evidence
-      (`close --historical`, frob T-6585, 0.535.0).
-- [ ] frob: `frob:tests` bindings in Assets/Tests read as malformed
-      because frob does not yet see Unity test asmdefs as the test side
-      (frob T-6570, 0.534.0). Two bindings were removed from
-      BuilderSessionTests and ShipBodyTests; re-add them after it lands.
+- [ ] frob: the three Sprint 0 tickets (label `jira-status:done`, S0-1 to
+      S0-3) are todo; close them with `frob ticket close --outcome done
+      --no-evidence --reason "pre-frob work"` once the team agrees.
+- [ ] frob: re-add `frob:tests` bindings on the C# edit-mode tests (two were
+      removed from BuilderSessionTests and ShipBodyTests) after frob
+      resolves C# test items (frob ~HT9HBY2).

@@ -3,9 +3,13 @@
 Status: W, C and B are done: frob is wired in (`frob.toml`,
 `design/hullbreach_game.strata`, 116 tickets under `tickets/`), the
 comment sweep landed (D9 below), and the Jira backlog is imported
-(`docs/backlog.md`). What is still open is on the frob side, not ours:
-the `frob check` CHECK001 blocker and the other frob-tracked gaps listed
-in the "frob" section of [TODO.md](../../TODO.md). This page specs the
+(`docs/backlog.md`). The repo has since moved from frob v1 to frob v2 (0.532.0): tickets are
+ULID ledger entries (v1 ids kept as aliases), `frob.toml` follows the v2
+schema and the strata model is no longer read. What is still open is on
+the frob side, not ours: C# is fidelity F1 in v2 and the other
+frob-tracked gaps listed in the "frob" section of [TODO.md](../../TODO.md)
+and [docs/frob.md](../frob.md#known-gaps-in-frob-0532-on-this-repo).
+The sections below are the original v1-era spec and are kept as history. This page specs the
 three pieces of work that were deferred at the end of the
 [UI port](ui-port.md#7-schedule) and pulled forward: W (frob wiring), C
 (comment sweep) and B (backlog import). Related: [architecture](../architecture.md),
@@ -55,7 +59,7 @@ merged back into every open branch.
 - `docs/frob.md`: what frob is, the comment directives this repo uses
   (D9 in [ui-port.md](ui-port.md#2-decisions)), and the ticket workflow
   for teammates.
-- Known blocker: `frob check` exits with CHECK001 "unknown project type"
+- Known blocker (v1 era; superseded by the v2 migration, see docs/frob.md): `frob check` exits with CHECK001 "unknown project type"
   on any Unity repo, because frob's check stage dispatches only
   python/typescript/cpp/rust. The frob maintainers confirmed it on
   2026-09-26 and are adding "unity" and "csharp" project types (frob
@@ -151,7 +155,7 @@ course deliverables cite.
 
 ## 5. Acceptance
 
-1. W: `frob graph build` reports 0 parse failures, `frob ticket list`
+1. W (v1 wording; v2 has no `frob graph build`): `frob graph build` reports 0 parse failures, `frob ticket list`
    works, `tools/plaincs/run_tests.sh` and `scripts/check_unity_tree.sh`
    pass. `frob check` passes as soon as frob can dispatch C#; until then
    the CHECK001 blocker is recorded in `TODO.md` with the frob ticket id.

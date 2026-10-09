@@ -1,19 +1,27 @@
 # frob, for teammates who have never used it
 
-frob is the tool wired into this repo by
-[docs/design/frob-and-backlog.md](design/frob-and-backlog.md) (unit W). It
-is three things at once, and only two of them do anything on this repo
-yet:
+frob (v2, 0.532.0, a single Rust binary) is the tool wired into this repo
+by [docs/design/frob-and-backlog.md](design/frob-and-backlog.md) (unit W).
+It is three things at once, and only two of them are fully useful on a
+C# repo yet:
 
-1. **A ticket queue.** `tickets/T-####/ticket.md` files, git-tracked, one
-   directory per ticket, with a small state machine (`queued` ->
-   `planned` -> `in-progress` -> `done`, or `dropped`).
+1. **A ticket ledger.** `tickets/<ULID>/ticket.md` plus append-only
+   `events/*.toml` files, git-tracked. Categories are triage, todo,
+   in-progress, done; a done ticket carries an outcome (fixed, wont-fix,
+   duplicate, invalid, done). Each ticket has a short handle such as
+   `~XC7G41Z`; the old v1 ids (`T-0041`) are kept as aliases, so
+   `frob ticket show T-0041` still works.
 2. **A comment DSL.** Directives inside ordinary `//` comments that link
-   code to docs, to tests, and to tickets, and that frob's graph can
-   check for drift.
-3. **Gates**, once C# check support lands (see "known blocker" below):
-   `frob check` will refuse a commit whose comment directives, tests, or
-   architecture model disagree with the code.
+   code to docs, to tests, and to tickets (`frob:doc`, `frob:tests`,
+   `frob:ticket <ulid>`, `frob:todo <ulid>`).
+3. **Gates**: `frob check` reports rule findings. C# is fidelity F1 in
+   0.532.0 (see "Known gaps" below), so several rules cannot see this code
+   yet.
+
+Install the pinned version the same way CI does:
+`uv tool install frob==0.532.0`. Run `frob init` once per clone: it
+installs the `frob-ledger` merge driver into your local git config (the
+`.gitattributes` rules are committed).
 
 ## The comment rules (D9)
 
@@ -42,19 +50,47 @@ gate is coming.
 ## Working a ticket
 
 ```bash
-frob ticket list              # see what's queued
-frob ticket doable            # queued/planned work with no open blockers
-frob ticket show T-####       # read the Description/Plan/Failure log in full
-frob ticket start T-####      # claim it (a write lease on its declared scope)
-# ... implement, adding // frob:ticket T-#### etc. as you go ...
-frob ticket evidence T-#### NODE-ID --accepts 1   # bind a passing test/check
-frob ticket done-report T-#### --why-file why.md
-frob ticket close T-####      # re-verifies the evidence and the report
+frob ticket list                       # what exists (--category todo, --label ...)
+frob ticket doable                     # todo work with no open blockers
+frob ticket show T-0041                # read it in full (a handle or ULID works too)
+frob work T-0041                       # lease it, make its worktree and branch
+frob work --here T-0041                # lease it in this checkout, no new worktree
+# ... implement, adding // frob:ticket <full-ULID> where useful ...
+frob ticket evidence add --provider command --ref "dotnet test ..." T-0041 --accepts 1
+frob ticket close --outcome fixed T-0041   # re-verifies evidence and the definition of done
+frob land                              # land the ticket's branch
 ```
 
-No tickets exist in this repo yet (unit B, the Jira import, comes after
-unit W). `frob ticket list` runs cleanly against an empty queue today;
-that is expected.
+Other verbs you will use: `frob board`, `frob requeue --reason ... T`,
+`frob ticket comment T`, `frob ticket update T --points N`, `frob cycle show`
+(Sprint 2 is the active cycle, 2026-10-05 to 2026-10-23), `frob doctor`,
+`frob ticket doctor`.
+
+`ref_mode = "branch"` in `frob.toml` means ledger commits land on your
+working branch and travel in the pull request; `main` stays PR-only. On a
+feature branch, `frob ticket doctor` reads the ledger at the checked-out
+branch.
+
+`cycle assign` needs story points. Eleven Sprint 2 stories have none and
+are not in the cycle (they are containers for their pointed children);
+size them with `frob ticket update T --points N` and assign them.
+
+### Recording test evidence
+
+`frob test` does not run C# yet and v2 has no `[[test.runner]]` table. The
+plain-C# NUnit harness is `tools/plaincs/run_tests.sh` (CI runs it). To
+record it against a ticket use the `command` provider, whose first word
+must be in `[evidence] allowed_tools` (`dotnet` is by default):
+
+```bash
+tools/plaincs/fetch_deps.sh
+frob ticket evidence add --provider command T-0058 \
+  --ref "dotnet test tools/plaincs/Hullbreach.Plain.Tests/Hullbreach.Plain.Tests.csproj -c Release --filter TestCategory!=Slow"
+```
+
+The `dotnet` provider that `[evidence.dotnet]` configures is not offered by
+`frob ticket evidence add` in 0.532.0, and the `unity` pack/provider
+(batch-mode Unity test runs) is design only until a later release.
 
 ## `frob:doc` / `frob:describes` and docs/reference/
 
@@ -63,15 +99,16 @@ unit P) is the target of every `// frob:doc` line in the code: one
 heading per type, and a `<!-- frob:describes ... -->` line under that
 heading for each symbol the code links to it. `frob:doc` says "this
 symbol is described there"; `frob:describes` says "this doc heading
-describes that symbol" -- frob's graph checks that both ends agree once
-its check stage runs here, so a heading that gets renamed or a symbol
+describes that symbol" -- the intent is that frob's graph checks both ends agree, so a heading that gets renamed or a symbol
 that gets moved shows up as drift instead of a silently stale link.
 
-## Design notes for `design/hullbreach_game.strata` and `frob.toml`
+## Design notes for `design/hullbreach_game.strata`
 
-The comment blocks in both files stay to one or two `// `/`# ` lines
-each (the same D9 rule as code); this section is where the rest of the
-"why" that used to live in those comments now lives.
+`design/hullbreach_game.strata` is the v1 architecture model (strata).
+frob v2 does not read `.strata` files (its model language is grimble,
+`design/model.grmb`), so the file is kept as documentation only and the
+v1 `frob graph build` / `frob sys audit` steps no longer exist. The notes
+below explain what it encodes; porting it to grimble is future work.
 
 - **The hand-merge.** `frob scaffold unity-project .` writes one
   `design/unity_*.strata` fragment per `.asmdef`; none of them parse on
@@ -119,22 +156,21 @@ each (the same D9 rule as code); this section is where the rest of the
   cannot pass that check today -- reported to the frob maintainers, not
   worked around here.
 
-## Known blocker
+## Known gaps in frob 0.532.0 on this repo
 
-`frob check` exits `CHECK001` ("unknown project type") on this repo
-today, because frob's check stage dispatches only python/typescript/
-cpp/rust project types, not Unity/C# yet, even though its underlying
-parser already understands C#. This is a real gap in frob itself, not a
-misconfiguration here: the frob maintainers confirmed it on 2026-09-26.
-It is tracked upstream as frob T-6590 (critical, targeted for
-frob 0.534.0, adding "unity" and "csharp" project types with the test
-step read from this repo's own `[[test.runner]]`); the strata
-root-module parse gap that made the hand-merged `design/hullbreach_game.strata`
-necessary in the first place is the same series, frob T-5198. Until
-0.534.0 ships, `frob check` fails fast on CHECK001 before running
-anything else, so there is nothing else to gate yet -- but
-`frob graph build` (the strata model) and `frob ticket` both work fully
-today, and `tools/plaincs/run_tests.sh` plus
-`scripts/check_unity_tree.sh` are what actually verify this repo in the
-meantime. A CI job that runs `frob check` lands once a frob release
-dispatches C# (see [TODO.md](../TODO.md)).
+- `frob check` exits 1. Findings by rule: DSL001 on `frob:describes` (800,
+  every one in a docs/*.md file), COV001 (public methods "reached by no
+  test" because C# test detection is a Gap), TODO001 (bare `TODO` comments
+  need `frob:todo <ulid>`), and opaque-file Unresolved notes.
+- C# is fidelity F1: `resolve_ref` and `test_items` are Gaps, so a
+  `frob:tests` binding on a C# test is reported TEST001 ("names no test
+  function in the graph"). This repo carries no such bindings now; do not
+  add them until frob resolves C# tests.
+- `frob:todo`/`frob:ticket` in code need a full 26-char ULID; alias
+  resolution for v1 ids in directives is pending upstream.
+- `frob test` and `frob coverage` do not run C#; there is no `frob
+  coverage` in v2 (COV001 in `frob check` is the coverage rule) and no
+  `frob ticket sweep` (use `frob ticket doctor`).
+- CI runs `frob check` as a non-blocking job until these clear (see
+  [TODO.md](../TODO.md)). `scripts/check_unity_tree.sh` and
+  `tools/plaincs/run_tests.sh` remain what actually verify the repo.
