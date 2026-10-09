@@ -1,0 +1,7 @@
+kind = "field"
+field = "acceptance"
+new = ["Given the stress overlay and the hull warning banner, when docs/stress-colors.md is read, then it states the ratio each uses, the ratio-to-color function, the band thresholds and where each lives in code", "Given build mode and fly mode, when docs/stress-colors.md is read, then it states that both go through the same ShipRenderer tint function and what differs between them"]
+moved = []
+at = "2026-10-09T04:09:20Z"
+actor = "GingerVHS"
+rev = 1
