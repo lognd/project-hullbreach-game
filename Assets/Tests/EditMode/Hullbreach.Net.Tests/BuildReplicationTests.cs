@@ -123,31 +123,22 @@ namespace Hullbreach.Net.Tests
         [Test]
         public void OverTheTransport_TheOpponentsReplicaShowsTheBlock_AndAClientCannotBuildOnAnotherShip()
         {
-            var hub = new LoopbackTransport(seed: 11) { DelayTicks = 1, JitterTicks = 2 };
-            var serverEp = hub.CreateEndpoint(out int serverId);
-            var clientA = hub.CreateEndpoint(out int idA);
-            var clientB = hub.CreateEndpoint(out int idB);
-            hub.Connect(serverId, idA);
-            hub.Connect(serverId, idB);
-            var host = new ServerHost(serverEp);
-            host.Join(idA, Design(Rocket));
-            host.Join(idB, Design(Rocket));
-            var replicaA = new ClientReplica();
-            var replicaB = new ClientReplica();
+            var rig = new NetRig(new LinkProfile(1, 2, 0f), seed: 11);
+            var host = rig.Host;
+            host.Join(rig.IdA, Design(Rocket));
+            host.Join(rig.IdB, Design(Rocket));
+            int idA = rig.IdA, idB = rig.IdB;
+
+            // Let the join snapshots land first: a reliable event that overtakes its snapshot is a known
+            // ClientReplica gap, tracked separately from this test.
+            rig.Play(8);
 
             // Peer B sends a request; whatever it targets can only ever be B's own ship.
-            clientB.SendReliable(serverId, Bytes(Req(1, 0, BlockTypes.Armor)));
-            clientB.SendReliable(serverId, new byte[] { (byte)MessageKind.BuildRequest, 1 }); // truncated: dropped
-
-            var buf = new byte[1024];
-            for (int tick = 0; tick < 12; tick++)
-            {
-                hub.Tick();
-                host.Advance(1.0 / 50.0);
-                hub.Tick();
-                while (clientA.TryReceive(out _, buf, out int la)) replicaA.ApplyReceived(buf, la, (uint)tick);
-                while (clientB.TryReceive(out _, buf, out int lb)) replicaB.ApplyReceived(buf, lb, (uint)tick);
-            }
+            rig.ClientB.SendReliable(rig.ServerId, Bytes(Req(1, 0, BlockTypes.Armor)));
+            rig.ClientB.SendReliable(rig.ServerId, new byte[] { (byte)MessageKind.BuildRequest, 1 }); // truncated: dropped
+            rig.Play(12);
+            var replicaA = rig.ReplicaA;
+            var replicaB = rig.ReplicaB;
 
             int key = BlockKey.Pack(1, 0);
             Assert.IsTrue(host.Simulation.Ships[idB].Grid.Contains(key), "server placed it on B's ship");
