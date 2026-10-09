@@ -1,0 +1,6 @@
+kind = "field"
+field = "scope"
+new = ["Assets/Scripts/Hullbreach.Builder/BuildBudget.cs", "Assets/Scripts/Hullbreach.Builder/BuilderSession.cs", "Assets/Scripts/Hullbreach.Builder/BlockPalette.cs", "docs/reference/hullbreach-builder.md", "Assets/Tests/EditMode/Hullbreach.Builder.Tests/BuildBudgetTests.cs*"]
+at = "2026-10-09T04:09:36Z"
+actor = "stevendangkhoi"
+rev = 1
