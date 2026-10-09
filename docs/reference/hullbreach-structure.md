@@ -227,6 +227,12 @@ against the modes if you want to draw the deformed shape.
 - `AddPointForce`: scatters a force applied at a world (ship-local) point
   into the nodal load vector, distributing it over the containing
   element's nodes by shape-function weight.
+  Nodes absent from the structure (a destroyed block) are skipped and the
+  remaining weights renormalized, so the force magnitude is conserved
+  rather than silently shrinking. Returns false and leaves `target`
+  untouched for a non-finite point or one with no present element node;
+  `StructuralSolver.DroppedPointForces` counts those per tick. Uses cached
+  scratch arrays, so it never allocates.
 - `ApplyInertiaRelief`: applies inertia relief to `target`, in place.
   Returns the rigid-body acceleration it solved for, which the caller
   also wants for integrating the actual ship motion. Net force/torque are
@@ -891,6 +897,7 @@ decide it should break.
 <!-- frob:describes Assets/Scripts/Hullbreach.Structure/StructuralSolver.cs::StructuralSolver.Converged -->
 <!-- frob:describes Assets/Scripts/Hullbreach.Structure/StructuralSolver.cs::StructuralSolver.ResidualNorm -->
 <!-- frob:describes Assets/Scripts/Hullbreach.Structure/StructuralSolver.cs::StructuralSolver.IterationsThisTick -->
+<!-- frob:describes Assets/Scripts/Hullbreach.Structure/StructuralSolver.cs::StructuralSolver.DroppedPointForces -->
 <!-- frob:describes Assets/Scripts/Hullbreach.Structure/StructuralSolver.cs::StructuralSolver.ContinuedFromLastTick -->
 <!-- frob:describes Assets/Scripts/Hullbreach.Structure/StructuralSolver.cs::StructuralSolver.TicksSinceRestart -->
 <!-- frob:describes Assets/Scripts/Hullbreach.Structure/StructuralSolver.cs::StructuralSolver.DofCount -->
@@ -999,6 +1006,8 @@ BucklingTests case (all calibrated against `E = 1`) is untouched.
   CgSolver's tolerance within `MaxCgIterationsPerTick`.
 - `ResidualNorm`: `CgSolver.LastResidualNorm` from the most recent
   Tick's quasi-static solve.
+- `DroppedPointForces`: point forces the last Tick could not place on the
+  structure (see `LoadVector.AddPointForce`); 0 in normal operation.
 - `IterationsThisTick`: `CgSolver.LastIterationCount` from the most
   recent Tick.
 - `ContinuedFromLastTick`: true when this tick's quasi-static solve

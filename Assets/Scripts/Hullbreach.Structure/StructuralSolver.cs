@@ -77,6 +77,11 @@ namespace Hullbreach.Structure
         // frob:doc docs/reference/hullbreach-structure.md#structuralsolver
         public float ResidualNorm { get; private set; }
 
+        // Point forces the last Tick could not place on the structure
+        // (non-finite, or no element node present); 0 in normal operation.
+        // frob:doc docs/reference/hullbreach-structure.md#structuralsolver
+        public int DroppedPointForces { get; private set; }
+
         // How much of MaxCgIterationsPerTick this tick actually spent.
         // frob:doc docs/reference/hullbreach-structure.md#structuralsolver
         public int IterationsThisTick { get; private set; }
@@ -179,8 +184,10 @@ namespace Hullbreach.Structure
             Array.Clear(f, 0, f.Length);
             _loadVector.QuasiStatic = f;
 
+            int dropped = 0;
             foreach (var (point, force) in appliedForces)
-                _loadVector.AddPointForce(f, point, force);
+                if (!_loadVector.AddPointForce(f, point, force)) dropped++;
+            DroppedPointForces = dropped;
 
             _loadVector.ApplyInertiaRelief(f, grid, out _, out _);
 

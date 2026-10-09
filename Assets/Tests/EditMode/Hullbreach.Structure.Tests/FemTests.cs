@@ -25,6 +25,54 @@ namespace Hullbreach.Structure.Tests
             return grid;
         }
 
+        static float[] Scatter(LoadVector loads, StiffnessAssembly assembly, float2 point, float2 force, out bool ok)
+        {
+            var f = new float[assembly.DofCount];
+            ok = loads.AddPointForce(f, point, force);
+            return f;
+        }
+
+        static float2 Sum(float[] f)
+        {
+            float2 s = float2.zero;
+            for (int i = 0; i < f.Length; i += 2) s += new float2(f[i], f[i + 1]);
+            return s;
+        }
+
+        // frob:tests Assets/Scripts/Hullbreach.Structure/Fem/LoadVector.cs::LoadVector.AddPointForce
+        [Test]
+        public void AddPointForce_OnAbsentBlock_ConservesForceOverPresentNodes()
+        {
+            var grid = TwoByThreeShip();
+            var assembly = new StiffnessAssembly();
+            assembly.Rebuild(grid);
+            var loads = new LoadVector(assembly);
+
+            // Block (2,0) is absent but shares its x=2 edge nodes with (1,0).
+            var f = Scatter(loads, assembly, new float2(2.1f, 0.5f), new float2(5f, -3f), out bool ok);
+
+            Assert.IsTrue(ok);
+            Assert.AreEqual(5f, Sum(f).x, 1e-3f);
+            Assert.AreEqual(-3f, Sum(f).y, 1e-3f);
+        }
+
+        // frob:tests Assets/Scripts/Hullbreach.Structure/Fem/LoadVector.cs::LoadVector.AddPointForce
+        [Test]
+        public void AddPointForce_OffStructureOrNonFinite_IsRejectedAndLeavesTargetUntouched()
+        {
+            var grid = TwoByThreeShip();
+            var assembly = new StiffnessAssembly();
+            assembly.Rebuild(grid);
+            var loads = new LoadVector(assembly);
+
+            foreach (var p in new[] { new float2(40.5f, 40.5f), new float2(float.NaN, 0.5f), new float2(float.PositiveInfinity, 0f), new float2(1e30f, 0f) })
+            {
+                var f = Scatter(loads, assembly, p, new float2(5f, -3f), out bool ok);
+                Assert.IsFalse(ok, $"point {p} should be rejected");
+                Assert.AreEqual(float2.zero, Sum(f));
+            }
+        }
+
         [Test]
         public void InertiaRelief_LeavesLoadOrthogonalToRigidModes()
         {
