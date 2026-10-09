@@ -2,11 +2,12 @@
 id = "01M4GR1V5NGR5J5DGW1W5CT4FM"
 title = "LoadVector.AddPointForce silently drops or partially loses force for points outside the grid and allocates per call"
 type = "bug"
-category = "todo"
+category = "done"
+outcome = "fixed"
 priority = "medium"
 reporter = "lognd"
 created = "2026-10-09T16:30:59Z"
-updated = "2026-10-09T17:02:32Z"
+updated = "2026-10-09T17:03:02Z"
 labels = ["origin:auditor", "audit:hullbreach-structure"]
 scope = ["Assets/Scripts/Hullbreach.Structure/Fem/LoadVector.cs"]
 
