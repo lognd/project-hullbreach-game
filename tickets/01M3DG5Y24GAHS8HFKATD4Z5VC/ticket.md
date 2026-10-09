@@ -2,7 +2,7 @@
 id = "01M3DG5Y24GAHS8HFKATD4Z5VC"
 title = "S34-2: Replicate BlockPlaced mid-match to the opponent"
 type = "task"
-category = "in-progress"
+category = "todo"
 priority = "high"
 points = 2
 parent = "01M3DG5Y0QWT3XQ9HHJGV4H9H0"
