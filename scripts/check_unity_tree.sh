@@ -67,5 +67,33 @@ if awk '/negativeButton: left/{f=1; next} f && /^\s*invert:/{print $0; exit}' Pr
     fail "keyboard Horizontal axis (negativeButton: left) has invert: 1 in ProjectSettings/InputManager.asset"
 fi
 
+# 8. Security policy rules (invariants/INV-001..004). Each guards a recurrence
+#    class found in the network-trust audit; the tickets named below make the
+#    tree pass. Heuristic greps, not taint analysis.
+net=Assets/Scripts/Hullbreach.Net
+# POL-net-no-remote-sized-alloc (INV-001): no array sized by a wire-read count.
+if grep -nE 'new [A-Za-z0-9_]+\[(count|n|len|length)\]' "$net/NetMessages.cs" >/dev/null 2>&1; then
+    fail "POL-net-no-remote-sized-alloc: wire-read count sizes an allocation in $net/NetMessages.cs (INV-001)"
+fi
+# POL-net-reader-bounds-checked (INV-001): ByteReader must expose a remaining-length check.
+if ! grep -qE 'Remaining|TryRead' "$net/Wire.cs"; then
+    fail "POL-net-reader-bounds-checked: ByteReader in $net/Wire.cs has no bounds/remaining check (INV-001)"
+fi
+# POL-net-reliable-window-bounded (INV-002): the reorder buffer needs an explicit window constant.
+if ! grep -qE 'MaxReliable(Window|Pending)' "$net/ClientReplica.cs"; then
+    fail "POL-net-reliable-window-bounded: no MaxReliableWindow/MaxReliablePending bound in $net/ClientReplica.cs (INV-002)"
+fi
+# POL-server-validates-client-design (INV-003): Join must validate the client-supplied design.
+if ! grep -qE 'ValidateDesign|DesignValidator' "$net/ServerSimulation.cs"; then
+    fail "POL-server-validates-client-design: ServerSimulation does not validate client-supplied designs/inputs (INV-003)"
+fi
+# POL-fetch-pinned-commit (INV-004): a cloned dependency must be pinned to a 40-hex commit.
+while IFS= read -r -d '' f; do
+    [ "$f" = scripts/check_unity_tree.sh ] && continue  # this rule's own text names `git clone`
+    if grep -q 'git clone' "$f" && ! grep -qE '\b[0-9a-f]{40}\b' "$f"; then
+        fail "POL-fetch-pinned-commit: $f clones without a pinned commit hash (INV-004)"
+    fi
+done < <(git ls-files -z 'tools/*.sh' 'scripts/*.sh')
+
 if [ "$problems" -eq 0 ]; then echo "unity tree: clean"; fi
 exit "$problems"
