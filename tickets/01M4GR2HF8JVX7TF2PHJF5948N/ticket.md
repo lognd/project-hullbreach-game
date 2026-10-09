@@ -2,11 +2,12 @@
 id = "01M4GR2HF8JVX7TF2PHJF5948N"
 title = "ServerSimulation: fragment ids and peer NetIds share one ushort id space and collide"
 type = "bug"
-category = "todo"
+category = "done"
+outcome = "fixed"
 priority = "medium"
 reporter = "lognd"
 created = "2026-10-09T16:31:22Z"
-updated = "2026-10-09T17:08:54Z"
+updated = "2026-10-09T17:09:25Z"
 labels = ["origin:auditor", "audit:hullbreach-net"]
 scope = ["Assets/Scripts/Hullbreach.Net/ServerSimulation.cs"]
 
