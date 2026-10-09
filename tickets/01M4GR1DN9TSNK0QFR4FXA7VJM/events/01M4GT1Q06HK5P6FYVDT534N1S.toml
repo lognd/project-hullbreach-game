@@ -1,0 +1,7 @@
+kind = "field"
+field = "acceptance"
+new = ["Given a temporary gravity well in the client, when GravityWorld fixed-updates past its seconds, then the well expires"]
+moved = []
+at = "2026-10-09T17:05:52Z"
+actor = "GingerVHS"
+rev = 1
