@@ -1,0 +1,7 @@
+kind = "field"
+field = "acceptance"
+new = ["Given a buckled block that is removed, when the solver ticks, then BuckledBlocks and mode participation list only live blocks"]
+moved = []
+at = "2026-10-09T17:00:06Z"
+actor = "GingerVHS"
+rev = 1
