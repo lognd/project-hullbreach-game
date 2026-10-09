@@ -924,6 +924,14 @@ the block count changed since the last rebuild, or the caller explicitly
 asks via `MarkTopologyChanged`, this rebuilds. This avoids ever mutating
 state owned by another module while still not re-assembling every tick.
 
+DAMAGE REBUILDS: `BlockGrid.TrySet` (the damage write) does not mark the
+topology dirty, so Tick also hashes every block's `EffectiveStiffness` and
+rebuilds K when the hash changes; otherwise K would keep the undamaged E
+while block stress uses the softened one. After any rebuild, published
+buckling modes (and `BuckledBlocks`) that name a block no longer in the grid
+are dropped, so they only ever list live blocks; a damage-only rebuild keeps
+them.
+
 PER-TICK CONVERGENCE BUDGET: `MaxCgIterationsPerTick` bounds how much CG
 work one Tick call may spend on the quasi-static solve. A ship large
 enough that CG cannot reach tolerance within the budget keeps its PARTIAL

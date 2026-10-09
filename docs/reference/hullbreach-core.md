@@ -172,7 +172,8 @@ The table is normalized against Hull.YieldStress = 1.0:
 stiff so it sheds load to its neighbors, which is what makes ductile
 failure actually read as ductile, without needing a nonlinear solve. This
 one scalar is the entire reason K_e = E * KHat works, so everything that
-changes stiffness must go through here. The floor (0.05) is a placeholder
+changes stiffness must go through here. `SofteningFactor` is the single
+home of the floor (DamageModel.SofteningFactor delegates to it). The floor (0.05) is a placeholder
 curve that just keeps K non-singular; a later DamageModel may replace it
 with something that better matches real ductile softening (TODO D3).
 
@@ -187,6 +188,7 @@ with something that better matches real ductile softening (TODO D3).
 <!-- frob:describes Assets/Scripts/Hullbreach.Core/Grid/BlockType.cs::BlockTypes.Get -->
 <!-- frob:describes Assets/Scripts/Hullbreach.Core/Grid/BlockType.cs::BlockTypes.Count -->
 <!-- frob:describes Assets/Scripts/Hullbreach.Core/Grid/BlockType.cs::BlockTypes.EffectiveStiffness -->
+<!-- frob:describes Assets/Scripts/Hullbreach.Core/Grid/BlockType.cs::BlockTypes.SofteningFactor -->
 
 ### BlockVariants
 

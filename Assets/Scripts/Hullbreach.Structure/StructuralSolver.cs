@@ -52,6 +52,10 @@ namespace Hullbreach.Structure
         int _lastRebuiltCount = -1;
         bool _forceRebuild = true;
 
+        // Order-independent hash of every block's EffectiveStiffness at the
+        // last K rebuild; a mismatch means damage softened (or healed) a block.
+        ulong _lastStiffnessSignature;
+
         float[] _displacement = Array.Empty<float>();
 
         // Reused across ticks so a converged, steady-state ship never
@@ -128,12 +132,18 @@ namespace Hullbreach.Structure
         // frob:doc docs/reference/hullbreach-structure.md#structuralsolver
         public void Tick(Hullbreach.Core.BlockGrid grid, IReadOnlyList<(float2 point, float2 force)> appliedForces, float dt)
         {
-            bool needsRebuild = _forceRebuild || grid.TopologyDirty || grid.Count != _lastRebuiltCount;
+            // Damage writes (BlockGrid.TrySet) do not mark the topology dirty,
+            // so K would keep the undamaged E that ComputeBlockStress no longer uses.
+            ulong stiffnessSignature = StiffnessSignature(grid);
+            bool needsRebuild = _forceRebuild || grid.TopologyDirty || grid.Count != _lastRebuiltCount
+                                || stiffnessSignature != _lastStiffnessSignature;
             if (needsRebuild)
             {
                 _assembly.Rebuild(grid);
                 _lastRebuiltCount = grid.Count;
+                _lastStiffnessSignature = stiffnessSignature;
                 _forceRebuild = false;
+                DropStaleBuckling(grid);
 
                 if (_displacement.Length != _assembly.DofCount)
                 {
@@ -197,6 +207,20 @@ namespace Hullbreach.Structure
             // skip on an under-converged solve, let old modes stand.
             if (Converged) RunBuckling(grid);
             _tickIndex++;
+        }
+
+        // Hashes (key, EffectiveStiffness) per block, summed so iteration
+        // order does not matter; allocation-free.
+        static ulong StiffnessSignature(Hullbreach.Core.BlockGrid grid)
+        {
+            ulong sum = 0;
+            foreach (var kvp in grid.All)
+            {
+                uint bits = (uint)BitConverter.SingleToInt32Bits(Hullbreach.Core.BlockTypes.EffectiveStiffness(kvp.Value));
+                ulong h = ((ulong)(uint)kvp.Key << 32 | bits) * 0x9E3779B97F4A7C15UL;
+                sum += h ^ (h >> 29);
+            }
+            return sum;
         }
 
         // Reduces displacement to a per-block stress at the element
@@ -334,6 +358,24 @@ namespace Hullbreach.Structure
         // Absolute backstop for an unloaded hull, so rounding noise near
         // zero does not count as compression.
         const float CompressionFloorAbsolute = 1e-6f;
+
+        // After a K rebuild, published modes naming a block that no longer
+        // exists describe a vanished topology: drop them so BuckledBlocks
+        // lists only live blocks. A damage-only rebuild keeps them.
+        void DropStaleBuckling(Hullbreach.Core.BlockGrid grid)
+        {
+            bool stale = false;
+            foreach (int key in _buckledBlocks)
+                if (!grid.Contains(key)) { stale = true; break; }
+            for (int i = 0; i < _bucklingModes.Count && !stale; i++)
+                foreach (int key in _bucklingModes[i].BlockParticipation.Keys)
+                    if (!grid.Contains(key)) { stale = true; break; }
+
+            if (!stale) return;
+            _bucklingModes.Clear();
+            _buckledBlocks.Clear();
+            CriticalLoadFactor = float.PositiveInfinity;
+        }
 
         // Runs (at most every BucklingEveryNTicks ticks) one subspace step,
         // publishing only once converged; early-out if nothing compresses.
