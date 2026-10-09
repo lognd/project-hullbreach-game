@@ -1,0 +1,15 @@
+kind = "create"
+title = "S26-1: Title screen UI scene with Play, Build, Settings, Sign in, and Quit"
+type = "task"
+category = "todo"
+priority = "high"
+points = 3
+parent = "01M3DG5Y0FMGFR0WY5PJG1C3WZ"
+aliases = ["T-0045"]
+labels = ["jira:SCRUM-130", "owner:stevendangkhoi", "game", "milestone:0.1.0"]
+body = """
+Title screen UI scene with Play, Build, Settings, Sign in, and Quit
+Parent story: S26 Start from a title screen"""
+at = "2026-09-26T00:00:00Z"
+actor = "human"
+rev = 1

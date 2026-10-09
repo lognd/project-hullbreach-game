@@ -1,0 +1,15 @@
+kind = "create"
+title = "S27-3: Persist settings to a local file across launches"
+type = "task"
+category = "todo"
+priority = "medium"
+points = 1
+parent = "01M3DG5Y0GHE7Z7ZF6PK8WR4RY"
+aliases = ["T-0050"]
+labels = ["jira:SCRUM-135", "owner:stevendangkhoi", "game", "milestone:0.1.0"]
+body = """
+Persist settings to a local file across launches
+Parent story: S27 Adjust settings"""
+at = "2026-09-26T00:00:00Z"
+actor = "human"
+rev = 1

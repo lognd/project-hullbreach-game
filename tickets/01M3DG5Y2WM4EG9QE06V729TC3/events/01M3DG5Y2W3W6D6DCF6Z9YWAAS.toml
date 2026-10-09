@@ -1,0 +1,15 @@
+kind = "create"
+title = "S42-2: ProjectileSpawner and Projectile applying block damage and an impulse on hit"
+type = "task"
+category = "todo"
+priority = "critical"
+points = 3
+parent = "01M3DG5Y0ZSMJPHX5C7GF557KF"
+aliases = ["T-0092"]
+labels = ["jira:SCRUM-118", "owner:GingerVHS", "game", "milestone:0.1.0"]
+body = """
+ProjectileSpawner and Projectile applying block damage and an impulse on hit
+Parent story: S42 Shoot a basic cannon"""
+at = "2026-09-26T00:00:00Z"
+actor = "human"
+rev = 1

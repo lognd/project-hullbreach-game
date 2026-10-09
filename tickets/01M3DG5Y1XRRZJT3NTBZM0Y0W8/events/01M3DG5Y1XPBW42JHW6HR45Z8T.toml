@@ -1,0 +1,15 @@
+kind = "create"
+title = "S31-3: Undo tests"
+type = "task"
+category = "todo"
+priority = "high"
+points = 1
+parent = "01M3DG5Y0MFJ6RPX9B9VVEG7XQ"
+aliases = ["T-0061"]
+labels = ["jira:SCRUM-112", "owner:stevendangkhoi", "game", "milestone:0.1.0"]
+body = """
+Undo tests
+Parent story: S31 Remove and undo blocks"""
+at = "2026-09-26T00:00:00Z"
+actor = "human"
+rev = 1

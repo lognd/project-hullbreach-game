@@ -1,0 +1,15 @@
+kind = "create"
+title = "S46-3: Results screen with winner, duration, and both players' stats, plus rematch or return to lobby"
+type = "task"
+category = "todo"
+priority = "critical"
+points = 2
+parent = "01M3DG5Y134BJMWZH7S1QV7EY9"
+aliases = ["T-0103"]
+labels = ["jira:SCRUM-122", "owner:a-carten", "game", "milestone:0.1.0"]
+body = """
+Results screen with winner, duration, and both players' stats, plus rematch or return to lobby
+Parent story: S46 Win by breaching the core"""
+at = "2026-09-26T00:00:00Z"
+actor = "human"
+rev = 1

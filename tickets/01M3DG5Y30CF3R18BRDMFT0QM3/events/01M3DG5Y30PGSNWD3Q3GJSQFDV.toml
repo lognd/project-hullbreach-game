@@ -1,0 +1,15 @@
+kind = "create"
+title = "S44-1: SeekingThrusterBehaviour: homing shot that welds a firing thruster onto the target"
+type = "task"
+category = "todo"
+priority = "medium"
+points = 3
+parent = "01M3DG5Y114RNPPMJWHSPVHVQC"
+aliases = ["T-0096"]
+labels = ["jira:SCRUM-205", "owner:GingerVHS", "game", "physics", "milestone:0.3.0"]
+body = """
+SeekingThrusterBehaviour: homing shot that welds a firing thruster onto the target
+Parent story: S44 Fire the Inconvenient Thruster"""
+at = "2026-09-26T00:00:00Z"
+actor = "human"
+rev = 1

@@ -1,0 +1,14 @@
+kind = "create"
+title = "E9: Ship builder"
+type = "epic"
+category = "todo"
+priority = "medium"
+aliases = ["T-0003"]
+labels = ["jira:SCRUM-16", "owner:mcnairrobotics", "game"]
+body = """
+https://aliens-against-humanity.atlassian.net/browse/SCRUM-16
+
+Placing, orienting, and removing blocks on a valid hull, in and out of combat."""
+at = "2026-09-26T00:00:00Z"
+actor = "human"
+rev = 1

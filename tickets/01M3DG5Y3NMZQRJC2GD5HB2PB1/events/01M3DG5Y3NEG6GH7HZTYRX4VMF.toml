@@ -1,0 +1,15 @@
+kind = "create"
+title = "S51-2: Upgrade effects for thruster efficiency, armor stiffness, and repair"
+type = "task"
+category = "todo"
+priority = "low"
+points = 2
+parent = "01M3DG5Y180JWXT0NP2N3D895E"
+aliases = ["T-0117"]
+labels = ["jira:SCRUM-214", "owner:GingerVHS", "game", "stretch"]
+body = """
+Upgrade effects for thruster efficiency, armor stiffness, and repair
+Parent story: S51 Salvage parts mid-match"""
+at = "2026-09-26T00:00:00Z"
+actor = "human"
+rev = 1
