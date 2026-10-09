@@ -2,11 +2,12 @@
 id = "01M4GR20BWW7F0148E0F58A1YS"
 title = "UndoStack.Apply swallows TryAdd/TryRemove failures; Undo of the first core placement reports true but changes nothing"
 type = "bug"
-category = "todo"
+category = "done"
+outcome = "fixed"
 priority = "high"
 reporter = "lognd"
 created = "2026-10-09T16:31:04Z"
-updated = "2026-10-09T16:53:21Z"
+updated = "2026-10-09T16:53:23Z"
 labels = ["origin:auditor", "auditor"]
 scope = ["Assets/Scripts/Hullbreach.Builder/UndoStack.cs"]
 
