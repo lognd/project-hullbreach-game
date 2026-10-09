@@ -1,0 +1,7 @@
+kind = "field"
+field = "acceptance"
+new = ["Given a bad index, center position, or non-positive Mu, when TryCircularOrbitVelocity runs, then it returns false with zero velocity and no NaN"]
+moved = []
+at = "2026-10-09T17:04:06Z"
+actor = "GingerVHS"
+rev = 1
