@@ -1,0 +1,7 @@
+kind = "field"
+field = "acceptance"
+new = ["Given a steady load, when CG runs under a per-tick iteration budget, then it continues across ticks to the same displacement as one unbudgeted solve and restarts on a changed load or topology (CgContinuationTests)", "Given the coarse preconditioner, when applied on a slender arm, then it is symmetric, annihilates rigid modes and cuts iterations (CoarsePreconditionerTests)"]
+moved = []
+at = "2026-10-09T04:14:27Z"
+actor = "GingerVHS"
+rev = 1
