@@ -2,11 +2,12 @@
 id = "01M4GR19JQASCFF47CTPSDV17J"
 title = "BlockGrid.KeyAt returns stale data for i >= KeyCount and public Mass field is externally mutable"
 type = "bug"
-category = "todo"
+category = "done"
+outcome = "fixed"
 priority = "low"
 reporter = "lognd"
 created = "2026-10-09T16:30:41Z"
-updated = "2026-10-09T16:53:19Z"
+updated = "2026-10-09T16:53:20Z"
 labels = ["origin:auditor", "audit:hullbreach-core"]
 scope = ["Assets/Scripts/Hullbreach.Core/Grid/BlockGrid.cs"]
 
