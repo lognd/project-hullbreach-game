@@ -14,6 +14,9 @@
 - `netcode.md`: read this if you are working on `Hullbreach.Net` or the
   authoritative-server story (S47/S48); it covers the wire message
   design and quantization, and what is not wired up yet.
+- `stress-colors.md`: read this if you are touching the stress overlay,
+  the hull warning banner or a colorblind palette; it is the one place
+  the ratio-to-color mapping and its thresholds are written down.
 - `roadmap.md`: read this if you want to know what is built, in
   progress, or not started yet, against the course's story numbers.
 - `design/ui-port.md`: read this if you are working on the HUD or any
