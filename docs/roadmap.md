@@ -100,6 +100,11 @@ average is exactly what hid the periodic spike below for two branches.
 | 500 blocks | 3850 | 400 (capped) | 100 | 104 | 157 ms | no |
 | 2000 blocks | 10702 | 400 (capped) | 289 | 294 | 571 ms | no |
 
+The 100-block median is an asserted budget: `Benchmark_100Blocks` fails
+above 5 ms (a quarter of the 20 ms tick). See
+[testing.md](testing.md#performance-budget) for why the median and not the
+max.
+
 **What is real-time at 50 Hz (20 ms/tick) on this machine.** A
 100-block ship is, with room to spare: once it converges (tick 1, 127
 CG iterations, 22 ms) a steady tick costs 0.17 ms, because CG continues
