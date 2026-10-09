@@ -1,0 +1,25 @@
++++
+id = "01M4FDM7MX49CFNWPN41HEBC3F"
+title = "S53: See a structural failure coming before a block gives way"
+type = "story"
+category = "todo"
+priority = "medium"
+parent = "01M3DG5Y04X6WZ1G61CVD7TX9S"
+reporter = "lognd"
+created = "2026-10-09T04:09:33Z"
+updated = "2026-10-09T04:09:33Z"
+persona = "player"
+capability = "see which blocks are about to fail from load and how long I have"
+outcome_text = "I can throttle back, turn, or rebuild before my ship tears itself apart"
+labels = ["owner:GingerVHS", "game", "physics", "milestone:0.3.0"]
++++
+
+Card: as a player, I want blocks that are about to fail from sustained load (yield or buckling, not weapon hits) to be outlined with a pulsating green-to-red outline and a countdown, so I can react before they break.
+
+Today: DamageModel.ShouldDetach detaches a block the instant its ductile ratio reaches 1.0; brittle failure is instant; ShipRenderer.ApplyCriticalFlash only tints the block body red at >= 0.8 and draws no outline. There is no time-to-failure, so a timer needs a fuse in the simulation first (S53-1).
+
+Conversation:
+- Fuse length: derived from DamageModel accumulation (seconds until damage reaches 1 at the current overshoot), or a fixed grace period? Proposed: accumulation-based for yield, fixed sustained-overload grace for buckling.
+- Does brittle failure stay instant? Proposed: yes for impact-driven spikes; load-driven brittle overshoot gets the short fuse too. Owner decides.
+- Timer per block, per cluster of adjacent failing blocks, or one HUD value? Proposed: per cluster near the blocks plus the shortest on the HullWarningBanner.
+- Weapon hits keep their immediate effect (out of scope).
