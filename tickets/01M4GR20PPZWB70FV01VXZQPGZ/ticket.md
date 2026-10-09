@@ -2,11 +2,12 @@
 id = "01M4GR20PPZWB70FV01VXZQPGZ"
 title = "BuilderSession.Select accepts any byte; invalid typeId reaches BlockTypes.Get and throws IndexOutOfRange on placement"
 type = "bug"
-category = "todo"
+category = "done"
+outcome = "fixed"
 priority = "medium"
 reporter = "lognd"
 created = "2026-10-09T16:31:05Z"
-updated = "2026-10-09T16:53:23Z"
+updated = "2026-10-09T16:53:24Z"
 labels = ["origin:auditor", "auditor"]
 scope = ["Assets/Scripts/Hullbreach.Builder/BuilderSession.cs"]
 
