@@ -2,11 +2,12 @@
 id = "01M4GR3V95DNN2JGJEXTZJF0PA"
 title = "NetDemo.RefreshVisuals never destroys quads for blocks/ships removed from the replica"
 type = "bug"
-category = "todo"
+category = "done"
+outcome = "fixed"
 priority = "medium"
 reporter = "lognd"
 created = "2026-10-09T16:32:05Z"
-updated = "2026-10-09T17:12:13Z"
+updated = "2026-10-09T17:12:49Z"
 idempotency_key = "audit-game-netdemo-visuals"
 labels = ["origin:auditor", "audit:hullbreach-game"]
 scope = ["Assets/Scripts/Hullbreach.Game/NetDemo.cs"]
