@@ -1,0 +1,6 @@
+kind = "comment"
+subtype = "note"
+body = "Decision (Logan, 2026-10-09): a skin is per block type. The equipped loadout is a map block-type -> skin id (unset types use the default look), plus one slot each for thruster trail, banner and projectile effect. Applies to S12-1/S12-2 on the platform side as well."
+at = "2026-10-09T16:37:26Z"
+actor = "lognd"
+rev = 1
