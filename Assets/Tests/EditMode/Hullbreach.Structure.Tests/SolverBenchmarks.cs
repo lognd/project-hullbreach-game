@@ -153,7 +153,7 @@ namespace Hullbreach.Structure.Tests
         }
 
         // The median, not the max: every 4th tick runs the buckling sweep
-        // (29-49 ms, a known open item in TODO.md) and tick 1 pays the CG
+        // (29-49 ms, still open: see docs/roadmap.md) and tick 1 pays the CG
         // convergence, so a max bound would fail by design. Measured median
         // is ~0.17 ms against the 5 ms budget, a margin of about 30x that a
         // noisy CI runner or a Debug build (5-8x slower) does not eat.
