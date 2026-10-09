@@ -159,7 +159,7 @@ WHERE the problem is without switching to the Stress overlay.
 
 ## The uGUI HUD (U1-U3)
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/BuilderHud.cs::BuilderHud -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/BuilderHud.cs::BuilderHud -->
 
 The whole HUD is uGUI now, not immediate-mode drawing (the IMGUI-to-uGUI
 port, `docs/design/ui-port.md`, U1-U3). `DemoScene` gains a `HudCanvas`

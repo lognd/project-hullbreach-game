@@ -7,6 +7,7 @@
 # The checkout is pinned to an immutable commit (invariants/INV-004): a tag
 # can be moved, and this source is compiled and executed in CI. The pin is
 # the commit the 1.2.5 tag pointed at when it was reviewed
+# frob:invariant INV-004
 # (git ls-remote https://github.com/Unity-Technologies/Unity.Mathematics.git refs/tags/1.2.5).
 set -eu
 cd "$(dirname "$0")"

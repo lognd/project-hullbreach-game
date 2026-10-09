@@ -31,7 +31,7 @@ comments are plain `//` lines, one or two of them, WHY not WHAT -- no XML
 `<summary>` blocks. Every public type or member instead carries a
 `// frob:doc docs/<page>.md#<anchor>` line pointing at a docs/ heading,
 and that heading lists every symbol it documents with one
-`<!-- frob:describes Assets/Scripts/<Asm>/<File>.cs::<Type>[.<Member>] -->`
+`<!-- describes: Assets/Scripts/<Asm>/<File>.cs::<Type>[.<Member>] -->`
 line each. For example, `Assets/Editor/Hullbreach.Editor/HudPrefabBuilder.cs`
 carries:
 
@@ -42,7 +42,7 @@ public static void BuildHudCanvasPrefab(bool force)
 ```
 
 and `docs/design/ui-port.md`'s `#hudprefabbuilder-editor` heading carries
-the matching `<!-- frob:describes ... -->` line. Until frob's check stage
+the matching `<!-- describes: ... -->` line. Until frob's check stage
 can dispatch C# (see below), these links are not yet gated -- they are
 just discoverable, greppable cross-references; write them anyway, the
 gate is coming.
@@ -92,14 +92,16 @@ The `dotnet` provider that `[evidence.dotnet]` configures is not offered by
 `frob ticket evidence add` in 0.532.0, and the `unity` pack/provider
 (batch-mode Unity test runs) is design only until a later release.
 
-## `frob:doc` / `frob:describes` and docs/reference/
+## `frob:doc` / `describes:` and docs/reference/
 
 `docs/reference/<assembly>.md` (one page per assembly, skeletons added by
 unit P) is the target of every `// frob:doc` line in the code: one
-heading per type, and a `<!-- frob:describes ... -->` line under that
+heading per type, and a `<!-- describes: ... -->` line under that
 heading for each symbol the code links to it. `frob:doc` says "this
-symbol is described there"; `frob:describes` says "this doc heading
-describes that symbol" -- the intent is that frob's graph checks both ends agree, so a heading that gets renamed or a symbol
+symbol is described there"; `describes:` says "this doc heading
+describes that symbol". It is deliberately NOT a `frob:` directive: v2
+has no such verb and reported every line as DSL001, so it is a plain
+comment convention until frob adds one. The intent is that frob's graph checks both ends agree, so a heading that gets renamed or a symbol
 that gets moved shows up as drift instead of a silently stale link.
 
 ## Design notes for `design/hullbreach_game.strata`
@@ -158,10 +160,11 @@ below explain what it encodes; porting it to grimble is future work.
 
 ## Known gaps in frob 0.532.0 on this repo
 
-- `frob check` exits 1. Findings by rule: DSL001 on `frob:describes` (800,
-  every one in a docs/*.md file), COV001 (public methods "reached by no
-  test" because C# test detection is a Gap), TODO001 (bare `TODO` comments
-  need `frob:todo <ulid>`), and opaque-file Unresolved notes.
+- `frob check` exits 0 (errors cleared; the DSL001 findings went away
+  when `frob:describes` became the plain `describes:` convention).
+  Remaining are warnings only: COV001 (public methods "reached by no
+  test" because C# test detection is a Gap) and opaque-file Unresolved
+  notes (none required).
 - C# is fidelity F1: `resolve_ref` and `test_items` are Gaps, so a
   `frob:tests` binding on a C# test is reported TEST001 ("names no test
   function in the graph"). This repo carries no such bindings now; do not

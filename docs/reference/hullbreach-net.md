@@ -2,22 +2,22 @@
 
 Per-type reference for `Assets/Scripts/Hullbreach.Net`, linked from the code by
 `// frob:doc docs/reference/hullbreach-net.md#<anchor>`. One heading per
-public type; each heading carries the `frob:describes` lines for that
+public type; each heading carries the `describes:` lines for that
 type and its public members. Architecture-level context lives in
 [architecture.md](../architecture.md).
 
 ### ByteWriter
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/Wire.cs::ByteWriter -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/Wire.cs::ByteWriter.ByteWriter -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/Wire.cs::ByteWriter.Position -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/Wire.cs::ByteWriter.WriteU8 -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/Wire.cs::ByteWriter.WriteI8 -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/Wire.cs::ByteWriter.WriteU16 -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/Wire.cs::ByteWriter.WriteI16 -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/Wire.cs::ByteWriter.WriteU32 -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/Wire.cs::ByteWriter.WriteI32 -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/Wire.cs::ByteWriter.WriteF32 -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/Wire.cs::ByteWriter -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/Wire.cs::ByteWriter.ByteWriter -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/Wire.cs::ByteWriter.Position -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/Wire.cs::ByteWriter.WriteU8 -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/Wire.cs::ByteWriter.WriteI8 -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/Wire.cs::ByteWriter.WriteU16 -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/Wire.cs::ByteWriter.WriteI16 -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/Wire.cs::ByteWriter.WriteU32 -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/Wire.cs::ByteWriter.WriteI32 -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/Wire.cs::ByteWriter.WriteF32 -->
 
 Little-endian cursor over a caller-owned byte buffer. No allocation per
 message: every `Write` call takes a `ByteWriter` wrapping a buffer the
@@ -28,19 +28,19 @@ avoid.
 
 ### ByteReader
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/Wire.cs::ByteReader -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/Wire.cs::ByteReader.ByteReader -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/Wire.cs::ByteReader.Position -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/Wire.cs::ByteReader.Remaining -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/Wire.cs::ByteReader.Failed -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/Wire.cs::ByteReader.Fail -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/Wire.cs::ByteReader.ReadU8 -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/Wire.cs::ByteReader.ReadI8 -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/Wire.cs::ByteReader.ReadU16 -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/Wire.cs::ByteReader.ReadI16 -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/Wire.cs::ByteReader.ReadU32 -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/Wire.cs::ByteReader.ReadI32 -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/Wire.cs::ByteReader.ReadF32 -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/Wire.cs::ByteReader -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/Wire.cs::ByteReader.ByteReader -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/Wire.cs::ByteReader.Position -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/Wire.cs::ByteReader.Remaining -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/Wire.cs::ByteReader.Failed -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/Wire.cs::ByteReader.Fail -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/Wire.cs::ByteReader.ReadU8 -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/Wire.cs::ByteReader.ReadI8 -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/Wire.cs::ByteReader.ReadU16 -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/Wire.cs::ByteReader.ReadI16 -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/Wire.cs::ByteReader.ReadU32 -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/Wire.cs::ByteReader.ReadI32 -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/Wire.cs::ByteReader.ReadF32 -->
 
 The inverse of `ByteWriter`, bounded by the received length (INV-001):
 construct it with the transport's `length` so stale buffer bytes are never
@@ -52,13 +52,13 @@ byte budget a count must fit in before anything is allocated.
 
 ### Quantization
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/Quantization.cs::Quantization -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/Quantization.cs::Quantization.PositionScale -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/Quantization.cs::Quantization.PositionLimit -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/Quantization.cs::Quantization.PackPosition -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/Quantization.cs::Quantization.UnpackPosition -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/Quantization.cs::Quantization.PackAngle -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/Quantization.cs::Quantization.UnpackAngle -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/Quantization.cs::Quantization -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/Quantization.cs::Quantization.PositionScale -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/Quantization.cs::Quantization.PositionLimit -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/Quantization.cs::Quantization.PackPosition -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/Quantization.cs::Quantization.UnpackPosition -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/Quantization.cs::Quantization.PackAngle -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/Quantization.cs::Quantization.UnpackAngle -->
 
 Fixed-point packing for the per-tick state. See docs/netcode.md's message
 table for the quantization scales used on the wire.
@@ -76,12 +76,12 @@ which is exactly modular arithmetic on the circle, so any radian value
 
 ### ITransport
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/ITransport.cs::ITransport -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/ITransport.cs::ITransport.SendReliable -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/ITransport.cs::ITransport.SendUnreliable -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/ITransport.cs::ITransport.TryReceive -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/ITransport.cs::ITransport.PeerConnected -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/ITransport.cs::ITransport.PeerDisconnected -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ITransport.cs::ITransport -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ITransport.cs::ITransport.SendReliable -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ITransport.cs::ITransport.SendUnreliable -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ITransport.cs::ITransport.TryReceive -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ITransport.cs::ITransport.PeerConnected -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ITransport.cs::ITransport.PeerDisconnected -->
 
 The one interface a real transport (Unity Transport, Netcode for
 GameObjects, a raw socket) must implement to plug into
@@ -110,8 +110,8 @@ Contract the implementer must satisfy:
 
 ### IServerOutbox
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/IServerOutbox.cs::IServerOutbox -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/IServerOutbox.cs::IServerOutbox.Send -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/IServerOutbox.cs::IServerOutbox -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/IServerOutbox.cs::IServerOutbox.Send -->
 
 Everything `ServerSimulation` emits in one `Tick`, before it touches an
 `ITransport`. Keeping this as a plain list of (peer, reliable, bytes)
@@ -123,21 +123,21 @@ exist.
 
 ### OutboxEntry
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/IServerOutbox.cs::OutboxEntry -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/IServerOutbox.cs::OutboxEntry.Peer -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/IServerOutbox.cs::OutboxEntry.Reliable -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/IServerOutbox.cs::OutboxEntry.Bytes -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/IServerOutbox.cs::OutboxEntry.OutboxEntry -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/IServerOutbox.cs::OutboxEntry -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/IServerOutbox.cs::OutboxEntry.Peer -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/IServerOutbox.cs::OutboxEntry.Reliable -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/IServerOutbox.cs::OutboxEntry.Bytes -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/IServerOutbox.cs::OutboxEntry.OutboxEntry -->
 
 One queued send: which peer, which channel, and the exact bytes to
 deliver.
 
 ### ServerOutbox
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/IServerOutbox.cs::ServerOutbox -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/IServerOutbox.cs::ServerOutbox.Entries -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/IServerOutbox.cs::ServerOutbox.Send -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/IServerOutbox.cs::ServerOutbox.Clear -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/IServerOutbox.cs::ServerOutbox -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/IServerOutbox.cs::ServerOutbox.Entries -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/IServerOutbox.cs::ServerOutbox.Send -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/IServerOutbox.cs::ServerOutbox.Clear -->
 
 The default `IServerOutbox`: a plain growable list a caller drains once per
 tick and clears. `ServerSimulation.Tick` fills this; whatever pumps the
@@ -147,15 +147,15 @@ loop) reads `Entries` and forwards each one to
 
 ### LoopbackTransport
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/LoopbackTransport.cs::LoopbackTransport -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/LoopbackTransport.cs::LoopbackTransport.DelayTicks -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/LoopbackTransport.cs::LoopbackTransport.JitterTicks -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/LoopbackTransport.cs::LoopbackTransport.UnreliableDropRate -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/LoopbackTransport.cs::LoopbackTransport.LoopbackTransport -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/LoopbackTransport.cs::LoopbackTransport.CreateEndpoint -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/LoopbackTransport.cs::LoopbackTransport.Connect -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/LoopbackTransport.cs::LoopbackTransport.Disconnect -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/LoopbackTransport.cs::LoopbackTransport.Tick -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/LoopbackTransport.cs::LoopbackTransport -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/LoopbackTransport.cs::LoopbackTransport.DelayTicks -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/LoopbackTransport.cs::LoopbackTransport.JitterTicks -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/LoopbackTransport.cs::LoopbackTransport.UnreliableDropRate -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/LoopbackTransport.cs::LoopbackTransport.LoopbackTransport -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/LoopbackTransport.cs::LoopbackTransport.CreateEndpoint -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/LoopbackTransport.cs::LoopbackTransport.Connect -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/LoopbackTransport.cs::LoopbackTransport.Disconnect -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/LoopbackTransport.cs::LoopbackTransport.Tick -->
 
 In-memory transport hub for tests and local (same-process) play: no
 sockets, no threads. `CreateEndpoint` hands back one `ITransport` per
@@ -175,7 +175,7 @@ delivered until enough ticks have passed.
 
 ### NetMessages
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::NetMessages -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::NetMessages -->
 
 Wire formats. The governing rule (send CAUSES, never EFFECTS) and the full
 message table live in [docs/netcode.md](../netcode.md); this file only
@@ -183,7 +183,7 @@ holds the struct layouts themselves.
 
 ### MessageKind
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::MessageKind -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::MessageKind -->
 
 One byte identifying which message struct follows in a buffer. Kept as its
 own byte (not folded into a discriminated union) so a receiver can
@@ -191,20 +191,20 @@ dispatch with a single switch before deserializing anything.
 
 ### InputMessage
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::InputMessage -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::InputMessage.NetId -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::InputMessage.Tick -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::InputMessage.ThrustAxis -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::InputMessage.Steer -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::InputMessage.Flags -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::InputMessage.FireBit -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::InputMessage.InputMessage -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::InputMessage.FromFloats -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::InputMessage.ThrustAxisFloat -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::InputMessage.SteerFloat -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::InputMessage.FirePressed -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::InputMessage.Write -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::InputMessage.Read -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::InputMessage -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::InputMessage.NetId -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::InputMessage.Tick -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::InputMessage.ThrustAxis -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::InputMessage.Steer -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::InputMessage.Flags -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::InputMessage.FireBit -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::InputMessage.InputMessage -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::InputMessage.FromFloats -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::InputMessage.ThrustAxisFloat -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::InputMessage.SteerFloat -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::InputMessage.FirePressed -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::InputMessage.Write -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::InputMessage.Read -->
 
 Client -> server, unreliable, one per tick: this tick's player intent.
 Latest-wins on the server (`ServerSimulation` keeps only the newest input
@@ -213,13 +213,13 @@ for the byte layout.
 
 ### SnapshotBlock
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::SnapshotBlock -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::SnapshotBlock.X -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::SnapshotBlock.Y -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::SnapshotBlock.TypeId -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::SnapshotBlock.Mods -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::SnapshotBlock.Damage -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::SnapshotBlock.SnapshotBlock -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::SnapshotBlock -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::SnapshotBlock.X -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::SnapshotBlock.Y -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::SnapshotBlock.TypeId -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::SnapshotBlock.Mods -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::SnapshotBlock.Damage -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::SnapshotBlock.SnapshotBlock -->
 
 One block as carried by `ShipSnapshot`: position (grid-local, fits an
 sbyte per `BlockKey`'s -128..127 range), type, modifiers and accumulated
@@ -227,21 +227,21 @@ damage.
 
 ### ShipSnapshot
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::ShipSnapshot -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::ShipSnapshot.Sequence -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::ShipSnapshot.NetId -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::ShipSnapshot.Blocks -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::ShipSnapshot.Px -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::ShipSnapshot.Py -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::ShipSnapshot.Rot -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::ShipSnapshot.Vx -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::ShipSnapshot.Vy -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::ShipSnapshot.Av -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::ShipSnapshot.ShipSnapshot -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::ShipSnapshot.MaxBlocks -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::ShipSnapshot.ByteSize -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::ShipSnapshot.Write -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::ShipSnapshot.Read -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::ShipSnapshot -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::ShipSnapshot.Sequence -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::ShipSnapshot.NetId -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::ShipSnapshot.Blocks -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::ShipSnapshot.Px -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::ShipSnapshot.Py -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::ShipSnapshot.Rot -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::ShipSnapshot.Vx -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::ShipSnapshot.Vy -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::ShipSnapshot.Av -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::ShipSnapshot.ShipSnapshot -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::ShipSnapshot.MaxBlocks -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::ShipSnapshot.ByteSize -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::ShipSnapshot.Write -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::ShipSnapshot.Read -->
 
 Server -> client, RELIABLE, sent once on join or respawn: the full block
 layout plus the ship's current pose/velocity. 5 bytes per block raw; block
@@ -256,30 +256,30 @@ actually received, so a remote count never sizes an allocation, and
 
 ### ShipRemoved
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::ShipRemoved -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::ShipRemoved.Sequence -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::ShipRemoved.NetId -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::ShipRemoved.ShipRemoved -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::ShipRemoved.Write -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::ShipRemoved.Read -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::ShipRemoved -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::ShipRemoved.Sequence -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::ShipRemoved.NetId -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::ShipRemoved.ShipRemoved -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::ShipRemoved.Write -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::ShipRemoved.Read -->
 
 Server -> client, reliable ordered: the ship left (an explicit `Leave` or
 an input timeout). Without it every replica kept a ghost ship forever.
 
 ### ShipState
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::ShipState -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::ShipState.NetId -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::ShipState.Px -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::ShipState.Py -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::ShipState.Rot -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::ShipState.Vx -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::ShipState.Vy -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::ShipState.Av -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::ShipState.ByteSize -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::ShipState.ShipState -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::ShipState.Write -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::ShipState.Read -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::ShipState -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::ShipState.NetId -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::ShipState.Px -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::ShipState.Py -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::ShipState.Rot -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::ShipState.Vx -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::ShipState.Vy -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::ShipState.Av -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::ShipState.ByteSize -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::ShipState.ShipState -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::ShipState.Write -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::ShipState.Read -->
 
 Server -> client, UNRELIABLE, ~30-50 Hz: this tick's pose. Losing one is
 harmless since the next one supersedes it. See docs/netcode.md#message-table
@@ -287,16 +287,16 @@ for the byte layout and quantization.
 
 ### BlockPlaced
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::BlockPlaced -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::BlockPlaced.Sequence -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::BlockPlaced.NetId -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::BlockPlaced.X -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::BlockPlaced.Y -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::BlockPlaced.TypeId -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::BlockPlaced.Mods -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::BlockPlaced.BlockPlaced -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::BlockPlaced.Write -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::BlockPlaced.Read -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::BlockPlaced -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::BlockPlaced.Sequence -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::BlockPlaced.NetId -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::BlockPlaced.X -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::BlockPlaced.Y -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::BlockPlaced.TypeId -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::BlockPlaced.Mods -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::BlockPlaced.BlockPlaced -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::BlockPlaced.Write -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::BlockPlaced.Read -->
 
 Server -> client, RELIABLE ORDERED: a block was placed. Carries a
 sequence number because placement order matters for which cell wins a
@@ -304,14 +304,14 @@ race, exactly like destruction order matters for `Connectivity.FindDetached`.
 
 ### BlockDestroyed
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::BlockDestroyed -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::BlockDestroyed.Sequence -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::BlockDestroyed.NetId -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::BlockDestroyed.X -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::BlockDestroyed.Y -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::BlockDestroyed.BlockDestroyed -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::BlockDestroyed.Write -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::BlockDestroyed.Read -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::BlockDestroyed -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::BlockDestroyed.Sequence -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::BlockDestroyed.NetId -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::BlockDestroyed.X -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::BlockDestroyed.Y -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::BlockDestroyed.BlockDestroyed -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::BlockDestroyed.Write -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::BlockDestroyed.Read -->
 
 Server -> client, RELIABLE ORDERED: a block died. This is the whole point
 of the design: both sides run `Connectivity.FindDetached`/
@@ -321,19 +321,19 @@ docs/netcode.md#the-governing-rule-send-causes-not-effects.
 
 ### FragmentSpawned
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::FragmentSpawned -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::FragmentSpawned.Sequence -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::FragmentSpawned.ParentId -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::FragmentSpawned.NewId -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::FragmentSpawned.Px -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::FragmentSpawned.Py -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::FragmentSpawned.Rot -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::FragmentSpawned.Vx -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::FragmentSpawned.Vy -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::FragmentSpawned.Av -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::FragmentSpawned.FragmentSpawned -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::FragmentSpawned.Write -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::FragmentSpawned.Read -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::FragmentSpawned -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::FragmentSpawned.Sequence -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::FragmentSpawned.ParentId -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::FragmentSpawned.NewId -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::FragmentSpawned.Px -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::FragmentSpawned.Py -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::FragmentSpawned.Rot -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::FragmentSpawned.Vx -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::FragmentSpawned.Vy -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::FragmentSpawned.Av -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::FragmentSpawned.FragmentSpawned -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::FragmentSpawned.Write -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::FragmentSpawned.Read -->
 
 Server -> client, RELIABLE ORDERED: a detached component (from a
 `FindDetached` split, on the tick's `BlockDestroyed`/buckling events) is
@@ -343,15 +343,15 @@ the same ordered destruction events first.
 
 ### BlockDamaged
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::BlockDamaged -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::BlockDamaged.Sequence -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::BlockDamaged.NetId -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::BlockDamaged.X -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::BlockDamaged.Y -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::BlockDamaged.Damage -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::BlockDamaged.BlockDamaged -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::BlockDamaged.Write -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::BlockDamaged.Read -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::BlockDamaged -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::BlockDamaged.Sequence -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::BlockDamaged.NetId -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::BlockDamaged.X -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::BlockDamaged.Y -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::BlockDamaged.Damage -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::BlockDamaged.BlockDamaged -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::BlockDamaged.Write -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::BlockDamaged.Read -->
 
 Server -> client, RELIABLE ORDERED: a block took damage but did not die.
 Damage is a CAUSE the client cannot derive on its own (the FE solve that
@@ -360,17 +360,17 @@ it must be sent explicitly rather than recomputed locally.
 
 ### PowerupApplied
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::PowerupApplied -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::PowerupApplied.Sequence -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::PowerupApplied.NetId -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::PowerupApplied.X -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::PowerupApplied.Y -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::PowerupApplied.Variant -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::PowerupApplied.Seconds10 -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::PowerupApplied.PowerupApplied -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::PowerupApplied.Seconds -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::PowerupApplied.Write -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::PowerupApplied.Read -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::PowerupApplied -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::PowerupApplied.Sequence -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::PowerupApplied.NetId -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::PowerupApplied.X -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::PowerupApplied.Y -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::PowerupApplied.Variant -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::PowerupApplied.Seconds10 -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::PowerupApplied.PowerupApplied -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::PowerupApplied.Seconds -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::PowerupApplied.Write -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::PowerupApplied.Read -->
 
 Server -> client, RELIABLE ORDERED: a temporary variant transform
 (`ShipBody.ApplyPowerup`) landed on a block. `Seconds10` is tenths of a
@@ -379,22 +379,22 @@ float on the wire.
 
 ### GravityWellSpawned
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::GravityWellSpawned -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::GravityWellSpawned.Px -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::GravityWellSpawned.Py -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::GravityWellSpawned.Mu -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::GravityWellSpawned.Radius -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::GravityWellSpawned.Seconds10 -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::GravityWellSpawned.MuScale -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::GravityWellSpawned.GravityWellSpawned -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::GravityWellSpawned.FromFloats -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::GravityWellSpawned.MuFloat -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::GravityWellSpawned.RadiusFloat -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::GravityWellSpawned.SecondsFloat -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::GravityWellSpawned.PxFloat -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::GravityWellSpawned.PyFloat -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::GravityWellSpawned.Write -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::GravityWellSpawned.Read -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::GravityWellSpawned -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::GravityWellSpawned.Px -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::GravityWellSpawned.Py -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::GravityWellSpawned.Mu -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::GravityWellSpawned.Radius -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::GravityWellSpawned.Seconds10 -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::GravityWellSpawned.MuScale -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::GravityWellSpawned.GravityWellSpawned -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::GravityWellSpawned.FromFloats -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::GravityWellSpawned.MuFloat -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::GravityWellSpawned.RadiusFloat -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::GravityWellSpawned.SecondsFloat -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::GravityWellSpawned.PxFloat -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::GravityWellSpawned.PyFloat -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::GravityWellSpawned.Write -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::GravityWellSpawned.Read -->
 
 Server -> client, RELIABLE ORDERED: a temporary gravity well/anti-well
 (`IWorldSink.AddTemporaryGravity`) was dropped into the world field. `Mu`
@@ -405,36 +405,36 @@ precision.
 
 ### ReplicaEventKind
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ReplicaEventKind -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ReplicaEventKind -->
 
 Effect-worthy events a renderer/audio layer wants to react to, drained via
 `ClientReplica.TryDequeueEvent` once applied.
 
 ### ReplicaEvent
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ReplicaEvent -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ReplicaEvent.Kind -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ReplicaEvent.NetId -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ReplicaEvent.X -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ReplicaEvent.Y -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ReplicaEvent.WorldPosition -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ReplicaEvent.ReplicaEvent -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ReplicaEvent -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ReplicaEvent.Kind -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ReplicaEvent.NetId -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ReplicaEvent.X -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ReplicaEvent.Y -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ReplicaEvent.WorldPosition -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ReplicaEvent.ReplicaEvent -->
 
 One applied event, boxed just enough for a renderer to know what happened
 and to which ship, without re-parsing wire bytes.
 
 ### ClientReplica
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ClientReplica -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ClientReplica.Ships -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ClientReplica.ApplySnapshot -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ClientReplica.ApplyState -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ClientReplica.TryInterpolate -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ClientReplica.ApplyReceived -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ClientReplica.ApplyReliable -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ClientReplica.MaxReliableWindow -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ClientReplica.TryDequeueEvent -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ClientReplica.BuildInput -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ClientReplica -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ClientReplica.Ships -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ClientReplica.ApplySnapshot -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ClientReplica.ApplyState -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ClientReplica.TryInterpolate -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ClientReplica.ApplyReceived -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ClientReplica.ApplyReliable -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ClientReplica.MaxReliableWindow -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ClientReplica.TryDequeueEvent -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ClientReplica.BuildInput -->
 
 The non-authoritative twin of `ServerSimulation`: applies `ShipSnapshot`/
 `ShipState`/reliable events received over an `ITransport` (or fed directly
@@ -471,7 +471,7 @@ cannot stall the stream. Sequence comparison is wrap-safe.
 
 ### ReplicaApplyResult
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ReplicaApplyResult -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ReplicaApplyResult -->
 
 What the replica did with one payload: `Applied`, `Buffered`, `Stale`,
 `OutOfWindow` or `Malformed`; see `ClientReplica`.
@@ -501,20 +501,20 @@ next expected sequence and then drains whatever the gap closing unblocks.
 
 ### ServerSimulation
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.TickRate -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.TimeoutSeconds -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.Gravity -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.ServerSimulation -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.Ships -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.MaxPeerId -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.FirstFragmentId -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.Join -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.Leave -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.TryDequeueDroppedPeer -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.SetInput -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.Tick -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.DebugDestroyBlock -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.TickRate -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.TimeoutSeconds -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.Gravity -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.ServerSimulation -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.Ships -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.MaxPeerId -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.FirstFragmentId -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.Join -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.Leave -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.TryDequeueDroppedPeer -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.SetInput -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.Tick -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.DebugDestroyBlock -->
 
 The authoritative, plain-C# server loop: one `ShipBody` + `StructuralSolver`
 per connected peer, a shared `GravityField`, and a minimal point-body
@@ -565,17 +565,17 @@ and skip the owner's ship.
 
 ### JoinResult
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::JoinResult -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::JoinResult -->
 
 Outcome of `ServerSimulation.Join`: `Joined`, `InvalidPeerId`,
 `AlreadyJoined`, `InvalidDesign`. A non-`Joined` result changes nothing.
 
 ### DesignValidator
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/DesignValidator.cs::DesignVerdict -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/DesignValidator.cs::DesignValidator -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/DesignValidator.cs::DesignValidator.MaxSpawnSpeed -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/DesignValidator.cs::DesignValidator.ValidateDesign -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/DesignValidator.cs::DesignVerdict -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/DesignValidator.cs::DesignValidator -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/DesignValidator.cs::DesignValidator.MaxSpawnSpeed -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/DesignValidator.cs::DesignValidator.ValidateDesign -->
 
 Server-side check of a client-supplied `ShipSnapshot` before a ship is
 built from it: at least one and at most `ShipSnapshot.MaxBlocks` blocks,
@@ -585,8 +585,8 @@ broken.
 
 ### ProjectileHitTest
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/ProjectileHitTest.cs::ProjectileHitTest -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Net/ProjectileHitTest.cs::ProjectileHitTest.TryHitShipCell -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ProjectileHitTest.cs::ProjectileHitTest -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ProjectileHitTest.cs::ProjectileHitTest.TryHitShipCell -->
 
 Engine-free circle-versus-block-cell test the server uses for projectile
 impacts: finds the occupied cell nearest the circle centre that the circle
@@ -622,7 +622,7 @@ separate `HasValue` branch.
 
 ### NetDemo
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/NetDemo.cs::NetDemo -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/NetDemo.cs::NetDemo -->
 
 Runs a whole `ServerSimulation` + two `ClientReplica` instances in-process
 over a jittery `LoopbackTransport`, purely so a handoff engineer can see
