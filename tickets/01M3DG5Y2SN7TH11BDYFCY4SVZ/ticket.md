@@ -2,7 +2,7 @@
 id = "01M3DG5Y2SN7TH11BDYFCY4SVZ"
 title = "S41-1: Arena bounds with soft push-back and no structural damage"
 type = "task"
-category = "todo"
+category = "in-progress"
 priority = "medium"
 points = 2
 parent = "01M3DG5Y0Y1MZXATXQF051SPA2"
