@@ -1,0 +1,6 @@
+kind = "comment"
+subtype = "note"
+body = "Implemented on branch mcnairrobotics/sprint2-netcode (BuildRequest, ServerSimulation.TryPlaceBlock with PlacementRules validation, BlockPlaced broadcast; BuildReplicationTests: 11 cases; plaincs 292 green). Not closed: evidence add --provider command with dotnet is refused (E-EVIDENCE-TOOL, dotnet not in [evidence] allowed_tools). Allowlist not widened, no attestation. Open: no refusal message on the wire yet; no build rate limit until S34-3 (T-0069)."
+at = "2026-10-09T04:10:42Z"
+actor = "mcnairrobotics"
+rev = 1
