@@ -1,0 +1,6 @@
+kind = "field"
+field = "scope"
+new = ["Assets/Scripts/Hullbreach.Net/ITransport.cs"]
+at = "2026-10-09T04:22:52Z"
+actor = "mcnairrobotics"
+rev = 1
