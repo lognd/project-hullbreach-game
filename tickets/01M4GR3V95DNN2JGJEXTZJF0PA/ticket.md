@@ -1,0 +1,15 @@
++++
+id = "01M4GR3V95DNN2JGJEXTZJF0PA"
+title = "NetDemo.RefreshVisuals never destroys quads for blocks/ships removed from the replica"
+type = "bug"
+category = "todo"
+priority = "medium"
+reporter = "lognd"
+created = "2026-10-09T16:32:05Z"
+updated = "2026-10-09T16:32:05Z"
+idempotency_key = "audit-game-netdemo-visuals"
+labels = ["origin:auditor", "audit:hullbreach-game"]
+scope = ["Assets/Scripts/Hullbreach.Game/NetDemo.cs"]
++++
+
+NetDemo.cs:131-155. _visuals only grows: when ClientReplica drops a block (BlockDestroyed) or a peer leaves, the old quad GameObject stays at its last position forever, and both replicas share one _visuals key space only by netId so the two clients' views collide (replica1 and replica2 both create/update the same (netId,key) quad, last writer wins). Fix: key _visuals by (replicaIndex, netId, key), track the set seen this refresh and Destroy the rest, destroy all in OnDestroy. Also Drain/RunOneTick (lines 93-98,126-127) ignore the received length and ApplyReceived return/contract, so a short datagram parses stale buffer bytes; pass length to a bounds-checked reader.
