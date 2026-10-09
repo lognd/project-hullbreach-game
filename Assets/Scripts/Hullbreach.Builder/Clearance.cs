@@ -8,13 +8,17 @@ namespace Hullbreach.Builder
     // frob:doc docs/reference/hullbreach-builder.md#clearance
     public static class Clearance
     {
-        // Lists cells that must stay empty for a block at `key`; see
+        // Fills `cells` with cells that must stay empty for a block at `key`
+        // and returns true; false (cells empty) for an unknown typeId or
+        // out-of-range key, so empty-with-true means "needs none". An ahead
+        // cell off the grid is not reserved (nothing can occupy it). See
         // docs/reference/hullbreach-builder.md#clearance for per-type rules.
         // frob:doc docs/reference/hullbreach-builder.md#clearance
         public static bool TryReservedCells(int key, byte typeId, byte modifiers, List<int> cells)
         {
             cells.Clear();
             BlockKey.Unpack(key, out int x, out int y);
+            if (!BlockTypes.IsValid(typeId) || !BlockKey.InRange(x, y)) return false;
 
             switch (typeId)
             {
