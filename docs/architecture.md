@@ -301,7 +301,9 @@ directly: Structure has no dependency on Ship (see the assembly graph).
    `SpallStress`, min compressive vs. `CompressiveStress`). Both are
    **client-safe**: every machine's solve produces the same ratios given
    the same inputs, so both are fine to use for a color tint
-   (`ShipRenderer`'s Stress overlay uses `max(DuctileRatio, BrittleRatio)`)
+   (`ShipRenderer`'s Stress overlay uses `max(DuctileRatio, BrittleRatio)`
+   plus `BucklingRatio` via `ExtraRatioSource`; the whole ratio-to-color
+   mapping is in [stress-colors.md](stress-colors.md))
    or, per the game layer's own decision, to detach a block once a ratio
    exceeds 1 (see `ShipStructure` in `Hullbreach.Game`).
 6. **Damage** (`Hullbreach.Structure.Failure.DamageModel`): hysteresis so
