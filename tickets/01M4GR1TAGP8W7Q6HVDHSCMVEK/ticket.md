@@ -2,11 +2,12 @@
 id = "01M4GR1TAGP8W7Q6HVDHSCMVEK"
 title = "Damage changes block stiffness but never triggers K rebuild, so stress uses softened E against an un-softened K"
 type = "bug"
-category = "todo"
+category = "done"
+outcome = "fixed"
 priority = "high"
 reporter = "lognd"
 created = "2026-10-09T16:30:58Z"
-updated = "2026-10-09T17:00:41Z"
+updated = "2026-10-09T17:01:11Z"
 labels = ["origin:auditor", "audit:hullbreach-structure"]
 scope = ["Assets/Scripts/Hullbreach.Structure/StructuralSolver.cs"]
 
