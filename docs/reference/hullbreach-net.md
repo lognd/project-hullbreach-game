@@ -513,6 +513,34 @@ file-private helper) returns an out-of-range sentinel when the grid has
 no core key, so a comparison against a candidate key never needs a
 separate `HasValue` branch.
 
+### ServerHost
+
+Plain-C# host driver for `ServerSimulation` (S47-1): owns the `ServerOutbox`,
+pumps an `ITransport` into the simulation and forwards the outbox back out,
+at a fixed tick, with no Unity. `Advance(elapsedSeconds)` is the whole
+scheduler: it keeps total host time and runs
+`floor(hostSeconds * TickRate)` ticks in all, so chunking the elapsed time
+differently never changes the tick count. One call runs at most
+`MaxCatchUpTicks`; a longer stall skips the surplus (logged) instead of
+replaying it, so a hiccup cannot make the server fall further behind.
+`Run` is the loop a process entry point calls, with the clock, the sleep
+and the stop condition injected so tests need no wall time.
+
+Each tick drains the transport, then ticks the simulation, then forwards
+the outbox. A client controls every inbound byte, so a payload that is
+empty, the wrong length for its kind, or not a client->server kind is
+dropped and logged, never thrown. The sender's transport peer id picks the
+ship an `InputMessage` drives, not the `NetId` the message claims.
+`Join` takes the design from whatever lobby or handshake owns that
+decision; the join snapshots are forwarded at once.
+
+### NetLog
+
+The one logging seam for the plain-C# netcode. A host assigns `Sink` (the
+Unity side forwards to `Debug.Log`, a headless process to its own logger);
+with no sink every `Write` is a no-op. Only rare-path events go through it
+(join, leave, refusals, dropped payloads, stalls), never per-tick traffic.
+
 ### NetDemo
 
 <!-- frob:describes Assets/Scripts/Hullbreach.Game/NetDemo.cs::NetDemo -->
