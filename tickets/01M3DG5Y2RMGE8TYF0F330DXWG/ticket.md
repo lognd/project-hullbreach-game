@@ -8,10 +8,10 @@ points = 1
 parent = "01M3DG5Y0X02V7SGJ0Y3J7550F"
 reporter = "human"
 created = "2026-09-26T00:00:00Z"
-updated = "2026-10-09T04:04:03Z"
+updated = "2026-10-09T04:06:11Z"
 aliases = ["T-0088"]
 labels = ["jira:SCRUM-163", "owner:GingerVHS", "game", "physics", "milestone:0.2.0"]
-scope = ["Assets/Scripts/Hullbreach.World/GravityConfig.cs*", "Assets/Scripts/Hullbreach.World/GravityField.cs", "Assets/Scripts/Hullbreach.Net/ServerSimulation.cs", "Assets/Scripts/Hullbreach.Game/GravityWorld.cs", "Assets/Tests/EditMode/**", "docs/**", "changelog.d/**"]
+scope = ["Assets/Scripts/Hullbreach.World/GravityConfig.cs*", "Assets/Scripts/Hullbreach.World/GravityField.cs", "Assets/Scripts/Hullbreach.Net/ServerSimulation.cs", "Assets/Scripts/Hullbreach.Game/GravityWorld.cs", "Assets/Tests/EditMode/**", "docs/**", "changelog.d/**", "Assets/Config.meta", "Assets/Config/**", "Assets/Scenes/DemoScene.unity"]
 
 [[acceptance]]
 text = "Given a gravity configuration text that sets MaxAcceleration, SurfaceRestitution and planets, when the shared GravityConfig parses it and builds a GravityField, then the field clamps, bounces and pulls with those values and no code change"
