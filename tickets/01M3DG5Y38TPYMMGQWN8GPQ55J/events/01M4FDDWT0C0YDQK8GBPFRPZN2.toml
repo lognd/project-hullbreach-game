@@ -1,0 +1,7 @@
+kind = "field"
+field = "scope"
+old = ["docs/netcode.md", "docs/reference/hullbreach-net.md", "docs/roadmap.md", "Assets/Scripts/Hullbreach.Net/ServerHost.cs*", "Assets/Scripts/Hullbreach.Net/NetLog.cs*", "Assets/Tests/EditMode/Hullbreach.Net.Tests/ServerHostTests.cs*"]
+new = ["docs/netcode.md", "docs/reference/hullbreach-net.md", "docs/roadmap.md", "Assets/Scripts/Hullbreach.Net/ServerHost.cs*", "Assets/Scripts/Hullbreach.Net/NetLog.cs*", "Assets/Tests/EditMode/Hullbreach.Net.Tests/ServerHostTests.cs*", "Assets/Scripts/Hullbreach.Net/NetMessages.cs"]
+at = "2026-10-09T04:06:05Z"
+actor = "mcnairrobotics"
+rev = 1
