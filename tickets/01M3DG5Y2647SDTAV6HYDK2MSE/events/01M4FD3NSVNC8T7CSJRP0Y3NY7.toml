@@ -1,0 +1,7 @@
+kind = "field"
+field = "labels"
+old = ["jira:SCRUM-174", "owner:stevendangkhoi", "game", "platform", "milestone:0.2.0"]
+new = ["jira:SCRUM-174", "owner:stevendangkhoi", "game", "platform", "milestone:0.2.0", "creates:Assets/Tests/EditMode/Hullbreach.Builder.Tests/ShipDesign*", "creates:docs/ship-design-format.md"]
+at = "2026-10-09T04:00:30Z"
+actor = "stevendangkhoi"
+rev = 1
