@@ -2,11 +2,12 @@
 id = "01M4GR2HZCGE3Q0A18RTA2Z5YD"
 title = "ServerSimulation.SetInput trusts unclamped sbyte axes: -128 yields -1.0079 thrust/steer"
 type = "security"
-category = "todo"
+category = "done"
+outcome = "duplicate"
 priority = "medium"
 reporter = "lognd"
 created = "2026-10-09T16:31:22Z"
-updated = "2026-10-09T16:31:22Z"
+updated = "2026-10-09T16:36:19Z"
 labels = ["origin:auditor", "audit:hullbreach-net"]
 scope = ["Assets/Scripts/Hullbreach.Net/NetMessages.cs", "Assets/Scripts/Hullbreach.Net/ServerSimulation.cs"]
 +++
