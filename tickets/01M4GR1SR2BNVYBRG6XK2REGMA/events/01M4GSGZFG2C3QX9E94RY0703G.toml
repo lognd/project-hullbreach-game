@@ -1,0 +1,5 @@
+kind = "changelog-exempt"
+reason = "Fixed in this branch; verified by tools/plaincs/run_tests.sh (288 pass, new tests fail without the fix). run_tests.sh is not in frob.toml evidence allowed_tools so no command evidence could be bound. Audit-cycle internal fix; matches the changelog-exempt closes already on this branch."
+at = "2026-10-09T16:56:43Z"
+actor = "a-carten"
+rev = 1

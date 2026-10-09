@@ -1,0 +1,7 @@
+kind = "field"
+field = "acceptance"
+new = ["Given CRITICAL band, when the pulse swings, then every channel of WarningCriticalRed scales and a missing worst name omits the clause"]
+moved = []
+at = "2026-10-09T16:56:31Z"
+actor = "a-carten"
+rev = 1

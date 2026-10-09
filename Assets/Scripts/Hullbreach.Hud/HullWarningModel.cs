@@ -49,7 +49,7 @@ namespace Hullbreach.Hud
                 HullWarning.Strain => "STRAIN",
                 _ => "OK",
             };
-            string headline = $"Hull: {label}   (max ratio {maxRatio:0.00})";
+            string headline = System.FormattableString.Invariant($"Hull: {label}   (max ratio {maxRatio:0.00})");
 
             if (band == HullWarning.Ok)
             {
@@ -63,10 +63,11 @@ namespace Hullbreach.Hud
                 hint = worstBlockName != null && worstBlockName.Length > 0 && criticalBlockCount > 1
                     ? "brace the arm"
                     : "ease off thrust";
-                // Alternate between full and dim red a few times a second so it
-                // reads as an alarm, not a label.
+                // Scale all of WarningCriticalRed's channels (pulse 0.1..1.0) a few times a
+                // second so it swings between bright and dark red and reads as an alarm.
                 float pulse = 0.55f + 0.45f * System.MathF.Sin(unscaledTime * 12f);
-                color = new HudColor(1f, 0.15f * pulse, 0.15f * pulse);
+                var red = HudColor.WarningCriticalRed;
+                color = new HudColor(red.R * pulse, red.G * pulse, red.B * pulse, red.A);
             }
             else
             {
@@ -74,9 +75,17 @@ namespace Hullbreach.Hud
                 color = HudColor.WarningStrainYellow;
             }
 
-            string detail = criticalBlockCount > 0
-                ? $"{criticalBlockCount} block(s) in the red, worst: {worstBlockName}"
-                : "load factor low";
+            string detail;
+            if (criticalBlockCount <= 0)
+            {
+                detail = "load factor low";
+            }
+            else
+            {
+                // No name known (e.g. the grid lookup failed): drop the clause, not print a blank.
+                string worst = string.IsNullOrEmpty(worstBlockName) ? string.Empty : $", worst: {worstBlockName}";
+                detail = System.FormattableString.Invariant($"{criticalBlockCount} block(s) in the red{worst}");
+            }
 
             return new HullWarningModel(headline, detail, hint, color, true);
         }

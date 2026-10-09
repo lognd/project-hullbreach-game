@@ -152,13 +152,19 @@ assets), but it has three costs that now matter:
 - `BuilderHudModel` -- from a `BuilderSession`, the palette
   (`BlockPalette.All()`) and the hover verdict string: title line,
   palette rows (name, mass, cost, selected), total mass, block count,
-  state, optional hover line. Format strings identical to today's.
+  state, optional hover line. Format strings identical to today's. The
+  title's key range is `min(9, BlockTypes.Count)`, matching
+  `BuilderController`'s bindings; a null session throws
+  `ArgumentNullException` (callers guard, as `BuilderHud` does).
 - `FlightTelemetryModel` -- from ship telemetry (speed components,
   angular velocity, forward/reverse/steer throttle means): speed line,
   channel bar values (label text + clamped fill, steer as signed
   -1..1 with center-origin fill). `Build` copies its format strings and
   clamp order verbatim from the old `DrawStatusPanel`/`DrawChannelBar`/
   `DrawSteerBar` so the rendered text is unchanged.
+  Non-finite inputs are sanitised: NaN throttle means clamp to 0 fill,
+  +/-Infinity throttles clamp to the range ends, and non-finite velocity
+  or angular speed reads as 0, so `Fill` is always finite.
 - `StatusPanelModel` -- the exact text the old `DrawStatusPanel`/
   `DrawActivePowerups` drew, minus the control bars (`FlightTelemetryModel`
   already covers those): mode line, control-hint lines for Build/Fly,
@@ -172,6 +178,9 @@ assets), but it has three costs that now matter:
   color including the CRITICAL pulse, and whether detail lines show.
   `HullWarning` enum moved here from `Hullbreach.Game.DemoMode`; the
   play-mode tests' `using Hullbreach.Hud;` picks it up.
+
+All numeric text in these models is formatted with the invariant culture,
+so the HUD reads `12.3` on every OS locale (covered by `HudCultureTests`).
 
 ### `Hullbreach.Game` views (`Assets/Scripts/Hullbreach.Game/Hud/`)
 
@@ -229,6 +238,12 @@ assets), but it has three costs that now matter:
   standalone, before `DemoScene`'s `Demo` object exists), so
   `WireDemoScene` wires it after instantiating `HudCanvas` into the
   scene, the same way it wires `BuilderHud.controller`.
+  `Run`/`WireDemoScene` report every missed binding (missing `Demo`,
+  `PlayerShip`, `BuilderController`, prefab or view) as an error and
+  leave the scene unsaved; the batch entry points (`Build`, `BuildForce`)
+  exit non-zero in `-batchmode`. The skip guard checks all five prefab
+  paths, `Run` builds `ChannelBar.prefab` first, and the views log an
+  error in `Awake` and idle when their serialized reference is unset.
 
 **Adding a panel**: write one more `AddXxxPanel(GameObject
 canvasRoot)` method following `AddBuilderPanel`'s shape (build the

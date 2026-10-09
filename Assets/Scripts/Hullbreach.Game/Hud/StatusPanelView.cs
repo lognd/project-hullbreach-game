@@ -24,10 +24,16 @@ namespace Hullbreach.Game
 
         TMP_Text[] _powerupRows = System.Array.Empty<TMP_Text>();
 
-        void Awake() => powerupRowTemplate.gameObject.SetActive(false);
+        void Awake()
+        {
+            powerupRowTemplate.gameObject.SetActive(false);
+            // An unwired demoMode is a scene-setup bug: report it once, then idle instead of throwing per frame.
+            if (demoMode == null) Debug.LogError("StatusPanelView: demoMode is unset; re-run HudPrefabBuilder.WireDemoScene.", this);
+        }
 
         void LateUpdate()
         {
+            if (demoMode == null) return;
             bool building = demoMode.State == DemoState.Build;
             var ship = demoMode.PlayerShip != null ? demoMode.PlayerShip.Ship : null;
             float mass = ship != null ? ship.Grid.Mass.Total : 0f;

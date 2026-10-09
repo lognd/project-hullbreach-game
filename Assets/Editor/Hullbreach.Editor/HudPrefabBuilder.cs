@@ -41,11 +41,11 @@ namespace Hullbreach.Editor
 
         // -executeMethod entry point: does not overwrite existing prefabs.
         // frob:doc docs/design/ui-port.md#hudprefabbuilder-editor
-        public static void Build() => Run(force: false);
+        public static void Build() => RunBatch(force: false);
 
         // -executeMethod entry point that DOES overwrite existing prefabs.
         // frob:doc docs/design/ui-port.md#hudprefabbuilder-editor
-        public static void BuildForce() => Run(force: true);
+        public static void BuildForce() => RunBatch(force: true);
 
         // -executeMethod entry point for the standalone ChannelBar prefab (U2).
         // frob:doc docs/design/ui-port.md#hudprefabbuilder-editor
@@ -58,21 +58,58 @@ namespace Hullbreach.Editor
         // frob:doc docs/design/ui-port.md#hudprefabbuilder-editor
         public static void Run(bool force)
         {
-            BuildHudCanvasPrefab(force);
-            WireDemoScene();
+            string error = TryRun(force);
+            if (error != null) Debug.LogError($"HudPrefabBuilder: {error}");
+        }
+
+        // Batch entry: a failed build or wiring exits non-zero so CI sees it.
+        static void RunBatch(bool force)
+        {
+            string error = TryRun(force);
+            if (error == null) return;
+            Debug.LogError($"HudPrefabBuilder: {error}");
+            if (Application.isBatchMode) EditorApplication.Exit(1);
+        }
+
+        // Returns null on success, else a message naming everything that failed.
+        static string TryRun(bool force)
+        {
+            string error = TryBuildHudCanvasPrefab(force);
+            return error ?? TryWireDemoScene();
         }
 
         // Screen Space Overlay canvas, 1920x1080 reference resolution, match 0.5 (D5).
         // frob:doc docs/design/ui-port.md#hudprefabbuilder-editor
         public static void BuildHudCanvasPrefab(bool force)
         {
-            if (!force && (File.Exists(BuilderPanelPrefabPath) || File.Exists(HudCanvasPrefabPath)))
+            string error = TryBuildHudCanvasPrefab(force);
+            if (error != null) Debug.LogError($"HudPrefabBuilder: {error}");
+        }
+
+        // Every prefab Run produces; the skip guard needs all of them, not one.
+        static readonly string[] AllPrefabPaths =
+        {
+            HudCanvasPrefabPath, BuilderPanelPrefabPath, ChannelBarPrefabPath,
+            StatusPanelPrefabPath, HullWarningBannerPrefabPath,
+        };
+
+        static string TryBuildHudCanvasPrefab(bool force)
+        {
+            if (!force && System.Array.TrueForAll(AllPrefabPaths, File.Exists))
             {
                 Debug.Log("HudPrefabBuilder: prefabs already exist, skipping (pass force=true to overwrite).");
-                return;
+                return null;
             }
 
             Directory.CreateDirectory("Assets/Prefabs/UI");
+
+            // StatusPanel nests ChannelBar, so it must exist (and be imported) first.
+            BuildChannelBarPrefab(force);
+            AssetDatabase.ImportAsset(ChannelBarPrefabPath);
+            if (AssetDatabase.LoadAssetAtPath<GameObject>(ChannelBarPrefabPath) == null)
+            {
+                return $"{ChannelBarPrefabPath} could not be built or loaded; HUD prefabs not written.";
+            }
 
             var canvasGo = new GameObject("HudCanvas", typeof(RectTransform));
             var canvas = canvasGo.AddComponent<Canvas>();
@@ -86,14 +123,23 @@ namespace Hullbreach.Editor
 
             canvasGo.AddComponent<GraphicRaycaster>();
 
-            AddBuilderPanel(canvasGo);
-            AddStatusPanel(canvasGo);
-            AddHullWarningBanner(canvasGo);
+            try
+            {
+                AddBuilderPanel(canvasGo);
+                AddStatusPanel(canvasGo);
+                AddHullWarningBanner(canvasGo);
 
-            PrefabUtility.SaveAsPrefabAsset(canvasGo, HudCanvasPrefabPath);
-            Object.DestroyImmediate(canvasGo);
+                PrefabUtility.SaveAsPrefabAsset(canvasGo, HudCanvasPrefabPath);
+            }
+            finally
+            {
+                // Never leak the temporary canvas, even when a panel builder throws.
+                Object.DestroyImmediate(canvasGo);
+            }
+
             AssetDatabase.SaveAssets();
             Debug.Log($"HudPrefabBuilder: wrote {HudCanvasPrefabPath}, {BuilderPanelPrefabPath}, {StatusPanelPrefabPath} and {HullWarningBannerPrefabPath}.");
+            return null;
         }
 
         // Top-left palette panel: see docs/design/ui-port.md for the layout contract.
@@ -383,10 +429,25 @@ namespace Hullbreach.Editor
         }
 
         // Adds one HudCanvas instance and one EventSystem to DemoScene; idempotent.
+        // Logs an error (and leaves the scene unsaved) when any binding is missing.
         // frob:doc docs/design/ui-port.md#hudprefabbuilder-editor
         public static void WireDemoScene()
         {
+            string error = TryWireDemoScene();
+            if (error != null) Debug.LogError($"HudPrefabBuilder: {error}");
+        }
+
+        // Returns null on success, else every missed binding; the scene is saved only on success.
+        static string TryWireDemoScene()
+        {
+            // OpenScene(Single) would prompt on a dirty scene; give interactive users the choice.
+            if (!Application.isBatchMode && !EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo())
+            {
+                return "wiring cancelled: unsaved scene changes were not resolved.";
+            }
+
             var scene = EditorSceneManager.OpenScene(DemoScenePath, OpenSceneMode.Single);
+            var problems = new System.Collections.Generic.List<string>();
 
             if (Object.FindFirstObjectByType<EventSystem>() == null)
             {
@@ -395,69 +456,78 @@ namespace Hullbreach.Editor
             }
 
             var existingCanvas = GameObject.Find("HudCanvas");
-            GameObject canvasInstance;
+            GameObject canvasInstance = existingCanvas;
             if (existingCanvas == null)
             {
                 var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(HudCanvasPrefabPath);
+                if (prefab == null) return $"{HudCanvasPrefabPath} is missing; build the prefabs first.";
                 canvasInstance = (GameObject)PrefabUtility.InstantiatePrefab(prefab, scene);
                 canvasInstance.name = "HudCanvas";
-            }
-            else
-            {
-                canvasInstance = existingCanvas;
             }
 
             var newBuilderHud = canvasInstance.GetComponentInChildren<BuilderHud>(true);
             var statusPanelView = canvasInstance.GetComponentInChildren<StatusPanelView>(true);
             var hullWarningBanner = canvasInstance.GetComponentInChildren<HullWarningBanner>(true);
+            if (newBuilderHud == null) problems.Add("HudCanvas has no BuilderHud");
+            if (statusPanelView == null) problems.Add("HudCanvas has no StatusPanelView");
+            if (hullWarningBanner == null) problems.Add("HudCanvas has no HullWarningBanner");
 
             var demoGo = GameObject.Find("Demo");
-            if (demoGo != null)
+            var demoMode = demoGo != null ? demoGo.GetComponent<DemoMode>() : null;
+            if (demoGo == null) problems.Add("no 'Demo' object in DemoScene");
+            else if (demoMode == null) problems.Add("'Demo' has no DemoMode");
+
+            var playerShipGo = GameObject.Find("PlayerShip");
+            var builderController = playerShipGo != null
+                ? playerShipGo.GetComponent<Hullbreach.Game.BuilderController>()
+                : null;
+            if (playerShipGo == null) problems.Add("no 'PlayerShip' object in DemoScene");
+            else if (builderController == null) problems.Add("'PlayerShip' has no BuilderController");
+
+            if (demoMode != null && newBuilderHud != null)
             {
-                var demoMode = demoGo.GetComponent<DemoMode>();
-                var oldBuilderHud = demoGo.GetComponent<BuilderHud>();
+                var so = new SerializedObject(demoMode);
+                so.FindProperty("builderHud").objectReferenceValue = newBuilderHud;
+                so.ApplyModifiedPropertiesWithoutUndo();
+            }
 
-                if (demoMode != null && newBuilderHud != null)
-                {
-                    var so = new SerializedObject(demoMode);
-                    so.FindProperty("builderHud").objectReferenceValue = newBuilderHud;
-                    so.ApplyModifiedPropertiesWithoutUndo();
-                }
+            if (demoMode != null && statusPanelView != null)
+            {
+                var statusSo = new SerializedObject(statusPanelView);
+                statusSo.FindProperty("demoMode").objectReferenceValue = demoMode;
+                statusSo.ApplyModifiedPropertiesWithoutUndo();
+            }
 
-                if (demoMode != null && statusPanelView != null)
-                {
-                    var statusSo = new SerializedObject(statusPanelView);
-                    statusSo.FindProperty("demoMode").objectReferenceValue = demoMode;
-                    statusSo.ApplyModifiedPropertiesWithoutUndo();
-                }
+            if (demoMode != null && hullWarningBanner != null)
+            {
+                var bannerSo = new SerializedObject(hullWarningBanner);
+                bannerSo.FindProperty("demoMode").objectReferenceValue = demoMode;
+                bannerSo.ApplyModifiedPropertiesWithoutUndo();
+            }
 
-                if (demoMode != null && hullWarningBanner != null)
-                {
-                    var bannerSo = new SerializedObject(hullWarningBanner);
-                    bannerSo.FindProperty("demoMode").objectReferenceValue = demoMode;
-                    bannerSo.ApplyModifiedPropertiesWithoutUndo();
-                }
+            if (newBuilderHud != null && builderController != null)
+            {
+                var hudSo = new SerializedObject(newBuilderHud);
+                hudSo.FindProperty("controller").objectReferenceValue = builderController;
+                hudSo.ApplyModifiedPropertiesWithoutUndo();
+            }
 
-                var playerShipGo = GameObject.Find("PlayerShip");
-                var builderController = playerShipGo != null
-                    ? playerShipGo.GetComponent<Hullbreach.Game.BuilderController>()
-                    : null;
-                if (newBuilderHud != null && builderController != null)
-                {
-                    var hudSo = new SerializedObject(newBuilderHud);
-                    hudSo.FindProperty("controller").objectReferenceValue = builderController;
-                    hudSo.ApplyModifiedPropertiesWithoutUndo();
-                }
+            // Only drop the old HUD once the new one is fully bound, else DemoMode is left with none.
+            var oldBuilderHud = demoGo != null ? demoGo.GetComponent<BuilderHud>() : null;
+            if (oldBuilderHud != null && problems.Count == 0 && oldBuilderHud != newBuilderHud)
+            {
+                Object.DestroyImmediate(oldBuilderHud);
+            }
 
-                if (oldBuilderHud != null)
-                {
-                    Object.DestroyImmediate(oldBuilderHud);
-                }
+            if (problems.Count > 0)
+            {
+                return "DemoScene wiring incomplete, scene not saved: " + string.Join("; ", problems) + ".";
             }
 
             EditorSceneManager.MarkSceneDirty(scene);
             EditorSceneManager.SaveScene(scene);
             Debug.Log("HudPrefabBuilder: wired HudCanvas + EventSystem into DemoScene.");
+            return null;
         }
     }
 }

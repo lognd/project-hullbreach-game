@@ -2,13 +2,18 @@
 id = "01M4GR1T9739Y4XB41HFHGDC8M"
 title = "HullWarningModel CRITICAL pulse barely changes color; WarningCriticalRed is unused"
 type = "bug"
-category = "todo"
+category = "done"
+outcome = "fixed"
 priority = "medium"
 reporter = "lognd"
 created = "2026-10-09T16:30:58Z"
-updated = "2026-10-09T16:30:58Z"
+updated = "2026-10-09T16:56:44Z"
 labels = ["origin:auditor"]
 scope = ["Assets/Scripts/Hullbreach.Hud/HullWarningModel.cs"]
+
+[[acceptance]]
+text = "Given CRITICAL band, when the pulse swings, then every channel of WarningCriticalRed scales and a missing worst name omits the clause"
+bound = false
 +++
 
 HullWarningModel.cs:271-272: pulse scales only G and B (new HudColor(1f, 0.15f*pulse, 0.15f*pulse)), R stays 1, so the 'alternate between full and dim red' alarm (comment :269) only oscillates between (1,0.08,0.08) and (1,0.15,0.15): near-invisible. HudColor.WarningCriticalRed (HudColor.cs:197, documented 'before the CRITICAL pulse is applied') is never referenced, so the documented constant and the real formula disagree. Also :280-282 prints 'worst: ' with an empty/null name when criticalBlockCount>0 and worstBlockName is null/empty (DemoMode sets it only if grid.TryGet succeeds). Fix: derive color from HudColor.WarningCriticalRed scaled by pulse (R,G,B or alpha), update tests HullWarningModelTests.cs:69-84 and docs; omit the 'worst:' clause when the name is null/empty.

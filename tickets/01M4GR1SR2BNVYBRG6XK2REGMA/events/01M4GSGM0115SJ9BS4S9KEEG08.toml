@@ -1,0 +1,7 @@
+kind = "field"
+field = "acceptance"
+new = ["Given NaN or infinite telemetry inputs, when FlightTelemetryModel.Build runs, then Fill is finite and labels never read NaN"]
+moved = []
+at = "2026-10-09T16:56:32Z"
+actor = "a-carten"
+rev = 1

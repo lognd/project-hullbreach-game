@@ -1,0 +1,5 @@
+kind = "evidence-bypass"
+reason = "Unity Editor/Game-only code (HudPrefabBuilder, uGUI views); no local runner can execute it. Unverified locally; plain-cs suite 288 pass, check_unity_tree.sh unchanged vs base. Audit-cycle internal fix; matches the changelog-exempt closes already on this branch."
+at = "2026-10-09T16:56:48Z"
+actor = "a-carten"
+rev = 1

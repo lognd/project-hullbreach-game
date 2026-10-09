@@ -66,7 +66,7 @@ namespace Hullbreach.Hud
             if (typeId == BlockTypes.Cannon && variant == 1) return "Gravity gun";
             if (typeId == BlockTypes.Cannon && variant == 2) return "Anti-gravity gun";
             if (typeId == BlockTypes.Thruster && variant == 1) return "Seeking thruster";
-            return $"variant {variant}";
+            return System.FormattableString.Invariant($"variant {variant}");
         }
 
         // Pure: no side effects, no UnityEngine/Hullbreach.Ship dependency (D3).
@@ -98,7 +98,7 @@ namespace Hullbreach.Hud
                 overlayLine = $"Overlay: {overlayName}";
             }
 
-            string massBlocksLine = $"Mass: {mass:0.0}   Blocks: {blockCount}";
+            string massBlocksLine = System.FormattableString.Invariant($"Mass: {mass:0.0}   Blocks: {blockCount}");
 
             var powerupLines = new List<string>();
             if (powerups != null)
@@ -106,7 +106,7 @@ namespace Hullbreach.Hud
                 foreach (var p in powerups)
                 {
                     string label = VariantLabel(p.TypeId, p.Variant);
-                    powerupLines.Add($"{p.TypeName} ({p.X},{p.Y}): {label} {p.TimeLeft:0.0} s");
+                    powerupLines.Add(System.FormattableString.Invariant($"{p.TypeName} ({p.X},{p.Y}): {label} {p.TimeLeft:0.0} s"));
                 }
             }
 

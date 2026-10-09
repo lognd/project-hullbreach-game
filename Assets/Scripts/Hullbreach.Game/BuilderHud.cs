@@ -22,6 +22,8 @@ namespace Hullbreach.Game
 
         void Awake()
         {
+            // An unwired controller is a scene-setup bug: report it once, then idle instead of throwing per frame.
+            if (controller == null) Debug.LogError("BuilderHud: controller is unset; re-run HudPrefabBuilder.WireDemoScene.", this);
             rowTemplate.gameObject.SetActive(false);
             BuildRows();
         }
@@ -33,7 +35,7 @@ namespace Hullbreach.Game
 
         void LateUpdate()
         {
-            if (controller.Session == null) return;
+            if (controller == null || controller.Session == null) return;
 
             var model = BuilderHudModel.Build(controller.Session, controller.HoverVerdictText);
 

@@ -1,0 +1,7 @@
+kind = "field"
+field = "acceptance"
+new = ["Given any palette size, when BuilderHudModel builds, then the title key range is min(9, BlockTypes.Count) and a null session throws ArgumentNullException"]
+moved = []
+at = "2026-10-09T16:56:31Z"
+actor = "a-carten"
+rev = 1
