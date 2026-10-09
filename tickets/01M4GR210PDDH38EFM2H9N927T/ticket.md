@@ -6,9 +6,13 @@ category = "todo"
 priority = "medium"
 reporter = "lognd"
 created = "2026-10-09T16:31:05Z"
-updated = "2026-10-09T16:31:05Z"
+updated = "2026-10-09T16:53:28Z"
 labels = ["origin:auditor", "auditor"]
 scope = ["Assets/Scripts/Hullbreach.Game/BuilderController.cs"]
+
+[[acceptance]]
+text = "Given a hovered cell, then the gizmo colour comes from Session.Hover verdict"
+bound = false
 +++
 
 Symbol: BuilderController.OnDrawGizmos (BuilderController.cs:201-203). While Orienting it hardcodes valid=true, ignoring Session.Hover's verdict for the candidate facing; while Idle it calls the 3-arg PlacementRules.CanPlace(grid,key,typeId) which fixes modifiers=0 (PlacementRules.cs:301), so for Cannon/Fin the gizmo shows red at cells that Session.Click would accept with another facing (CanPlaceAnyFacing) and green-or-red incorrectly vs the real rule. Also BuilderController already caches _hoverValid from Session.Hover, which is the authoritative result. Fix direction: draw the gizmo from _hoverValid (same source as UpdateHoverIndicator), and drop the direct PlacementRules call; add a play-mode/edit-mode check that gizmo color source equals HoverState.Valid.
