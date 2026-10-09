@@ -2,11 +2,12 @@
 id = "01M4GR2JNYB77501DAJFF4Q694"
 title = "Wire decode has no length/kind validation: ShipSnapshot.Read trusts count, readers ignore payload length"
 type = "security"
-category = "todo"
+category = "done"
+outcome = "duplicate"
 priority = "medium"
 reporter = "lognd"
 created = "2026-10-09T16:31:23Z"
-updated = "2026-10-09T16:31:23Z"
+updated = "2026-10-09T16:36:20Z"
 labels = ["origin:auditor", "audit:hullbreach-net"]
 scope = ["Assets/Scripts/Hullbreach.Net/Wire.cs", "Assets/Scripts/Hullbreach.Net/NetMessages.cs"]
 +++
