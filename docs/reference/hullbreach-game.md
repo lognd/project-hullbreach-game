@@ -418,6 +418,11 @@ when a block's ratios cross `DamageModel`'s thresholds. Ordered AFTER
 already populated, and BEFORE `ShipRenderer` (default 0) so the Stress
 overlay reads this tick's solve, not the previous one.
 
+While `ShipController.SimulationEnabled` is false (Build mode) the ship is
+frozen and `FixedUpdate` returns early without solving, so the stale
+`AppliedForcesThisStep` cannot keep damaging or detaching blocks; the
+buckling-hold and failing timers are cleared and restart on resume.
+
 **Calibration.** `DefaultLoadScale` (0.06) is the gameplay-force to
 material-unit conversion (`StructuralSolver.LoadScale`); the default is
 measured, not guessed: at 1.0 the stock demo ship peaked at 1.08 of yield
