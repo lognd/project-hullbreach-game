@@ -2,11 +2,12 @@
 id = "01M4GR1DN9TSNK0QFR4FXA7VJM"
 title = "GravityWorld.Field is never Ticked: temporary gravity wells never expire in the Unity client"
 type = "bug"
-category = "todo"
+category = "done"
+outcome = "fixed"
 priority = "high"
 reporter = "lognd"
 created = "2026-10-09T16:30:45Z"
-updated = "2026-10-09T17:05:52Z"
+updated = "2026-10-09T17:05:53Z"
 labels = ["origin:auditor"]
 scope = ["Assets/Scripts/Hullbreach.Game/GravityWorld.cs"]
 
