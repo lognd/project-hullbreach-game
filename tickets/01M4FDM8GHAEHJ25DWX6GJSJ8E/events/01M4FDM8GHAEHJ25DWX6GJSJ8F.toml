@@ -1,0 +1,18 @@
+kind = "create"
+title = "S54-1: Fragments become drifting hazard bodies after an arming delay"
+type = "task"
+category = "todo"
+priority = "medium"
+points = 3
+parent = "01M4FDM8C8GH3HM55Z3JDCRYWQ"
+labels = ["owner:GingerVHS", "game", "physics", "milestone:0.3.0"]
+scope = ["Assets/Scripts/Hullbreach.World/**", "Assets/Scripts/Hullbreach.Ship/**", "Assets/Scripts/Hullbreach.Net/ServerSimulation.cs", "Assets/Tests/**", "docs/**"]
+acceptance = ["Given a group detached from a ship, when it spawns, then it is an unarmed fragment that drifts with inherited linear and angular velocity, is affected by gravity, and deals no damage", "Given an unarmed fragment, when the documented arming delay has passed and it overlaps no ship, then it becomes an armed hazard that damages ships on contact like an asteroid", "Given an armed fragment, when it exceeds its lifetime or leaves the arena, then it despawns"]
+body = "Shares the hazard collision and damage model with S45-1 asteroids."
+at = "2026-10-09T04:09:34Z"
+actor = "lognd"
+rev = 1
+
+[[links]]
+kind = "blocked-by"
+target = "01M3DG5Y2HDGV4RB392AVRCXBK"
