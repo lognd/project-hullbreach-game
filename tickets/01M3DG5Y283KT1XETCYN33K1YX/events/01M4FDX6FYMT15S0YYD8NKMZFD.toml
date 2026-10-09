@@ -1,0 +1,7 @@
+kind = "field"
+field = "acceptance"
+new = ["Given Q8 elements, the node lattice and the assembled stiffness, when unit stiffness is built, then it is symmetric, positive semi-definite and annihilates rigid-body modes, and adjacent blocks share nodes (Q8ElementTests, NodeLatticeTests, FemTests)", "Given an arm loaded at its tip, when the FE core solves, then blocks near the load are more stressed than the free end and a brace row lowers the peak (StressDistributionTests, S36 criteria 1 and 2)"]
+moved = []
+at = "2026-10-09T04:14:27Z"
+actor = "GingerVHS"
+rev = 1
