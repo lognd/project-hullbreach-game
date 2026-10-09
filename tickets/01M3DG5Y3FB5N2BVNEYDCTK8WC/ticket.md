@@ -2,13 +2,14 @@
 id = "01M3DG5Y3FB5N2BVNEYDCTK8WC"
 title = "S48-4: Transport behind an interface so the C# socket layer can be replaced"
 type = "task"
-category = "in-progress"
+category = "done"
+outcome = "done"
 priority = "critical"
 points = 2
 parent = "01M3DG5Y157XVFXF2844EP0ZKH"
 reporter = "human"
 created = "2026-09-26T00:00:00Z"
-updated = "2026-10-09T04:22:53Z"
+updated = "2026-10-09T04:23:16Z"
 aliases = ["T-0111"]
 labels = ["jira:SCRUM-167", "owner:mcnairrobotics", "game", "netcode", "milestone:0.2.0"]
 scope = ["Assets/Scripts/Hullbreach.Net/ITransport.cs"]
