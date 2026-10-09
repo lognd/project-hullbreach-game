@@ -2,13 +2,13 @@
 id = "01M3DG5Y25YGZ3DV7JSDB4BNMF"
 title = "S34-3: Build cooldown or cost so mid-match building is a trade-off"
 type = "task"
-category = "todo"
+category = "in-progress"
 priority = "high"
 points = 2
 parent = "01M3DG5Y0QWT3XQ9HHJGV4H9H0"
 reporter = "human"
 created = "2026-09-26T00:00:00Z"
-updated = "2026-10-09T04:09:36Z"
+updated = "2026-10-09T04:15:02Z"
 aliases = ["T-0069"]
 labels = ["jira:SCRUM-173", "owner:stevendangkhoi", "game", "milestone:0.2.0", "creates:Assets/Tests/EditMode/Hullbreach.Builder.Tests/BuildBudgetTests.cs*"]
 scope = ["Assets/Scripts/Hullbreach.Builder/BuildBudget.cs", "Assets/Scripts/Hullbreach.Builder/BuilderSession.cs", "Assets/Scripts/Hullbreach.Builder/BlockPalette.cs", "docs/reference/hullbreach-builder.md", "Assets/Tests/EditMode/Hullbreach.Builder.Tests/BuildBudgetTests.cs*"]
