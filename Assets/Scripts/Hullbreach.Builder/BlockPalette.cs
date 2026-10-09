@@ -61,6 +61,10 @@ namespace Hullbreach.Builder
         public static bool IsSymmetric(byte typeId)
             => typeId != BlockTypes.Cannon && typeId != BlockTypes.Fin;
 
+        // The build price of one block of this type; what BuildBudget charges.
+        // frob:doc docs/reference/hullbreach-builder.md#blockpalette
+        public static int CostOf(byte typeId) => Cost[typeId];
+
         // frob:doc docs/reference/hullbreach-builder.md#blockpalette
         public static IEnumerable<PaletteEntry> All()
         {

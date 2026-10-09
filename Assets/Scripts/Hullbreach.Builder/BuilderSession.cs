@@ -52,10 +52,29 @@ namespace Hullbreach.Builder
         // Builds over an EXTERNAL grid so a demo scene's builder can edit
         // the same BlockGrid a ShipBody simulates; caller keeps ownership.
         // frob:doc docs/reference/hullbreach-builder.md#buildersession
-        public BuilderSession(BlockGrid grid)
+        public BuilderSession(BlockGrid grid) : this(grid, null)
+        {
+        }
+
+        // A null budget means unlimited (pre-match building).
+        // frob:doc docs/reference/hullbreach-builder.md#buildersession
+        public BuilderSession(BlockGrid grid, BuildBudget budget)
         {
             Grid = grid ?? throw new ArgumentNullException(nameof(grid));
+            Budget = budget ?? BuildBudget.Unlimited();
         }
+
+        // What a placement costs and how often it may happen (S34-3).
+        // frob:doc docs/reference/hullbreach-builder.md#buildersession
+        public BuildBudget Budget { get; }
+
+        // Why the last Click was refused by the budget rather than the rules; None otherwise.
+        // frob:doc docs/reference/hullbreach-builder.md#buildersession
+        public BuildDenial LastDenial { get; private set; }
+
+        // Advances the budget's refill and cooldown by dt seconds.
+        // frob:doc docs/reference/hullbreach-builder.md#buildersession
+        public void Tick(float dt) => Budget.Tick(dt);
 
         // Defaults to Core so the very first click can seed the grid.
         // frob:doc docs/reference/hullbreach-builder.md#buildersession
@@ -113,6 +132,7 @@ namespace Hullbreach.Builder
         // frob:doc docs/reference/hullbreach-builder.md#buildersession
         public bool Click(int key)
         {
+            LastDenial = BuildDenial.None;
             if (State == BuilderState.Orienting)
             {
                 return CommitPending();
@@ -213,6 +233,14 @@ namespace Hullbreach.Builder
         bool Place(int key, byte modifiers)
         {
             if (!PlacementRules.CanPlace(Grid, key, SelectedTypeId, modifiers, out _)) return false;
+
+            // Rules first, so a refused cell never spends credits; the charge
+            // happens only once the placement is certain.
+            if (!Budget.TryCharge(SelectedTypeId, out BuildDenial denial))
+            {
+                LastDenial = denial;
+                return false;
+            }
 
             var block = new Block(SelectedTypeId, modifiers);
             if (!Grid.TryAdd(key, block)) return false;

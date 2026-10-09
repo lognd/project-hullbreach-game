@@ -265,3 +265,45 @@ and validates. Expected failures (empty, truncated, hand-mangled, newer
 version) come back as `Error` with the 1-based line, never as exceptions.
 File I/O is deliberately not here: the save/load UI (T-0071) reads and
 writes the string.
+
+### BuildDenial
+
+Why a `BuildBudget` refused a build: `Cooldown` (too soon after the last
+placement) or `InsufficientCredits`. `None` means it did not refuse.
+`BuilderSession.LastDenial` exposes it so the HUD can say "recharging"
+rather than flash a generic red.
+
+### BuildTuning
+
+The mid-match build economy numbers (S34-3), kept in one struct so a
+balance change is one edit. Costs are not here: they come from
+`BlockPalette` (`BlockPalette.CostOf`, Hull 1, Armor 3, Thruster 4,
+Cannon 5, Fin 2, RetroThruster 3). The shipped `BuildTuning.MidMatch`:
+
+| Tunable | Value | Meaning |
+|---|---|---|
+| `StartingCredits` | 10 | Credits at match start: roughly two hulls and a cannon. |
+| `MaxCredits` | 20 | Bank cap, so waiting cannot buy a whole new ship at once. |
+| `RefillPerSecond` | 1.0 | Credits regained per second: a hull per second, a cannon per five. |
+| `CooldownSeconds` | 0.5 | Minimum gap between two placements whatever the bank holds. |
+
+So sustained building is capped by income (one credit per second), bursts
+by the bank, and nobody can dump the bank in a single frame. These are
+first-pass numbers to be tuned in play.
+
+### BuildBudget
+
+Credits plus a placement cooldown. It is advanced only by `Tick(dt)`, has
+no engine or clock dependency, and does the same arithmetic on every
+machine, so a client session can predict and the authoritative server can
+enforce with the very same class. `Check` asks without charging;
+`TryCharge` charges and starts the cooldown, or returns the
+`BuildDenial` and changes nothing. `Unlimited()` is the pre-match mode
+(nothing charged, nothing denied), and is what a `BuilderSession` uses
+unless it is handed a budget.
+
+Decisions: the charge happens when a placement commits (the second click
+of a two-click block), after `PlacementRules` agreed, so a refused cell
+never spends credits. Undo does NOT refund, so place-and-undo cannot be
+used to probe for free; redo re-applies without a second charge. Removal
+is free and gives nothing back.
