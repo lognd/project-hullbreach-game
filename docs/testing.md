@@ -216,3 +216,10 @@ own compiler settings), not an expected difference.
    `.asmdef`/`.meta` wiring is actually correct, which the `dotnet test`
    path cannot fully verify since it compiles from raw file globs, not
    `.asmdef` references).
+
+## Recording test runs as frob evidence
+
+frob v2 cannot run C# tests itself (`frob test` does not dispatch C#, and
+there is no `[[test.runner]]` table), so run the harness above and attach
+it to the ticket with the `command` provider; see
+[docs/frob.md](frob.md#recording-test-evidence).

@@ -68,3 +68,14 @@ so it compiles with the stock .NET SDK. `tools/plaincs/run_tests.sh`
 builds those assemblies plus the edit-mode NUnit tests and runs them;
 CI runs the same script. Unity's Test Runner runs the identical sources
 inside the editor.
+
+## Tickets (frob v2)
+
+The backlog is a frob v2 ledger under `tickets/` (install with
+`uv tool install frob==0.532.0`, then `frob init` once per clone).
+Take work with `frob work <ticket>` (v1 ids like `T-0041` still resolve),
+close it with `frob ticket close --outcome fixed <ticket>`, and land the
+branch with `frob land`. Ledger commits go on your working branch and
+merge through the pull request like any other change; never hand-edit
+files under `tickets/`. Details and known gaps are in
+[docs/frob.md](docs/frob.md).
