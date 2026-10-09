@@ -138,8 +138,10 @@ in a restitution impulse is not worth an OBB test.
   step: finds the deepest overlapping block pair, pushes the two ships
   apart along the contact normal in inverse-mass proportion, and applies
   an equal and opposite restitution impulse at the contact point. Above
-  `ShipBody.ContactDamageSpeed` of closing speed both contacting blocks
-  take damage, on the same curve as a planet impact. Returns whether a
+  each ship's own `ShipBody.ContactDamageSpeed` of closing speed its
+  contacting block takes damage, on the same curve as a planet impact;
+  ships already separating take none, and the result does not depend on
+  argument order. Returns whether a
   contact was found. One pair per step is enough: the deepest pair
   dominates the response, and resolving every overlapping pair in one
   pass double-counts the push for a flush face-to-face hit.
