@@ -2,11 +2,12 @@
 id = "01M4GR2XCB7AXMRPSEP5Y6CYTG"
 title = "ServerSimulation.Join accepts an unvalidated client-supplied ShipSnapshot and an existing peer id"
 type = "security"
-category = "todo"
+category = "done"
+outcome = "duplicate"
 priority = "medium"
 reporter = "lognd"
 created = "2026-10-09T16:31:34Z"
-updated = "2026-10-09T16:31:34Z"
+updated = "2026-10-09T16:36:18Z"
 labels = ["origin:auditor", "audit:hullbreach-net"]
 scope = ["Assets/Scripts/Hullbreach.Net/ServerSimulation.cs"]
 +++
