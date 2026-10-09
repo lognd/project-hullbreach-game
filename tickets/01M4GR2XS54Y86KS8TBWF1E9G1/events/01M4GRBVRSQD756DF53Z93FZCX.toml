@@ -1,0 +1,6 @@
+kind = "comment"
+subtype = "note"
+body = "Merged from 01M4GR2NA6VM4EM22MMXXKT7YH / 01M4GR2XCB7AXMRPSEP5Y6CYTG: Join ignores Grid.TryAdd failures, accepts permanent variant bits and unbounded block count, returns void so it cannot reject; rejoin with an existing peer id silently replaces that ship. Future cosmetic ids sent at join must also be validated against platform ownership."
+at = "2026-10-09T16:36:27Z"
+actor = "lognd"
+rev = 1
