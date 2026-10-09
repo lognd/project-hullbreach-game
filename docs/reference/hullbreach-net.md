@@ -505,6 +505,10 @@ adds the block, rebuilds the ship's derived views, marks the structural
 solver's topology dirty and broadcasts `BlockPlaced`. A refusal changes and
 sends nothing.
 
+The constructor's optional `GravityConfig` (null means
+`GravityConfig.Default`) builds the shared `GravityField` through the same
+`BuildField()` the Unity `GravityWorld` uses.
+
 `Arena` (null for unbounded) is copied onto every ship at the start of each
 `Tick`, so the authoritative step applies the same
 [ArenaBounds](hullbreach-world.md#arenabounds) push-back a predicting client

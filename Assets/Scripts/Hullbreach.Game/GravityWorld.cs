@@ -50,9 +50,10 @@ namespace Hullbreach.Game
     {
         [SerializeField] PlanetSpec[] planets = Array.Empty<PlanetSpec>();
 
-        // A single tunable rather than per-planet, since the demo has no
-        // need yet for a bouncy moon next to a sticky one.
-        [SerializeField] float surfaceRestitution = 0.2f;
+        // The shared constants (see GravityConfig); null means defaults. The
+        // server reads the same file, which is how the two sides agree.
+        // frob:doc docs/reference/hullbreach-game.md#gravityworld
+        [SerializeField] TextAsset configFile;
 
         // Null before any GravityWorld's Awake runs, or in a scene with no
         // GravityWorld at all (e.g. RocketScene).
@@ -61,21 +62,43 @@ namespace Hullbreach.Game
 
         void Awake()
         {
-            var field = new GravityField();
-            foreach (var planet in planets)
+            var config = LoadConfig();
+            var field = config.BuildField();
+            if (config.Planets.Count > 0)
             {
-                // A freshly-resized array serializes softRadiusFactor as 0,
-                // so treat <= 0 as "use the default factor".
-                float factor = planet.softRadiusFactor > 0f
-                    ? planet.softRadiusFactor
-                    : GravityBody.DefaultSoftRadiusFactor;
-                float softRadius = math.max(planet.radius * factor, GravityBody.MinSoftRadius);
-
-                field.Add(new GravityBody(new float2(planet.position.x, planet.position.y),
-                                           planet.mu, planet.radius, surfaceRestitution, softRadius));
-                SpawnDisc(planet);
+                // Physics come from the config; the Inspector entry at the
+                // same index only supplies the sprite, color and scale.
+                for (int i = 0; i < config.Planets.Count; i++)
+                {
+                    var visual = i < planets.Length ? planets[i] : new PlanetSpec { spriteScale = 1f };
+                    var p = config.Planets[i];
+                    visual.position = new Vector2(p.Position.x, p.Position.y);
+                    visual.mu = p.Mu;
+                    visual.radius = p.Radius;
+                    SpawnDisc(visual);
+                }
+            }
+            else
+            {
+                // Scene-authored layout: a freshly-resized array serializes
+                // softRadiusFactor as 0, which PlanetConfig treats as "default".
+                foreach (var planet in planets)
+                {
+                    var p = new PlanetConfig(new float2(planet.position.x, planet.position.y),
+                                             planet.mu, planet.radius, planet.softRadiusFactor);
+                    field.Add(p.ToBody(config.SurfaceRestitution));
+                    SpawnDisc(planet);
+                }
             }
             Field = field;
+        }
+
+        GravityConfig LoadConfig()
+        {
+            if (configFile == null) return GravityConfig.Default;
+            if (GravityConfig.TryParse(configFile.text, out var config, out var error)) return config;
+            Debug.LogError($"GravityWorld: {configFile.name}: {error}; falling back to default constants");
+            return GravityConfig.Default;
         }
 
         void OnDestroy()

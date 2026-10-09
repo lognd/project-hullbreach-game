@@ -68,7 +68,11 @@ bodies added via `Add`, temporary ones via `AddTemporary`) so
 deterministic (insertion) order, important both for determinism across
 machines and so `ShipBody.ContactsThisStep` is reproducible.
 
-- `MaxAcceleration`: ceiling on the SUMMED acceleration magnitude returned
+- `DefaultMaxAcceleration` (40) is what `new GravityField()` uses; the
+  constructor argument is how [GravityConfig](#gravityconfig) sets it.
+- `MaxAcceleration`: read-only after construction (it used to be a public
+  field), so client and server cannot be tuned apart at runtime. Ceiling on
+  the SUMMED acceleration magnitude returned
   by `AccelerationAt`, applied after every body's contribution is added so
   overlapping strong wells cannot stack past a playable pull (gameplay
   choice: a ship should never get yanked harder than this regardless of how
@@ -102,6 +106,34 @@ machines and so `ShipBody.ContactsThisStep` is reproducible.
   at that point, and how far inside the clearance shell the point is
   (`Radius + clearance - distance`; positive means penetrating). False
   (with default outs) when no body is in range.
+
+### GravityConfig
+
+The engine-free gravity constants, so tuning is a data edit and the Unity
+client and the server cannot disagree (S40, T-0088). `GravityConfig.Default`
+equals the values that used to be hard-coded: `MaxAcceleration` 40,
+`SurfaceRestitution` 0.2, no planets. `BuildField()` is the one place a
+`GravityField` is made from it; `GravityWorld` and `ServerSimulation` both
+call it. `Planets` are `PlanetConfig` values (position, `Mu`, `Radius`,
+optional soft-radius factor; `ToBody` applies the `GravityBody` soft-radius
+floor once for everybody). Visuals (sprite, color, scale) are not physics
+and stay on the Unity component.
+
+The text format is one `key = value` per line, `#` comments:
+
+```
+max_acceleration = 40
+surface_restitution = 0.2
+planet = 0 -60 900 18
+planet = 45 20 120 6 1.5
+```
+
+`TryParse` never throws: it returns false with a `line N: ...` message for
+an unknown key, a malformed line, or an out-of-range value
+(`max_acceleration` must be > 0, `surface_restitution` in 0..1, a planet
+needs positive `mu` and `radius`). `TryLoad` reads a file path for the
+headless server; the client reads the same file as a Unity `TextAsset`
+(`Assets/Config/Gravity.txt`). Arena bounds are not in this file yet.
 
 ### ArenaBounds
 

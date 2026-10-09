@@ -115,11 +115,15 @@ resuming is exactly where the player left off.
 <!-- frob:describes Assets/Scripts/Hullbreach.Game/GravityWorld.cs::GravityWorld -->
 <!-- frob:describes Assets/Scripts/Hullbreach.Game/GravityWorld.cs::GravityWorld.Field -->
 
-Scene-level gravity setup: builds a single `GravityField` from the
-Inspector-authored `PlanetSpec` list on Awake and exposes it as a static
+Scene-level gravity setup: builds a single `GravityField` on Awake from a
+[GravityConfig](hullbreach-world.md#gravityconfig) (the optional
+`configFile` TextAsset, `Assets/Config/Gravity.txt` in the demo scene; a
+parse error is logged and defaults are used) and exposes it as a static
 singleton so `ShipController` and `Projectile` can pick it up without a
 scene-graph reference. Also spawns one visible disc per planet, since the
-field itself is invisible plain data.
+field itself is invisible plain data. When the config lists planets they
+supply the physics and the Inspector `PlanetSpec` at the same index only
+the look; with no config planets the Inspector list is used as before.
 
 "Singleton-ish": `Field` is null until some `GravityWorld`'s Awake has run,
 and `DemoMode`/`ShipController` read it lazily (null-safe) rather than
