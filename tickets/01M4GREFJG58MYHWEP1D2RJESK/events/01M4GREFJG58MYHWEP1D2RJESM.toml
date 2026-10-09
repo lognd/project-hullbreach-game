@@ -1,0 +1,14 @@
+kind = "create"
+title = "S55: Equip a projectile effect"
+type = "story"
+category = "todo"
+priority = "medium"
+parent = "01M4GRD8ZV5ZNB70YTSK7RH036"
+persona = "player"
+capability = "to choose how my shots look"
+outcome_text = "my weapons feel like mine"
+labels = ["owner:a-carten", "game", "platform", "milestone:0.3.0"]
+acceptance = ["A player can equip any owned projectile effect; both players see it.", "Effects never change projectile radius, speed, damage or hit detection.", "Every effect keeps shots readable against the background and distinguishable from the opponent's."]
+at = "2026-10-09T16:37:53Z"
+actor = "lognd"
+rev = 1
