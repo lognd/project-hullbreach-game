@@ -70,7 +70,7 @@ namespace Hullbreach.Hud.Tests
         {
             // pulse = 0.55 + 0.45*sin(0) = 0.55
             var model = HullWarningModel.Build(HullWarning.Critical, 0.9f, 1, "Hull", 0f);
-            Assert.AreEqual(1f, model.Color.R, 1e-6f);
+            Assert.AreEqual(HudColor.WarningCriticalRed.R * 0.55f, model.Color.R, 1e-5f);
             Assert.AreEqual(0.15f * 0.55f, model.Color.G, 1e-5f);
             Assert.AreEqual(0.15f * 0.55f, model.Color.B, 1e-5f);
         }
@@ -82,6 +82,32 @@ namespace Hullbreach.Hud.Tests
             var model = HullWarningModel.Build(HullWarning.Critical, 0.9f, 1, "Hull", t);
             float expectedPulse = 0.55f + 0.45f * 1f;
             Assert.AreEqual(0.15f * expectedPulse, model.Color.G, 1e-4f);
+        }
+
+        [Test]
+        public void Critical_PulseSwingsRedChannelVisibly()
+        {
+            float peak = System.MathF.PI / 24f;  // sin(t*12) = 1
+            float trough = 3f * System.MathF.PI / 24f;  // sin(t*12) = -1
+            var bright = HullWarningModel.Build(HullWarning.Critical, 0.9f, 1, "Hull", peak);
+            var dark = HullWarningModel.Build(HullWarning.Critical, 0.9f, 1, "Hull", trough);
+            Assert.AreEqual(HudColor.WarningCriticalRed.R, bright.Color.R, 1e-4f);
+            Assert.Less(dark.Color.R, 0.2f);
+        }
+
+        [TestCase(null)]
+        [TestCase("")]
+        public void Critical_MissingWorstName_OmitsWorstClause(string name)
+        {
+            var model = HullWarningModel.Build(HullWarning.Critical, 0.9f, 2, name, 0f);
+            Assert.AreEqual("2 block(s) in the red", model.Detail);
+        }
+
+        [Test]
+        public void Critical_NamedWorst_KeepsWorstClause()
+        {
+            var model = HullWarningModel.Build(HullWarning.Critical, 0.9f, 2, "Arm", 0f);
+            Assert.AreEqual("2 block(s) in the red, worst: Arm", model.Detail);
         }
     }
 }
