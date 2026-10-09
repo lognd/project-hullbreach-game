@@ -6,7 +6,7 @@ category = "todo"
 priority = "medium"
 reporter = "lognd"
 created = "2026-10-09T16:31:27Z"
-updated = "2026-10-09T16:31:27Z"
+updated = "2026-10-09T17:04:24Z"
 labels = ["origin:auditor", "audit:hullbreach-net"]
 scope = ["Assets/Scripts/Hullbreach.Net/ClientReplica.cs"]
 +++
