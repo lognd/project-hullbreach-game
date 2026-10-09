@@ -1,0 +1,16 @@
+kind = "evidence"
+accepts = [1]
+captured_at = "2026-10-09T17:03:30Z"
+digest = "100857de8d7f9d99e55dbe56e7ecfb123a20fdc02c9836139ac2853f1d6a8a29"
+exit_code = 0
+inline = """
+tools/plaincs/fetch_deps.sh:15:um_commit=53b0c4756c3c0dff3746285a8b83e858c26cdb06
+"""
+passed = true
+provider = "command"
+ref = "git grep -n 53b0c4756c3c0dff3746285a8b83e858c26cdb06 -- tools/plaincs/fetch_deps.sh"
+size = 82
+status = "measured"
+at = "2026-10-09T17:03:30Z"
+actor = "mcnairrobotics"
+rev = 1
