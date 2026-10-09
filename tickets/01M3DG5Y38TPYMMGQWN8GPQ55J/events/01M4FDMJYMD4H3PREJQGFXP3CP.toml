@@ -1,0 +1,6 @@
+kind = "comment"
+subtype = "note"
+body = 'Implemented on branch mcnairrobotics/sprint2-netcode (ServerHost, NetLog, ServerHostTests: 8 tests; plaincs 281 green). Not closed: no evidence can be recorded. `frob ticket evidence add --provider command --ref "dotnet test ..."` is refused with E-EVIDENCE-TOOL (dotnet is not in [evidence] allowed_tools; the 0.532.0 default list is cargo, git, pytest, vitest, jest, contrary to docs/frob.md), and the dotnet provider is not offered by evidence add. Allowlist not widened, no attestation used. Needs an owner decision.'
+at = "2026-10-09T04:09:45Z"
+actor = "mcnairrobotics"
+rev = 1
