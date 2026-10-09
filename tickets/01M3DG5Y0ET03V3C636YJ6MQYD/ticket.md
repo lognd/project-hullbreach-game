@@ -4,9 +4,10 @@ title = "S16: Record a finished match"
 type = "story"
 category = "todo"
 priority = "critical"
+points = 3
 reporter = "human"
 created = "2026-09-26T00:00:00Z"
-updated = "2026-09-26T00:00:00Z"
+updated = "2026-10-09T04:03:27Z"
 aliases = ["T-0014"]
 labels = ["jira:SCRUM-37", "owner:lognd", "game", "platform", "milestone:0.2.0"]
 
