@@ -2,11 +2,12 @@
 id = "01M4GR3S4C64YAF769WV4G7ZCV"
 title = "Powerup.OnTriggerEnter2D can apply the powerup twice and queue two respawns when several block colliders trigger in one step"
 type = "bug"
-category = "todo"
+category = "done"
+outcome = "fixed"
 priority = "medium"
 reporter = "lognd"
 created = "2026-10-09T16:32:03Z"
-updated = "2026-10-09T17:14:18Z"
+updated = "2026-10-09T17:14:20Z"
 idempotency_key = "audit-game-powerup-double"
 labels = ["origin:auditor", "audit:hullbreach-game"]
 scope = ["Assets/Scripts/Hullbreach.Game/Powerup.cs"]

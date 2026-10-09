@@ -1,0 +1,8 @@
+kind = "transition"
+from = "todo"
+to = "done"
+outcome = "fixed"
+reason = "Unity-engine-only MonoBehaviour (Powerup); no local runner can execute it. PlayMode test PowerupTests added but unrun."
+at = "2026-10-09T17:14:20Z"
+actor = "GingerVHS"
+rev = 1
