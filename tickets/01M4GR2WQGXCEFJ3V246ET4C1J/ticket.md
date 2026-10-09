@@ -2,11 +2,12 @@
 id = "01M4GR2WQGXCEFJ3V246ET4C1J"
 title = "Bounds-check wire decoding and cap remote-sized allocations"
 type = "security"
-category = "todo"
+category = "done"
+outcome = "fixed"
 priority = "high"
 reporter = "lognd"
 created = "2026-10-09T16:31:34Z"
-updated = "2026-10-09T17:01:49Z"
+updated = "2026-10-09T17:08:33Z"
 labels = ["origin:auditor", "security"]
 scope = ["Assets/Scripts/Hullbreach.Net/Wire.cs", "Assets/Scripts/Hullbreach.Net/NetMessages.cs", "Assets/Scripts/Hullbreach.Net/ClientReplica.cs"]
 
