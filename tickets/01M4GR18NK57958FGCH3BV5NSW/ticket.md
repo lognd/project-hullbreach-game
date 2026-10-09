@@ -2,11 +2,12 @@
 id = "01M4GR18NK57958FGCH3BV5NSW"
 title = "GravityWorld.OnDestroy nulls static Field unconditionally despite ownership comment"
 type = "bug"
-category = "todo"
+category = "done"
+outcome = "fixed"
 priority = "medium"
 reporter = "lognd"
 created = "2026-10-09T16:30:40Z"
-updated = "2026-10-09T17:05:53Z"
+updated = "2026-10-09T17:05:54Z"
 labels = ["origin:auditor"]
 scope = ["Assets/Scripts/Hullbreach.Game/GravityWorld.cs"]
 
