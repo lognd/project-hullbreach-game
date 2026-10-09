@@ -56,6 +56,19 @@ namespace Hullbreach.Core.Tests
             Assert.AreEqual(BlockKey.Max, y);
         }
 
+        // frob:tests Assets/Scripts/Hullbreach.Core/Grid/BlockKey.cs::BlockKey.Neighbors
+        [Test]
+        public void Neighbors_OffGridEdge_AreMinusOne_NotAliased()
+        {
+            var into = new int[4];
+            BlockKey.Neighbors(BlockKey.Pack(BlockKey.Max, BlockKey.Max), into);
+            Assert.AreEqual(-1, into[0]);
+            Assert.AreEqual(-1, into[2]);
+            BlockKey.Neighbors(BlockKey.Pack(BlockKey.Min, BlockKey.Min), into);
+            Assert.AreEqual(-1, into[1]);
+            Assert.AreEqual(-1, into[3]);
+        }
+
         [Test]
         public void Neighbors_AreTheFourOrthogonalCells()
         {

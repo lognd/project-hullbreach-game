@@ -99,6 +99,10 @@ GRID CONVENTION: everything downstream depends on this: block (x, y)
 occupies the unit square [x, x+1] x [y, y+1], so its center is at
 (x + 0.5, y + 0.5).
 
+Neighbors writes -1 for a neighbor that falls off the -128..127 grid edge
+(never a real key; Contains(-1) is false), so edge cells do not alias the
+far edge. Pack asserts InRange in debug builds.
+
 <!-- frob:describes Assets/Scripts/Hullbreach.Core/Grid/BlockKey.cs::BlockKey -->
 <!-- frob:describes Assets/Scripts/Hullbreach.Core/Grid/BlockKey.cs::BlockKey.Min -->
 <!-- frob:describes Assets/Scripts/Hullbreach.Core/Grid/BlockKey.cs::BlockKey.Max -->
