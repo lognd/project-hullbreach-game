@@ -17,6 +17,24 @@ namespace Hullbreach.Net
         FragmentSpawned,
         PowerupApplied,
         GravityWellSpawned,
+        ShipRemoved,
+    }
+
+    // What ApplyReceived/ApplyReliable did with one payload; wire data never
+    // throws, it is classified here instead.
+    // frob:doc docs/reference/hullbreach-net.md#replicaapplyresult
+    public enum ReplicaApplyResult
+    {
+        // Applied (or consumed in order) right now.
+        Applied,
+        // Held in the reorder buffer until the gap before it fills.
+        Buffered,
+        // Duplicate or already covered by a newer snapshot; ignored.
+        Stale,
+        // Sequence too far past the last applied one (INV-002); dropped.
+        OutOfWindow,
+        // Truncated, unknown kind or implausible content; dropped.
+        Malformed,
     }
 
     // One applied event, boxed just enough for a renderer to know what
@@ -76,8 +94,45 @@ namespace Hullbreach.Net
         readonly Dictionary<uint, byte[]> _pendingReliable = new Dictionary<uint, byte[]>();
         readonly Queue<ReplicaEvent> _events = new Queue<ReplicaEvent>();
 
+        // Highest sequence already folded into each ship (its snapshot's
+        // sequence, or the removal's): older events for it are skipped.
+        readonly Dictionary<ushort, uint> _shipBaseline = new Dictionary<ushort, uint>();
+
+        // Events for a ship whose snapshot has not arrived yet, replayed when it does.
+        readonly List<DeferredEvent> _deferred = new List<DeferredEvent>();
+
+        readonly struct DeferredEvent
+        {
+            public readonly ushort NetId;
+            public readonly uint Sequence;
+            public readonly byte[] Payload;
+
+            public DeferredEvent(ushort netId, uint sequence, byte[] payload)
+            {
+                NetId = netId;
+                Sequence = sequence;
+                Payload = payload;
+            }
+        }
+
+        // How far past the last applied sequence a reliable message may be and
+        // still be buffered; also caps the buffered and deferred counts, so
+        // remote data can never grow memory without bound (INV-002).
+        // frob:doc docs/reference/hullbreach-net.md#clientreplica
+        // frob:invariant INV-002
+        public const int MaxReliableWindow = 512;
+
+        const uint HalfSequenceRange = 0x80000000u;
+
         uint _lastAppliedSequence;
         bool _haveBaseline;
+
+        // True when `sequence` is at or behind `reference` in wrapping uint order.
+        static bool AtOrBehind(uint sequence, uint reference)
+        {
+            uint ahead = sequence - reference;
+            return ahead == 0 || ahead >= HalfSequenceRange;
+        }
 
         // Every replica ship known so far, keyed by server netId.
         // frob:doc docs/reference/hullbreach-net.md#clientreplica
@@ -91,10 +146,14 @@ namespace Hullbreach.Net
             }
         }
 
-        // A snapshot's own sequence becomes the new baseline; see reference page.
+        // Installs the ship unless a newer snapshot or removal already covers it
+        // (false then); the first snapshot also sets the stream baseline.
         // frob:doc docs/reference/hullbreach-net.md#clientreplica
-        public void ApplySnapshot(ShipSnapshot snapshot)
+        public bool ApplySnapshot(ShipSnapshot snapshot)
         {
+            if (_shipBaseline.TryGetValue(snapshot.NetId, out uint covered) && AtOrBehind(snapshot.Sequence, covered))
+                return false;
+
             var replica = new ReplicaShip();
             foreach (var b in snapshot.Blocks)
             {
@@ -118,13 +177,25 @@ namespace Hullbreach.Net
             replica.Older = sample;
 
             _ships[snapshot.NetId] = replica;
+            _shipBaseline[snapshot.NetId] = snapshot.Sequence;
 
-            if (!_haveBaseline || snapshot.Sequence > _lastAppliedSequence)
+            if (!_haveBaseline)
             {
                 _lastAppliedSequence = snapshot.Sequence;
                 _haveBaseline = true;
                 DiscardStaleBuffered();
             }
+            else if (!AtOrBehind(snapshot.Sequence, _lastAppliedSequence)
+                && snapshot.Sequence - _lastAppliedSequence <= MaxReliableWindow)
+            {
+                // The snapshot owns a slot in the ordered stream; reserve it
+                // (an empty payload is a no-op) so the cursor can pass it.
+                _pendingReliable[snapshot.Sequence] = Array.Empty<byte>();
+            }
+
+            ReplayDeferred(snapshot.NetId);
+            DrainPending();
+            return true;
         }
 
         // Unreliable and unordered by design; see the reference page.
@@ -192,56 +263,93 @@ namespace Hullbreach.Net
             return true;
         }
 
-        // Entry point a transport pump should call for every received payload.
+        // Entry point a transport pump should call for every received payload;
+        // only the first `length` bytes are read, and wire data never throws.
         // frob:doc docs/reference/hullbreach-net.md#clientreplica
-        public void ApplyReceived(byte[] into, int length, uint clientTick = 0)
+        // frob:invariant INV-001
+        public ReplicaApplyResult ApplyReceived(byte[] into, int length, uint clientTick = 0)
         {
-            var kind = (MessageKind)into[0];
-            switch (kind)
+            if (into == null || length < 1 || length > into.Length) return ReplicaApplyResult.Malformed;
+
+            var r = new ByteReader(into, 0, length);
+            switch ((MessageKind)into[0])
             {
                 case MessageKind.ShipSnapshot:
                 {
-                    var r = new ByteReader(into);
-                    ApplySnapshot(ShipSnapshot.Read(ref r));
-                    return;
+                    var snapshot = ShipSnapshot.Read(ref r);
+                    if (r.Failed) return ReplicaApplyResult.Malformed;
+                    return ApplySnapshot(snapshot) ? ReplicaApplyResult.Applied : ReplicaApplyResult.Stale;
                 }
                 case MessageKind.ShipState:
                 {
-                    var r = new ByteReader(into);
-                    ApplyState(ShipState.Read(ref r), clientTick);
-                    return;
+                    var state = ShipState.Read(ref r);
+                    if (r.Failed) return ReplicaApplyResult.Malformed;
+                    ApplyState(state, clientTick);
+                    return ReplicaApplyResult.Applied;
                 }
                 case MessageKind.GravityWellSpawned:
                 {
-                    var r = new ByteReader(into);
-                    ApplyGravityWellSpawned(GravityWellSpawned.Read(ref r));
-                    return;
+                    var well = GravityWellSpawned.Read(ref r);
+                    if (r.Failed) return ReplicaApplyResult.Malformed;
+                    ApplyGravityWellSpawned(well);
+                    return ReplicaApplyResult.Applied;
                 }
-                default:
+                case MessageKind.BlockPlaced:
+                case MessageKind.BlockDestroyed:
+                case MessageKind.FragmentSpawned:
+                case MessageKind.BlockDamaged:
+                case MessageKind.PowerupApplied:
+                case MessageKind.ShipRemoved:
                 {
-                    // u32 sequence number right after the kind byte.
-                    uint sequence = (uint)(into[1] | (into[2] << 8) | (into[3] << 16) | (into[4] << 24));
+                    // u32 sequence number right after the kind byte; a body that
+                    // turns out short is skipped in order by ApplyOne.
+                    r.ReadU8();
+                    uint sequence = r.ReadU32();
+                    if (r.Failed) return ReplicaApplyResult.Malformed;
                     var trimmed = new byte[length];
                     Array.Copy(into, trimmed, length);
-                    ApplyReliable(sequence, trimmed);
-                    return;
+                    return ApplyReliable(sequence, trimmed);
                 }
+                default:
+                    // Includes Input and any unknown byte: never a server->client message.
+                    return ReplicaApplyResult.Malformed;
             }
         }
 
         // Buffers by sequence and applies in order; see the reference page.
+        // Sequences outside MaxReliableWindow are dropped (INV-002).
         // frob:doc docs/reference/hullbreach-net.md#clientreplica
-        public void ApplyReliable(uint sequence, byte[] payload)
+        // frob:invariant INV-002
+        public ReplicaApplyResult ApplyReliable(uint sequence, byte[] payload)
         {
-            if (_haveBaseline && sequence <= _lastAppliedSequence) return; // stale/duplicate
+            if (payload == null) return ReplicaApplyResult.Malformed;
+
+            if (_haveBaseline)
+            {
+                if (AtOrBehind(sequence, _lastAppliedSequence)) return ReplicaApplyResult.Stale; // stale/duplicate
+                if (sequence - _lastAppliedSequence > MaxReliableWindow) return ReplicaApplyResult.OutOfWindow;
+            }
+            else if (_pendingReliable.Count >= MaxReliableWindow && !_pendingReliable.ContainsKey(sequence))
+            {
+                return ReplicaApplyResult.OutOfWindow;
+            }
 
             _pendingReliable[sequence] = payload;
+            DrainPending();
+            return _pendingReliable.ContainsKey(sequence) ? ReplicaApplyResult.Buffered : ReplicaApplyResult.Applied;
+        }
 
+        // Applies the contiguous run after the last applied sequence. A
+        // payload that fails to decode still consumes its slot, so one bad
+        // message can never stall the stream.
+        void DrainPending()
+        {
+            if (!_haveBaseline) return;
             while (_pendingReliable.TryGetValue(_lastAppliedSequence + 1, out var next))
             {
                 _pendingReliable.Remove(_lastAppliedSequence + 1);
-                ApplyOne(next);
                 _lastAppliedSequence++;
+                ApplyOne(_lastAppliedSequence, next);
             }
         }
 
@@ -249,55 +357,108 @@ namespace Hullbreach.Net
         {
             var stale = new List<uint>();
             foreach (var kv in _pendingReliable)
-                if (kv.Key <= _lastAppliedSequence) stale.Add(kv.Key);
+                if (AtOrBehind(kv.Key, _lastAppliedSequence)) stale.Add(kv.Key);
             foreach (var key in stale) _pendingReliable.Remove(key);
         }
 
-        void ApplyOne(byte[] payload)
+        // True when the ship already includes everything up to `sequence`.
+        bool IsCovered(ushort netId, uint sequence)
+            => _shipBaseline.TryGetValue(netId, out uint covered) && AtOrBehind(sequence, covered);
+
+        // Holds an event for a ship whose snapshot is still in flight.
+        void Defer(ushort netId, uint sequence, byte[] payload)
         {
+            if (_deferred.Count >= MaxReliableWindow) _deferred.RemoveAt(0);
+            _deferred.Add(new DeferredEvent(netId, sequence, payload));
+        }
+
+        void ReplayDeferred(ushort netId)
+        {
+            if (_deferred.Count == 0) return;
+            var replay = new List<DeferredEvent>();
+            _deferred.RemoveAll(d =>
+            {
+                if (d.NetId != netId) return false;
+                replay.Add(d);
+                return true;
+            });
+            replay.Sort((x, y) => x.Sequence.CompareTo(y.Sequence));
+            foreach (var d in replay) ApplyOne(d.Sequence, d.Payload);
+        }
+
+        // Decodes and applies one sequenced event; false when it was malformed
+        // (skipped). Never throws on wire data.
+        bool ApplyOne(uint sequence, byte[] payload)
+        {
+            if (payload.Length == 0) return true; // reserved slot, already applied
+
             var r = new ByteReader(payload);
-            var kind = (MessageKind)payload[0];
-            switch (kind)
+            switch ((MessageKind)payload[0])
             {
                 case MessageKind.BlockDestroyed:
                 {
                     var m = BlockDestroyed.Read(ref r);
+                    if (r.Failed) return false;
+                    if (IsCovered(m.NetId, sequence)) return true;
+                    if (!_ships.ContainsKey(m.NetId)) { Defer(m.NetId, sequence, payload); return true; }
                     ApplyBlockDestroyed(m);
-                    break;
+                    return true;
                 }
                 case MessageKind.BlockDamaged:
                 {
                     var m = BlockDamaged.Read(ref r);
+                    if (r.Failed) return false;
+                    if (IsCovered(m.NetId, sequence)) return true;
+                    if (!_ships.ContainsKey(m.NetId)) { Defer(m.NetId, sequence, payload); return true; }
                     ApplyBlockDamaged(m);
-                    break;
+                    return true;
                 }
                 case MessageKind.BlockPlaced:
                 {
                     var m = BlockPlaced.Read(ref r);
+                    if (r.Failed) return false;
+                    if (IsCovered(m.NetId, sequence)) return true;
+                    if (!_ships.ContainsKey(m.NetId)) { Defer(m.NetId, sequence, payload); return true; }
                     ApplyBlockPlaced(m);
-                    break;
+                    return true;
                 }
                 case MessageKind.FragmentSpawned:
                 {
                     var m = FragmentSpawned.Read(ref r);
+                    if (r.Failed) return false;
                     ApplyFragmentSpawned(m);
-                    break;
+                    return true;
                 }
                 case MessageKind.PowerupApplied:
                 {
                     var m = PowerupApplied.Read(ref r);
+                    if (r.Failed) return false;
+                    if (IsCovered(m.NetId, sequence)) return true;
+                    if (!_ships.ContainsKey(m.NetId)) { Defer(m.NetId, sequence, payload); return true; }
                     ApplyPowerupApplied(m);
-                    break;
+                    return true;
                 }
-                case MessageKind.GravityWellSpawned:
+                case MessageKind.ShipRemoved:
                 {
-                    var m = GravityWellSpawned.Read(ref r);
-                    ApplyGravityWellSpawned(m);
-                    break;
+                    var m = ShipRemoved.Read(ref r);
+                    if (r.Failed) return false;
+                    ApplyShipRemoved(m);
+                    return true;
                 }
                 default:
-                    throw new InvalidOperationException("Unexpected reliable MessageKind " + kind);
+                    return false;
             }
+        }
+
+        // Drops the ship; its baseline stays so a late duplicate snapshot or
+        // event for it cannot resurrect it.
+        void ApplyShipRemoved(ShipRemoved m)
+        {
+            if (IsCovered(m.NetId, m.Sequence)) return;
+            _shipBaseline[m.NetId] = m.Sequence;
+            _deferred.RemoveAll(d => d.NetId == m.NetId);
+            if (_ships.Remove(m.NetId))
+                _events.Enqueue(new ReplicaEvent(ReplicaEventKind.ShipRemoved, m.NetId, 0, 0, float2.zero));
         }
 
         void ApplyBlockDestroyed(BlockDestroyed m)

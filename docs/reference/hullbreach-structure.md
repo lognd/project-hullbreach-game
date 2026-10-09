@@ -897,6 +897,8 @@ decide it should break.
 <!-- frob:describes Assets/Scripts/Hullbreach.Structure/StructuralSolver.cs::StructuralSolver.MarkTopologyChanged -->
 <!-- frob:describes Assets/Scripts/Hullbreach.Structure/StructuralSolver.cs::StructuralSolver.UseCoarseCorrection -->
 <!-- frob:describes Assets/Scripts/Hullbreach.Structure/StructuralSolver.cs::StructuralSolver.BlockStresses -->
+<!-- frob:describes Assets/Scripts/Hullbreach.Structure/StructuralSolver.cs::StructuralSolver.DefaultLoadScale -->
+<!-- frob:describes Assets/Scripts/Hullbreach.Structure/StructuralSolver.cs::StructuralSolver.DefaultMaterialStiffnessScale -->
 <!-- frob:describes Assets/Scripts/Hullbreach.Structure/StructuralSolver.cs::StructuralSolver.LoadScale -->
 <!-- frob:describes Assets/Scripts/Hullbreach.Structure/StructuralSolver.cs::StructuralSolver.MaterialStiffnessScale -->
 <!-- frob:describes Assets/Scripts/Hullbreach.Structure/StructuralSolver.cs::StructuralSolver.Tick -->
@@ -964,6 +966,13 @@ stays linear, stresses scale exactly with it, and the geometric stiffness
 that buckling is built from scales consistently too. Calibrated so the
 stock demo ship at full thrust sits around 0.3 of yield while a long
 unsupported arm still fails.
+
+`DefaultLoadScale` (0.06) and `DefaultMaterialStiffnessScale` (40) are those
+two calibrated values as constants. Both the authoritative `ServerSimulation`
+(which alone decides detachment) and the Game layer's `ShipStructure` assign
+them, so server stress and the client tint agree; neither duplicates the
+numbers. The solver's own field defaults stay 1 so tests of raw solver math
+are unaffected.
 
 `MaterialStiffnessScale` is the ratio of real Young's modulus to yield
 stress that BlockType's normalized material table leaves out, applied to

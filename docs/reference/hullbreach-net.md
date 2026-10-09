@@ -31,6 +31,9 @@ avoid.
 <!-- frob:describes Assets/Scripts/Hullbreach.Net/Wire.cs::ByteReader -->
 <!-- frob:describes Assets/Scripts/Hullbreach.Net/Wire.cs::ByteReader.ByteReader -->
 <!-- frob:describes Assets/Scripts/Hullbreach.Net/Wire.cs::ByteReader.Position -->
+<!-- frob:describes Assets/Scripts/Hullbreach.Net/Wire.cs::ByteReader.Remaining -->
+<!-- frob:describes Assets/Scripts/Hullbreach.Net/Wire.cs::ByteReader.Failed -->
+<!-- frob:describes Assets/Scripts/Hullbreach.Net/Wire.cs::ByteReader.Fail -->
 <!-- frob:describes Assets/Scripts/Hullbreach.Net/Wire.cs::ByteReader.ReadU8 -->
 <!-- frob:describes Assets/Scripts/Hullbreach.Net/Wire.cs::ByteReader.ReadI8 -->
 <!-- frob:describes Assets/Scripts/Hullbreach.Net/Wire.cs::ByteReader.ReadU16 -->
@@ -39,8 +42,13 @@ avoid.
 <!-- frob:describes Assets/Scripts/Hullbreach.Net/Wire.cs::ByteReader.ReadI32 -->
 <!-- frob:describes Assets/Scripts/Hullbreach.Net/Wire.cs::ByteReader.ReadF32 -->
 
-The exact inverse of `ByteWriter`: same fail-fast behavior, throwing
-`IndexOutOfRangeException` on reading past the end.
+The inverse of `ByteWriter`, bounded by the received length (INV-001):
+construct it with the transport's `length` so stale buffer bytes are never
+readable. Reading past the end never throws or reads stale data; it sets
+`Failed` and returns zero from then on, so a decoder reads the whole
+message and checks `Failed` once. `Fail()` lets a decoder mark a message
+malformed for other reasons (an implausible count); `Remaining` is the
+byte budget a count must fit in before anything is allocated.
 
 ### Quantization
 
@@ -230,6 +238,7 @@ damage.
 <!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::ShipSnapshot.Vy -->
 <!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::ShipSnapshot.Av -->
 <!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::ShipSnapshot.ShipSnapshot -->
+<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::ShipSnapshot.MaxBlocks -->
 <!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::ShipSnapshot.ByteSize -->
 <!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::ShipSnapshot.Write -->
 <!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::ShipSnapshot.Read -->
@@ -239,6 +248,23 @@ layout plus the ship's current pose/velocity. 5 bytes per block raw; block
 grids deflate ~10:1 under a reliable transport's own compression, so a
 10k-block ship is a few KB. Fine as a one-off; never sent per tick. See
 docs/netcode.md#message-table for the byte layout.
+
+`MaxBlocks` (4096) caps a snapshot: `Read` fails the reader (and returns
+no blocks) when the wire count exceeds it or does not fit in the bytes
+actually received, so a remote count never sizes an allocation, and
+`Write` throws rather than letting the u16 count wrap.
+
+### ShipRemoved
+
+<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::ShipRemoved -->
+<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::ShipRemoved.Sequence -->
+<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::ShipRemoved.NetId -->
+<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::ShipRemoved.ShipRemoved -->
+<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::ShipRemoved.Write -->
+<!-- frob:describes Assets/Scripts/Hullbreach.Net/NetMessages.cs::ShipRemoved.Read -->
+
+Server -> client, reliable ordered: the ship left (an explicit `Leave` or
+an input timeout). Without it every replica kept a ghost ship forever.
 
 ### ShipState
 
@@ -406,6 +432,7 @@ and to which ship, without re-parsing wire bytes.
 <!-- frob:describes Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ClientReplica.TryInterpolate -->
 <!-- frob:describes Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ClientReplica.ApplyReceived -->
 <!-- frob:describes Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ClientReplica.ApplyReliable -->
+<!-- frob:describes Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ClientReplica.MaxReliableWindow -->
 <!-- frob:describes Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ClientReplica.TryDequeueEvent -->
 <!-- frob:describes Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ClientReplica.BuildInput -->
 
@@ -421,10 +448,33 @@ This is what makes `ClientReplica` correct even against a transport that
 reorders reliable messages (see `LoopbackTransport`'s jitter and
 `ITransport`'s ordering contract, docs/netcode.md#ordering...).
 
-`ApplySnapshot`'s own sequence number becomes the new baseline: any
-buffered reliable event with a sequence at or below it is stale (it was
-already folded into the snapshot server-side) and is discarded rather than
-reapplied.
+Baselines are per ship. `ApplySnapshot` installs a ship only if no newer
+snapshot or removal already covers its `NetId` (it returns false
+otherwise), and records the snapshot's sequence as that ship's baseline:
+later-arriving events for that ship at or below it are skipped (already
+folded in), other ships are untouched. The first snapshot a replica ever
+sees also sets the stream cursor; after that a snapshot reserves its own
+slot in the ordered stream so the cursor can pass it. An event for a ship
+whose snapshot has not arrived yet is held (bounded) and replayed when it
+does. `ShipRemoved` drops the ship, raises `ReplicaEventKind.ShipRemoved`
+and keeps the baseline so a late duplicate cannot resurrect it.
+
+Wire data never throws. `ApplyReceived` and `ApplyReliable` return a
+`ReplicaApplyResult`: `Applied`, `Buffered` (waiting for a gap),
+`Stale` (duplicate or covered), `OutOfWindow` (more than
+`MaxReliableWindow` = 512 past the last applied sequence, INV-002;
+buffered and deferred counts are capped by the same constant) or
+`Malformed` (unknown kind, truncated header). Only the first `length`
+bytes are read. A reliable message with a readable header but a short or
+undecodable body still consumes its sequence slot, so one bad message
+cannot stall the stream. Sequence comparison is wrap-safe.
+
+### ReplicaApplyResult
+
+<!-- frob:describes Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ReplicaApplyResult -->
+
+What the replica did with one payload: `Applied`, `Buffered`, `Stale`,
+`OutOfWindow` or `Malformed`; see `ClientReplica`.
 
 `ApplyFragmentSpawned` (private) only spawns the replica body the
 already-derived detached blocks belong in, at the pose the server reports;
@@ -457,8 +507,11 @@ next expected sequence and then drains whatever the gap closing unblocks.
 <!-- frob:describes Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.Gravity -->
 <!-- frob:describes Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.ServerSimulation -->
 <!-- frob:describes Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.Ships -->
+<!-- frob:describes Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.MaxPeerId -->
+<!-- frob:describes Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.FirstFragmentId -->
 <!-- frob:describes Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.Join -->
 <!-- frob:describes Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.Leave -->
+<!-- frob:describes Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.TryDequeueDroppedPeer -->
 <!-- frob:describes Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.SetInput -->
 <!-- frob:describes Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.Tick -->
 <!-- frob:describes Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.DebugDestroyBlock -->
@@ -481,9 +534,63 @@ theirs to the peer table, so the later loop that broadcasts the
 newcomer's own snapshot to everyone else never doubles back and resends
 an existing ship to itself; that later loop includes the joiner itself,
 since it needs a snapshot of its own ship exactly like everyone else
-does. `SetInput` is latest-wins: a peer that sends every tick simply
-always has fresh input, and one that drops a packet loses nothing but
-that tick's precision.
+does. The snapshots sent to the joiner for existing ships are stamped
+with the current sequence rather than a fresh one (only the joiner gets
+them, so a fresh number would leave a gap in everyone else's stream).
+
+`Join` returns a `JoinResult` and treats the design as untrusted (INV-003):
+`InvalidPeerId` unless `1 <= peer <= MaxPeerId` (the peer id is the ship's
+`NetId`), `AlreadyJoined` if the peer has a ship (a join never replaces
+one; call `Leave` first), `InvalidDesign` unless
+`DesignValidator.ValidateDesign` passes. Damage in the design is ignored
+(a new ship is intact) and the claimed velocity is clamped to
+`DesignValidator.MaxSpawnSpeed`; position and angle are bounded by the
+wire quantization. Fragment `NetId`s cycle through
+`FirstFragmentId..65535`, disjoint from peer ids, so a fragment can never
+overwrite a peer's replica. Each peer's `StructuralSolver` gets the shared
+calibrated `StructuralSolver.DefaultLoadScale` /
+`DefaultMaterialStiffnessScale`, the same values `ShipStructure` uses.
+
+`Leave` and the input timeout both broadcast `ShipRemoved` to the remaining
+peers and orphan the leaver's in-flight projectiles; timed-out peers are
+queued for `TryDequeueDroppedPeer` so the host can close their connection.
+
+`SetInput` keeps the latest axes (clamped to -1..1; -128 decodes to -1) but
+latches a fire press until the next `Tick` consumes it, so a release that
+arrives before the tick cannot erase the press edge, and ignores a message
+whose tick is older than the last accepted one. Peer identity is always the
+`peer` argument, never `InputMessage.NetId`. Projectile hits test a circle
+of `ProjectileSpec.Radius` against the block cells (`ProjectileHitTest`)
+and skip the owner's ship.
+
+### JoinResult
+
+<!-- frob:describes Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::JoinResult -->
+
+Outcome of `ServerSimulation.Join`: `Joined`, `InvalidPeerId`,
+`AlreadyJoined`, `InvalidDesign`. A non-`Joined` result changes nothing.
+
+### DesignValidator
+
+<!-- frob:describes Assets/Scripts/Hullbreach.Net/DesignValidator.cs::DesignVerdict -->
+<!-- frob:describes Assets/Scripts/Hullbreach.Net/DesignValidator.cs::DesignValidator -->
+<!-- frob:describes Assets/Scripts/Hullbreach.Net/DesignValidator.cs::DesignValidator.MaxSpawnSpeed -->
+<!-- frob:describes Assets/Scripts/Hullbreach.Net/DesignValidator.cs::DesignValidator.ValidateDesign -->
+
+Server-side check of a client-supplied `ShipSnapshot` before a ship is
+built from it: at least one and at most `ShipSnapshot.MaxBlocks` blocks,
+known block types, no duplicate cells, exactly one core, and every block
+connected to the core. Returns a `DesignVerdict` naming the first rule
+broken.
+
+### ProjectileHitTest
+
+<!-- frob:describes Assets/Scripts/Hullbreach.Net/ProjectileHitTest.cs::ProjectileHitTest -->
+<!-- frob:describes Assets/Scripts/Hullbreach.Net/ProjectileHitTest.cs::ProjectileHitTest.TryHitShipCell -->
+
+Engine-free circle-versus-block-cell test the server uses for projectile
+impacts: finds the occupied cell nearest the circle centre that the circle
+overlaps, in the ship's local frame. A zero radius is a point test.
 
 `Tick` advances every ship by one fixed tick (apply latest input, step
 the body, tick its structural solver, resolve damage/detachment/
@@ -528,6 +635,7 @@ replica as one colored quad per block using runtime-generated
 replica ships deliberately do not have). Does not touch `DemoScene`; drop
 this on an empty `GameObject` in any scene to see it run.
 
-`RefreshVisuals` (private) creates a quad per block lazily and never
-touches a block's visual once placed beyond moving it with its ship:
-cheap, and good enough for a handoff demo.
+`RefreshVisuals` (private) creates a quad per block lazily, keyed by
+(replica, netId, block) so the two clients do not share quads, moves it with
+its ship, and destroys any quad whose block or ship the replica no longer
+has; `OnDestroy` removes the rest.

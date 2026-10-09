@@ -10,6 +10,19 @@ using Hullbreach.World;
 
 namespace Hullbreach.Net
 {
+    // Outcome of ServerSimulation.Join; anything but Joined leaves no ship behind.
+    // frob:doc docs/reference/hullbreach-net.md#joinresult
+    public enum JoinResult
+    {
+        Joined,
+        // The transport id does not fit the peer NetId range.
+        InvalidPeerId,
+        // That peer already has a ship; Leave first (a join never replaces one).
+        AlreadyJoined,
+        // The supplied design failed DesignValidator.ValidateDesign.
+        InvalidDesign,
+    }
+
     // The authoritative, plain-C# server loop; see the reference page.
     // frob:doc docs/reference/hullbreach-net.md#serversimulation
     public sealed class ServerSimulation
@@ -47,6 +60,8 @@ namespace Hullbreach.Net
             public bool HasFreshInput;
             public float SecondsSinceInput;
             public bool IsBuilding;
+            public bool HasInput;
+            public bool PendingFire;
             public readonly Dictionary<int, bool> Failing = new Dictionary<int, bool>();
         }
 
@@ -55,7 +70,20 @@ namespace Hullbreach.Net
 
         uint _sequence;
         uint _tickIndex;
-        ushort _nextFragmentId = 1;
+
+        // Peers own NetIds 1..MaxPeerId (the transport id itself); fragments
+        // cycle through FirstFragmentId..65535. Disjoint ranges mean a peer
+        // ship and a fragment can never share a NetId.
+        // frob:doc docs/reference/hullbreach-net.md#serversimulation
+        public const int MaxPeerId = 0x7FFF;
+
+        // frob:doc docs/reference/hullbreach-net.md#serversimulation
+        public const ushort FirstFragmentId = 0x8000;
+
+        ushort _nextFragmentId = FirstFragmentId;
+
+        // Peers dropped by timeout, for the host to disconnect.
+        readonly Queue<int> _droppedPeers = new Queue<int>();
 
         sealed class ProjectileBody
         {
@@ -146,7 +174,8 @@ namespace Hullbreach.Net
         public bool TryPlaceBlock(int peer, int x, int y, byte typeId, byte modifiers)
         {
             if (!_peers.TryGetValue(peer, out var state) || !state.IsBuilding ||
-                typeId >= BlockTypes.Count || !BlockKey.InRange(x, y)) return false;
+                typeId >= BlockTypes.Count || !BlockKey.InRange(x, y) ||
+                state.Ship.Grid.Count >= ShipSnapshot.MaxBlocks) return false;
 
             int key = BlockKey.Pack(x, y);
             if (!PlacementRules.CanPlace(state.Ship.Grid, key, typeId, modifiers, out _)) return false;
@@ -183,13 +212,22 @@ namespace Hullbreach.Net
             return true;
         }
 
-        // Re-broadcasts the new snapshot to every other peer; see reference page.
+        // Validates the untrusted design, then re-broadcasts the new snapshot
+        // to every other peer; see reference page. Rejections change nothing.
         // frob:doc docs/reference/hullbreach-net.md#serversimulation
-        public void Join(int peer, ShipSnapshot initialDesign)
+        // frob:invariant INV-003
+        public JoinResult Join(int peer, ShipSnapshot initialDesign)
         {
+            if (peer < 1 || peer > MaxPeerId) return JoinResult.InvalidPeerId;
+            if (_peers.ContainsKey(peer)) return JoinResult.AlreadyJoined;
+            if (DesignValidator.ValidateDesign(initialDesign) != DesignVerdict.Ok) return JoinResult.InvalidDesign;
+
             // Runs before adding the newcomer to _peers; see reference page.
+            // Stamped with the current sequence, not a fresh one: only the
+            // joiner receives these, so a fresh number would leave a gap
+            // in everyone else's ordered stream.
             foreach (var kv in _peers)
-                EmitReliable(peer, BuildSnapshot(kv.Value));
+                EmitReliable(peer, BuildSnapshot(kv.Value, _sequence));
 
             var ship = new ShipBody
             {
@@ -200,11 +238,15 @@ namespace Hullbreach.Net
             foreach (var b in initialDesign.Blocks)
             {
                 int key = BlockKey.Pack(b.X, b.Y);
-                ship.Grid.TryAdd(key, new Block(b.TypeId, b.Mods, b.Damage));
+                // Damage is never taken from the client.
+                ship.Grid.TryAdd(key, new Block(b.TypeId, b.Mods, 0));
             }
             ship.Position = new float2(Quantization.UnpackPosition(initialDesign.Px), Quantization.UnpackPosition(initialDesign.Py));
             ship.Rotation = Quantization.UnpackAngle(initialDesign.Rot);
-            ship.Velocity = new float2(Quantization.UnpackPosition(initialDesign.Vx), Quantization.UnpackPosition(initialDesign.Vy));
+            float2 velocity = new float2(Quantization.UnpackPosition(initialDesign.Vx), Quantization.UnpackPosition(initialDesign.Vy));
+            float speed = math.length(velocity);
+            if (speed > DesignValidator.MaxSpawnSpeed) velocity *= DesignValidator.MaxSpawnSpeed / speed;
+            ship.Velocity = velocity;
             ship.AngularVelocity = Quantization.UnpackAngle(initialDesign.Av);
             ship.RebuildDerivedViews();
 
@@ -212,30 +254,60 @@ namespace Hullbreach.Net
             {
                 NetId = (ushort)peer,
                 Ship = ship,
-                Solver = new StructuralSolver(),
+                Solver = new StructuralSolver
+                {
+                    LoadScale = StructuralSolver.DefaultLoadScale,
+                    MaterialStiffnessScale = StructuralSolver.DefaultMaterialStiffnessScale,
+                },
                 SecondsSinceInput = 0f,
             };
-            state.Solver.LoadScale = 0.06f;
-            state.Solver.MaterialStiffnessScale = 40f;
             _peers[peer] = state;
 
             // Includes the joiner itself; see the reference page.
-            var snapshot = BuildSnapshot(state);
+            var snapshot = BuildSnapshot(state, NextSequence());
             foreach (var kv in _peers) EmitReliable(kv.Key, snapshot);
+            return JoinResult.Joined;
         }
 
-        // Safe to call for an unknown peer (no-op).
+        // Safe to call for an unknown peer (no-op); tells the others the ship is gone.
         // frob:doc docs/reference/hullbreach-net.md#serversimulation
-        public void Leave(int peer) => _peers.Remove(peer);
+        public void Leave(int peer)
+        {
+            if (_peers.TryGetValue(peer, out var state)) RemovePeer(peer, state);
+        }
 
-        // Latest-wins; see the reference page.
+        // Pops one peer dropped by timeout so the host can close its connection.
         // frob:doc docs/reference/hullbreach-net.md#serversimulation
+        public bool TryDequeueDroppedPeer(out int peer)
+        {
+            if (_droppedPeers.Count > 0) { peer = _droppedPeers.Dequeue(); return true; }
+            peer = -1;
+            return false;
+        }
+
+        // Removes the ship, orphans its projectiles, and broadcasts ShipRemoved.
+        void RemovePeer(int peer, PeerState state)
+        {
+            _peers.Remove(peer);
+            foreach (var p in _projectiles)
+                if (p.OwnerPeer == peer) p.OwnerPeer = -1;
+            BroadcastReliable(new ShipRemoved(NextSequence(), state.NetId));
+        }
+
+        // Latest-wins for the axes, but a fire press is latched until the
+        // next Tick consumes it, and an input older than the last accepted one
+        // is ignored. See reference page.
+        // frob:doc docs/reference/hullbreach-net.md#serversimulation
+        // frob:invariant INV-003
         public void SetInput(int peer, InputMessage input)
         {
             if (!_peers.TryGetValue(peer, out var state)) return;
+            if (state.HasInput && unchecked((int)(input.Tick - state.LatestInput.Tick)) < 0) return;
             state.LatestInput = input;
+            state.HasInput = true;
             state.IsBuilding = input.BuildMode;
             state.HasFreshInput = true;
+            state.PendingFire |= input.FirePressed;
             state.SecondsSinceInput = 0f;
         }
 
@@ -257,9 +329,10 @@ namespace Hullbreach.Net
             {
                 var state = _peers[peer];
                 var input = state.HasFreshInput
-                    ? new ShipInput(state.LatestInput.ThrustAxisFloat, state.LatestInput.SteerFloat, state.LatestInput.FirePressed)
+                    ? new ShipInput(state.LatestInput.ThrustAxisFloat, state.LatestInput.SteerFloat, state.PendingFire)
                     : new ShipInput(0f, 0f, false);
                 state.HasFreshInput = false;
+                state.PendingFire = false;
 
                 if (state.IsBuilding) continue;
 
@@ -333,7 +406,11 @@ namespace Hullbreach.Net
                     (dead ??= new List<int>()).Add(kv.Key);
             }
             if (dead == null) return;
-            foreach (int peer in dead) _peers.Remove(peer);
+            foreach (int peer in dead)
+            {
+                RemovePeer(peer, _peers[peer]);
+                _droppedPeers.Enqueue(peer);
+            }
         }
 
         void DrainShots(int peer, ShipBody ship)
@@ -383,13 +460,7 @@ namespace Hullbreach.Net
             foreach (int candidate in peers)
             {
                 if (candidate == p.OwnerPeer) continue;
-                var ship = _peers[candidate].Ship;
-                float2 local = ship.WorldToLocal(p.Position);
-                int x = (int)math.floor(local.x);
-                int y = (int)math.floor(local.y);
-                if (!BlockKey.InRange(x, y)) continue;
-                int k = BlockKey.Pack(x, y);
-                if (ship.Grid.Contains(k))
+                if (ProjectileHitTest.TryHitShipCell(_peers[candidate].Ship, p.Position, p.Spec.Radius, out int k))
                 {
                     peer = candidate;
                     key = k;
@@ -522,7 +593,7 @@ namespace Hullbreach.Net
 
                 foreach (int key in component) grid.TryRemove(key);
 
-                ushort fragmentId = _nextFragmentId++;
+                ushort fragmentId = AllocateFragmentId();
                 var evt = new FragmentSpawned(
                     NextSequence(), state.NetId, fragmentId,
                     Quantization.PackPosition(worldCentroid.x),
@@ -535,6 +606,15 @@ namespace Hullbreach.Net
             }
 
             state.Ship.RebuildDerivedViews();
+        }
+
+        // Next fragment NetId, cycling inside the fragment range so it never
+        // lands on a peer's NetId.
+        ushort AllocateFragmentId()
+        {
+            ushort id = _nextFragmentId;
+            _nextFragmentId = id == ushort.MaxValue ? FirstFragmentId : (ushort)(id + 1);
+            return id;
         }
 
         // Test/debug hook; see the reference page.
@@ -550,7 +630,7 @@ namespace Hullbreach.Net
             ResolveDetachAfterDestruction(peer, state);
         }
 
-        ShipSnapshot BuildSnapshot(PeerState state)
+        ShipSnapshot BuildSnapshot(PeerState state, uint sequence)
         {
             var blocks = new List<SnapshotBlock>();
             foreach (var kvp in state.Ship.Grid.All)
@@ -559,7 +639,7 @@ namespace Hullbreach.Net
                 blocks.Add(new SnapshotBlock((sbyte)x, (sbyte)y, kvp.Value.TypeId, kvp.Value.Modifiers, kvp.Value.Damage));
             }
             return new ShipSnapshot(
-                NextSequence(), state.NetId, blocks.ToArray(),
+                sequence, state.NetId, blocks.ToArray(),
                 Quantization.PackPosition(state.Ship.Position.x),
                 Quantization.PackPosition(state.Ship.Position.y),
                 Quantization.PackAngle(state.Ship.Rotation),
@@ -617,6 +697,7 @@ namespace Hullbreach.Net
                 case FragmentSpawned m: m.Write(ref w); break;
                 case PowerupApplied m: m.Write(ref w); break;
                 case GravityWellSpawned m: m.Write(ref w); break;
+                case ShipRemoved m: m.Write(ref w); break;
                 default: throw new InvalidOperationException("Unhandled reliable message type " + typeof(T));
             }
         }
