@@ -40,8 +40,10 @@ namespaces = ["frob", "grimble", "crunk"]
 attesters = ["44213227+mcnairrobotics@users.noreply.github.com"]
 # Programs the `command` provider may run. The documented default includes
 # dotnet, but 0.532.0 omits it, so it is listed here: the plain-C# NUnit
-# suite (tools/plaincs) is this repository's only test runner.
-allowed_tools = ["cargo", "git", "pytest", "vitest", "jest", "dotnet"]
+# suite (tools/plaincs) is this repository's only test runner. 0.532.0 matches
+# the program by bare name through PATH (a path with a slash is refused), so
+# run_tests.sh is listed by name and tools/plaincs must be on PATH.
+allowed_tools = ["cargo", "git", "pytest", "vitest", "jest", "dotnet", "run_tests.sh"]
 
 [git]
 # Compare-and-swap retries when moving a ledger ref.

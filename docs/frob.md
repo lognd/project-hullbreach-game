@@ -88,6 +88,15 @@ frob ticket evidence add --provider command T-0058 \
   --ref "dotnet test tools/plaincs/Hullbreach.Plain.Tests/Hullbreach.Plain.Tests.csproj -c Release --filter TestCategory!=Slow"
 ```
 
+`run_tests.sh` is also on the allowlist (by bare name: 0.532.0 refuses a
+path with a slash), so with `tools/plaincs` on `PATH` the whole harness can
+be bound, optionally narrowed to one test class:
+
+```bash
+PATH="$PWD/tools/plaincs:$PATH" frob ticket evidence add --provider command T-0058 \
+  --ref "run_tests.sh --filter FullyQualifiedName~ServerHardeningTests"
+```
+
 The `dotnet` provider that `[evidence.dotnet]` configures is not offered by
 `frob ticket evidence add` in 0.532.0, and the `unity` pack/provider
 (batch-mode Unity test runs) is design only until a later release.
