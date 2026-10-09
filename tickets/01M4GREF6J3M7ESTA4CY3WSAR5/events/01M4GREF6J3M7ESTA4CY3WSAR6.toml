@@ -1,0 +1,14 @@
+kind = "create"
+title = "S54: Show my banner and nameplate"
+type = "story"
+category = "todo"
+priority = "medium"
+parent = "01M4GRD8ZV5ZNB70YTSK7RH036"
+persona = "player"
+capability = "to pick a banner shown with my name in the lobby and above my ship"
+outcome_text = "opponents recognize me"
+labels = ["owner:a-carten", "game", "platform", "milestone:0.3.0"]
+acceptance = ["A player can equip any owned banner; the lobby and the in-match nameplate show it for both players.", "Without a banner the plain username nameplate is shown.", "Banner text and images come only from the curated catalog, never from user input."]
+at = "2026-10-09T16:37:53Z"
+actor = "lognd"
+rev = 1
