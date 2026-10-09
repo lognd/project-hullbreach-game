@@ -1,0 +1,6 @@
+kind = "comment"
+subtype = "note"
+body = "Merged from 01M4GR2JNYB77501DAJFF4Q694: also fix ShipSnapshot.Write casting block count to ushort (NetMessages.cs:195), which writes a 65536-block grid as count 0; and readers bound to the whole pooled buffer decode stale bytes on truncated datagrams."
+at = "2026-10-09T16:36:27Z"
+actor = "lognd"
+rev = 1
