@@ -1,0 +1,5 @@
+kind = "evidence-bypass"
+reason = "Unity-engine-only MonoBehaviours (ProjectileSpawner, WorldSink); no local runner can execute them. PlayMode test ProjectileSpawnerTests added but unrun."
+at = "2026-10-09T17:15:43Z"
+actor = "GingerVHS"
+rev = 1
