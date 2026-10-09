@@ -2,11 +2,12 @@
 id = "01M4GR2PAWCR5Z6930Q6NZ95SC"
 title = "ClientReplica.ApplySnapshot replaces the ship before the sequence check and resets one global baseline for all ships"
 type = "bug"
-category = "todo"
+category = "done"
+outcome = "fixed"
 priority = "medium"
 reporter = "lognd"
 created = "2026-10-09T16:31:27Z"
-updated = "2026-10-09T17:09:52Z"
+updated = "2026-10-09T17:10:16Z"
 labels = ["origin:auditor", "audit:hullbreach-net"]
 scope = ["Assets/Scripts/Hullbreach.Net/ClientReplica.cs"]
 
