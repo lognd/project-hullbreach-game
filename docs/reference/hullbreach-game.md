@@ -252,6 +252,10 @@ carrying it in a straight line, that applies the firing ship's own
 recoil-free hit (impulse + damage) to whatever `ShipCollider` it touches,
 then destroys itself. Spawned only by `ProjectileSpawner`: never construct
 one directly, since `Configure` must run before the first `FixedUpdate`.
+A ship has one trigger collider per block, so a round overlapping several
+blocks gets several `OnTriggerEnter2D` calls before `Destroy` takes effect;
+the first valid hit marks the round spent and later ones are ignored, so
+impulse, damage and any gravity well are delivered once.
 
 ### ProjectileSpawner
 
