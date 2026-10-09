@@ -8,10 +8,10 @@ points = 5
 parent = "01M3DG5Y14KAMJ8NTGHC8BW9YV"
 reporter = "human"
 created = "2026-09-26T00:00:00Z"
-updated = "2026-10-09T04:00:29Z"
+updated = "2026-10-09T04:06:05Z"
 aliases = ["T-0104"]
 labels = ["jira:SCRUM-126", "owner:mcnairrobotics", "game", "netcode", "milestone:0.1.0", "creates:Assets/Scripts/Hullbreach.Net/ServerHost.cs*", "creates:Assets/Scripts/Hullbreach.Net/NetLog.cs*", "creates:Assets/Tests/EditMode/Hullbreach.Net.Tests/ServerHostTests.cs*"]
-scope = ["docs/netcode.md", "docs/reference/hullbreach-net.md", "docs/roadmap.md", "Assets/Scripts/Hullbreach.Net/ServerHost.cs*", "Assets/Scripts/Hullbreach.Net/NetLog.cs*", "Assets/Tests/EditMode/Hullbreach.Net.Tests/ServerHostTests.cs*"]
+scope = ["docs/netcode.md", "docs/reference/hullbreach-net.md", "docs/roadmap.md", "Assets/Scripts/Hullbreach.Net/ServerHost.cs*", "Assets/Scripts/Hullbreach.Net/NetLog.cs*", "Assets/Tests/EditMode/Hullbreach.Net.Tests/ServerHostTests.cs*", "Assets/Scripts/Hullbreach.Net/NetMessages.cs"]
 
 [[acceptance]]
 text = "Given a ServerHost over an ITransport with two peers joined and no Unity runtime, when it is advanced by N seconds of host time, then it runs floor(N * TickRate) fixed ticks, each stepping every peer's ShipBody and StructuralSolver"
