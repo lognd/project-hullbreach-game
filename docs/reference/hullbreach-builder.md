@@ -206,3 +206,62 @@ action.
 <!-- frob:describes Assets/Scripts/Hullbreach.Builder/UndoStack.cs::UndoStack.RecordRemove -->
 <!-- frob:describes Assets/Scripts/Hullbreach.Builder/UndoStack.cs::UndoStack.TryUndo -->
 <!-- frob:describes Assets/Scripts/Hullbreach.Builder/UndoStack.cs::UndoStack.TryRedo -->
+
+### DesignBlock
+
+One block of a saved design: x, y, type, modifiers, damage. It mirrors
+`SnapshotBlock` field for field (the net wire's per-block record) but holds
+ints, so a hand-edited out-of-range value survives parsing and is reported
+by validation instead of wrapping around. Damage is stored for parity with
+the wire but a saved design is pristine: any non-zero damage is a problem.
+
+### ShipDesign
+
+A named, ordered list of `DesignBlock`s. It may or may not satisfy
+`PlacementRules`; that is `ShipDesignValidator`'s job, not the
+constructor's, so a bad file can still be inspected. `FromGrid` captures a
+live grid in sorted-key order, so equal grids always serialize to
+byte-identical files. `TryBuildGrid` replays the design into a fresh grid
+and returns false (grid null) unless it is entirely valid: a design is
+never repaired. `CurrentVersion` is the one format version this build
+writes and the newest it reads. The file layout is in
+[ship-design-format.md](../ship-design-format.md).
+
+### DesignProblemKind
+
+Why a design is invalid: `MissingCore`, `UnknownType` (type id not in
+`BlockTypes`), `BadValue` (modifiers or damage outside 0..255),
+`DuplicateCell`, `DamagedBlock`, or `Placement` (a `PlacementRules`
+verdict, carried in `DesignProblem.Verdict`).
+
+### DesignProblem
+
+One reported problem: kind, cell and, for `Placement`, the
+`PlacementVerdict`. `ToString` gives the human line a load screen shows,
+reusing `BuilderSession.DescribeVerdict` wording.
+
+### ShipDesignValidator
+
+`Validate` replays a design into a scratch grid and returns every problem;
+an empty list means valid. The replay places the first core (lowest key)
+and then sweeps the remaining blocks in key order, accepting any block
+`PlacementRules.CanPlace` allows, until a sweep accepts nothing; blocks
+left over are reported with the verdict the rules give them against the
+accepted set. So file order never matters, and when two blocks conflict
+(for example a hull in a thruster's exhaust cell) the one with the lower
+key is the one accepted and the other is the one reported. The design is
+never modified.
+
+### DesignLoadResult
+
+What `ShipDesignFile.Load` returns: `Design` and `Problems` for a file that
+parsed, or `Error` and `ErrorLine` (Design null) for one that did not.
+`IsValid` is true only for a parsed, problem-free design.
+
+### ShipDesignFile
+
+`Write` serializes a design to the versioned text format; `Load` parses
+and validates. Expected failures (empty, truncated, hand-mangled, newer
+version) come back as `Error` with the 1-based line, never as exceptions.
+File I/O is deliberately not here: the save/load UI (T-0071) reads and
+writes the string.
