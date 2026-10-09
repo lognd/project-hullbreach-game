@@ -2,11 +2,12 @@
 id = "01M4GR3ST7AA5DJ025CFTX22F1"
 title = "ShipController Awake/ReplaceBlocks ignore TryAdd/TryRemove results; core is never replaced and out-of-range or duplicate blocks vanish silently"
 type = "bug"
-category = "todo"
+category = "done"
+outcome = "fixed"
 priority = "medium"
 reporter = "lognd"
 created = "2026-10-09T16:32:03Z"
-updated = "2026-10-09T17:16:53Z"
+updated = "2026-10-09T17:16:54Z"
 idempotency_key = "audit-game-grid-silent-drop"
 labels = ["origin:auditor", "audit:hullbreach-game"]
 scope = ["Assets/Scripts/Hullbreach.Game/ShipController.cs"]
