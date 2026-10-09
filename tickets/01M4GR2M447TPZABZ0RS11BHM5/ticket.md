@@ -2,11 +2,12 @@
 id = "01M4GR2M447TPZABZ0RS11BHM5"
 title = "ServerSimulation never resolves ship-ship contact; authoritative server and Game diverge"
 type = "bug"
-category = "todo"
+category = "done"
+outcome = "fixed"
 priority = "high"
 reporter = "lognd"
 created = "2026-10-09T16:31:25Z"
-updated = "2026-10-09T17:12:50Z"
+updated = "2026-10-09T17:13:16Z"
 labels = ["origin:auditor", "audit:ship"]
 scope = ["Assets/Scripts/Hullbreach.Net/ServerSimulation.cs"]
 
