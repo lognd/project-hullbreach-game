@@ -4,10 +4,11 @@ title = "S43: Bend the field with a Gravity Gun and an Anti-Gravity Gun"
 type = "story"
 category = "todo"
 priority = "high"
+points = 5
 parent = "01M3DG5Y06HCEC2NK39DR1347N"
 reporter = "human"
 created = "2026-09-26T00:00:00Z"
-updated = "2026-09-26T00:00:00Z"
+updated = "2026-10-09T04:03:28Z"
 aliases = ["T-0032"]
 labels = ["jira:SCRUM-64", "owner:GingerVHS", "game", "physics", "milestone:0.2.0"]
 
