@@ -1,0 +1,7 @@
+kind = "field"
+field = "acceptance"
+new = ["Given settings saved through SettingsStore, when the store is loaded again (a new launch), then master/music/effects volume, resolution, fullscreen and key-binding placeholders are identical", "Given a missing settings file, when loaded, then defaults are returned with status Missing and no error", "Given a corrupt or unreadable settings file, when loaded, then defaults are returned with status Corrupt and warnings, nothing throws, and the next save replaces the file", "Given a failing disk, when saving, then Save reports the error in its result instead of throwing, and file I/O is behind ISettingsStorage so it is testable"]
+moved = []
+at = "2026-10-09T04:09:36Z"
+actor = "stevendangkhoi"
+rev = 1
