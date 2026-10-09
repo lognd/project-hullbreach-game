@@ -16,6 +16,10 @@ namespace Hullbreach.Game
 
         bool _configured;
 
+        // Set on the first successful pickup: a ship has one trigger collider per block,
+        // so several can fire in one step before Destroy takes effect.
+        bool _collected;
+
         // frob:doc docs/reference/hullbreach-game.md#powerup
         public void Configure(PowerupPreset preset)
         {
@@ -38,7 +42,7 @@ namespace Hullbreach.Game
 
         void OnTriggerEnter2D(Collider2D other)
         {
-            if (!_configured) return;
+            if (!_configured || _collected) return;
 
             var shipCollider = other.GetComponentInParent<ShipCollider>();
             if (shipCollider == null) return;
@@ -51,6 +55,7 @@ namespace Hullbreach.Game
                 new float2(point.x, point.y), Preset.seconds);
             if (!applied) return;
 
+            _collected = true;
             GetComponentInParent<PowerupSpawner>()?.NotifyCollected(this);
             Destroy(gameObject);
         }

@@ -222,6 +222,9 @@ Preset.seconds)`, which transforms the ship's nearest block of
 parent `PowerupSpawner` (so a replacement spawns after a delay) and
 destroys itself; if no eligible block was found, the pickup is left in
 place for another attempt.
+A ship has one trigger collider per block, so several can fire in one step
+before `Destroy` takes effect; the first successful pickup marks the powerup
+collected and later triggers are ignored, so it applies and respawns once.
 
 ### PowerupSpawner
 
