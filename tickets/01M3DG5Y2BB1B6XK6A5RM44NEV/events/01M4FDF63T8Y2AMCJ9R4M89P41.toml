@@ -1,0 +1,7 @@
+kind = "field"
+field = "acceptance"
+new = ["Given a 100-block ship under thrust, when the structural solver runs 20 Release ticks, then the median steady-state tick is within the documented 5 ms solver budget (25 percent of the 20 ms 50 Hz frame)", "Given the budget is asserted by a test that runs in the default plain-C# suite, when the budget or its margin is documented, then docs/testing.md states the budget, why the median is asserted, and how the 500 and 2000 block cases and the buckling spike are treated"]
+moved = []
+at = "2026-10-09T04:06:48Z"
+actor = "GingerVHS"
+rev = 1

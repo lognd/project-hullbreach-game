@@ -1,0 +1,6 @@
+kind = "field"
+field = "scope"
+new = ["Assets/Tests/EditMode/Hullbreach.Structure.Tests/SolverBenchmarks.cs", "docs/**", "changelog.d/**", "TODO.md"]
+at = "2026-10-09T04:06:48Z"
+actor = "GingerVHS"
+rev = 1
