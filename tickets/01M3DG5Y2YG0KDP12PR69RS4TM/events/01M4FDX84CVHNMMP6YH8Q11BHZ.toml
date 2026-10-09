@@ -1,0 +1,7 @@
+kind = "field"
+field = "acceptance"
+new = ["Given a gravity-gun cannon, when it fires, then the shot carries a positive well spec and an anti-gravity gun a negative one (BlockBehaviourTests)", "Given a gravity or anti-gravity shot that lands on a ship, when the server steps, then one attractive or repulsive well is planted in the shared field and peers are told (ServerGravityWellTests; S43 criteria 1 and 2)"]
+moved = []
+at = "2026-10-09T04:14:28Z"
+actor = "GingerVHS"
+rev = 1
