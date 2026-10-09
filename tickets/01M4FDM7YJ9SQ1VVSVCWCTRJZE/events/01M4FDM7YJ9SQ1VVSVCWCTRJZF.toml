@@ -1,0 +1,18 @@
+kind = "create"
+title = "S53-2: Pulsating green-to-red outline around blocks at risk of failure"
+type = "task"
+category = "todo"
+priority = "medium"
+points = 3
+parent = "01M4FDM7MX49CFNWPN41HEBC3F"
+labels = ["owner:a-carten", "game", "milestone:0.3.0"]
+scope = ["Assets/Scripts/Hullbreach.Game/ShipRenderer.cs", "Assets/Art/**", "docs/**"]
+acceptance = ["Given a block above the warning ratio, when it is drawn in any overlay mode including None, then an outline around the block is visible and shifts from green toward red as the ratio approaches failure", "Given a failing block, when its TimeToFailure shrinks, then the outline pulse rate increases", "Given the colorblind palette setting (S37-2), when it is on, then the outline uses the colorblind-safe ramp", "Given a block below the warning ratio, when it is drawn, then no outline is shown"]
+body = "Replaces or complements ApplyCriticalFlash (body tint). Needs Unity editor verification."
+at = "2026-10-09T04:09:33Z"
+actor = "lognd"
+rev = 1
+
+[[links]]
+kind = "blocked-by"
+target = "01M4FDM7SMC5PB0AW3T1RS9TFD"
