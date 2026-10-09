@@ -2,11 +2,12 @@
 id = "01M4GR2NA6VM4EM22MMXXKT7YH"
 title = "ServerSimulation.Join trusts client ShipSnapshot: ignores Grid.TryAdd failures, accepts arbitrary variants/state and re-Join overwrite"
 type = "security"
-category = "todo"
+category = "done"
+outcome = "duplicate"
 priority = "high"
 reporter = "lognd"
 created = "2026-10-09T16:31:26Z"
-updated = "2026-10-09T16:31:26Z"
+updated = "2026-10-09T16:36:17Z"
 labels = ["origin:auditor", "audit:ship"]
 scope = ["Assets/Scripts/Hullbreach.Net/ServerSimulation.cs"]
 +++
