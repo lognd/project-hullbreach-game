@@ -38,6 +38,10 @@ namespaces = ["frob", "grimble", "crunk"]
 [evidence]
 # Identities (git `user.email`) that may attest a criterion; `frob init` and `config sync` write the repository owner's email, and an empty list means nobody may.
 attesters = ["44213227+mcnairrobotics@users.noreply.github.com"]
+# Programs the `command` provider may run. The documented default includes
+# dotnet, but 0.532.0 omits it, so it is listed here: the plain-C# NUnit
+# suite (tools/plaincs) is this repository's only test runner.
+allowed_tools = ["cargo", "git", "pytest", "vitest", "jest", "dotnet"]
 
 [git]
 # Compare-and-swap retries when moving a ledger ref.
