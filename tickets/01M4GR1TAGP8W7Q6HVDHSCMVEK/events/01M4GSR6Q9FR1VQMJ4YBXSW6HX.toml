@@ -1,0 +1,7 @@
+kind = "field"
+field = "acceptance"
+new = ["Given a block whose damage changes, when the solver ticks, then K is rebuilt and the solve restarts, with one shared softening floor"]
+moved = []
+at = "2026-10-09T17:00:40Z"
+actor = "GingerVHS"
+rev = 1
