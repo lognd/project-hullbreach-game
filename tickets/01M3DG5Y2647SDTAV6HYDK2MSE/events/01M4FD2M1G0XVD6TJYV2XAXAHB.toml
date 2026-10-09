@@ -1,0 +1,7 @@
+kind = "field"
+field = "acceptance"
+new = ["Given a BlockGrid built through BuilderSession, when it is written to the versioned design format and read back, then the loaded grid has the same blocks (key, type, modifiers) and the same core", "Given a design file whose blocks break PlacementRules (floating block, overlapping clearance, second core, out-of-range cell, unknown type, damaged block), when it is loaded, then every problem is reported with its cell and reason and the blocks are not altered", "Given a corrupt, truncated or newer-version design file, when it is loaded, then load returns an error result naming the line and never throws"]
+moved = []
+at = "2026-10-09T03:59:56Z"
+actor = "stevendangkhoi"
+rev = 1
