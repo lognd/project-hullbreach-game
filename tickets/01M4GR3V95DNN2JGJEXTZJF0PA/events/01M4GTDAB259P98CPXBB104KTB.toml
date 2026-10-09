@@ -1,0 +1,7 @@
+kind = "field"
+field = "acceptance"
+new = ["NetDemo destroys visuals for removed blocks and ships (Unity-only code, unverified in the editor; the plain-C# suite passes)"]
+moved = []
+at = "2026-10-09T17:12:12Z"
+actor = "mcnairrobotics"
+rev = 1

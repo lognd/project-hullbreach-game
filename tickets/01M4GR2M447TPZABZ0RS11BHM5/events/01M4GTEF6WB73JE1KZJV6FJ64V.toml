@@ -1,0 +1,7 @@
+kind = "field"
+field = "acceptance"
+new = ["ShipContacts.Resolve runs for every server peer pair each tick"]
+moved = []
+at = "2026-10-09T17:12:50Z"
+actor = "mcnairrobotics"
+rev = 1

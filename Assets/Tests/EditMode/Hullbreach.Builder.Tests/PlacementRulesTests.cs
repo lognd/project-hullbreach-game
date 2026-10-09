@@ -237,5 +237,25 @@ namespace Hullbreach.Builder.Tests
 
             Assert.AreEqual(6, g.Count);
         }
+
+        [Test]
+        public void CanPlace_UnknownType_IsRefusedWithUnknownTypeVerdict()
+        {
+            var g = new BlockGrid();
+            g.TryAdd(BlockKey.Pack(0, 0), new Block(BlockTypes.Core));
+
+            Assert.IsFalse(PlacementRules.CanPlace(g, BlockKey.Pack(1, 0), 255, 0, out var why));
+            Assert.AreEqual(PlacementVerdict.UnknownType, why);
+        }
+
+        [Test]
+        public void TryReservedCells_UnknownTypeOrOutOfRangeKey_ReturnsFalse()
+        {
+            var cells = new List<int>();
+            Assert.IsFalse(Clearance.TryReservedCells(BlockKey.Pack(0, 0), 255, 0, cells));
+            Assert.IsEmpty(cells);
+            Assert.IsTrue(Clearance.TryReservedCells(BlockKey.Pack(0, 0), BlockTypes.Hull, 0, cells), "true + empty means none needed");
+            Assert.IsEmpty(cells);
+        }
     }
 }

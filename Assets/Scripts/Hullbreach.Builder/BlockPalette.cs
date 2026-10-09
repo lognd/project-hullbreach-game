@@ -64,6 +64,10 @@ namespace Hullbreach.Builder
         // frob:doc docs/reference/hullbreach-builder.md#blockpalette
         public static IEnumerable<PaletteEntry> All()
         {
+            // Adding a BlockTypes entry without a Cost row must fail loudly, not index past the table.
+            if (Cost.Length != BlockTypes.Count)
+                throw new System.InvalidOperationException("BlockPalette.Cost must have one entry per BlockTypes entry");
+
             for (byte typeId = 0; typeId < BlockTypes.Count; typeId++)
             {
                 var type = BlockTypes.Get(typeId);

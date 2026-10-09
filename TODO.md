@@ -71,7 +71,9 @@ S46 (win by breaching the core), S48, and the E14 stretch goals.
 - [x] UI: port the IMGUI HUD (`BuilderHud`, `DemoMode`'s status panel
       and hull banner) to uGUI prefabs. Done, U0-U4:
       [docs/design/ui-port.md](docs/design/ui-port.md).
-- [ ] frob: `frob check` (v2, 0.532.0) exits 1 on this repo. Makes CI's
+- [x] frob: `frob check` (v2, 0.532.0) used to exit 1 on this repo; it now
+      exits 0 (the `frob:describes` lines became plain `describes:` comments)
+      and CI's job is required. History: it made CI's
       `frob check` job non-blocking until it clears: (1) 800 DSL001
       findings, `frob:describes` is not a v2 directive (frob must decide
       what replaces it); (2) C# is fidelity F1, so COV001 warns on every

@@ -22,6 +22,7 @@ namespace Hullbreach.Net
         BlockDamaged = 7,
         PowerupApplied = 8,
         GravityWellSpawned = 9,
+        ShipRemoved = 10,
     }
 
     // Client -> server, unreliable: this tick's intent. Latest-wins on drop.
@@ -34,7 +35,7 @@ namespace Hullbreach.Net
         // frob:doc docs/reference/hullbreach-net.md#inputmessage
         public readonly uint Tick;
 
-        // Quantized -127..127, unpacked to -1f..1f by /127f.
+        // Quantized -127..127, unpacked to -1f..1f by /127f (-128 clamps to -1f).
         // frob:doc docs/reference/hullbreach-net.md#inputmessage
         public readonly sbyte ThrustAxis;
 
@@ -73,10 +74,10 @@ namespace Hullbreach.Net
         }
 
         // frob:doc docs/reference/hullbreach-net.md#inputmessage
-        public float ThrustAxisFloat => ThrustAxis / 127f;
+        public float ThrustAxisFloat => Math.Max(-1f, ThrustAxis / 127f);
 
         // frob:doc docs/reference/hullbreach-net.md#inputmessage
-        public float SteerFloat => Steer / 127f;
+        public float SteerFloat => Math.Max(-1f, Steer / 127f);
 
         // frob:doc docs/reference/hullbreach-net.md#inputmessage
         public bool FirePressed => (Flags & FireBit) != 0;
@@ -170,6 +171,15 @@ namespace Hullbreach.Net
         // frob:doc docs/reference/hullbreach-net.md#shipsnapshot
         public readonly ushort Av;
 
+        // Hard cap on blocks per snapshot: bounds what a Read will allocate and
+        // what Join will accept, far above any buildable ship (INV-001).
+        // frob:doc docs/reference/hullbreach-net.md#shipsnapshot
+        // frob:invariant INV-001
+        public const int MaxBlocks = 4096;
+
+        // Bytes one SnapshotBlock occupies on the wire.
+        const int BlockWireBytes = 5;
+
         // frob:doc docs/reference/hullbreach-net.md#shipsnapshot
         public ShipSnapshot(uint sequence, ushort netId, SnapshotBlock[] blocks,
                              short px, short py, ushort rot, short vx, short vy, ushort av)
@@ -187,11 +197,14 @@ namespace Hullbreach.Net
 
         // So a caller can size its send buffer without writing twice.
         // frob:doc docs/reference/hullbreach-net.md#shipsnapshot
-        public int ByteSize => 1 + 4 + 2 + 2 + (Blocks.Length * 5) + 2 + 2 + 2 + 2 + 2 + 2;
+        public int ByteSize => 1 + 4 + 2 + 2 + (Blocks.Length * BlockWireBytes) + 2 + 2 + 2 + 2 + 2 + 2;
 
         // frob:doc docs/reference/hullbreach-net.md#shipsnapshot
         public void Write(ref ByteWriter w)
         {
+            // A longer list would silently wrap the u16 count; callers validate first.
+            if (Blocks.Length > MaxBlocks)
+                throw new ArgumentOutOfRangeException(nameof(Blocks), "snapshot exceeds MaxBlocks");
             w.WriteU8((byte)MessageKind.ShipSnapshot);
             w.WriteU32(Sequence);
             w.WriteU16(NetId);
@@ -219,9 +232,16 @@ namespace Hullbreach.Net
             r.ReadU8(); // MessageKind
             uint seq = r.ReadU32();
             ushort netId = r.ReadU16();
-            ushort count = r.ReadU16();
-            var blocks = new SnapshotBlock[count];
-            for (int i = 0; i < count; i++)
+            int wireCount = r.ReadU16();
+            // Never size an allocation from the wire: the count must be
+            // plausible AND fit in the bytes actually received (INV-001).
+            if (r.Failed || wireCount > MaxBlocks || wireCount * BlockWireBytes > r.Remaining)
+            {
+                r.Fail();
+                return new ShipSnapshot(seq, netId, Array.Empty<SnapshotBlock>(), 0, 0, 0, 0, 0, 0);
+            }
+            var blocks = new SnapshotBlock[wireCount];
+            for (int i = 0; i < blocks.Length; i++)
             {
                 sbyte x = r.ReadI8();
                 sbyte y = r.ReadI8();
@@ -237,6 +257,41 @@ namespace Hullbreach.Net
             short vy = r.ReadI16();
             ushort av = r.ReadU16();
             return new ShipSnapshot(seq, netId, blocks, px, py, rot, vx, vy, av);
+        }
+    }
+
+    // Server -> client, reliable ordered: a ship left (leave or timeout).
+    // frob:doc docs/reference/hullbreach-net.md#shipremoved
+    public readonly struct ShipRemoved
+    {
+        // frob:doc docs/reference/hullbreach-net.md#shipremoved
+        public readonly uint Sequence;
+
+        // frob:doc docs/reference/hullbreach-net.md#shipremoved
+        public readonly ushort NetId;
+
+        // frob:doc docs/reference/hullbreach-net.md#shipremoved
+        public ShipRemoved(uint sequence, ushort netId)
+        {
+            Sequence = sequence;
+            NetId = netId;
+        }
+
+        // frob:doc docs/reference/hullbreach-net.md#shipremoved
+        public void Write(ref ByteWriter w)
+        {
+            w.WriteU8((byte)MessageKind.ShipRemoved);
+            w.WriteU32(Sequence);
+            w.WriteU16(NetId);
+        }
+
+        // frob:doc docs/reference/hullbreach-net.md#shipremoved
+        public static ShipRemoved Read(ref ByteReader r)
+        {
+            r.ReadU8();
+            uint seq = r.ReadU32();
+            ushort netId = r.ReadU16();
+            return new ShipRemoved(seq, netId);
         }
     }
 

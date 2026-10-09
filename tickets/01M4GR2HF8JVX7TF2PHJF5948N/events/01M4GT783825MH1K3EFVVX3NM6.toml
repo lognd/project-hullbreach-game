@@ -1,0 +1,7 @@
+kind = "field"
+field = "acceptance"
+new = ["Fragment ids never collide with peer NetIds; a split with two peers joined leaves both peer ships intact"]
+moved = []
+at = "2026-10-09T17:08:53Z"
+actor = "mcnairrobotics"
+rev = 1

@@ -1,0 +1,7 @@
+kind = "field"
+field = "acceptance"
+new = ["Given a hovered cell, then the gizmo colour comes from Session.Hover verdict"]
+moved = []
+at = "2026-10-09T16:53:28Z"
+actor = "stevendangkhoi"
+rev = 1

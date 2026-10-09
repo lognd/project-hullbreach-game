@@ -1,0 +1,5 @@
+kind = "evidence-bypass"
+reason = "BlockGridTests.KeyAt_PastKeyCount_*; Mass is now a get-only property; Plain-C# NUnit tests pass via tools/plaincs/run_tests.sh (286); frob cannot execute C# tests"
+at = "2026-10-09T16:53:20Z"
+actor = "stevendangkhoi"
+rev = 1

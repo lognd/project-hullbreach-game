@@ -1,0 +1,8 @@
+kind = "transition"
+from = "todo"
+to = "done"
+outcome = "fixed"
+reason = "BuilderSessionTests.Select_UnknownTypeId_*; Plain-C# NUnit tests pass via tools/plaincs/run_tests.sh (286); frob cannot execute C# tests"
+at = "2026-10-09T16:53:24Z"
+actor = "stevendangkhoi"
+rev = 1

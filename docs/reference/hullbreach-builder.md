@@ -2,7 +2,7 @@
 
 Per-type reference for `Assets/Scripts/Hullbreach.Builder`, linked from the code by
 `// frob:doc docs/reference/hullbreach-builder.md#<anchor>`. One heading per
-public type; each heading carries the `frob:describes` lines for that
+public type; each heading carries the `describes:` lines for that
 type and its public members. Architecture-level context lives in
 [architecture.md](../architecture.md).
 
@@ -10,13 +10,13 @@ type and its public members. Architecture-level context lives in
 
 One selectable palette entry (S33 criterion 1).
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Builder/BlockPalette.cs::PaletteEntry -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Builder/BlockPalette.cs::PaletteEntry.TypeId -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Builder/BlockPalette.cs::PaletteEntry.Name -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Builder/BlockPalette.cs::PaletteEntry.Mass -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Builder/BlockPalette.cs::PaletteEntry.Cost -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Builder/BlockPalette.cs::PaletteEntry.Symmetric -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Builder/BlockPalette.cs::PaletteEntry.PaletteEntry -->
+<!-- describes: Assets/Scripts/Hullbreach.Builder/BlockPalette.cs::PaletteEntry -->
+<!-- describes: Assets/Scripts/Hullbreach.Builder/BlockPalette.cs::PaletteEntry.TypeId -->
+<!-- describes: Assets/Scripts/Hullbreach.Builder/BlockPalette.cs::PaletteEntry.Name -->
+<!-- describes: Assets/Scripts/Hullbreach.Builder/BlockPalette.cs::PaletteEntry.Mass -->
+<!-- describes: Assets/Scripts/Hullbreach.Builder/BlockPalette.cs::PaletteEntry.Cost -->
+<!-- describes: Assets/Scripts/Hullbreach.Builder/BlockPalette.cs::PaletteEntry.Symmetric -->
+<!-- describes: Assets/Scripts/Hullbreach.Builder/BlockPalette.cs::PaletteEntry.PaletteEntry -->
 
 ### BlockPalette
 
@@ -29,19 +29,19 @@ ship-local +y and RetroThruster always pushes toward -y, so neither has a
 facing to choose; only Cannon and Fin point somewhere and so require the
 second click.
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Builder/BlockPalette.cs::BlockPalette -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Builder/BlockPalette.cs::BlockPalette.IsSymmetric -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Builder/BlockPalette.cs::BlockPalette.All -->
+<!-- describes: Assets/Scripts/Hullbreach.Builder/BlockPalette.cs::BlockPalette -->
+<!-- describes: Assets/Scripts/Hullbreach.Builder/BlockPalette.cs::BlockPalette.IsSymmetric -->
+<!-- describes: Assets/Scripts/Hullbreach.Builder/BlockPalette.cs::BlockPalette.All -->
 
 ### HoverState
 
 Preview shown to the UI for whatever cell the pointer is over.
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Builder/BuilderSession.cs::HoverState -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Builder/BuilderSession.cs::HoverState.Valid -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Builder/BuilderSession.cs::HoverState.Key -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Builder/BuilderSession.cs::HoverState.Verdict -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Builder/BuilderSession.cs::HoverState.HoverState -->
+<!-- describes: Assets/Scripts/Hullbreach.Builder/BuilderSession.cs::HoverState -->
+<!-- describes: Assets/Scripts/Hullbreach.Builder/BuilderSession.cs::HoverState.Valid -->
+<!-- describes: Assets/Scripts/Hullbreach.Builder/BuilderSession.cs::HoverState.Key -->
+<!-- describes: Assets/Scripts/Hullbreach.Builder/BuilderSession.cs::HoverState.Verdict -->
+<!-- describes: Assets/Scripts/Hullbreach.Builder/BuilderSession.cs::HoverState.HoverState -->
 
 ### BuilderState
 
@@ -51,7 +51,7 @@ commit". Symmetric block types (Core/Hull/Armor) have no facing to
 choose, so S30's UI conversation ("skip the second click") applies and
 they commit on the first click.
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Builder/BuilderSession.cs::BuilderState -->
+<!-- describes: Assets/Scripts/Hullbreach.Builder/BuilderSession.cs::BuilderState -->
 
 ### BuilderSession
 
@@ -75,33 +75,38 @@ verdict re-validates the pending cell with that candidate facing, so an
 orientation that would block its own exhaust/muzzle/fin clearance, or
 lacks a fin's hull anchor, previews as invalid.
 
+`Select` returns false, changing nothing, for a typeId outside the
+BlockTypes table (BlockTypes.IsValid); PlacementRules.CanPlace also refuses
+such ids with the UnknownType verdict as defense in depth.
+
 `Click` is the main two-click gesture: Idle + valid cell commits
 immediately for symmetric types and enters Orienting for asymmetric
 types; while Orienting it commits the pending placement with the facing
-from the last Hover.
+snapped from the pending cell towards the clicked key, so Click is
+self-contained and does not depend on a prior Hover.
 
 `Remove` applies the detach rule and records the whole batch (the
 requested block plus anything it strands) as one undoable action.
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Builder/BuilderSession.cs::BuilderSession -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Builder/BuilderSession.cs::BuilderSession.Grid -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Builder/BuilderSession.cs::BuilderSession.BuilderSession -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Builder/BuilderSession.cs::BuilderSession.SelectedTypeId -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Builder/BuilderSession.cs::BuilderSession.State -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Builder/BuilderSession.cs::BuilderSession.PendingKey -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Builder/BuilderSession.cs::BuilderSession.PendingModifiers -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Builder/BuilderSession.cs::BuilderSession.Changed -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Builder/BuilderSession.cs::BuilderSession.TotalMass -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Builder/BuilderSession.cs::BuilderSession.BlockCount -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Builder/BuilderSession.cs::BuilderSession.Select -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Builder/BuilderSession.cs::BuilderSession.Hover -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Builder/BuilderSession.cs::BuilderSession.Click -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Builder/BuilderSession.cs::BuilderSession.Cancel -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Builder/BuilderSession.cs::BuilderSession.Remove -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Builder/BuilderSession.cs::BuilderSession.Undo -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Builder/BuilderSession.cs::BuilderSession.Redo -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Builder/BuilderSession.cs::BuilderSession.UndoDepth -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Builder/BuilderSession.cs::BuilderSession.DescribeVerdict -->
+<!-- describes: Assets/Scripts/Hullbreach.Builder/BuilderSession.cs::BuilderSession -->
+<!-- describes: Assets/Scripts/Hullbreach.Builder/BuilderSession.cs::BuilderSession.Grid -->
+<!-- describes: Assets/Scripts/Hullbreach.Builder/BuilderSession.cs::BuilderSession.BuilderSession -->
+<!-- describes: Assets/Scripts/Hullbreach.Builder/BuilderSession.cs::BuilderSession.SelectedTypeId -->
+<!-- describes: Assets/Scripts/Hullbreach.Builder/BuilderSession.cs::BuilderSession.State -->
+<!-- describes: Assets/Scripts/Hullbreach.Builder/BuilderSession.cs::BuilderSession.PendingKey -->
+<!-- describes: Assets/Scripts/Hullbreach.Builder/BuilderSession.cs::BuilderSession.PendingModifiers -->
+<!-- describes: Assets/Scripts/Hullbreach.Builder/BuilderSession.cs::BuilderSession.Changed -->
+<!-- describes: Assets/Scripts/Hullbreach.Builder/BuilderSession.cs::BuilderSession.TotalMass -->
+<!-- describes: Assets/Scripts/Hullbreach.Builder/BuilderSession.cs::BuilderSession.BlockCount -->
+<!-- describes: Assets/Scripts/Hullbreach.Builder/BuilderSession.cs::BuilderSession.Select -->
+<!-- describes: Assets/Scripts/Hullbreach.Builder/BuilderSession.cs::BuilderSession.Hover -->
+<!-- describes: Assets/Scripts/Hullbreach.Builder/BuilderSession.cs::BuilderSession.Click -->
+<!-- describes: Assets/Scripts/Hullbreach.Builder/BuilderSession.cs::BuilderSession.Cancel -->
+<!-- describes: Assets/Scripts/Hullbreach.Builder/BuilderSession.cs::BuilderSession.Remove -->
+<!-- describes: Assets/Scripts/Hullbreach.Builder/BuilderSession.cs::BuilderSession.Undo -->
+<!-- describes: Assets/Scripts/Hullbreach.Builder/BuilderSession.cs::BuilderSession.Redo -->
+<!-- describes: Assets/Scripts/Hullbreach.Builder/BuilderSession.cs::BuilderSession.UndoDepth -->
+<!-- describes: Assets/Scripts/Hullbreach.Builder/BuilderSession.cs::BuilderSession.DescribeVerdict -->
 
 ### Clearance
 
@@ -116,9 +121,10 @@ neighbor, Cannon and Fin reserve the cell Facing.Ahead of them, and
 RetroThruster reserves its +x and -x neighbors. Plain blocks
 (Core/Hull/Armor) reserve nothing. A reserved direction that falls
 outside BlockKey's range is simply omitted: there is no cell there to
-ever be occupied, so it is vacuously satisfied. Always returns true; the
-bool return exists so a caller can read this as "the reservation set was
-computed" without special-casing plain types.
+ever be occupied, so it is vacuously satisfied. Returns true when the
+set was computed (an empty set then really means "needs none") and false,
+with the list cleared, for an unknown typeId or out-of-range key;
+PlacementRules turns that into the UnknownType verdict.
 
 `RequiredAnchor` is true when a type requires an anchoring block on some
 fixed side of it (only Fin, whose anchor is Facing.Behind, the hull it
@@ -127,9 +133,9 @@ falls outside BlockKey's range, the anchor key is -1 even though the
 return value is true, so the caller sees "there is nowhere for the
 required hull to be" and refuses the placement.
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Builder/Clearance.cs::Clearance -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Builder/Clearance.cs::Clearance.TryReservedCells -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Builder/Clearance.cs::Clearance.RequiredAnchor -->
+<!-- describes: Assets/Scripts/Hullbreach.Builder/Clearance.cs::Clearance -->
+<!-- describes: Assets/Scripts/Hullbreach.Builder/Clearance.cs::Clearance.TryReservedCells -->
+<!-- describes: Assets/Scripts/Hullbreach.Builder/Clearance.cs::Clearance.RequiredAnchor -->
 
 ### PlacementVerdict
 
@@ -138,7 +144,7 @@ exhaust/muzzle/fin clearance rules). Ok is the only accepting value;
 every other member names the specific rule that refused the cell so the
 HUD can explain it instead of just flashing red.
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Builder/PlacementRules.cs::PlacementVerdict -->
+<!-- describes: Assets/Scripts/Hullbreach.Builder/PlacementRules.cs::PlacementVerdict -->
 
 ### PlacementRules
 
@@ -172,10 +178,10 @@ one plus any stranded ones) is appended to `removed`. Uses Articulation
 as a fast path: if the key is not an articulation point, removing it
 cannot disconnect anything, so the flood fill is skipped entirely.
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Builder/PlacementRules.cs::PlacementRules -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Builder/PlacementRules.cs::PlacementRules.CanPlace -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Builder/PlacementRules.cs::PlacementRules.CanRemove -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Builder/PlacementRules.cs::PlacementRules.Detach -->
+<!-- describes: Assets/Scripts/Hullbreach.Builder/PlacementRules.cs::PlacementRules -->
+<!-- describes: Assets/Scripts/Hullbreach.Builder/PlacementRules.cs::PlacementRules.CanPlace -->
+<!-- describes: Assets/Scripts/Hullbreach.Builder/PlacementRules.cs::PlacementRules.CanRemove -->
+<!-- describes: Assets/Scripts/Hullbreach.Builder/PlacementRules.cs::PlacementRules.Detach -->
 
 ### UndoStack
 
@@ -198,11 +204,17 @@ its block, a Remove (including a detach batch) is undone by restoring
 every entry exactly. `TryRedo` re-applies the most recently undone
 action.
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Builder/UndoStack.cs::UndoStack -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Builder/UndoStack.cs::UndoStack.MinimumDepth -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Builder/UndoStack.cs::UndoStack.MaxDepth -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Builder/UndoStack.cs::UndoStack.Depth -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Builder/UndoStack.cs::UndoStack.RecordPlace -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Builder/UndoStack.cs::UndoStack.RecordRemove -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Builder/UndoStack.cs::UndoStack.TryUndo -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Builder/UndoStack.cs::UndoStack.TryRedo -->
+Undo/redo are all-or-nothing and report failure: if any entry cannot apply
+(undoing the core-seeding Place, since BlockGrid never removes the core, or
+a grid edited externally, e.g. damage removing a block) the grid is left
+untouched, the action stays on its stack, and TryUndo/TryRedo return false,
+so BuilderSession.Undo/Redo do not fire Changed.
+
+<!-- describes: Assets/Scripts/Hullbreach.Builder/UndoStack.cs::UndoStack -->
+<!-- describes: Assets/Scripts/Hullbreach.Builder/UndoStack.cs::UndoStack.MinimumDepth -->
+<!-- describes: Assets/Scripts/Hullbreach.Builder/UndoStack.cs::UndoStack.MaxDepth -->
+<!-- describes: Assets/Scripts/Hullbreach.Builder/UndoStack.cs::UndoStack.Depth -->
+<!-- describes: Assets/Scripts/Hullbreach.Builder/UndoStack.cs::UndoStack.RecordPlace -->
+<!-- describes: Assets/Scripts/Hullbreach.Builder/UndoStack.cs::UndoStack.RecordRemove -->
+<!-- describes: Assets/Scripts/Hullbreach.Builder/UndoStack.cs::UndoStack.TryUndo -->
+<!-- describes: Assets/Scripts/Hullbreach.Builder/UndoStack.cs::UndoStack.TryRedo -->

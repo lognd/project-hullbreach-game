@@ -2,7 +2,7 @@
 
 Per-type reference for `Assets/Scripts/Hullbreach.Core`, linked from the code by
 `// frob:doc docs/reference/hullbreach-core.md#<anchor>`. One heading per
-public type; each heading carries the `frob:describes` lines for that
+public type; each heading carries the `describes:` lines for that
 type and its public members. Architecture-level context lives in
 [architecture.md](../architecture.md).
 
@@ -16,14 +16,14 @@ split is why this is not an abstract base class with a subclass per block
 kind, which would cost a heap object and a virtual call in the innermost
 loop of the FE assembly and lock the simulation out of Burst.
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Core/Grid/Block.cs::Block -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Core/Grid/Block.cs::Block.TypeId -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Core/Grid/Block.cs::Block.Modifiers -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Core/Grid/Block.cs::Block.Damage -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Core/Grid/Block.cs::Block.Block -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Core/Grid/Block.cs::Block.DamageFraction -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Core/Grid/Block.cs::Block.WithDamage -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Core/Grid/Block.cs::Block.WithModifiers -->
+<!-- describes: Assets/Scripts/Hullbreach.Core/Grid/Block.cs::Block -->
+<!-- describes: Assets/Scripts/Hullbreach.Core/Grid/Block.cs::Block.TypeId -->
+<!-- describes: Assets/Scripts/Hullbreach.Core/Grid/Block.cs::Block.Modifiers -->
+<!-- describes: Assets/Scripts/Hullbreach.Core/Grid/Block.cs::Block.Damage -->
+<!-- describes: Assets/Scripts/Hullbreach.Core/Grid/Block.cs::Block.Block -->
+<!-- describes: Assets/Scripts/Hullbreach.Core/Grid/Block.cs::Block.DamageFraction -->
+<!-- describes: Assets/Scripts/Hullbreach.Core/Grid/Block.cs::Block.WithDamage -->
+<!-- describes: Assets/Scripts/Hullbreach.Core/Grid/Block.cs::Block.WithModifiers -->
 
 ### BlockGrid
 
@@ -42,6 +42,15 @@ TryRemove bump `_structureVersion` (they change the key set); TrySet does
 not (it only rewrites a value in place), so damage accumulation never pays
 for a resort.
 
+TryAdd and TrySet NEVER throw and validate BEFORE any mutation: a TypeId
+outside the table (BlockTypes.IsValid, e.g. a hostile wire byte) returns
+false and leaves the grid, mass and versions untouched. Net callers should
+treat false as a protocol error. TrySet additionally returns false when it
+would create or remove Core-ness (old and new TypeId must agree on being
+Core); CoreKey and the single-core rule belong to TryAdd/TryRemove.
+`Mass` is a get-only copy of the running accumulator. `KeyAt(i)` throws
+ArgumentOutOfRangeException unless 0 <= i < KeyCount.
+
 `CoreKey` is the packed key of the core, or null when this grid is debris.
 A fragment that breaks off has NO core, so connectivity has no root and
 simply does not run for it. This is why the core is nullable rather than
@@ -56,22 +65,22 @@ iteration; the sorted view is rebuilt lazily by `EnsureSortedKeys` when a
 structural edit happened since the last rebuild, and `SortedKeys`'s span
 is only valid until the next structural edit.
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Core/Grid/BlockGrid.cs::BlockGrid -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Core/Grid/BlockGrid.cs::BlockGrid.CoreKey -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Core/Grid/BlockGrid.cs::BlockGrid.Count -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Core/Grid/BlockGrid.cs::BlockGrid.Mass -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Core/Grid/BlockGrid.cs::BlockGrid.TopologyDirty -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Core/Grid/BlockGrid.cs::BlockGrid.All -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Core/Grid/BlockGrid.cs::BlockGrid.KeyCount -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Core/Grid/BlockGrid.cs::BlockGrid.KeyAt -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Core/Grid/BlockGrid.cs::BlockGrid.SortedKeys -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Core/Grid/BlockGrid.cs::BlockGrid.TryAdd -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Core/Grid/BlockGrid.cs::BlockGrid.TryRemove -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Core/Grid/BlockGrid.cs::BlockGrid.TryGet -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Core/Grid/BlockGrid.cs::BlockGrid.Contains -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Core/Grid/BlockGrid.cs::BlockGrid.TrySet -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Core/Grid/BlockGrid.cs::BlockGrid.ClearDirty -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Core/Grid/BlockGrid.cs::BlockGrid.CenterOf -->
+<!-- describes: Assets/Scripts/Hullbreach.Core/Grid/BlockGrid.cs::BlockGrid -->
+<!-- describes: Assets/Scripts/Hullbreach.Core/Grid/BlockGrid.cs::BlockGrid.CoreKey -->
+<!-- describes: Assets/Scripts/Hullbreach.Core/Grid/BlockGrid.cs::BlockGrid.Count -->
+<!-- describes: Assets/Scripts/Hullbreach.Core/Grid/BlockGrid.cs::BlockGrid.Mass -->
+<!-- describes: Assets/Scripts/Hullbreach.Core/Grid/BlockGrid.cs::BlockGrid.TopologyDirty -->
+<!-- describes: Assets/Scripts/Hullbreach.Core/Grid/BlockGrid.cs::BlockGrid.All -->
+<!-- describes: Assets/Scripts/Hullbreach.Core/Grid/BlockGrid.cs::BlockGrid.KeyCount -->
+<!-- describes: Assets/Scripts/Hullbreach.Core/Grid/BlockGrid.cs::BlockGrid.KeyAt -->
+<!-- describes: Assets/Scripts/Hullbreach.Core/Grid/BlockGrid.cs::BlockGrid.SortedKeys -->
+<!-- describes: Assets/Scripts/Hullbreach.Core/Grid/BlockGrid.cs::BlockGrid.TryAdd -->
+<!-- describes: Assets/Scripts/Hullbreach.Core/Grid/BlockGrid.cs::BlockGrid.TryRemove -->
+<!-- describes: Assets/Scripts/Hullbreach.Core/Grid/BlockGrid.cs::BlockGrid.TryGet -->
+<!-- describes: Assets/Scripts/Hullbreach.Core/Grid/BlockGrid.cs::BlockGrid.Contains -->
+<!-- describes: Assets/Scripts/Hullbreach.Core/Grid/BlockGrid.cs::BlockGrid.TrySet -->
+<!-- describes: Assets/Scripts/Hullbreach.Core/Grid/BlockGrid.cs::BlockGrid.ClearDirty -->
+<!-- describes: Assets/Scripts/Hullbreach.Core/Grid/BlockGrid.cs::BlockGrid.CenterOf -->
 
 ### BlockGrid.BlockEnumerable
 
@@ -83,9 +92,9 @@ prefers over the interface methods, which exist only as fallbacks for
 LINQ and other `IEnumerable`-typed consumers and box the enumerator same
 as before this change.
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Core/Grid/BlockGrid.cs::BlockGrid.BlockEnumerable -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Core/Grid/BlockGrid.cs::BlockGrid.BlockEnumerable.BlockEnumerable -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Core/Grid/BlockGrid.cs::BlockGrid.BlockEnumerable.GetEnumerator -->
+<!-- describes: Assets/Scripts/Hullbreach.Core/Grid/BlockGrid.cs::BlockGrid.BlockEnumerable -->
+<!-- describes: Assets/Scripts/Hullbreach.Core/Grid/BlockGrid.cs::BlockGrid.BlockEnumerable.BlockEnumerable -->
+<!-- describes: Assets/Scripts/Hullbreach.Core/Grid/BlockGrid.cs::BlockGrid.BlockEnumerable.GetEnumerator -->
 
 ### BlockKey
 
@@ -99,13 +108,13 @@ GRID CONVENTION: everything downstream depends on this: block (x, y)
 occupies the unit square [x, x+1] x [y, y+1], so its center is at
 (x + 0.5, y + 0.5).
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Core/Grid/BlockKey.cs::BlockKey -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Core/Grid/BlockKey.cs::BlockKey.Min -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Core/Grid/BlockKey.cs::BlockKey.Max -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Core/Grid/BlockKey.cs::BlockKey.Pack -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Core/Grid/BlockKey.cs::BlockKey.Unpack -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Core/Grid/BlockKey.cs::BlockKey.Neighbors -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Core/Grid/BlockKey.cs::BlockKey.InRange -->
+<!-- describes: Assets/Scripts/Hullbreach.Core/Grid/BlockKey.cs::BlockKey -->
+<!-- describes: Assets/Scripts/Hullbreach.Core/Grid/BlockKey.cs::BlockKey.Min -->
+<!-- describes: Assets/Scripts/Hullbreach.Core/Grid/BlockKey.cs::BlockKey.Max -->
+<!-- describes: Assets/Scripts/Hullbreach.Core/Grid/BlockKey.cs::BlockKey.Pack -->
+<!-- describes: Assets/Scripts/Hullbreach.Core/Grid/BlockKey.cs::BlockKey.Unpack -->
+<!-- describes: Assets/Scripts/Hullbreach.Core/Grid/BlockKey.cs::BlockKey.Neighbors -->
+<!-- describes: Assets/Scripts/Hullbreach.Core/Grid/BlockKey.cs::BlockKey.InRange -->
 
 ### BlockType
 
@@ -129,17 +138,17 @@ impulsive load case. `CompressiveStress` is the brittle limit in
 compression, much larger than SpallStress for armor-like materials:
 brittle solids are far stronger in compression than in tension.
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Core/Grid/BlockType.cs::BlockType -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Core/Grid/BlockType.cs::BlockType.Width -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Core/Grid/BlockType.cs::BlockType.Height -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Core/Grid/BlockType.cs::BlockType.Name -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Core/Grid/BlockType.cs::BlockType.Mass -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Core/Grid/BlockType.cs::BlockType.YoungsModulus -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Core/Grid/BlockType.cs::BlockType.PoissonClass -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Core/Grid/BlockType.cs::BlockType.YieldStress -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Core/Grid/BlockType.cs::BlockType.SpallStress -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Core/Grid/BlockType.cs::BlockType.CompressiveStress -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Core/Grid/BlockType.cs::BlockType.BlockType -->
+<!-- describes: Assets/Scripts/Hullbreach.Core/Grid/BlockType.cs::BlockType -->
+<!-- describes: Assets/Scripts/Hullbreach.Core/Grid/BlockType.cs::BlockType.Width -->
+<!-- describes: Assets/Scripts/Hullbreach.Core/Grid/BlockType.cs::BlockType.Height -->
+<!-- describes: Assets/Scripts/Hullbreach.Core/Grid/BlockType.cs::BlockType.Name -->
+<!-- describes: Assets/Scripts/Hullbreach.Core/Grid/BlockType.cs::BlockType.Mass -->
+<!-- describes: Assets/Scripts/Hullbreach.Core/Grid/BlockType.cs::BlockType.YoungsModulus -->
+<!-- describes: Assets/Scripts/Hullbreach.Core/Grid/BlockType.cs::BlockType.PoissonClass -->
+<!-- describes: Assets/Scripts/Hullbreach.Core/Grid/BlockType.cs::BlockType.YieldStress -->
+<!-- describes: Assets/Scripts/Hullbreach.Core/Grid/BlockType.cs::BlockType.SpallStress -->
+<!-- describes: Assets/Scripts/Hullbreach.Core/Grid/BlockType.cs::BlockType.CompressiveStress -->
+<!-- describes: Assets/Scripts/Hullbreach.Core/Grid/BlockType.cs::BlockType.BlockType -->
 
 ### BlockTypes
 
@@ -172,17 +181,18 @@ changes stiffness must go through here. The floor (0.05) is a placeholder
 curve that just keeps K non-singular; a later DamageModel may replace it
 with something that better matches real ductile softening (TODO D3).
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Core/Grid/BlockType.cs::BlockTypes -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Core/Grid/BlockType.cs::BlockTypes.Core -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Core/Grid/BlockType.cs::BlockTypes.Hull -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Core/Grid/BlockType.cs::BlockTypes.Armor -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Core/Grid/BlockType.cs::BlockTypes.Thruster -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Core/Grid/BlockType.cs::BlockTypes.Cannon -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Core/Grid/BlockType.cs::BlockTypes.Fin -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Core/Grid/BlockType.cs::BlockTypes.RetroThruster -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Core/Grid/BlockType.cs::BlockTypes.Get -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Core/Grid/BlockType.cs::BlockTypes.Count -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Core/Grid/BlockType.cs::BlockTypes.EffectiveStiffness -->
+<!-- describes: Assets/Scripts/Hullbreach.Core/Grid/BlockType.cs::BlockTypes -->
+<!-- describes: Assets/Scripts/Hullbreach.Core/Grid/BlockType.cs::BlockTypes.Core -->
+<!-- describes: Assets/Scripts/Hullbreach.Core/Grid/BlockType.cs::BlockTypes.Hull -->
+<!-- describes: Assets/Scripts/Hullbreach.Core/Grid/BlockType.cs::BlockTypes.Armor -->
+<!-- describes: Assets/Scripts/Hullbreach.Core/Grid/BlockType.cs::BlockTypes.Thruster -->
+<!-- describes: Assets/Scripts/Hullbreach.Core/Grid/BlockType.cs::BlockTypes.Cannon -->
+<!-- describes: Assets/Scripts/Hullbreach.Core/Grid/BlockType.cs::BlockTypes.Fin -->
+<!-- describes: Assets/Scripts/Hullbreach.Core/Grid/BlockType.cs::BlockTypes.RetroThruster -->
+<!-- describes: Assets/Scripts/Hullbreach.Core/Grid/BlockType.cs::BlockTypes.Get -->
+<!-- describes: Assets/Scripts/Hullbreach.Core/Grid/BlockType.cs::BlockTypes.Count -->
+<!-- describes: Assets/Scripts/Hullbreach.Core/Grid/BlockType.cs::BlockTypes.IsValid -->
+<!-- describes: Assets/Scripts/Hullbreach.Core/Grid/BlockType.cs::BlockTypes.EffectiveStiffness -->
 
 ### BlockVariants
 
@@ -194,10 +204,10 @@ Facing (bits 0-1) and ThrusterUpgrades (bits 2-3), since builder placement
 code needs to read/write variant bits without depending on
 Hullbreach.Ship.
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Core/Grid/BlockVariants.cs::BlockVariants -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Core/Grid/BlockVariants.cs::BlockVariants.Mask -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Core/Grid/BlockVariants.cs::BlockVariants.Get -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Core/Grid/BlockVariants.cs::BlockVariants.With -->
+<!-- describes: Assets/Scripts/Hullbreach.Core/Grid/BlockVariants.cs::BlockVariants -->
+<!-- describes: Assets/Scripts/Hullbreach.Core/Grid/BlockVariants.cs::BlockVariants.Mask -->
+<!-- describes: Assets/Scripts/Hullbreach.Core/Grid/BlockVariants.cs::BlockVariants.Get -->
+<!-- describes: Assets/Scripts/Hullbreach.Core/Grid/BlockVariants.cs::BlockVariants.With -->
 
 ### Facing
 
@@ -209,14 +219,14 @@ encoding without depending on Hullbreach.Ship.
 Encoding: 0 = +y ("up"), 1 = +x, 2 = -y, 3 = -x, all in ship-local space
 before Rotation is applied.
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Core/Grid/Facing.cs::Facing -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Core/Grid/Facing.cs::Facing.Mask -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Core/Grid/Facing.cs::Facing.Step -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Core/Grid/Facing.cs::Facing.Direction -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Core/Grid/Facing.cs::Facing.Opposite -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Core/Grid/Facing.cs::Facing.Perpendicular -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Core/Grid/Facing.cs::Facing.Ahead -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Core/Grid/Facing.cs::Facing.Behind -->
+<!-- describes: Assets/Scripts/Hullbreach.Core/Grid/Facing.cs::Facing -->
+<!-- describes: Assets/Scripts/Hullbreach.Core/Grid/Facing.cs::Facing.Mask -->
+<!-- describes: Assets/Scripts/Hullbreach.Core/Grid/Facing.cs::Facing.Step -->
+<!-- describes: Assets/Scripts/Hullbreach.Core/Grid/Facing.cs::Facing.Direction -->
+<!-- describes: Assets/Scripts/Hullbreach.Core/Grid/Facing.cs::Facing.Opposite -->
+<!-- describes: Assets/Scripts/Hullbreach.Core/Grid/Facing.cs::Facing.Perpendicular -->
+<!-- describes: Assets/Scripts/Hullbreach.Core/Grid/Facing.cs::Facing.Ahead -->
+<!-- describes: Assets/Scripts/Hullbreach.Core/Grid/Facing.cs::Facing.Behind -->
 
 ### MassProperties
 
@@ -240,15 +250,15 @@ center; the parallel axis theorem folds the block's own inertia plus its
 offset into the origin-frame second moment, all in O(1), and `Remove` is
 the exact inverse of `Add`.
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Core/Mass/MassProperties.cs::MassProperties -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Core/Mass/MassProperties.cs::MassProperties.Total -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Core/Mass/MassProperties.cs::MassProperties.FirstMoment -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Core/Mass/MassProperties.cs::MassProperties.SecondMomentAboutOrigin -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Core/Mass/MassProperties.cs::MassProperties.CenterOfMass -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Core/Mass/MassProperties.cs::MassProperties.InertiaAboutCenterOfMass -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Core/Mass/MassProperties.cs::MassProperties.RectangleInertia -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Core/Mass/MassProperties.cs::MassProperties.Add -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Core/Mass/MassProperties.cs::MassProperties.Remove -->
+<!-- describes: Assets/Scripts/Hullbreach.Core/Mass/MassProperties.cs::MassProperties -->
+<!-- describes: Assets/Scripts/Hullbreach.Core/Mass/MassProperties.cs::MassProperties.Total -->
+<!-- describes: Assets/Scripts/Hullbreach.Core/Mass/MassProperties.cs::MassProperties.FirstMoment -->
+<!-- describes: Assets/Scripts/Hullbreach.Core/Mass/MassProperties.cs::MassProperties.SecondMomentAboutOrigin -->
+<!-- describes: Assets/Scripts/Hullbreach.Core/Mass/MassProperties.cs::MassProperties.CenterOfMass -->
+<!-- describes: Assets/Scripts/Hullbreach.Core/Mass/MassProperties.cs::MassProperties.InertiaAboutCenterOfMass -->
+<!-- describes: Assets/Scripts/Hullbreach.Core/Mass/MassProperties.cs::MassProperties.RectangleInertia -->
+<!-- describes: Assets/Scripts/Hullbreach.Core/Mass/MassProperties.cs::MassProperties.Add -->
+<!-- describes: Assets/Scripts/Hullbreach.Core/Mass/MassProperties.cs::MassProperties.Remove -->
 
 ### Articulation
 
@@ -275,8 +285,8 @@ parent (not all edges to it), since 4-connected grid adjacency never has
 more than one edge between the same pair of nodes; that is why one
 comparison (`child == frame.Parent`) is safe.
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Core/Topology/Articulation.cs::Articulation -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Core/Topology/Articulation.cs::Articulation.Compute -->
+<!-- describes: Assets/Scripts/Hullbreach.Core/Topology/Articulation.cs::Articulation -->
+<!-- describes: Assets/Scripts/Hullbreach.Core/Topology/Articulation.cs::Articulation.Compute -->
 
 ### Connectivity
 
@@ -303,7 +313,7 @@ separate chunks yields two debris bodies rather than one; it is a BFS
 restricted to the given key set only, same shape as ReachableFromCore but
 bounded to the given keys instead of the whole grid.
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Core/Topology/Connectivity.cs::Connectivity -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Core/Topology/Connectivity.cs::Connectivity.ReachableFromCore -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Core/Topology/Connectivity.cs::Connectivity.FindDetached -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Core/Topology/Connectivity.cs::Connectivity.SplitIntoComponents -->
+<!-- describes: Assets/Scripts/Hullbreach.Core/Topology/Connectivity.cs::Connectivity -->
+<!-- describes: Assets/Scripts/Hullbreach.Core/Topology/Connectivity.cs::Connectivity.ReachableFromCore -->
+<!-- describes: Assets/Scripts/Hullbreach.Core/Topology/Connectivity.cs::Connectivity.FindDetached -->
+<!-- describes: Assets/Scripts/Hullbreach.Core/Topology/Connectivity.cs::Connectivity.SplitIntoComponents -->

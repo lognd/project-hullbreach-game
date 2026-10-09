@@ -2,13 +2,13 @@
 
 Per-type reference for `Assets/Scripts/Hullbreach.Game`, linked from the code by
 `// frob:doc docs/reference/hullbreach-game.md#<anchor>`. One heading per
-public type; each heading carries the `frob:describes` lines for that
+public type; each heading carries the `describes:` lines for that
 type and its public members. Architecture-level context lives in
 [architecture.md](../architecture.md).
 
 ### AuthoredBlock
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/ShipController.cs::AuthoredBlock -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/ShipController.cs::AuthoredBlock -->
 
 One block of the Inspector-authored ship, before it goes into the grid. A
 plain serializable struct rather than a ScriptableObject or prefab-per-ship,
@@ -17,15 +17,15 @@ is Hullbreach.Builder's job later).
 
 ### BuilderController
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/BuilderController.cs::BuilderController -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/BuilderController.cs::BuilderController.Session -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/BuilderController.cs::BuilderController.HoverValid -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/BuilderController.cs::BuilderController.HoverVerdictText -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/BuilderController.cs::BuilderController.HoverIndicator -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/BuilderController.cs::BuilderController.TryPlaceAt -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/BuilderController.cs::BuilderController.TryRemoveAt -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/BuilderController.cs::BuilderController.VerdictAt -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/BuilderController.cs::BuilderController.PreviewHoverAt -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/BuilderController.cs::BuilderController -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/BuilderController.cs::BuilderController.Session -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/BuilderController.cs::BuilderController.HoverValid -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/BuilderController.cs::BuilderController.HoverVerdictText -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/BuilderController.cs::BuilderController.HoverIndicator -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/BuilderController.cs::BuilderController.TryPlaceAt -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/BuilderController.cs::BuilderController.TryRemoveAt -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/BuilderController.cs::BuilderController.VerdictAt -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/BuilderController.cs::BuilderController.PreviewHoverAt -->
 
 The MonoBehaviour adapter for `BuilderSession` (S30-S33). Lifecycle,
 mouse-to-grid conversion and Gizmo drawing ONLY: every rule about what is a
@@ -48,11 +48,15 @@ same reason, pinning the hover preview to a key since a test cannot move
 the OS cursor. `UpdateHoverIndicator` builds a runtime-only quad over the
 hovered cell so the preview is visible in a running build, not just the
 Scene view (`OnDrawGizmos` never renders in Play mode's Game view).
+`OnDrawGizmos` colours from the same cached `_hoverValid` verdict, never
+re-running PlacementRules. Hover and mouse clicks are skipped while
+`EventSystem.current.IsPointerOverGameObject()` is true, so clicks on HUD
+panels never edit the grid beneath them.
 
 ### CameraFollow
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/CameraFollow.cs::CameraFollow -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/CameraFollow.cs::CameraFollow.SetTarget -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/CameraFollow.cs::CameraFollow -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/CameraFollow.cs::CameraFollow.SetTarget -->
 
 Smoothly follows a target transform on the XY plane, keeping the camera's
 own Z (its distance from the 2D scene). Orthographic size is left to the
@@ -61,33 +65,33 @@ tune framing without touching code.
 
 ### DemoState
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/DemoMode.cs::DemoState -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/DemoMode.cs::DemoState -->
 
 Which of the two demo scene states is active: `Build` or `Fly`.
 
 ### DemoMode
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/DemoMode.cs::DemoMode -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/DemoMode.cs::DemoMode.State -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/DemoMode.cs::DemoMode.InputSource -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/DemoMode.cs::DemoMode.PlayerShip -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/DemoMode.cs::DemoMode.PlayerRenderer -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/DemoMode.cs::DemoMode.PlayerStructure -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/DemoMode.cs::DemoMode.Builder -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/DemoMode.cs::DemoMode.OrbitStartPosition -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/DemoMode.cs::DemoMode.StartsInOrbit -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/DemoMode.cs::DemoMode.Warning -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/DemoMode.cs::DemoMode.MaxStressRatio -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/DemoMode.cs::DemoMode.CriticalBlockCount -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/DemoMode.cs::DemoMode.CriticalBlockName -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/DemoMode.cs::DemoMode.ActivePowerups -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/DemoMode.cs::DemoMode.CriticalRatio -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/DemoMode.cs::DemoMode.StrainRatio -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/DemoMode.cs::DemoMode.CriticalLoadFactorFloor -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/DemoMode.cs::DemoMode.SetState -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/DemoMode.cs::DemoMode.ToggleState -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/DemoMode.cs::DemoMode.ResetPlayer -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/DemoMode.cs::DemoMode.OrbitStartVelocity -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/DemoMode.cs::DemoMode -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/DemoMode.cs::DemoMode.State -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/DemoMode.cs::DemoMode.InputSource -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/DemoMode.cs::DemoMode.PlayerShip -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/DemoMode.cs::DemoMode.PlayerRenderer -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/DemoMode.cs::DemoMode.PlayerStructure -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/DemoMode.cs::DemoMode.Builder -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/DemoMode.cs::DemoMode.OrbitStartPosition -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/DemoMode.cs::DemoMode.StartsInOrbit -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/DemoMode.cs::DemoMode.Warning -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/DemoMode.cs::DemoMode.MaxStressRatio -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/DemoMode.cs::DemoMode.CriticalBlockCount -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/DemoMode.cs::DemoMode.CriticalBlockName -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/DemoMode.cs::DemoMode.ActivePowerups -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/DemoMode.cs::DemoMode.CriticalRatio -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/DemoMode.cs::DemoMode.StrainRatio -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/DemoMode.cs::DemoMode.CriticalLoadFactorFloor -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/DemoMode.cs::DemoMode.SetState -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/DemoMode.cs::DemoMode.ToggleState -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/DemoMode.cs::DemoMode.ResetPlayer -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/DemoMode.cs::DemoMode.OrbitStartVelocity -->
 
 Top-level demo scene conductor: toggles between Build (ship frozen exactly
 where it is, `BuilderController` editing the live grid) and Fly (simulation
@@ -112,8 +116,8 @@ resuming is exactly where the player left off.
 
 ### GravityWorld
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/GravityWorld.cs::GravityWorld -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/GravityWorld.cs::GravityWorld.Field -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/GravityWorld.cs::GravityWorld -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/GravityWorld.cs::GravityWorld.Field -->
 
 Scene-level gravity setup: builds a single `GravityField` from the
 Inspector-authored `PlanetSpec` list on Awake and exposes it as a static
@@ -128,7 +132,7 @@ uses gravity, same convention as the rest of the demo.
 
 ### PlanetSpec
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/GravityWorld.cs::PlanetSpec -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/GravityWorld.cs::PlanetSpec -->
 
 One planet/moon authored in the Inspector: its `GravityBody` plus the color
 used for its runtime-generated disc, so the scene needs no baked sprites to
@@ -136,13 +140,13 @@ show planets.
 
 ### IDemoInput
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/DemoInput.cs::IDemoInput -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/DemoInput.cs::IDemoInput.ThrustAxis -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/DemoInput.cs::IDemoInput.Steer -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/DemoInput.cs::IDemoInput.FirePressed -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/DemoInput.cs::IDemoInput.TogglePressed -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/DemoInput.cs::IDemoInput.ResetPressed -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/DemoInput.cs::IDemoInput.OverlayPressed -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/DemoInput.cs::IDemoInput -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/DemoInput.cs::IDemoInput.ThrustAxis -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/DemoInput.cs::IDemoInput.Steer -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/DemoInput.cs::IDemoInput.FirePressed -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/DemoInput.cs::IDemoInput.TogglePressed -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/DemoInput.cs::IDemoInput.ResetPressed -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/DemoInput.cs::IDemoInput.OverlayPressed -->
 
 Every player intent the demo scene reads, behind one interface so a
 play-mode test can script it. `UnityEngine.Input` cannot be driven from a
@@ -155,14 +159,14 @@ must report true for exactly one Update, the same contract
 
 ### LegacyDemoInput
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/DemoInput.cs::LegacyDemoInput -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/DemoInput.cs::LegacyDemoInput.Instance -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/DemoInput.cs::LegacyDemoInput.ThrustAxis -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/DemoInput.cs::LegacyDemoInput.Steer -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/DemoInput.cs::LegacyDemoInput.FirePressed -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/DemoInput.cs::LegacyDemoInput.TogglePressed -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/DemoInput.cs::LegacyDemoInput.ResetPressed -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/DemoInput.cs::LegacyDemoInput.OverlayPressed -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/DemoInput.cs::LegacyDemoInput -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/DemoInput.cs::LegacyDemoInput.Instance -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/DemoInput.cs::LegacyDemoInput.ThrustAxis -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/DemoInput.cs::LegacyDemoInput.Steer -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/DemoInput.cs::LegacyDemoInput.FirePressed -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/DemoInput.cs::LegacyDemoInput.TogglePressed -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/DemoInput.cs::LegacyDemoInput.ResetPressed -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/DemoInput.cs::LegacyDemoInput.OverlayPressed -->
 
 The shipping implementation: the legacy Input Manager bindings the demo has
 always used (W/S or Up/Down, A/D or Left/Right, Space, Tab, R, O).
@@ -170,13 +174,13 @@ Stateless, so one shared instance serves every component.
 
 ### ScriptedDemoInput
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/DemoInput.cs::ScriptedDemoInput -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/DemoInput.cs::ScriptedDemoInput.Thrust -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/DemoInput.cs::ScriptedDemoInput.SteerAxis -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/DemoInput.cs::ScriptedDemoInput.PressFire -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/DemoInput.cs::ScriptedDemoInput.PressToggle -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/DemoInput.cs::ScriptedDemoInput.PressReset -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/DemoInput.cs::ScriptedDemoInput.PressOverlay -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/DemoInput.cs::ScriptedDemoInput -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/DemoInput.cs::ScriptedDemoInput.Thrust -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/DemoInput.cs::ScriptedDemoInput.SteerAxis -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/DemoInput.cs::ScriptedDemoInput.PressFire -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/DemoInput.cs::ScriptedDemoInput.PressToggle -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/DemoInput.cs::ScriptedDemoInput.PressReset -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/DemoInput.cs::ScriptedDemoInput.PressOverlay -->
 
 A scripted `IDemoInput` whose every member is a settable field, for
 play-mode tests. The edge-triggered members auto-clear after one read so a
@@ -186,7 +190,7 @@ forever.
 
 ### OrbitStarter
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/OrbitStarter.cs::OrbitStarter -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/OrbitStarter.cs::OrbitStarter -->
 
 Puts a non-player ship onto a circular orbit around one of `GravityWorld`'s
 bodies at its authored position, on the first frame. Without this a scene
@@ -198,9 +202,9 @@ the ship in the Inspector can never leave a stale velocity behind.
 
 ### Powerup
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/Powerup.cs::Powerup -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/Powerup.cs::Powerup.Preset -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/Powerup.cs::Powerup.Configure -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/Powerup.cs::Powerup -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/Powerup.cs::Powerup.Preset -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/Powerup.cs::Powerup.Configure -->
 
 A floating pickup: a spinning tinted disc with a trigger collider. Always
 created by `PowerupSpawner.Spawn`, which calls `Configure` immediately
@@ -219,8 +223,8 @@ place for another attempt.
 
 ### PowerupSpawner
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/PowerupSpawner.cs::PowerupSpawner -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/PowerupSpawner.cs::PowerupSpawner.NotifyCollected -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/PowerupSpawner.cs::PowerupSpawner -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/PowerupSpawner.cs::PowerupSpawner.NotifyCollected -->
 
 Spawns every authored `PowerupPreset` as a `Powerup` GameObject on Start,
 and respawns one at the same place after `respawnSeconds` once it is
@@ -229,7 +233,7 @@ near the player's orbit start without hand-placing prefabs.
 
 ### PowerupPreset
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/PowerupSpawner.cs::PowerupPreset -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/PowerupSpawner.cs::PowerupPreset -->
 
 One powerup pickup authored in the Inspector: where it floats, which
 variant it applies to which block type, how long the transform lasts, and
@@ -238,8 +242,8 @@ its color/label; the disc itself is generated at runtime
 
 ### Projectile
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/Projectile.cs::Projectile -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/Projectile.cs::Projectile.Configure -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/Projectile.cs::Projectile -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/Projectile.cs::Projectile.Configure -->
 
 A single spawned cannon round: a small yellow circle with a `Rigidbody2D`
 carrying it in a straight line, that applies the firing ship's own
@@ -249,8 +253,8 @@ one directly, since `Configure` must run before the first `FixedUpdate`.
 
 ### ProjectileSpawner
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/ProjectileSpawner.cs::ProjectileSpawner -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/ProjectileSpawner.cs::ProjectileSpawner.SpawnFromSink -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/ProjectileSpawner.cs::ProjectileSpawner -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/ProjectileSpawner.cs::ProjectileSpawner.SpawnFromSink -->
 
 Subscribes to every `ShipController`'s `ShotFired` in the scene and turns
 each `ShotRequest` into a real `Projectile` GameObject. The Inspector fields
@@ -262,9 +266,9 @@ never coincident.
 
 ### ShipCollider
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/ShipCollider.cs::ShipCollider -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/ShipCollider.cs::ShipCollider.ColliderToKey -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/ShipCollider.cs::ShipCollider.MarkDirty -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/ShipCollider.cs::ShipCollider -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/ShipCollider.cs::ShipCollider.ColliderToKey -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/ShipCollider.cs::ShipCollider.MarkDirty -->
 
 Maintains one `BoxCollider2D` per block on the ship's grid, sized to one
 cell and offset to that cell's center, so `Projectile` can hit-test against
@@ -274,7 +278,7 @@ after a detach).
 
 ### ShipContactsRunner
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/ShipContactsRunner.cs::ShipContactsRunner -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/ShipContactsRunner.cs::ShipContactsRunner -->
 
 Runs `ShipContacts.Resolve` over every pair of ships in the scene once per
 FixedUpdate. Ordered AFTER `ShipController` (-100) and `ShipStructure` (-50)
@@ -286,18 +290,18 @@ the entire contact-resolution path for ship-vs-ship collision in this demo.
 
 ### ShipController
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/ShipController.cs::ShipController -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/ShipController.cs::ShipController.Ship -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/ShipController.cs::ShipController.InputEnabled -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/ShipController.cs::ShipController.SimulationEnabled -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/ShipController.cs::ShipController.InputSource -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/ShipController.cs::ShipController.ShotFired -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/ShipController.cs::ShipController.ApplyImpulse -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/ShipController.cs::ShipController.ApplyDamage -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/ShipController.cs::ShipController.ReplaceBlocks -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/ShipController.cs::ShipController.RequestFire -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/ShipController.cs::ShipController.ResetToOrigin -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/ShipController.cs::ShipController.ResetTo -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/ShipController.cs::ShipController -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/ShipController.cs::ShipController.Ship -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/ShipController.cs::ShipController.InputEnabled -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/ShipController.cs::ShipController.SimulationEnabled -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/ShipController.cs::ShipController.InputSource -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/ShipController.cs::ShipController.ShotFired -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/ShipController.cs::ShipController.ApplyImpulse -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/ShipController.cs::ShipController.ApplyDamage -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/ShipController.cs::ShipController.ReplaceBlocks -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/ShipController.cs::ShipController.RequestFire -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/ShipController.cs::ShipController.ResetToOrigin -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/ShipController.cs::ShipController.ResetTo -->
 
 The MonoBehaviour adapter. Lifecycle and Inspector wiring ONLY: every line
 of actual simulation belongs in `ShipBody`, which has no UnityEngine
@@ -352,15 +356,15 @@ preset orbital pass respectively.
 
 ### ShipRenderer
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/ShipRenderer.cs::ShipRenderer -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/ShipRenderer.cs::ShipRenderer.Overlay -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/ShipRenderer.cs::ShipRenderer.ExtraRatioSource -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/ShipRenderer.cs::ShipRenderer.Solver -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/ShipRenderer.cs::ShipRenderer.FlashRatioThreshold -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/ShipRenderer.cs::ShipRenderer.MarkDirty -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/ShipRenderer.cs::ShipRenderer.MakeSprite -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/ShipRenderer.cs::ShipRenderer.ForwardFlameColor -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/ShipRenderer.cs::ShipRenderer.RetroFlameColor -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/ShipRenderer.cs::ShipRenderer -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/ShipRenderer.cs::ShipRenderer.Overlay -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/ShipRenderer.cs::ShipRenderer.ExtraRatioSource -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/ShipRenderer.cs::ShipRenderer.Solver -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/ShipRenderer.cs::ShipRenderer.FlashRatioThreshold -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/ShipRenderer.cs::ShipRenderer.MarkDirty -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/ShipRenderer.cs::ShipRenderer.MakeSprite -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/ShipRenderer.cs::ShipRenderer.ForwardFlameColor -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/ShipRenderer.cs::ShipRenderer.RetroFlameColor -->
 
 Builds and maintains one child GameObject per block on a ship's
 `BlockGrid`, using a runtime-generated 1x1 white sprite tinted per type,
@@ -385,18 +389,18 @@ would be drawn underneath solid hull and never seen.
 
 ### OverlayMode
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/ShipRenderer.cs::OverlayMode -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/ShipRenderer.cs::OverlayMode -->
 
 Which per-block overlay `ShipRenderer` tints with, cycled by `DemoMode`'s O
 key: `None`, `Stress`, `LoadBearing`, `Damage`, `Buckling`.
 
 ### ShipStructure
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/ShipStructure.cs::ShipStructure -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/ShipStructure.cs::ShipStructure.DefaultLoadScale -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/ShipStructure.cs::ShipStructure.DefaultMaterialStiffnessScale -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/ShipStructure.cs::ShipStructure.Authoritative -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/ShipStructure.cs::ShipStructure.Solver -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/ShipStructure.cs::ShipStructure -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/ShipStructure.cs::ShipStructure.DefaultLoadScale -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/ShipStructure.cs::ShipStructure.DefaultMaterialStiffnessScale -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/ShipStructure.cs::ShipStructure.Authoritative -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/ShipStructure.cs::ShipStructure.Solver -->
 
 Runs the plain-C# `StructuralSolver` over a ship's grid every FixedUpdate,
 using the forces `ShipBody` recorded this Step, and applies damage/detach
@@ -447,13 +451,13 @@ actionable rather than a post-mortem.
 
 ### WorldSink
 
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/WorldSink.cs::WorldSink -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/WorldSink.cs::WorldSink.Instance -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/WorldSink.cs::WorldSink.Ships -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/WorldSink.cs::WorldSink.Refresh -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/WorldSink.cs::WorldSink.SpawnProjectile -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/WorldSink.cs::WorldSink.AddTemporaryGravity -->
-<!-- frob:describes Assets/Scripts/Hullbreach.Game/WorldSink.cs::WorldSink.TryNearestEnemy -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/WorldSink.cs::WorldSink -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/WorldSink.cs::WorldSink.Instance -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/WorldSink.cs::WorldSink.Ships -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/WorldSink.cs::WorldSink.Refresh -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/WorldSink.cs::WorldSink.SpawnProjectile -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/WorldSink.cs::WorldSink.AddTemporaryGravity -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/WorldSink.cs::WorldSink.TryNearestEnemy -->
 
 The game-side `IWorldSink`: routes block-behaviour requests (spawn a
 projectile, drop a temporary gravity well, find the nearest enemy) onto the

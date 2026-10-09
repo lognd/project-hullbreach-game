@@ -1,0 +1,7 @@
+kind = "field"
+field = "acceptance"
+new = ["Given an existing block, when TrySet would change Core-ness, then it returns false"]
+moved = []
+at = "2026-10-09T16:53:18Z"
+actor = "stevendangkhoi"
+rev = 1

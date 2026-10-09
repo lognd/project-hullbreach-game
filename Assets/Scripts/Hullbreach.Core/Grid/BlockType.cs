@@ -95,6 +95,11 @@ namespace Hullbreach.Core
         // frob:doc docs/reference/hullbreach-core.md#blocktypes
         public static int Count => Table.Length;
 
+        // True when `typeId` indexes the table; Get throws otherwise, so
+        // validate untrusted ids (wire, UI) with this first.
+        // frob:doc docs/reference/hullbreach-core.md#blocktypes
+        public static bool IsValid(byte typeId) => typeId < Table.Length;
+
         // Folds in damage softening; see docs/reference/hullbreach-core.md#blocktypes.
         // frob:todo 01M3DG5Y2FQRFRW3CRWJ24V0FQ the floor (0.05) is a placeholder curve (D3).
         // frob:doc docs/reference/hullbreach-core.md#blocktypes

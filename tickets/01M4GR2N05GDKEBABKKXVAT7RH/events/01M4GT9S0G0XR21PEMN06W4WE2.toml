@@ -1,0 +1,7 @@
+kind = "field"
+field = "acceptance"
+new = ["A ship that leaves or times out is removed from every replica via ShipRemoved"]
+moved = []
+at = "2026-10-09T17:10:16Z"
+actor = "mcnairrobotics"
+rev = 1

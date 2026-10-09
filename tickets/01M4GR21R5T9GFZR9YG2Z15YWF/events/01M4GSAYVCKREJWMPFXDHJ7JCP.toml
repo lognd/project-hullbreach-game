@@ -1,0 +1,7 @@
+kind = "field"
+field = "acceptance"
+new = ["Given an unknown type or bad key, then TryReservedCells returns false; palette guards Cost table"]
+moved = []
+at = "2026-10-09T16:53:26Z"
+actor = "stevendangkhoi"
+rev = 1
