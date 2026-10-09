@@ -8,7 +8,7 @@ points = 3
 parent = "01M3DG5Y107GDBD1ZZQK0H4AKX"
 reporter = "human"
 created = "2026-09-26T00:00:00Z"
-updated = "2026-10-09T04:19:24Z"
+updated = "2026-10-09T04:19:40Z"
 aliases = ["T-0094"]
 labels = ["jira:SCRUM-179", "owner:GingerVHS", "game", "physics", "milestone:0.2.0"]
 scope = ["Assets/Scripts/Hullbreach.Ship/Behaviours/**", "Assets/Scripts/Hullbreach.Net/ServerSimulation.cs", "Assets/Tests/EditMode/**"]
@@ -19,7 +19,7 @@ bound = true
 
 [[acceptance]]
 text = "Given a gravity or anti-gravity shot that lands on a ship, when the server steps, then one attractive or repulsive well is planted in the shared field and peers are told (ServerGravityWellTests; S43 criteria 1 and 2)"
-bound = false
+bound = true
 +++
 
 GravityGunBehaviour and AntiGravityGunBehaviour placing temporary gravity wells
