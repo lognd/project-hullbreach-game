@@ -2,11 +2,12 @@
 id = "01M4GR2MYDBW9GJHKJJNK5ZGTZ"
 title = "ServerSimulation projectile hit test ignores ProjectileSpec.Radius and can hit the shooter's own ship"
 type = "bug"
-category = "todo"
+category = "done"
+outcome = "fixed"
 priority = "medium"
 reporter = "lognd"
 created = "2026-10-09T16:31:25Z"
-updated = "2026-10-09T17:11:14Z"
+updated = "2026-10-09T17:11:42Z"
 labels = ["origin:auditor", "audit:ship"]
 scope = ["Assets/Scripts/Hullbreach.Net/ServerSimulation.cs"]
 
