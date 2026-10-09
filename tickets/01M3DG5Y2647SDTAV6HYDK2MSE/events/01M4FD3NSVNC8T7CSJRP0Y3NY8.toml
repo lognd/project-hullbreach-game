@@ -1,0 +1,7 @@
+kind = "field"
+field = "scope"
+old = ["Assets/Scripts/Hullbreach.Builder/**", "Assets/Tests/EditMode/Hullbreach.Builder.Tests/**", "docs/**", "changelog.d/**"]
+new = ["Assets/Scripts/Hullbreach.Builder/**", "docs/reference/hullbreach-builder.md", "Assets/Tests/EditMode/Hullbreach.Builder.Tests/ShipDesign*", "docs/ship-design-format.md"]
+at = "2026-10-09T04:00:30Z"
+actor = "stevendangkhoi"
+rev = 1

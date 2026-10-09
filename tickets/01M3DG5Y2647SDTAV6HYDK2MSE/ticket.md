@@ -8,10 +8,10 @@ points = 2
 parent = "01M3DG5Y0R3XBGSCEYQ0383EDK"
 reporter = "human"
 created = "2026-09-26T00:00:00Z"
-updated = "2026-10-09T03:59:56Z"
+updated = "2026-10-09T04:00:30Z"
 aliases = ["T-0070"]
-labels = ["jira:SCRUM-174", "owner:stevendangkhoi", "game", "platform", "milestone:0.2.0"]
-scope = ["Assets/Scripts/Hullbreach.Builder/**", "Assets/Tests/EditMode/Hullbreach.Builder.Tests/**", "docs/**", "changelog.d/**"]
+labels = ["jira:SCRUM-174", "owner:stevendangkhoi", "game", "platform", "milestone:0.2.0", "creates:Assets/Tests/EditMode/Hullbreach.Builder.Tests/ShipDesign*", "creates:docs/ship-design-format.md"]
+scope = ["Assets/Scripts/Hullbreach.Builder/**", "docs/reference/hullbreach-builder.md", "Assets/Tests/EditMode/Hullbreach.Builder.Tests/ShipDesign*", "docs/ship-design-format.md"]
 
 [[acceptance]]
 text = "Given a BlockGrid built through BuilderSession, when it is written to the versioned design format and read back, then the loaded grid has the same blocks (key, type, modifiers) and the same core"
