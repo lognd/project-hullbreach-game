@@ -1,0 +1,14 @@
++++
+id = "01M4GR2HZCGE3Q0A18RTA2Z5YD"
+title = "ServerSimulation.SetInput trusts unclamped sbyte axes: -128 yields -1.0079 thrust/steer"
+type = "security"
+category = "todo"
+priority = "medium"
+reporter = "lognd"
+created = "2026-10-09T16:31:22Z"
+updated = "2026-10-09T16:31:22Z"
+labels = ["origin:auditor", "audit:hullbreach-net"]
+scope = ["Assets/Scripts/Hullbreach.Net/NetMessages.cs", "Assets/Scripts/Hullbreach.Net/ServerSimulation.cs"]
++++
+
+NetMessages.cs:75-78 unpack ThrustAxis/Steer as sbyte/127f, and InputMessage.Read (NetMessages.cs:96-105) accepts the raw wire value, so a hostile client sending -128 gets -1.0079 (outside the documented -127..127 / -1..1 contract at NetMessages.cs:37-43). ServerSimulation.cs:156 feeds it straight into ShipInput with no clamp, giving ~0.8 percent extra authority; Flags reserved bits are also passed through unchecked. Server-authoritative contract: the server must not trust client ranges. Fix direction: clamp ThrustAxisFloat/SteerFloat to [-1,1] (or reject -128 in Read / SetInput), mask Flags to defined bits, and add a test that an input of sbyte.MinValue never exceeds magnitude 1.
