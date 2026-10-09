@@ -2,11 +2,12 @@
 id = "01M4GR21D4RKF5QYP2AYFDS6NN"
 title = "BuilderSession.Click ignores its key argument while Orienting; facing depends on a prior Hover call"
 type = "bug"
-category = "todo"
+category = "done"
+outcome = "fixed"
 priority = "low"
 reporter = "lognd"
 created = "2026-10-09T16:31:06Z"
-updated = "2026-10-09T16:53:25Z"
+updated = "2026-10-09T16:53:26Z"
 labels = ["origin:auditor", "auditor"]
 scope = ["Assets/Scripts/Hullbreach.Builder/BuilderSession.cs"]
 
