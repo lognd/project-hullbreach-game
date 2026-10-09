@@ -2,7 +2,7 @@
 id = "01M3DG5Y38TPYMMGQWN8GPQ55J"
 title = "S47-1: Headless server loop ticking ShipBody and StructuralSolver without the Unity scene"
 type = "task"
-category = "in-progress"
+category = "todo"
 priority = "critical"
 points = 5
 parent = "01M3DG5Y14KAMJ8NTGHC8BW9YV"
