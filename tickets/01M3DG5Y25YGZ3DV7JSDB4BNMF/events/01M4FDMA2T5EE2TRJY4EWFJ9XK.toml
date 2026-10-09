@@ -1,0 +1,7 @@
+kind = "field"
+field = "labels"
+old = ["jira:SCRUM-173", "owner:stevendangkhoi", "game", "milestone:0.2.0"]
+new = ["jira:SCRUM-173", "owner:stevendangkhoi", "game", "milestone:0.2.0", "creates:Assets/Tests/EditMode/Hullbreach.Builder.Tests/BuildBudgetTests.cs*"]
+at = "2026-10-09T04:09:36Z"
+actor = "stevendangkhoi"
+rev = 1
