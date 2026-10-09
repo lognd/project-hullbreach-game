@@ -1,0 +1,7 @@
+kind = "field"
+field = "acceptance"
+new = ["Given a joined peer and a BuildRequest that PlacementRules accepts, when the server handles it, then the block is added to that peer's authoritative grid and a BlockPlaced is broadcast to every peer, so the opponent's replica shows the new block", "Given a BuildRequest the placement rules refuse, or one with an unknown block type, non-facing modifier bits, an unknown peer or a destroyed ship, when the server handles it, then no grid changes and no BlockPlaced is sent", "Given a ServerHost over a transport, when a client sends a BuildRequest, then it edits only the sending peer's ship, and a truncated BuildRequest is dropped and logged without stopping the loop"]
+moved = []
+at = "2026-10-09T04:09:52Z"
+actor = "mcnairrobotics"
+rev = 1
