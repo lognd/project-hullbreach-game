@@ -145,6 +145,34 @@ a headless dedicated-server build are both tracked as open items in
 `TODO.md`, waiting on a Unity license secret (`UNITY_LICENSE`/
 `UNITY_EMAIL`/`UNITY_PASSWORD`) before a `game-ci`-based job can be added.
 
+## Throttled-connection harness
+
+`Assets/Tests/EditMode/Hullbreach.Net.Tests/NetRig.cs` wires a `ServerHost`
+and two `ClientReplica`s through one `LoopbackTransport`; `LinkProfile`
+says how hostile that link is. `LinkProfile.Throttled()` is the S48 target:
+a 100 ms round trip and 2 percent loss. At the 50 Hz tick one hub tick is
+20 ms, `DelayTicks` and `JitterTicks` apply per send, so the mean one-way
+latency is `DelayTicks + JitterTicks / 2` ticks and the round trip
+`2 * DelayTicks + JitterTicks` ticks (here 2 and 1, giving 5 ticks = 100 ms).
+Only unreliable sends are dropped, which is `LoopbackTransport`'s contract:
+reliable messages are delayed and reordered, never lost.
+
+`NetRig.Step` is one sim tick: the caller's callback sends client input,
+the host drains and simulates, the hub delivers, the clients apply. Runs are
+seeded, so a failure reproduces. `ThrottledConnectionTests` asserts that the
+profile really measures 100 ms and about 2 percent, that a client's own-ship
+pose always matches a server pose from the last ten ticks and never jumps
+by more than six ticks of motion, and that after builds, damage and a
+detach every replica's block grids equal the server's. There is no client
+prediction yet (S48-1), so nothing here asserts on prediction corrections.
+
+Known gaps the harness found, each with a ticket and an `[Ignore]`d repro in
+`ThrottledConnectionTests`: fragment ids collide with peer ids
+(the reliable-event test spreads peer ids with `spareIds`), a reliable event
+that overtakes its snapshot is not applied until the next reliable message
+(the tests let the join snapshots land first), and a ship's pose is sent to
+its owner only.
+
 ## Which assemblies are NOT covered by `tools/plaincs`
 
 **`Hullbreach.Game`**, for EDIT-mode purposes: the only assembly that

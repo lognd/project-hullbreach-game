@@ -181,6 +181,12 @@ tick, so a held key is one `InputMessage` per tick, not one on press. And
 the server drives the ship belonging to the transport peer that sent the
 input; the `NetId` inside the message is never trusted.
 
+## Testing under a bad connection
+
+`LoopbackTransport` can delay, jitter and drop; the test harness that
+packages the S48 target (100 ms round trip, 2 percent unreliable loss) is
+described in [testing.md](testing.md#throttled-connection-harness).
+
 ## What a transport implementer must do
 
 Implement `ITransport` (`SendReliable`, `SendUnreliable`, `TryReceive`,
