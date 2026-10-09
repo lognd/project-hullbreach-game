@@ -1,0 +1,23 @@
+kind = "create"
+title = "S26: Start from a title screen"
+type = "story"
+category = "todo"
+priority = "high"
+parent = "01M3DG5Y02BXW6QBAG8X1JFSW2"
+aliases = ["T-0015"]
+labels = ["jira:SCRUM-47", "owner:stevendangkhoi", "game", "milestone:0.1.0"]
+acceptance = ["Launching the game shows a title screen with the listed options, each of which leads somewhere.", "The signed-in username is visible on the title screen when signed in."]
+body = """
+https://aliens-against-humanity.atlassian.net/browse/SCRUM-47
+
+**Card**
+As a player, I want a title screen with Play, Build, Settings, Sign in, and Quit, so that I can get where I want without guessing.
+
+**Conversation**
+- Does Play go straight to a lobby, or to a mode select (LAN / online / co-op later)?
+- Controller support in v1, or keyboard and mouse only?
+
+Code already exists: Not started. roadmap.md: needs a UI scene; nothing under Assets/Scenes but RocketScene.unity/DemoScene.unity."""
+at = "2026-09-26T00:00:00Z"
+actor = "human"
+rev = 1

@@ -1,0 +1,15 @@
+kind = "create"
+title = "S41-2: Boundary rendering on screen and on the radar"
+type = "task"
+category = "todo"
+priority = "medium"
+points = 2
+parent = "01M3DG5Y0Y1MZXATXQF051SPA2"
+aliases = ["T-0090"]
+labels = ["jira:SCRUM-178", "owner:a-carten", "game", "milestone:0.2.0"]
+body = """
+Boundary rendering on screen and on the radar
+Parent story: S41 Stay inside the arena"""
+at = "2026-09-26T00:00:00Z"
+actor = "human"
+rev = 1

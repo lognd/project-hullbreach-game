@@ -1,0 +1,15 @@
+kind = "create"
+title = "S31-1: Detach rule that also removes blocks stranded by a removal"
+type = "task"
+category = "todo"
+priority = "high"
+points = 2
+parent = "01M3DG5Y0MFJ6RPX9B9VVEG7XQ"
+aliases = ["T-0059"]
+labels = ["jira:SCRUM-110", "owner:stevendangkhoi", "game", "milestone:0.1.0"]
+body = """
+Detach rule that also removes blocks stranded by a removal
+Parent story: S31 Remove and undo blocks"""
+at = "2026-09-26T00:00:00Z"
+actor = "human"
+rev = 1

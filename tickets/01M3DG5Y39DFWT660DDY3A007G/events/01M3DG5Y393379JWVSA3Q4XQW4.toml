@@ -1,0 +1,15 @@
+kind = "create"
+title = "S47-2: Input and snapshot message serialization (ShipSnapshot, BlockPlaced, BlockDestroyed, FragmentSpawned)"
+type = "task"
+category = "todo"
+priority = "critical"
+points = 3
+parent = "01M3DG5Y14KAMJ8NTGHC8BW9YV"
+aliases = ["T-0105"]
+labels = ["jira:SCRUM-127", "owner:mcnairrobotics", "game", "netcode", "milestone:0.1.0"]
+body = """
+Input and snapshot message serialization (ShipSnapshot, BlockPlaced, BlockDestroyed, FragmentSpawned)
+Parent story: S47 Run matches on an authoritative server"""
+at = "2026-09-26T00:00:00Z"
+actor = "human"
+rev = 1

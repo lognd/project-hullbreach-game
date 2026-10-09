@@ -1,0 +1,15 @@
+kind = "create"
+title = "S41-1: Arena bounds with soft push-back and no structural damage"
+type = "task"
+category = "todo"
+priority = "medium"
+points = 2
+parent = "01M3DG5Y0Y1MZXATXQF051SPA2"
+aliases = ["T-0089"]
+labels = ["jira:SCRUM-177", "owner:GingerVHS", "game", "milestone:0.2.0"]
+body = """
+Arena bounds with soft push-back and no structural damage
+Parent story: S41 Stay inside the arena"""
+at = "2026-09-26T00:00:00Z"
+actor = "human"
+rev = 1

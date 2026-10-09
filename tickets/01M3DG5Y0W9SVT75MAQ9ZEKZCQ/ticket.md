@@ -1,0 +1,36 @@
++++
+id = "01M3DG5Y0W9SVT75MAQ9ZEKZCQ"
+title = "S39: Fly a ship that handles like it was built"
+type = "story"
+category = "todo"
+priority = "critical"
+parent = "01M3DG5Y05HP0YSRB6819FBK2S"
+reporter = "human"
+created = "2026-09-26T00:00:00Z"
+updated = "2026-09-26T00:00:00Z"
+aliases = ["T-0028"]
+labels = ["jira:SCRUM-60", "owner:GingerVHS", "game", "physics", "milestone:0.1.0"]
+
+[[acceptance]]
+text = "A thruster mounted off the center of mass produces rotation as well as translation."
+bound = false
+
+[[acceptance]]
+text = "Doubling a ship's mass with no added thrust roughly halves its acceleration."
+bound = false
+
+[[acceptance]]
+text = "Control fins change turning behavior in a way a player can feel."
+bound = false
++++
+
+https://aliens-against-humanity.atlassian.net/browse/SCRUM-60
+
+**Card**
+As a player, I want thrusters and control fins to apply force and torque at the point where they are mounted, so that where I put a thruster changes how the ship turns, and a heavy ship feels heavy.
+
+**Conversation**
+- Do we use Unity's 2D rigid body with per-block force application, or our own integrator to share with the game server?
+- Control scheme: direct thruster toggles, or a flight-assist layer that maps WASD to the thrusters it finds?
+
+Code already exists: Done. roadmap.md: Hullbreach.Ship.ShipBody/SteeringModel/BlockFacing, Hullbreach.Game.ShipController; tests in ShipBodyTests.cs, ThrusterUpgradesTests.cs.

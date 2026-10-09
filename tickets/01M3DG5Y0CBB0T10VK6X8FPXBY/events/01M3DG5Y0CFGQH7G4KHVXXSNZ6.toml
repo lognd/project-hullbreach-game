@@ -1,0 +1,20 @@
+kind = "create"
+title = "S07: Sign in from inside the game"
+type = "story"
+category = "todo"
+priority = "critical"
+aliases = ["T-0012"]
+labels = ["jira:SCRUM-28", "owner:stevendangkhoi", "game", "platform", "milestone:0.1.0"]
+acceptance = ["A player can sign in from the game client with the same credentials as the website.", "The game client presents a valid session to the game server when joining a match.", "A player who is not signed in can still build ships offline but cannot join ranked matches."]
+body = """
+https://aliens-against-humanity.atlassian.net/browse/SCRUM-28
+
+**Card**
+As a player, I want to sign into my platform account from the game client, so that my matches count toward my rating and my skins appear on my ship.
+
+**Conversation**
+- Does the game show a username/password form, or open the website in a browser and receive a token (device-code style)?
+- How does the game client store the token between launches?"""
+at = "2026-09-26T00:00:00Z"
+actor = "human"
+rev = 1
