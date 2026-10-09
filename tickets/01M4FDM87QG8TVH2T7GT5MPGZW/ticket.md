@@ -1,0 +1,28 @@
++++
+id = "01M4FDM87QG8TVH2T7GT5MPGZW"
+title = "S53-4: Replicate failing state and time-to-failure in snapshots"
+type = "task"
+category = "todo"
+priority = "medium"
+points = 2
+parent = "01M4FDM7MX49CFNWPN41HEBC3F"
+reporter = "lognd"
+created = "2026-10-09T04:09:34Z"
+updated = "2026-10-09T04:09:34Z"
+labels = ["owner:mcnairrobotics", "game", "netcode", "milestone:0.3.0"]
+scope = ["Assets/Scripts/Hullbreach.Net/**", "Assets/Tests/**", "docs/netcode.md", "docs/reference/hullbreach-net.md"]
+
+[[links]]
+kind = "blocked-by"
+target = "01M4FDM7SMC5PB0AW3T1RS9TFD"
+
+[[acceptance]]
+text = "Given a failing block on the server, when a snapshot is sent, then the client receives its failing flag and TimeToFailure quantized to the documented resolution"
+bound = false
+
+[[acceptance]]
+text = "Given a round trip through the serializer, when decoded, then values match within the documented quantization"
+bound = false
++++
+
+Both players see the same warning; the client never computes its own fuse.
