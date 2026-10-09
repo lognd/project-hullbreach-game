@@ -2,11 +2,12 @@
 id = "01M4GR14N86R205ZMEZE85M949"
 title = "BlockGrid.TryAdd/TrySet crash and corrupt state on unvalidated TypeId from network"
 type = "security"
-category = "todo"
+category = "done"
+outcome = "fixed"
 priority = "high"
 reporter = "lognd"
 created = "2026-10-09T16:30:36Z"
-updated = "2026-10-09T16:52:55Z"
+updated = "2026-10-09T16:53:04Z"
 labels = ["origin:auditor", "audit:hullbreach-core"]
 scope = ["Assets/Scripts/Hullbreach.Core/Grid/BlockGrid.cs"]
 
