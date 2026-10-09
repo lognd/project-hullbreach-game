@@ -1,0 +1,7 @@
+kind = "field"
+field = "acceptance"
+new = ["Given a de-DE thread culture, when Hud models build text, then output uses an invariant decimal point"]
+moved = []
+at = "2026-10-09T16:56:30Z"
+actor = "a-carten"
+rev = 1
