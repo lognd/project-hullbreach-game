@@ -505,6 +505,11 @@ adds the block, rebuilds the ship's derived views, marks the structural
 solver's topology dirty and broadcasts `BlockPlaced`. A refusal changes and
 sends nothing.
 
+`Arena` (null for unbounded) is copied onto every ship at the start of each
+`Tick`, so the authoritative step applies the same
+[ArenaBounds](hullbreach-world.md#arenabounds) push-back a predicting client
+`ShipBody` does.
+
 `Tick` advances every ship by one fixed tick (apply latest input, step
 the body, tick its structural solver, resolve damage/detachment/
 buckling, then emit poses and events) in a fixed, deterministic order

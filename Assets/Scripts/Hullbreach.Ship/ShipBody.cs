@@ -46,6 +46,11 @@ namespace Hullbreach.Ship
         // frob:doc docs/reference/hullbreach-ship.md#shipbody
         public GravityField Gravity;
 
+        // Null for an unbounded arena. Applied straight to Velocity, not as
+        // a force, so the structural solver never sees the push-back.
+        // frob:doc docs/reference/hullbreach-ship.md#shipbody
+        public ArenaBounds Arena;
+
         // Defaults to NullWorldSink so a ShipBody built by a test never
         // needs a null check to Step.
         // frob:doc docs/reference/hullbreach-ship.md#shipbody
@@ -256,6 +261,15 @@ namespace Hullbreach.Ship
             // use the NEW velocity to update position (as Box2D does).
             Velocity += a * dt;
             AngularVelocity += alpha * dt;
+
+            // Deliberately not folded into `a`: LastLinearAcceleration and
+            // AppliedForcesThisStep feed the stress solve, and leaving the
+            // arena is not a load the hull should feel.
+            if (Arena != null)
+            {
+                float2 centerOfMass = LocalToWorld(Grid.Mass.CenterOfMass);
+                Velocity += Arena.PushBackAcceleration(centerOfMass, Velocity) * dt;
+            }
 
             // Exponential decay on the NEW angular velocity: stable at any
             // dt, never drives the spin through zero and back.
