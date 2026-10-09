@@ -8,18 +8,18 @@ points = 5
 parent = "01M3DG5Y0V6ZWSJZQW0H5VM80Z"
 reporter = "human"
 created = "2026-09-26T00:00:00Z"
-updated = "2026-10-09T04:14:28Z"
+updated = "2026-10-09T04:18:19Z"
 aliases = ["T-0080"]
 labels = ["jira:SCRUM-159", "owner:GingerVHS", "game", "physics", "milestone:0.2.0"]
 scope = ["Assets/Scripts/Hullbreach.Structure/Fem/**", "Assets/Tests/EditMode/Hullbreach.Structure.Tests/**"]
 
 [[acceptance]]
 text = "Given a column under compression, when BucklingAnalysis runs, then the critical load factor matches a dense oracle, scales with inverse length squared, and tension has no modes (BucklingTests)"
-bound = false
+bound = true
 
 [[acceptance]]
 text = "Given the solver hook, when load is high, then buckled blocks are reported and the analysis is bit-deterministic (BucklingTests)"
-bound = false
+bound = true
 +++
 
 BucklingAnalysis and GeometricStiffness for compressive failure
