@@ -2,11 +2,12 @@
 id = "01M4GR3RG3JMPHJ83721EJPETF"
 title = "ShipStructure.FixedUpdate ignores ShipController.SimulationEnabled; blocks take damage and detach while in Build mode"
 type = "bug"
-category = "todo"
+category = "done"
+outcome = "fixed"
 priority = "medium"
 reporter = "lognd"
 created = "2026-10-09T16:32:02Z"
-updated = "2026-10-09T17:14:48Z"
+updated = "2026-10-09T17:14:49Z"
 idempotency_key = "audit-game-sim-gate"
 labels = ["origin:auditor", "audit:hullbreach-game"]
 scope = ["Assets/Scripts/Hullbreach.Game/ShipStructure.cs"]
