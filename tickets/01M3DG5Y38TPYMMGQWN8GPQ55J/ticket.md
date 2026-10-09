@@ -2,13 +2,13 @@
 id = "01M3DG5Y38TPYMMGQWN8GPQ55J"
 title = "S47-1: Headless server loop ticking ShipBody and StructuralSolver without the Unity scene"
 type = "task"
-category = "todo"
+category = "in-progress"
 priority = "critical"
 points = 5
 parent = "01M3DG5Y14KAMJ8NTGHC8BW9YV"
 reporter = "human"
 created = "2026-09-26T00:00:00Z"
-updated = "2026-10-09T04:09:45Z"
+updated = "2026-10-09T04:14:41Z"
 aliases = ["T-0104"]
 labels = ["jira:SCRUM-126", "owner:mcnairrobotics", "game", "netcode", "milestone:0.1.0", "creates:Assets/Scripts/Hullbreach.Net/ServerHost.cs*", "creates:Assets/Scripts/Hullbreach.Net/NetLog.cs*", "creates:Assets/Tests/EditMode/Hullbreach.Net.Tests/ServerHostTests.cs*"]
 scope = ["docs/netcode.md", "docs/reference/hullbreach-net.md", "docs/roadmap.md", "Assets/Scripts/Hullbreach.Net/ServerHost.cs*", "Assets/Scripts/Hullbreach.Net/NetLog.cs*", "Assets/Tests/EditMode/Hullbreach.Net.Tests/ServerHostTests.cs*", "Assets/Scripts/Hullbreach.Net/NetMessages.cs"]
