@@ -8,7 +8,7 @@ namespace Hullbreach.Net.Tests
     // Drives ServerHost over LoopbackTransport: the headless loop of S47, no Unity.
     public class ServerHostTests
     {
-        const float TickRate = 50f;
+        const float TickRate = NetRig.TickRate;
 
         // Well above rest, well below what a second of full thrust reaches.
         const float MovedSpeed = 0.01f;
@@ -35,13 +35,16 @@ namespace Hullbreach.Net.Tests
         {
             _log = new List<string>();
             NetLog.Sink = _log.Add;
-            _hub = new LoopbackTransport(seed: 3);
-            _serverEndpoint = _hub.CreateEndpoint(out _serverId);
-            _clientA = _hub.CreateEndpoint(out _idA);
-            _clientB = _hub.CreateEndpoint(out _idB);
-            _hub.Connect(_serverId, _idA);
-            _hub.Connect(_serverId, _idB);
-            _host = new ServerHost(_serverEndpoint, TickRate);
+            // The tests read the client endpoints themselves, so the rig must not pump them into replicas.
+            var rig = new NetRig(LinkProfile.Ideal, seed: 3, pumpClients: false);
+            _hub = rig.Hub;
+            _serverEndpoint = rig.ServerEndpoint;
+            _clientA = rig.ClientA;
+            _clientB = rig.ClientB;
+            _serverId = rig.ServerId;
+            _idA = rig.IdA;
+            _idB = rig.IdB;
+            _host = rig.Host;
         }
 
         [TearDown]
@@ -49,13 +52,7 @@ namespace Hullbreach.Net.Tests
 
         static void Send(ITransport from, int to, byte[] payload) => from.SendUnreliable(to, payload);
 
-        static byte[] InputBytes(ushort netId, float thrust)
-        {
-            var buf = new byte[InputMessage.ByteSize];
-            var w = new ByteWriter(buf);
-            InputMessage.FromFloats(netId, 0, thrust, 0f, false).Write(ref w);
-            return buf;
-        }
+        static byte[] InputBytes(ushort netId, float thrust) => NetRig.InputBytes(netId, 0, thrust, 0f);
 
         // Plays `ticks` fixed ticks of host time; `perTick` is where clients send their input (ServerSimulation
         // applies an input for one tick only, so a held key means one message per tick).
