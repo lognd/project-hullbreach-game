@@ -1,0 +1,7 @@
+kind = "transition"
+from = "todo"
+to = "in-progress"
+reason = "lease: GingerVHS in wt/GingerVHS-game; scope: docs/stress-colors.md, docs/README.md, docs/architecture.md, changelog.d/**; ttl 7200s"
+at = "2026-10-09T04:09:20Z"
+actor = "GingerVHS"
+rev = 1

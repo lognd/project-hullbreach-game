@@ -2,7 +2,7 @@
 id = "01M3DG5Y2EZFPRHEE69EDYC1A2"
 title = "S37-3: Document the stress-to-color mapping shared by build mode and combat"
 type = "docs"
-category = "todo"
+category = "in-progress"
 priority = "critical"
 points = 1
 parent = "01M3DG5Y0TRQYC578FES1WY409"
