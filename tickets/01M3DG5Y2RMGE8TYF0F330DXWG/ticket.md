@@ -2,13 +2,13 @@
 id = "01M3DG5Y2RMGE8TYF0F330DXWG"
 title = "S40-3: Gravity constants loaded from configuration"
 type = "task"
-category = "todo"
+category = "in-progress"
 priority = "high"
 points = 1
 parent = "01M3DG5Y0X02V7SGJ0Y3J7550F"
 reporter = "human"
 created = "2026-09-26T00:00:00Z"
-updated = "2026-10-09T04:03:54Z"
+updated = "2026-10-09T04:04:03Z"
 aliases = ["T-0088"]
 labels = ["jira:SCRUM-163", "owner:GingerVHS", "game", "physics", "milestone:0.2.0"]
 scope = ["Assets/Scripts/Hullbreach.World/GravityConfig.cs*", "Assets/Scripts/Hullbreach.World/GravityField.cs", "Assets/Scripts/Hullbreach.Net/ServerSimulation.cs", "Assets/Scripts/Hullbreach.Game/GravityWorld.cs", "Assets/Tests/EditMode/**", "docs/**", "changelog.d/**"]

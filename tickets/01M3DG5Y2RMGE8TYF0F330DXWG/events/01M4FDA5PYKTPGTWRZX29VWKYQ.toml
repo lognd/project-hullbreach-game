@@ -1,0 +1,7 @@
+kind = "transition"
+from = "todo"
+to = "in-progress"
+reason = "lease: GingerVHS in wt/GingerVHS-game; scope: Assets/Scripts/Hullbreach.World/GravityConfig.cs*, Assets/Scripts/Hullbreach.World/GravityField.cs, Assets/Scripts/Hullbreach.Net/ServerSimulation.cs, Assets/Scripts/Hullbreach.Game/GravityWorld.cs, Assets/Tests/EditMode/**, docs/**, changelog.d/**; ttl 7200s"
+at = "2026-10-09T04:04:03Z"
+actor = "GingerVHS"
+rev = 1
