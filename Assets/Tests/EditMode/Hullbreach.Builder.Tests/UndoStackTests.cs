@@ -144,5 +144,44 @@ namespace Hullbreach.Builder.Tests
 
             Assert.IsFalse(undo.TryRedo(g), "recording a new action must drop the stale redo entry");
         }
+
+        [Test]
+        public void Undo_OfFirstCorePlacement_FailsAndKeepsActionAndGrid()
+        {
+            var g = new BlockGrid();
+            var undo = new UndoStack();
+            var core = new Block(BlockTypes.Core);
+            g.TryAdd(BlockKey.Pack(0, 0), core);
+            undo.RecordPlace(BlockKey.Pack(0, 0), core);
+
+            Assert.IsFalse(undo.TryUndo(g), "the core cannot be removed, so undo must report failure");
+            Assert.AreEqual(1, undo.Depth, "the action stays on the undo stack");
+            Assert.AreEqual(1, g.Count);
+            Assert.IsFalse(undo.TryRedo(g), "nothing was undone, so nothing to redo");
+        }
+
+        [Test]
+        public void Undo_WhenGridWasEditedExternally_IsAllOrNothing()
+        {
+            var g = new BlockGrid();
+            var undo = new UndoStack();
+            g.TryAdd(BlockKey.Pack(0, 0), new Block(BlockTypes.Core));
+            var a = new Block(BlockTypes.Hull);
+            var b = new Block(BlockTypes.Hull);
+            g.TryAdd(BlockKey.Pack(1, 0), a);
+            g.TryAdd(BlockKey.Pack(2, 0), b);
+            undo.RecordRemove(new List<(int Key, Block Block)>
+            {
+                (BlockKey.Pack(1, 0), a),
+                (BlockKey.Pack(2, 0), b),
+            });
+
+            // Undo of a Remove restores; (2,0) is already occupied, so the
+            // whole undo must refuse without restoring (1,0) either.
+            g.TryRemove(BlockKey.Pack(1, 0));
+            Assert.IsFalse(undo.TryUndo(g));
+            Assert.IsFalse(g.Contains(BlockKey.Pack(1, 0)));
+            Assert.AreEqual(1, undo.Depth);
+        }
     }
 }
