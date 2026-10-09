@@ -20,7 +20,7 @@ This is what CI's `plaincs` job runs on every PR
 
 `Hullbreach.Plain.csproj` (`tools/plaincs/Hullbreach.Plain/`) compiles
 every engine-free assembly from source, directly out of `Assets/Scripts`:
-`Hullbreach.Core`, `.Ship`, `.World`, `.Structure`, `.Builder`, `.Net`,
+`Hullbreach.Core`, `.Ship`, `.World`, `.Structure`, `.Builder`, `.Net`, `.Hud`, `.Settings`,
 plus the fetched `Unity.Mathematics` sources (with its own Editor/
 Properties/attribute files excluded: those need the actual Unity
 editor). `Hullbreach.Plain.Tests.csproj` compiles every `.cs` under
