@@ -2,11 +2,12 @@
 id = "01M4GR210PDDH38EFM2H9N927T"
 title = "BuilderController.OnDrawGizmos misreports validity: forces true while Orienting and tests facing 0 only for directional types"
 type = "bug"
-category = "todo"
+category = "done"
+outcome = "fixed"
 priority = "medium"
 reporter = "lognd"
 created = "2026-10-09T16:31:05Z"
-updated = "2026-10-09T16:53:28Z"
+updated = "2026-10-09T16:53:29Z"
 labels = ["origin:auditor", "auditor"]
 scope = ["Assets/Scripts/Hullbreach.Game/BuilderController.cs"]
 
