@@ -1,0 +1,7 @@
+kind = "field"
+field = "acceptance"
+new = ["Given a gravity configuration text that sets MaxAcceleration, SurfaceRestitution and planets, when the shared GravityConfig parses it and builds a GravityField, then the field clamps, bounces and pulls with those values and no code change", "Given no configuration, when a GravityField is built from the default GravityConfig, then its constants equal the previous hard-coded values (MaxAcceleration 40, surface restitution 0.2)", "Given a malformed configuration text, when it is parsed, then parsing fails with a line-numbered error and no field is built", "Given the same configuration, when ServerSimulation and the client GravityWorld build their fields, then both come from GravityConfig.BuildField and agree on every acceleration"]
+moved = []
+at = "2026-10-09T04:03:54Z"
+actor = "GingerVHS"
+rev = 1
