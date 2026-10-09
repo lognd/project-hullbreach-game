@@ -2,13 +2,14 @@
 id = "01M3DG5Y2647SDTAV6HYDK2MSE"
 title = "S35-1: BlockGrid design serialization and validation on load"
 type = "task"
-category = "in-progress"
+category = "done"
+outcome = "done"
 priority = "medium"
 points = 2
 parent = "01M3DG5Y0R3XBGSCEYQ0383EDK"
 reporter = "human"
 created = "2026-09-26T00:00:00Z"
-updated = "2026-10-09T04:14:24Z"
+updated = "2026-10-09T04:14:56Z"
 aliases = ["T-0070"]
 labels = ["jira:SCRUM-174", "owner:stevendangkhoi", "game", "platform", "milestone:0.2.0", "creates:Assets/Tests/EditMode/Hullbreach.Builder.Tests/ShipDesign*", "creates:docs/ship-design-format.md"]
 scope = ["Assets/Scripts/Hullbreach.Builder/**", "docs/reference/hullbreach-builder.md", "Assets/Tests/EditMode/Hullbreach.Builder.Tests/ShipDesign*", "docs/ship-design-format.md"]
