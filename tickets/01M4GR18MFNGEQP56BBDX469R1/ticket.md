@@ -2,11 +2,12 @@
 id = "01M4GR18MFNGEQP56BBDX469R1"
 title = "BlockGrid.TrySet can change TypeId to/from Core, desyncing CoreKey and the one-core invariant"
 type = "bug"
-category = "todo"
+category = "done"
+outcome = "fixed"
 priority = "medium"
 reporter = "lognd"
 created = "2026-10-09T16:30:40Z"
-updated = "2026-10-09T16:53:18Z"
+updated = "2026-10-09T16:53:19Z"
 labels = ["origin:auditor", "audit:hullbreach-core"]
 scope = ["Assets/Scripts/Hullbreach.Core/Grid/BlockGrid.cs"]
 
