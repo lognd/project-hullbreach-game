@@ -238,6 +238,12 @@ so the HUD reads `12.3` on every OS locale (covered by `HudCultureTests`).
   standalone, before `DemoScene`'s `Demo` object exists), so
   `WireDemoScene` wires it after instantiating `HudCanvas` into the
   scene, the same way it wires `BuilderHud.controller`.
+  `Run`/`WireDemoScene` report every missed binding (missing `Demo`,
+  `PlayerShip`, `BuilderController`, prefab or view) as an error and
+  leave the scene unsaved; the batch entry points (`Build`, `BuildForce`)
+  exit non-zero in `-batchmode`. The skip guard checks all five prefab
+  paths, `Run` builds `ChannelBar.prefab` first, and the views log an
+  error in `Awake` and idle when their serialized reference is unset.
 
 **Adding a panel**: write one more `AddXxxPanel(GameObject
 canvasRoot)` method following `AddBuilderPanel`'s shape (build the

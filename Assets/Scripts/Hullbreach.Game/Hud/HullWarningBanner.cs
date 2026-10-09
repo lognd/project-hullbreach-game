@@ -14,8 +14,15 @@ namespace Hullbreach.Game
         [SerializeField] TMP_Text detailText;
         [SerializeField] TMP_Text hintText;
 
+        // An unwired demoMode is a scene-setup bug: report it once, then idle instead of throwing per frame.
+        void Awake()
+        {
+            if (demoMode == null) Debug.LogError("HullWarningBanner: demoMode is unset; re-run HudPrefabBuilder.WireDemoScene.", this);
+        }
+
         void LateUpdate()
         {
+            if (demoMode == null) return;
             bool fly = demoMode.State == DemoState.Fly;
             panelRoot.SetActive(fly);
             if (!fly) return;
