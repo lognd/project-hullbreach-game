@@ -1,0 +1,7 @@
+kind = "transition"
+from = "in-progress"
+to = "todo"
+reason = "Implementation committed in 3b5a563 and passing under tools/plaincs/run_tests.sh; cannot attach evidence (E-EVIDENCE-TOOL: dotnet not in allowed_tools on 0.532.0). Releasing the lease so the next ticket can start under the WIP limit of 1."
+at = "2026-10-09T04:04:03Z"
+actor = "GingerVHS"
+rev = 1

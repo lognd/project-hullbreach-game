@@ -2,13 +2,13 @@
 id = "01M3DG5Y2SN7TH11BDYFCY4SVZ"
 title = "S41-1: Arena bounds with soft push-back and no structural damage"
 type = "task"
-category = "in-progress"
+category = "todo"
 priority = "medium"
 points = 2
 parent = "01M3DG5Y0Y1MZXATXQF051SPA2"
 reporter = "human"
 created = "2026-09-26T00:00:00Z"
-updated = "2026-10-09T04:00:18Z"
+updated = "2026-10-09T04:04:03Z"
 aliases = ["T-0089"]
 labels = ["jira:SCRUM-177", "owner:GingerVHS", "game", "milestone:0.2.0"]
 scope = ["Assets/Scripts/Hullbreach.World/ArenaBounds.cs*", "Assets/Scripts/Hullbreach.Ship/ShipBody.cs", "Assets/Scripts/Hullbreach.Net/ServerSimulation.cs", "Assets/Tests/EditMode/**", "docs/**", "changelog.d/**"]
