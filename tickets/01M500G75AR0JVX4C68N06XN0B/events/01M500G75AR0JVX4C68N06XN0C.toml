@@ -1,0 +1,22 @@
+kind = "create"
+title = "S57-5: Feed replicated ships and gravity wells to the minimap and enemy arrow in MultiplayerGame"
+type = "task"
+category = "todo"
+priority = "medium"
+points = 3
+parent = "01M500EVPWWECD3A2C08TJ1K5Q"
+labels = ["owner:mcnairrobotics", "game", "netcode", "milestone:0.3.0", "creates:Assets/Scripts/Hullbreach.NetCode.Entities/HullbreachNetworkRadarFeed.cs", "creates:Assets/Scripts/Hullbreach.NetCode.Entities/HullbreachNetworkRadarFeed.cs.meta"]
+scope = ["Assets/Scripts/Hullbreach.NetCode.Entities/HullbreachNetworkGameHud.cs", "Assets/Scripts/Hullbreach.Net/ClientReplica.cs", "Assets/Scenes/MultiplayerGame.unity", "docs/design/ui-port.md", "Assets/Scripts/Hullbreach.NetCode.Entities/HullbreachNetworkRadarFeed.cs", "Assets/Scripts/Hullbreach.NetCode.Entities/HullbreachNetworkRadarFeed.cs.meta"]
+acceptance = ["In MultiplayerGame each client's minimap marks its own ship (the ship owned by HullbreachNetCodeClient.LocalNetworkId) as own and every other replicated ship as enemy.", "Gravity wells replicated via GravityWellSpawned appear as planet blips on the client minimap; ClientReplica exposes them read-only if it does not already.", "The enemy arrow on each client points within 2 degrees of the bearing to the nearest other player's ship and switches to the on-screen marker when that ship is in view.", "Before the local ship is replicated, or with no opponent connected, the minimap shows only what is known and the enemy indicator is hidden, with no exceptions logged.", "No per-frame managed allocations in the feed (pooled lists); ui-port.md documents the multiplayer data source."]
+body = "Netcode data plumbing so the S57-3/S57-4 views work in the multiplayer scene: the enemy is the other player's ship from ClientReplica, not a local AI target. Reuses MinimapModel and EnemyIndicatorModel unchanged."
+at = "2026-10-15T14:47:15Z"
+actor = "a-carten"
+rev = 1
+
+[[links]]
+kind = "blocked-by"
+target = "01M500FR763WZNFTPXE6T58VK7"
+
+[[links]]
+kind = "blocked-by"
+target = "01M500FR8NDVVBRAY9ZD2EDHC4"
