@@ -68,8 +68,10 @@ namespace Hullbreach.NetCode.Entities
                 _arenaConfigured = true;
             }
 
+            // Only peers the platform gate admitted get snapshots (docs/platform-link.md#handshake).
             foreach (Entity connection in _connections.Values)
-                if (!EntityManager.HasComponent<NetworkStreamInGame>(connection))
+                if (EntityManager.HasComponent<HullbreachPlatformAdmitted>(connection) &&
+                    !EntityManager.HasComponent<NetworkStreamInGame>(connection))
                     EntityManager.AddComponent<NetworkStreamInGame>(connection);
         }
 
@@ -86,7 +88,8 @@ namespace Hullbreach.NetCode.Entities
                 int peer = ids[i].Value;
                 active.Add(peer);
                 _connections[peer] = entities[i];
-                if (gameplayLoaded && _joinedPeers.Add(peer))
+                bool admitted = EntityManager.HasComponent<HullbreachPlatformAdmitted>(entities[i]);
+                if (gameplayLoaded && admitted && _joinedPeers.Add(peer))
                     _simulation.Join(peer, CreateStarterShip(peer));
             }
 
