@@ -22,5 +22,21 @@ namespace Hullbreach.Platform.Tests
             Assert.AreEqual(string.Empty, PlatformSession.Token);
             Assert.AreEqual(string.Empty, PlatformSession.Username);
         }
+
+        [Test]
+        public void OfflineAndSignInReplaceEachOther()
+        {
+            Assert.IsFalse(PlatformSession.HasChosen);
+            PlatformSession.SignIn("pilot", "tok");
+            PlatformSession.PlayOffline();
+            Assert.IsTrue(PlatformSession.IsOffline);
+            Assert.IsTrue(PlatformSession.HasChosen);
+            Assert.IsFalse(PlatformSession.IsSignedIn);
+            Assert.AreEqual(string.Empty, PlatformSession.Token);
+            PlatformSession.SignIn("pilot", "tok");
+            Assert.IsFalse(PlatformSession.IsOffline);
+            PlatformSession.SignOut();
+            Assert.IsFalse(PlatformSession.HasChosen);
+        }
     }
 }
