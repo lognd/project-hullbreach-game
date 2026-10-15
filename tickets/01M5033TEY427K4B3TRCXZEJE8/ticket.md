@@ -7,7 +7,7 @@ priority = "high"
 parent = "01M3DG5Y14KAMJ8NTGHC8BW9YV"
 reporter = "mcnairrobotics"
 created = "2026-10-15T15:32:55Z"
-updated = "2026-10-15T16:49:44Z"
+updated = "2026-10-15T16:50:00Z"
 labels = ["owner:mcnairrobotics", "game", "netcode", "milestone:0.3.0"]
 scope = ["Assets/Scripts/Hullbreach.NetCode.Entities/**"]
 
