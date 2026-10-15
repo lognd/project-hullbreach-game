@@ -7,17 +7,17 @@ priority = "high"
 parent = "01M3DG5Y14KAMJ8NTGHC8BW9YV"
 reporter = "mcnairrobotics"
 created = "2026-10-15T15:32:55Z"
-updated = "2026-10-15T15:32:55Z"
+updated = "2026-10-15T16:50:00Z"
 labels = ["owner:mcnairrobotics", "game", "netcode", "milestone:0.3.0"]
 scope = ["Assets/Scripts/Hullbreach.NetCode.Entities/**"]
 
 [[acceptance]]
 text = "A direct host started with -hullbreachDirect loads MultiplayerGame and admits players without reordering the build scene list."
-bound = false
+bound = true
 
 [[acceptance]]
 text = "A direct client started with -hullbreachConnect loads MultiplayerGame and reaches Replicated ships: 2 against a direct host without the build-order workaround."
-bound = false
+bound = true
 
 [[acceptance]]
 text = "A Linux dedicated server build loads MultiplayerGame and admits direct clients without the build-order workaround."

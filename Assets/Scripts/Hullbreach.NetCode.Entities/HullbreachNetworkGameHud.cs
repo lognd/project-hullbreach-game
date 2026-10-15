@@ -31,6 +31,13 @@ namespace Hullbreach.NetCode.Entities
         async void Leave()
         {
             leaveButton.interactable = false;
+            // A direct/LAN match has no lobby to go back to, so Leave closes the game.
+            if (HullbreachDirectLaunch.Plan.IsDirect)
+            {
+                Debug.Log("Hullbreach direct: leaving the match closes the game.");
+                Application.Quit();
+                return;
+            }
             try
             {
                 await HullbreachLobbyService.Instance.LeaveAndReturnToLobbyAsync();

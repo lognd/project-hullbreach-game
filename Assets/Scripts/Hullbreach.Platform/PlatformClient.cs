@@ -146,13 +146,28 @@ namespace Hullbreach.Platform
                     }
                     return new SessionOutcome(SessionStatus.Failed, null, null, "unexpected session response");
                 case 401:
-                    // The platform answers a bad server key with the same 401, so this also
-                    // covers a misconfigured key once /session starts requiring one.
+                    // The platform checks X-Server-Key before the token and says which one
+                    // failed in "detail"; a key problem is the operator's, not the player's.
+                    string detail = Detail(response.Body);
+                    if (detail.IndexOf("server key", StringComparison.OrdinalIgnoreCase) >= 0)
+                        return new SessionOutcome(SessionStatus.Failed, null, null,
+                            "platform refused this game server's key (" + detail + "); set " +
+                            PlatformConfig.ServerKeyEnv + " to one of the platform's game server keys");
                     return new SessionOutcome(SessionStatus.Invalid, null, null, "platform session invalid or expired");
+                case 503:
+                    string unavailable = Detail(response.Body);
+                    return new SessionOutcome(SessionStatus.Failed, null, null,
+                        unavailable.IndexOf("server key", StringComparison.OrdinalIgnoreCase) >= 0
+                            ? "platform has no game server keys configured (" + unavailable + ")"
+                            : "session check failed (HTTP 503)");
                 default:
                     return new SessionOutcome(SessionStatus.Failed, null, null,
                         "session check failed (HTTP " + response.StatusCode + ")");
             }
         }
+
+        // The platform's error body is {"detail": str}; empty when absent or not JSON.
+        static string Detail(string body) =>
+            PlatformJson.TryParseObject(body, out var root) ? PlatformJson.GetString(root, "detail") ?? string.Empty : string.Empty;
     }
 }

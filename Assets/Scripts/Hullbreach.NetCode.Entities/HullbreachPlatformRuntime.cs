@@ -93,6 +93,13 @@ namespace Hullbreach.NetCode.Entities
         public static PlatformClient Client =>
             s_client ??= new PlatformClient(Config, new HullbreachUnityPlatformHttp(), Log);
 
+        // Headless demo clients cannot click the sign-in screen, so a token handed
+        // over in the environment signs them in before the first scene loads.
+        // frob:doc docs/platform-link.md#client-session
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+        static void SignInFromEnvironment() =>
+            PlatformSession.SignInFromEnvironment(Environment.GetEnvironmentVariable, Log);
+
         // Statics survive play-mode restarts when domain reload is off; start clean each run.
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         static void ResetStatics()
