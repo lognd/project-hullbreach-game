@@ -546,30 +546,19 @@ firewall.
 
 ## Guide 4: signing in with a platform account
 
-> **Needs unmerged work.** This guide only works once pull request
-> [#50](https://github.com/lognd/project-hullbreach-game/pull/50)
-> (server-side session check) and
-> [#51](https://github.com/lognd/project-hullbreach-game/pull/51)
-> (the sign-in screen, built on #50) are merged, **and** someone has done
-> the one-time editor step from #51 below and committed the result. On a
-> `main` that does not have them, none of the options below exist and
-> there is no sign-in screen. Full details are in `docs/platform-link.md`
-> once #50 is merged.
-
 What you will show: a player signs in with a platform account on the
 lobby screen; the game server checks that sign-in with the platform; the
 in-game HUD says who is signed in; and a server can be set to refuse
 players who are not signed in.
 
-### 4.1 One-time editor step (from #51)
+### 4.1 The sign-in screen is already in the project
 
-After pulling a `main` that includes #51, open the project, then run the
-menu **Hullbreach -> Online -> Add sign-in screen to lobby scene**. It
-creates `Assets/Prefabs/UI/SignInCanvas.prefab` and adds it to
-`LobbyScene` without touching the rest of the lobby. Save the scene
-(**Ctrl+S** / **Cmd+S**). If it is already in the repo (check for
-`Assets/Prefabs/UI/SignInCanvas.prefab`), skip this step. Without it the
-lobby still works, but everyone simply plays offline.
+`LobbyScene` ships with the sign-in screen
+(`Assets/Prefabs/UI/SignInCanvas.prefab`), so there is no editor step.
+If the file is missing from your copy, run `git pull`. If you ever need
+to regenerate it, use the menu **Hullbreach -> Online -> Add sign-in
+screen to lobby scene** and save the scene (**Ctrl+S** / **Cmd+S**).
+Without it the lobby still works, but everyone simply plays offline.
 
 ### 4.2 Start the platform and make an account
 
@@ -735,7 +724,7 @@ Before standup:
 - [ ] Lobby build made (Guide 2.3), Development Build ticked, copied to a
       second computer if you have one.
 - [ ] Project linked to Unity services; `LobbyScene` shows `Online`.
-- [ ] For the sign-in part (only if #50 and #51 are merged): platform
+- [ ] For the sign-in part: platform
       running (`http://127.0.0.1:8000/api/docs` loads), two test accounts
       made, sign-in prefab present (Guide 4.1).
 
@@ -906,8 +895,8 @@ Fix: wait a minute.
 **`Enter a username and password.`** Both boxes must be filled.
 
 **There is no sign-in screen at all**
-Cause: #50/#51 are not merged into your copy, or the editor step (4.1)
-was not done, or the scene was not saved.
+Cause: your copy is older than the sign-in screen, or someone removed
+it from `LobbyScene` without saving the regenerated scene.
 Fix: `git pull`, check for `Assets/Prefabs/UI/SignInCanvas.prefab`, run
 **Hullbreach -> Online -> Add sign-in screen to lobby scene**, save, and
 rebuild.

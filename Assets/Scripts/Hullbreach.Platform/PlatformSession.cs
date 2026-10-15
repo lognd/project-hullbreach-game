@@ -7,9 +7,18 @@ namespace Hullbreach.Platform
     {
         static string s_token = string.Empty;
         static string s_username = string.Empty;
+        static bool s_offline;
 
         // frob:doc docs/platform-link.md#client-session
         public static bool IsSignedIn => s_token.Length > 0;
+
+        // True after the player chose "play offline" on the sign-in screen.
+        // frob:doc docs/platform-link.md#client-session
+        public static bool IsOffline => s_offline;
+
+        // Signed in or offline: either way the sign-in screen has been answered this run.
+        // frob:doc docs/platform-link.md#client-session
+        public static bool HasChosen => IsSignedIn || s_offline;
 
         // frob:doc docs/platform-link.md#client-session
         public static string Username => s_username;
@@ -23,6 +32,16 @@ namespace Hullbreach.Platform
         {
             s_username = username ?? string.Empty;
             s_token = token ?? string.Empty;
+            s_offline = false;
+        }
+
+        // Guest play: drops any token so the handshake hello carries none.
+        // frob:doc docs/platform-link.md#client-session
+        public static void PlayOffline()
+        {
+            s_username = string.Empty;
+            s_token = string.Empty;
+            s_offline = true;
         }
 
         // frob:doc docs/platform-link.md#client-session
@@ -30,6 +49,7 @@ namespace Hullbreach.Platform
         {
             s_username = string.Empty;
             s_token = string.Empty;
+            s_offline = false;
         }
     }
 }
