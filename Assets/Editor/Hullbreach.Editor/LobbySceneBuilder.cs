@@ -18,6 +18,7 @@ namespace Hullbreach.Editor
     public static class LobbySceneBuilder
     {
         public const string LobbyPrefabPath = "Assets/Prefabs/UI/LobbyCanvas.prefab";
+        public const string SignInPrefabPath = "Assets/Prefabs/UI/SignInCanvas.prefab";
         public const string LobbyScenePath = "Assets/Scenes/LobbyScene.unity";
         public const string GameScenePath = "Assets/Scenes/MultiplayerGame.unity";
         public const string GhostPrefabPath = "Assets/Prefabs/NetCode/HullbreachGameplayGhost.prefab";
@@ -26,6 +27,22 @@ namespace Hullbreach.Editor
         [MenuItem("Hullbreach/Online/Rebuild lobby and multiplayer scenes")]
         public static void RebuildMenu() => Build(force: true);
 
+        // Adds the sign-in screen to an existing lobby scene without resetting the lobby
+        // prefab or the multiplayer scenes, so restyled layouts survive.
+        // frob:doc docs/platform-link.md#sign-in-screen
+        [MenuItem("Hullbreach/Online/Add sign-in screen to lobby scene")]
+        public static void AddSignInMenu()
+        {
+            Directory.CreateDirectory("Assets/Prefabs/UI");
+            if (!File.Exists(SignInPrefabPath)) BuildSignInPrefab();
+            Scene scene = EditorSceneManager.OpenScene(LobbyScenePath, OpenSceneMode.Single);
+            if (Object.FindFirstObjectByType<HullbreachSignInView>() == null)
+                PrefabUtility.InstantiatePrefab(AssetDatabase.LoadAssetAtPath<GameObject>(SignInPrefabPath));
+            EditorSceneManager.SaveScene(scene, LobbyScenePath);
+            AssetDatabase.SaveAssets();
+            Debug.Log("LobbySceneBuilder: lobby scene has the sign-in screen.");
+        }
+
         public static void Build(bool force)
         {
             Directory.CreateDirectory("Assets/Prefabs/UI");
@@ -33,6 +50,7 @@ namespace Hullbreach.Editor
             Directory.CreateDirectory("Assets/Scenes");
 
             if (force || !File.Exists(LobbyPrefabPath)) BuildLobbyPrefab();
+            if (force || !File.Exists(SignInPrefabPath)) BuildSignInPrefab();
             if (force || !File.Exists(LobbyScenePath)) BuildLobbyScene();
             if (force || !File.Exists(GhostPrefabPath)) BuildGhostPrefab();
             if (force || !File.Exists(GhostSubScenePath)) BuildGhostSubScene();
@@ -173,6 +191,84 @@ namespace Hullbreach.Editor
             Object.DestroyImmediate(canvasRoot);
         }
 
+        // A separate overlay canvas above the lobby: the form blocks the lobby until the
+        // player signs in or picks offline, then only a small account bar remains.
+        static void BuildSignInPrefab()
+        {
+            var canvasRoot = new GameObject("SignInCanvas", typeof(RectTransform));
+            Canvas canvas = canvasRoot.AddComponent<Canvas>();
+            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            canvas.sortingOrder = 10;
+            CanvasScaler scaler = canvasRoot.AddComponent<CanvasScaler>();
+            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+            scaler.referenceResolution = new Vector2(1920f, 1080f);
+            scaler.matchWidthOrHeight = 0.5f;
+            canvasRoot.AddComponent<GraphicRaycaster>();
+
+            Image blocker = AddImage(canvasRoot.transform, "SignInRoot", new Color(0.025f, 0.04f, 0.075f, 0.985f));
+            Stretch(blocker.rectTransform);
+            GameObject panel = AddPanel(blocker.transform, "SignInPanel", new Vector2(620f, 520f),
+                new Color(0.06f, 0.09f, 0.15f, 0.97f));
+            VerticalLayoutGroup layout = panel.AddComponent<VerticalLayoutGroup>();
+            layout.padding = new RectOffset(40, 40, 32, 32);
+            layout.spacing = 10f;
+            layout.childControlHeight = true;
+            layout.childControlWidth = true;
+            layout.childForceExpandHeight = false;
+            layout.childForceExpandWidth = true;
+
+            TMP_Text title = AddText(panel.transform, "Title", "HULLBREACH", 34f, TextAlignmentOptions.Center);
+            title.fontStyle = FontStyles.Bold;
+            AddText(panel.transform, "Subtitle", "Sign in with your Hullbreach account", 18f, TextAlignmentOptions.Center);
+            AddSpacer(panel.transform, 6f);
+            AddText(panel.transform, "UsernameLabel", "Username", 16f);
+            TMP_InputField username = AddInput(panel.transform, "UsernameInput", "Username", false);
+            AddText(panel.transform, "PasswordLabel", "Password", 16f);
+            TMP_InputField password = AddInput(panel.transform, "PasswordInput", "Password", true);
+            password.characterLimit = 128;
+            TMP_Text message = AddText(panel.transform, "MessageText", string.Empty, 16f, TextAlignmentOptions.Center);
+            message.textWrappingMode = TextWrappingModes.Normal;
+            message.gameObject.GetComponent<LayoutElement>().preferredHeight = 48f;
+            Button signIn = AddButton(panel.transform, "SignInButton", "SIGN IN", 48f);
+            Button offline = AddButton(panel.transform, "PlayOfflineButton", "PLAY OFFLINE", 42f);
+            offline.GetComponent<Image>().color = new Color(0.16f, 0.22f, 0.32f, 1f);
+
+            GameObject account = AddPanel(canvasRoot.transform, "AccountRoot", new Vector2(520f, 56f),
+                new Color(0.04f, 0.065f, 0.11f, 0.92f));
+            RectTransform accountRect = account.GetComponent<RectTransform>();
+            accountRect.anchorMin = accountRect.anchorMax = accountRect.pivot = new Vector2(1f, 1f);
+            accountRect.anchoredPosition = new Vector2(-18f, -18f);
+            HorizontalLayoutGroup accountLayout = account.AddComponent<HorizontalLayoutGroup>();
+            accountLayout.padding = new RectOffset(16, 8, 8, 8);
+            accountLayout.spacing = 10f;
+            accountLayout.childControlHeight = true;
+            accountLayout.childControlWidth = true;
+            accountLayout.childForceExpandHeight = true;
+            accountLayout.childForceExpandWidth = false;
+            TMP_Text accountText = AddText(account.transform, "AccountText", string.Empty, 16f);
+            accountText.gameObject.GetComponent<LayoutElement>().flexibleWidth = 1f;
+            Button signOut = AddButton(account.transform, "SignOutButton", "SIGN OUT", 40f);
+            signOut.gameObject.GetComponent<LayoutElement>().preferredWidth = 130f;
+            account.SetActive(false);
+
+            HullbreachSignInView view = canvasRoot.AddComponent<HullbreachSignInView>();
+            SerializedObject serialized = new SerializedObject(view);
+            Set(serialized, "formRoot", blocker.gameObject);
+            Set(serialized, "usernameInput", username);
+            Set(serialized, "passwordInput", password);
+            Set(serialized, "signInButton", signIn);
+            Set(serialized, "playOfflineButton", offline);
+            Set(serialized, "messageText", message);
+            Set(serialized, "accountRoot", account);
+            Set(serialized, "accountText", accountText);
+            Set(serialized, "signOutButton", signOut);
+            Set(serialized, "signOutLabel", signOut.GetComponentInChildren<TMP_Text>());
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+
+            PrefabUtility.SaveAsPrefabAsset(canvasRoot, SignInPrefabPath);
+            Object.DestroyImmediate(canvasRoot);
+        }
+
         static void BuildLobbyScene()
         {
             Scene scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
@@ -181,6 +277,7 @@ namespace Hullbreach.Editor
             CreateEventSystem();
             GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(LobbyPrefabPath);
             PrefabUtility.InstantiatePrefab(prefab);
+            PrefabUtility.InstantiatePrefab(AssetDatabase.LoadAssetAtPath<GameObject>(SignInPrefabPath));
             EditorSceneManager.SaveScene(scene, LobbyScenePath);
         }
 
