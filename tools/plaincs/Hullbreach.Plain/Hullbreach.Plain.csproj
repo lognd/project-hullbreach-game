@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <!-- The engine-free simulation assemblies (Core, Ship, Structure, Builder,
-       Net) compiled with the stock .NET SDK. Anything that needs UnityEngine
-       lives in Hullbreach.Game and is deliberately NOT included here. -->
+  <!-- The engine-free assemblies (Core, Ship, World, Structure, Builder,
+       Net, Hud, Platform) compiled with the stock .NET SDK. Anything that
+       needs UnityEngine lives in Hullbreach.Game and is deliberately NOT included here. -->
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
     <LangVersion>9.0</LangVersion>
@@ -21,6 +21,7 @@
     <Compile Include="../../../Assets/Scripts/Hullbreach.Builder/**/*.cs" />
     <Compile Include="../../../Assets/Scripts/Hullbreach.Net/**/*.cs" />
     <Compile Include="../../../Assets/Scripts/Hullbreach.Hud/**/*.cs" />
+    <Compile Include="../../../Assets/Scripts/Hullbreach.Platform/**/*.cs" />
     <Compile Include="../.deps/um/src/Unity.Mathematics/**/*.cs" />
     <Compile Remove="../.deps/um/src/Unity.Mathematics/math_unity_conversion.cs" />
     <Compile Remove="../.deps/um/src/Unity.Mathematics/PropertyAttributes.cs" />
