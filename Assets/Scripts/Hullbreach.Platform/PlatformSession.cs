@@ -1,3 +1,5 @@
+using System;
+
 namespace Hullbreach.Platform
 {
     // The signed-in player's platform session, in memory only for this run (S07-3
@@ -42,6 +44,27 @@ namespace Hullbreach.Platform
             s_username = string.Empty;
             s_token = string.Empty;
             s_offline = true;
+        }
+
+        // Demo/testing aid: a headless client cannot click the sign-in screen, so a
+        // token from the environment (never a CLI arg) signs it in at startup.
+        // frob:doc docs/platform-link.md#client-session
+        public const string TokenEnv = "HULLBREACH_PLATFORM_TOKEN";
+
+        // frob:doc docs/platform-link.md#client-session
+        public const string UsernameEnv = "HULLBREACH_PLATFORM_USERNAME";
+
+        // Signs in from TokenEnv/UsernameEnv when a token is set; logs the name, never the token.
+        // frob:doc docs/platform-link.md#client-session
+        public static bool SignInFromEnvironment(Func<string, string> getEnv, IPlatformLog log)
+        {
+            if (getEnv == null) throw new ArgumentNullException(nameof(getEnv));
+            string token = (getEnv(TokenEnv) ?? string.Empty).Trim();
+            if (token.Length == 0) return false;
+            string username = (getEnv(UsernameEnv) ?? string.Empty).Trim();
+            SignIn(username, token);
+            log?.Info($"Hullbreach platform: signed in from {TokenEnv} as '{username}' (demo/testing aid).");
+            return true;
         }
 
         // frob:doc docs/platform-link.md#client-session

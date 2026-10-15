@@ -243,6 +243,15 @@ server treats them as a guest or, in required mode, turns them away);
 `HasChosen` is true once either answer was given this run. Treat `Token`
 as a secret: it may be passed to the handshake and nowhere else.
 
+Demo/testing aid: a headless client cannot click the sign-in screen, so
+at startup (before the first scene) `HullbreachPlatformRuntime` calls
+`SignInFromEnvironment`. When `HULLBREACH_PLATFORM_TOKEN` is set it signs
+in with that token and the name in `HULLBREACH_PLATFORM_USERNAME`, and
+logs `Hullbreach platform: signed in from HULLBREACH_PLATFORM_TOKEN as
+'<name>' (demo/testing aid).` (the name only, never the token). It is
+environment-only, never a command-line argument, so the token does not
+show up in process listings.
+
 <!-- describes: Assets/Scripts/Hullbreach.Platform/PlatformSession.cs::PlatformSession -->
 <!-- describes: Assets/Scripts/Hullbreach.Platform/PlatformSession.cs::PlatformSession.IsSignedIn -->
 <!-- describes: Assets/Scripts/Hullbreach.Platform/PlatformSession.cs::PlatformSession.IsOffline -->
@@ -252,6 +261,9 @@ as a secret: it may be passed to the handshake and nowhere else.
 <!-- describes: Assets/Scripts/Hullbreach.Platform/PlatformSession.cs::PlatformSession.SignIn -->
 <!-- describes: Assets/Scripts/Hullbreach.Platform/PlatformSession.cs::PlatformSession.PlayOffline -->
 <!-- describes: Assets/Scripts/Hullbreach.Platform/PlatformSession.cs::PlatformSession.SignOut -->
+<!-- describes: Assets/Scripts/Hullbreach.Platform/PlatformSession.cs::PlatformSession.TokenEnv -->
+<!-- describes: Assets/Scripts/Hullbreach.Platform/PlatformSession.cs::PlatformSession.UsernameEnv -->
+<!-- describes: Assets/Scripts/Hullbreach.Platform/PlatformSession.cs::PlatformSession.SignInFromEnvironment -->
 
 ## Sign-in screen
 
