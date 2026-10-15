@@ -455,7 +455,9 @@ mode you need a build that **starts on `MultiplayerGame`**:
    commit the change.
 
 This step has not yet been walked end to end in the editor. If the match
-never connects, see [Troubleshooting](#troubleshooting).
+never connects, see [Troubleshooting](#troubleshooting). The proper fix
+(direct mode loading `MultiplayerGame` by itself, so no build-order
+workaround is needed) is tracked as frob ticket `~CXZEJE8` (S47-5).
 
 ### 3.2 Find the host's IP address
 
@@ -692,7 +694,8 @@ matches. Players connect to it with the direct options from Guide 3.
    "Linux Dedicated Server Build Support" module from 0.4). Click
    **Switch Platform**.
 2. Make `MultiplayerGame` the **first** scene for this profile (same
-   reason and same method as [3.1](#31-make-a-direct-connect-build-important)).
+   reason and same method as [3.1](#31-make-a-direct-connect-build-important);
+   the fix that removes this step is frob ticket `~CXZEJE8`, S47-5).
 3. Click **Build**, pick an empty folder outside the repo, and name the
    file `HullbreachServer`. You get `HullbreachServer.x86_64` plus a
    `HullbreachServer_Data` folder.
