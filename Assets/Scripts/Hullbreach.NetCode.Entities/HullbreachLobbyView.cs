@@ -51,6 +51,9 @@ namespace Hullbreach.NetCode.Entities
 
         void OnEnable()
         {
+            // Direct/LAN and server launches skip the lobby (S47-5); do not start
+            // Unity Services for a scene that is about to be replaced.
+            if (HullbreachDirectLaunch.Plan.IsDirect) return;
             _service = HullbreachLobbyService.Instance;
             _service.Changed += Refresh;
             hostButton.onClick.AddListener(Host);

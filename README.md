@@ -430,34 +430,20 @@ command-line options (the code is in
 | `-hullbreachDirect` | Host: run the server on port 7979 and play on it. |
 | `-hullbreachConnect <ip>` | Join the game at `<ip>`, for example `-hullbreachConnect 192.168.1.23`. |
 | `-hullbreachPort <number>` | Use this port instead of 7979 (for both hosting and joining). |
+| `-hullbreachServer` | Run as a server with no player of its own (add `-batchmode -nographics` for no window). |
 
-A bad address logs `Invalid -hullbreachConnect address '<x>'; using
-loopback.` and connects to the same computer instead.
+Each direct option opens the match (`MultiplayerGame`) by itself; the
+lobby screen is skipped. A bad address logs `Hullbreach direct: Invalid
+-hullbreachConnect address '<x>' (use a numeric IPv4 address such as
+192.168.1.23); using 127.0.0.1.` and connects to the same computer instead.
 
-### 3.1 Make a direct-connect build (important)
+### 3.1 Make a build
 
-Direct mode connects immediately, but on `main` nothing loads the match
-scene in direct mode: the build opens on `LobbyScene`, and only the
-lobby's **START GAME** loads `MultiplayerGame`. The server does not let
-anyone into the match until `MultiplayerGame` is loaded. So for direct
-mode you need a build that **starts on `MultiplayerGame`**:
-
-1. **File -> Build Profiles**, select your platform (Windows).
-2. Either untick `LobbyScene` in the **Scene List** (so `MultiplayerGame`
-   becomes first) for this build only, or click **Add Build Profile**,
-   make a separate profile, turn on its own scene list override, and put
-   `MultiplayerGame` first in it. The separate profile is nicer because
-   it does not change the shared scene list.
-3. Tick **Development Build**, click **Build**, choose a **different**
-   empty folder from your lobby build (for example
-   `C:\dev\hullbreach-direct`).
-4. If you unticked `LobbyScene`, tick it again afterwards and do not
-   commit the change.
-
-This step has not yet been walked end to end in the editor. If the match
-never connects, see [Troubleshooting](#troubleshooting). The proper fix
-(direct mode loading `MultiplayerGame` by itself, so no build-order
-workaround is needed) is tracked as frob ticket `~CXZEJE8` (S47-5).
+Any ordinary Windows build works for direct mode (the same one as Guide
+2.3): **File -> Build Profiles**, select **Windows**, tick **Development
+Build**, click **Build**, choose an empty folder outside the repo (for
+example `C:\dev\hullbreach`). Direct options load the match scene
+themselves (S47-5), so the scene order does not matter.
 
 ### 3.2 Find the host's IP address
 
@@ -475,24 +461,24 @@ device-to-device traffic; a phone hotspot or home router works better.
 
 ### 3.3 Start the host
 
-In a terminal, go to the direct build folder and start it with
+In a terminal, go to the build folder and start it with
 `-hullbreachDirect`:
 
 - **Windows PowerShell**:
   ```
-  cd C:\dev\hullbreach-direct
+  cd C:\dev\hullbreach
   & ".\Project Hullbreach.exe" -hullbreachDirect
   ```
   (The `&` and quotes are needed because the name has a space.)
 - **Windows Command Prompt (cmd)**:
   ```
-  cd /d C:\dev\hullbreach-direct
+  cd /d C:\dev\hullbreach
   "Project Hullbreach.exe" -hullbreachDirect
   ```
 - **Linux** (a Linux player build; the file name is whatever you typed
   when building, ending in `.x86_64`):
   ```
-  cd ~/hullbreach-direct
+  cd ~/hullbreach
   chmod +x ./ProjectHullbreach.x86_64
   ./ProjectHullbreach.x86_64 -hullbreachDirect
   ```
@@ -535,10 +521,10 @@ On the **other** computer, same build, with the host's IP:
 
 You should see in both: `Replicated ships: 2`.
 
-**Same computer, two copies**: every non-server copy also starts its own
-server listening on the port, so a second copy on the same computer
-collides with the first on 7979. Run two copies on two computers, or use
-Guide 2 (Relay) or Multiplayer Play Mode for a one-computer test.
+**Same computer, two copies**: a joiner (`-hullbreachConnect`) runs no
+server of its own, so a host and a joiner can share one computer: start
+the host with `-hullbreachDirect`, then a second copy with
+`-hullbreachConnect 127.0.0.1`. Only one host per port per computer.
 
 To use a different port (if 7979 is taken), add `-hullbreachPort 7980`
 to **both** the host and the joiner commands, and allow that port in the
@@ -682,9 +668,8 @@ matches. Players connect to it with the direct options from Guide 3.
 1. Unity: **File -> Build Profiles** -> **Linux Server** (needs the
    "Linux Dedicated Server Build Support" module from 0.4). Click
    **Switch Platform**.
-2. Make `MultiplayerGame` the **first** scene for this profile (same
-   reason and same method as [3.1](#31-make-a-direct-connect-build-important);
-   the fix that removes this step is frob ticket `~CXZEJE8`, S47-5).
+2. Nothing to change in the scene list: a server build opens the match
+   scene (`MultiplayerGame`) by itself.
 3. Click **Build**, pick an empty folder outside the repo, and name the
    file `HullbreachServer`. You get `HullbreachServer.x86_64` plus a
    `HullbreachServer_Data` folder.
@@ -694,25 +679,24 @@ matches. Players connect to it with the direct options from Guide 3.
    ```
    cd ~/hullbreach-server
    chmod +x ./HullbreachServer.x86_64
-   ./HullbreachServer.x86_64 -batchmode -nographics -hullbreachDirect -logFile -
+   ./HullbreachServer.x86_64 -batchmode -nographics -logFile -
    ```
-   `-hullbreachDirect` is **required**: without a direct-mode option the
-   server does not listen on any port. `-logFile -` prints the log to the
+   A server build always listens, on UDP 7979 unless you add
+   `-hullbreachPort <n>`; it logs `Hullbreach direct: role=server
+   listen=0.0.0.0:7979 scene=MultiplayerGame`. `-logFile -` prints the log to the
    terminal instead of a file. Add `-hullbreachPort <n>` for another
    port and `-hullbreachRequirePlatformAuth` plus the environment
    variables from Guide 4 to use the platform.
 6. Open UDP 7979 on that machine (`sudo ufw allow 7979/udp`) and, for a
    cloud server, in its provider's firewall / security group.
-7. Players start the direct build from Guide 3 with
+7. Players start the build from Guide 3 with
    `-hullbreachConnect <server IP>`.
 
 Stop the server with **Ctrl+C**. To keep it running after you log out,
 run it inside `tmux` or `screen`, or as a systemd service.
 
-Note that player builds (`-hullbreachConnect`) also run their own small
-server; that is harmless on separate machines. This guide has not yet
-been walked end to end; the scene-order step is the part most likely to
-need adjusting.
+No Linux Dedicated Server module? An ordinary player build started with
+`-batchmode -nographics -hullbreachServer` is a headless server too.
 
 ## Demo script for standup
 
@@ -847,9 +831,10 @@ errors.
 
 **Joiner stays on `Waiting for Netcode connection...`**
 Cause, most likely first:
-1. The build starts on `LobbyScene` instead of `MultiplayerGame` (see
-   3.1), so the server never admits anyone. Rebuild with
-   `MultiplayerGame` first.
+1. The build is older than the S47-5 fix and starts on `LobbyScene`
+   instead of `MultiplayerGame`, so the server never admits anyone.
+   `git pull` and rebuild; the log should say `Hullbreach direct:
+   loading MultiplayerGame`.
 2. The host's firewall blocks UDP 7979. On Windows: Start -> "Windows
    Defender Firewall" -> **Allow an app or feature through Windows
    Defender Firewall** -> **Change settings** -> tick **Private** for
@@ -1207,8 +1192,8 @@ is in making the handling deliberate and framerate-independent.
 
 File -> Build Profiles -> Linux Server (or Platforms -> Dedicated Server
 -> Linux). Build to a folder outside the repo. The result is a headless
-binary that hosts a match. It only listens when started with a direct-mode
-option, and it needs `MultiplayerGame` as its first scene; the full steps
+binary that hosts a match: it opens `MultiplayerGame` and listens on UDP
+7979 (or `-hullbreachPort`) without further options; the full steps
 are in [Guide 5](#guide-5-dedicated-linux-server). A CI build for the
 server is on the list in `TODO.md`.
 
