@@ -1,17 +1,962 @@
 # Project Hullbreach: Game
 
-New here? Start with [docs/getting-started.md](docs/getting-started.md).
-
 This is the game half of Hullbreach: the Unity client and the dedicated
 server, built from one project. Players build a spaceship out of blocks
 and try to breach each other's hull. Accounts, ELO, match history, and the
-store are in the [platform repo](https://github.com/lognd/project-hullbreach-platform);
-this one talks to that API over HTTPS.
+store are in the [platform repo](https://github.com/lognd/project-hullbreach-platform#readme);
+this one talks to that API over HTTP(S).
 
 Company of Theseus, UF CEN3031, fall 2026. All rights reserved, see
 [LICENSE](LICENSE).
 
+The first big part of this file, **Start here**, is a step-by-step guide
+for launching the game and demoing multiplayer and the platform sign-in.
+It assumes you have never used a terminal, Git, or Unity. The second
+part, **Developer guide**, is the older reference material for people
+changing the code. If you only want to tweak the single-player demo
+without code, [docs/getting-started.md](docs/getting-started.md) is the
+friendliest place.
+
+---
+
+# Start here
+
+## What is this?
+
+Hullbreach is two separate programs that live in two separate GitHub
+repositories ("repos"; a repo is just a folder of files with its full
+history):
+
+- **The game** (this repo, `project-hullbreach-game`). A Unity program.
+  It is the window you play in, and the same project can also be built
+  into a **game server**: a program with no window that runs a match and
+  that the players' games connect to. In most of the guides below one of
+  the players' games acts as the server too (that player is the
+  **host**), so you do not need a separate server program.
+- **The platform** (the other repo,
+  [`project-hullbreach-platform`](https://github.com/lognd/project-hullbreach-platform#readme)).
+  A website plus a web API (a program that answers requests over HTTP,
+  the same protocol your browser uses) plus a database. It stores
+  accounts and passwords. The game asks it "is this username and password
+  right?" when you sign in, and the game server asks it "is this player
+  really signed in?" when the player connects.
+
+How the pieces talk to each other:
+
+```
+   Player A's computer                         Player B's computer
+ +----------------------+                   +----------------------+
+ |  Hullbreach game     |   game traffic    |  Hullbreach game     |
+ |  (host: also runs    |<----------------->|  (joins A's match)   |
+ |   the game server)   |  via Unity Relay  |                      |
+ +----------------------+  or direct UDP    +----------------------+
+            |                  port 7979               |
+            | "sign me in" / "is this player           | "sign me in"
+            |  signed in?"  (HTTP, port 8000)          |
+            v                                          v
+ +------------------------------------------------------------------+
+ |  Hullbreach platform (other repo): web API + website + database   |
+ |  http://127.0.0.1:8000 by default                                 |
+ +------------------------------------------------------------------+
+```
+
+- **Unity Relay** is a free Unity cloud service that passes game traffic
+  between players over the internet, so nobody has to open ports on their
+  router. Players find each other through the in-game **lobby** screen.
+- **Direct (LAN)** means one game connects straight to the other game's
+  IP address (the computer's number on the network) on UDP port 7979.
+  Good for two computers on the same Wi-Fi with no internet services.
+- The platform is **optional**. Without it you play as a guest. With it
+  you can show "signed in as <name>" and turn on a mode where the server
+  refuses players who are not signed in.
+
+## Which guide do I need?
+
+| I want to... | Do this |
+| --- | --- |
+| See the game run at all, alone | [Part 0](#part-0-one-time-setup) then [Guide 1](#guide-1-single-player-quick-look) |
+| Play two copies against each other over the internet | Part 0, then [Guide 2](#guide-2-multiplayer-through-the-relay-lobby) |
+| Connect two computers on the same network without Unity's online services | Part 0, then [Guide 3](#guide-3-direct-lan-connection) |
+| Show signing in with a platform account | Part 0, Guide 2, then [Guide 4](#guide-4-signing-in-with-a-platform-account) |
+| Run a game server with no window, on a Linux machine | Part 0, then [Guide 5](#guide-5-dedicated-linux-server) |
+| Run a five-minute demo at standup | [Demo script for standup](#demo-script-for-standup) |
+| Fix something that went wrong | [Troubleshooting](#troubleshooting) |
+
+**What has been tested, honestly.** Guide 1 and Guide 2 follow the flow
+the team has used and the docs in [docs/netcode.md](docs/netcode.md).
+Guide 3 and Guide 5 depend on a build setting described in those guides
+that has not yet been walked end to end in the editor; if a step does
+not match what you see, say so in the team chat. Guide 4 needs two pull
+requests that are not merged yet (see the guide).
+
+## Words you will see
+
+- **Terminal**: a window where you type commands instead of clicking.
+  You type (or paste) a command, press **Enter**, and it prints text
+  back. On Windows it is called **PowerShell**; on a Mac it is called
+  **Terminal**; on Linux it is usually called **Terminal** too.
+- **Command**: one line of text you type into the terminal. In this file
+  commands are shown in grey boxes like this:
+  ```
+  git --version
+  ```
+  Copy the whole line, paste it into the terminal (right-click, or
+  **Ctrl+V** on Windows PowerShell, **Cmd+V** on a Mac,
+  **Ctrl+Shift+V** in a Linux terminal), then press **Enter**.
+- **Folder / path**: where a file lives, written like
+  `C:\Users\you\Documents` (Windows) or `/home/you` (Linux, Mac uses
+  `/Users/you`).
+- **Clone**: download a repo with Git so you have your own copy.
+- **Scene**: a Unity level. A file ending in `.unity` under
+  `Assets/Scenes/`.
+- **Play Mode**: pressing the Play button in Unity runs the open scene
+  inside the editor window. Press Play again to stop.
+- **Build**: turning the Unity project into a normal program (an `.exe`
+  on Windows) that runs without Unity installed.
+- **IP address**: a computer's number on a network, like
+  `192.168.1.23`. `127.0.0.1` always means "this same computer".
+- **Port**: a numbered door on a computer that a program listens on. The
+  game uses **7979** (UDP) for direct connections; the platform uses
+  **8000**.
+- **Firewall**: the part of your operating system that blocks programs
+  from receiving network traffic until you allow them.
+
+## Part 0: one-time setup
+
+You do this once per computer. Budget an hour, most of it waiting for
+downloads.
+
+### 0.1 Open a terminal
+
+- **Windows**: press the **Windows key**, type `PowerShell`, click
+  **Windows PowerShell**. A blue or black window with a line like
+  `PS C:\Users\you>` appears. That line is the **prompt**; it shows the
+  folder you are "in".
+- **macOS**: press **Cmd+Space**, type `Terminal`, press **Enter**. The
+  prompt ends with `%` or `$`.
+- **Linux**: press **Ctrl+Alt+T** (or find "Terminal" in your app menu).
+  The prompt ends with `$`.
+
+You should see: a window with a blinking cursor after the prompt. Leave it
+open; the next steps use it.
+
+### 0.2 Install Git
+
+Git is the tool that downloads (clones) this repo and keeps it up to date.
+This repo does **not** use Git LFS (large file storage), so plain Git is
+all you need.
+
+- **Windows**: go to https://git-scm.com/download/win, download "Git for
+  Windows", run the installer and click **Next** on every page (the
+  defaults are right). Then **close PowerShell and open a new one** so it
+  notices Git.
+- **macOS**: in Terminal run `git --version`. If a box pops up offering
+  to install "command line developer tools", click **Install** and wait.
+- **Linux (Ubuntu/Debian)**: run `sudo apt update && sudo apt install -y git`
+  and type your computer password when asked (nothing shows while you
+  type; that is normal).
+
+Check it worked:
+
+```
+git --version
+```
+
+You should see something like `git version 2.43.0`. Any version is fine.
+If you see "not recognized" or "command not found", see
+[Troubleshooting](#troubleshooting).
+
+Unity runs on Windows and macOS here. On Windows, clone and open the game
+from normal Windows folders with Git for Windows, **not** from inside WSL
+(WSL is a Linux layer some of us use for the platform; Unity is very slow
+and confused when the project lives there).
+
+### 0.3 Download (clone) the game
+
+1. Pick a folder with **no spaces** in its path. Unity and its build tools
+   misbehave with spaces. `C:\dev` on Windows or your home folder on a
+   Mac are good choices. On Windows, make and enter `C:\dev`:
+   ```
+   mkdir C:\dev
+   cd C:\dev
+   ```
+   On macOS/Linux, `cd ~` puts you in your home folder.
+2. Clone:
+   ```
+   git clone https://github.com/lognd/project-hullbreach-game.git
+   ```
+   What it does: downloads the whole project into a new folder named
+   `project-hullbreach-game`. You should see `Cloning into
+   'project-hullbreach-game'...` and some progress lines ending in
+   `done.`. If it asks you to sign in to GitHub, you need to be added to
+   the repo first (send your GitHub username to the team lead); GitHub
+   wants a personal access token, not your password, and the
+   [platform README](https://github.com/lognd/project-hullbreach-platform#readme)
+   walks through making one.
+3. Later, to get the newest version, go into that folder and pull:
+   ```
+   cd C:\dev\project-hullbreach-game
+   git pull
+   ```
+
+### 0.4 Install Unity Hub and the exact Unity version
+
+Unity Hub is a small launcher that installs Unity editors and opens
+projects. This project needs **exactly Unity 6000.0.43f1** (Unity 6). Not
+a newer 6000.x: a different version will try to "upgrade" the project and
+break it for everyone else. (The version is recorded in
+`ProjectSettings/ProjectVersion.txt`.)
+
+1. Download Unity Hub from https://unity.com/download and install it.
+2. Open Unity Hub and sign in (make a free Unity account if you do not
+   have one; the **Personal** license is free and is what we use).
+3. Install the editor. Easiest way: paste this into your web browser's
+   address bar and press Enter, then let it open Unity Hub:
+   ```
+   unityhub://6000.0.43f1/97272b72f107
+   ```
+   Or in the Hub: **Installs -> Install Editor -> Archive -> download
+   archive**, find **6000.0.43f1** on the web page and click its
+   "Unity Hub" button.
+4. Unity Hub then asks which **modules** (extra parts) to install. Tick:
+   - **Windows Build Support (IL2CPP)** if you are on Windows, or **Mac
+     Build Support (IL2CPP)** on a Mac. Needed to make a build.
+   - **Linux Build Support (IL2CPP)** and **Linux Dedicated Server Build
+     Support**. Needed only for Guide 5 (the Linux server), but cheap to
+     add now.
+   - **Microsoft Visual Studio Community** (Windows). The project builds
+     with IL2CPP, which turns the game into C++ and compiles it, so a
+     Windows build needs Visual Studio's **Desktop development with
+     C++** workload. If the Visual Studio installer opens, tick that
+     workload. (On a Mac, IL2CPP builds need Xcode from the App Store.)
+5. Click **Install** (or **Continue**) and wait. It is several gigabytes.
+
+You should see: under **Installs**, an entry `6000.0.43f1` with the
+modules listed underneath.
+
+### 0.5 Open the project in Unity
+
+1. Unity Hub -> **Projects** -> **Add** (or the arrow next to it) ->
+   **Add project from disk**.
+2. Pick the `project-hullbreach-game` folder you cloned (the folder that
+   *contains* `Assets` and `ProjectSettings`, not one of those).
+3. The project appears in the list with **6000.0.43f1** next to it. Click
+   it.
+4. The first open **imports** everything and builds a hidden `Library`
+   folder. This takes 5 to 15 minutes, sometimes more. A progress bar
+   shows what it is doing. Let it finish.
+
+You should see: the Unity editor. The important parts:
+
+- **Play button**: the triangle at the top center. Press it to run the
+  open scene; press it again to stop.
+- **Project window**: bottom area, a file browser of `Assets`.
+- **Hierarchy**: left side, the objects in the open scene.
+- **Console**: a tab next to the Project window (if missing:
+  **Window -> General -> Console**). Messages and errors appear here.
+  Red lines are errors.
+
+If Unity says the project was saved with a different editor version, or
+the Console is full of red "package" errors, stop and see
+[Troubleshooting](#troubleshooting). Do **not** click "Continue" to
+upgrade.
+
+## Guide 1: single-player quick look
+
+The fastest way to see the game. No network, no accounts.
+
+1. In the **Project** window open the `Assets` folder, then `Scenes`.
+2. Double-click **`DemoScene`**. The Hierarchy fills with objects like
+   `PlayerShip` and `TargetShip`.
+3. Press **Play**.
+
+You should see: the game view with your ship and a target ship, starting
+in **Build** mode. Try:
+
+- **Tab** switches between Build and Fly.
+- In Build mode, **1** to **7** pick a block type, **left click** places
+  it, **Ctrl+Z** undoes.
+- In Fly mode, **W/S** thrust, **A/D** turn, **Space** fires, **R**
+  resets the ship, **O** cycles the color overlays (stress, damage and
+  so on).
+
+The full control list is in [Playing the demo](#playing-the-demo) below
+and in [docs/getting-started.md](docs/getting-started.md). Press **Play**
+again to stop.
+
+## Guide 2: multiplayer through the Relay lobby
+
+This is the main multiplayer path. Every copy of the game starts on a
+lobby screen; one player hosts, the others join with a code, the host
+presses Start Game. Traffic goes through Unity Relay, so it works across
+the internet and through home routers. It needs internet access and the
+Unity project linked to Unity's online services (step 2.1).
+
+The scenes involved: `LobbyScene` (the lobby screen, first in the build)
+and `MultiplayerGame` (the match, loaded when the host presses Start
+Game).
+
+### 2.1 Link the project to Unity's online services (once per computer)
+
+The lobby uses three Unity cloud services: **Authentication** (signs each
+copy in anonymously, no account needed by the player), **Lobby** (the
+list of games and join codes), and **Relay** (passes the traffic). The
+editor must be linked to the team's Unity Cloud project for these to
+work.
+
+1. In Unity: **Edit -> Project Settings -> Services**.
+2. If it says the project is not linked, choose **Use an existing Unity
+   project ID**, pick the organization and the team's project, and click
+   **Link**. The repo remembers the team project's ID
+   (`cloudProjectId` in `ProjectSettings/ProjectSettings.asset`) and its
+   organization (`derrickdavison`), so you need to be a member of that
+   Unity organization. If it is not in your list, ask the organization
+   owner to invite your Unity account at https://cloud.unity.com.
+3. In the Unity Cloud dashboard (https://cloud.unity.com) for that
+   project, **Lobby** and **Relay** must be turned on (they are free at
+   our scale). Anonymous sign-in for Authentication is on by default.
+
+Builds remember which project they were made from. **Every copy that
+plays together must be built from (or run in) an editor linked to the
+same Unity Cloud project**, or they will not see each other's lobbies.
+
+You should see: the Services page showing the linked project name.
+
+### 2.2 Try it inside the editor (one computer)
+
+1. Open `Assets/Scenes/LobbyScene` and press **Play**.
+2. The lobby shows the title **HULLBREACH ONLINE** and a status line that
+   says `Connecting to Unity Services...` and then `Online`.
+
+If it says `Online service error` instead, the project is not linked or
+the services are off; see [Troubleshooting](#troubleshooting).
+
+To play against yourself inside the editor, use **Multiplayer Play Mode**
+(it is installed with the project). It opens extra "virtual player"
+windows that each run their own copy:
+
+1. **Window -> Multiplayer -> Multiplayer Play Mode**.
+2. Tick **Player 2**. Wait until it says it is active (the first time
+   takes a minute or two; a second Unity window opens).
+3. With `LobbyScene` open, press **Play**. Both windows start the lobby.
+4. Host in one window and join in the other (step 2.4).
+
+The [netcode doc](docs/netcode.md) notes the virtual players need
+isolated player profiles. If the second player cannot join (for example
+an error that the player is already in the lobby), use two builds on
+two computers instead (2.3).
+
+### 2.3 Make a build (so you can run it outside Unity)
+
+1. **File -> Build Profiles**.
+2. In the list on the left pick **Windows** (or **macOS** on a Mac). If
+   it is not the active platform, click **Switch Platform** and wait.
+3. Check the **Scene List**: `LobbyScene` must be ticked and first, and
+   `MultiplayerGame` must be ticked. (The repo lists `LobbyScene`,
+   `MultiplayerGame`, `DemoScene`, `RocketScene`, in that order.)
+4. Tick **Development Build**. This matters for Guide 4: the game only
+   allows plain `http://` platform addresses in development builds.
+5. Click **Build**, make a new empty folder **outside** the repo (for
+   example `C:\dev\hullbreach-build`), and select it.
+6. Wait. The first IL2CPP build takes several minutes.
+
+You should see: the folder contains `Project Hullbreach.exe` (named after
+the product name in Player Settings), a `Project Hullbreach_Data` folder,
+and some `.dll` files. On a Mac it is `Project Hullbreach.app`.
+
+To run it, double-click the `.exe`. Windows may show "Windows protected
+your PC" the first time because the build is not signed; click **More
+info** -> **Run anyway**. (Mac: see Troubleshooting.)
+
+**Two computers**: copy the **whole build folder** (not just the `.exe`)
+to the second computer, for example zip it and share it. Both computers
+then run the same build.
+
+**Two copies on one computer**: double-click the `.exe` twice. The game
+keeps running when its window is not focused. Note that both copies
+share the same saved Unity sign-in, so Unity may treat them as the same
+player; if joining fails, use a second computer or Multiplayer Play Mode.
+
+### 2.4 Host, join, and start a match
+
+On the **host** copy:
+
+1. Wait for the status to say `Online`.
+2. Under **HOST A LOBBY**: type any **Lobby name**, leave **Maximum
+   players** at 8. Optionally tick **Private (join code only)** and type a
+   password (8 to 64 characters; shorter gives `Lobby passwords must be 8
+   to 64 characters.`).
+3. Click **HOST WITH RELAY**. Status shows `Creating lobby and Relay
+   allocation...` and then `Hosting <name>`.
+4. The waiting room shows an **INVITE CODE**. Read it out to the other
+   player (or paste it in chat).
+
+On the **joining** copy:
+
+1. Either click **REFRESH** under **PUBLIC LOBBIES** and pick the host's
+   lobby, or type the invite code under **JOIN BY CODE** (and the
+   password if there is one) and click **JOIN CODE**.
+2. Status shows `Joining lobby by code...` and then `Joined <name>`.
+
+Both copies should list both players under **PLAYERS**. Then on the host
+click **START GAME** (only the host has it; anyone else gets `Only the
+lobby host can start the game.`).
+
+You should see in both copies: the match scene with two ships (yours
+light blue, the other orange) and a status line at the top like
+
+```
+Connected as #1  *  Replicated ships: 2  *  BUILD
+```
+
+(the real separator is a small dot). **`Replicated ships: 2` is the
+proof that multiplayer works.** Build with 1-7 and left click, press Tab
+to fly, W/S/A/D to move, Space or left click to fire. **LEAVE** returns to
+the lobby.
+
+## Guide 3: direct LAN connection
+
+Use this when two computers are on the same network and you do not want
+Unity's online services (no internet, no linking). One copy is the host
+(it runs the server and plays); the other connects to the host's IP
+address on UDP port **7979**.
+
+The game switches to direct mode when it is started with any of these
+command-line options (the code is in
+`Assets/Scripts/Hullbreach.NetCode.Entities/HullbreachNetCodeBootstrap.cs`):
+
+| Option | Meaning |
+| --- | --- |
+| `-hullbreachDirect` | Host: run the server on port 7979 and play on it. |
+| `-hullbreachConnect <ip>` | Join the game at `<ip>`, for example `-hullbreachConnect 192.168.1.23`. |
+| `-hullbreachPort <number>` | Use this port instead of 7979 (for both hosting and joining). |
+
+A bad address logs `Invalid -hullbreachConnect address '<x>'; using
+loopback.` and connects to the same computer instead.
+
+### 3.1 Make a direct-connect build (important)
+
+Direct mode connects immediately, but on `main` nothing loads the match
+scene in direct mode: the build opens on `LobbyScene`, and only the
+lobby's **START GAME** loads `MultiplayerGame`. The server does not let
+anyone into the match until `MultiplayerGame` is loaded. So for direct
+mode you need a build that **starts on `MultiplayerGame`**:
+
+1. **File -> Build Profiles**, select your platform (Windows).
+2. Either untick `LobbyScene` in the **Scene List** (so `MultiplayerGame`
+   becomes first) for this build only, or click **Add Build Profile**,
+   make a separate profile, turn on its own scene list override, and put
+   `MultiplayerGame` first in it. The separate profile is nicer because
+   it does not change the shared scene list.
+3. Tick **Development Build**, click **Build**, choose a **different**
+   empty folder from your lobby build (for example
+   `C:\dev\hullbreach-direct`).
+4. If you unticked `LobbyScene`, tick it again afterwards and do not
+   commit the change.
+
+This step has not yet been walked end to end in the editor. If the match
+never connects, see [Troubleshooting](#troubleshooting).
+
+### 3.2 Find the host's IP address
+
+On the **host** computer, in a terminal:
+
+- **Windows**: `ipconfig`. Find your active adapter (Wi-Fi or Ethernet)
+  and read **IPv4 Address**, for example `192.168.1.23`.
+- **macOS**: `ipconfig getifaddr en0` (Wi-Fi; try `en1` if empty).
+- **Linux**: `hostname -I`. The first number is usually the one.
+
+Addresses starting `192.168.`, `10.`, or `172.16.` to `172.31.` are
+local-network addresses: what you want. Both computers must be on the
+same network (same Wi-Fi). Campus or guest Wi-Fi often blocks
+device-to-device traffic; a phone hotspot or home router works better.
+
+### 3.3 Start the host
+
+In a terminal, go to the direct build folder and start it with
+`-hullbreachDirect`:
+
+- **Windows PowerShell**:
+  ```
+  cd C:\dev\hullbreach-direct
+  & ".\Project Hullbreach.exe" -hullbreachDirect
+  ```
+  (The `&` and quotes are needed because the name has a space.)
+- **Windows Command Prompt (cmd)**:
+  ```
+  cd /d C:\dev\hullbreach-direct
+  "Project Hullbreach.exe" -hullbreachDirect
+  ```
+- **Linux** (a Linux player build; the file name is whatever you typed
+  when building, ending in `.x86_64`):
+  ```
+  cd ~/hullbreach-direct
+  chmod +x ./ProjectHullbreach.x86_64
+  ./ProjectHullbreach.x86_64 -hullbreachDirect
+  ```
+- **macOS**:
+  ```
+  open -n "Project Hullbreach.app" --args -hullbreachDirect
+  ```
+
+The **first** time, Windows shows "Windows Defender Firewall has blocked
+some features of this app". Tick **Private networks**, click **Allow
+access**. If you clicked Cancel by mistake, see Troubleshooting. Linux
+with `ufw` on: `sudo ufw allow 7979/udp`. macOS: click **Allow** on the
+incoming-connections prompt.
+
+You should see: the match scene, and the HUD line changes from `Waiting
+for Netcode connection...` to `Connected as #1 ... Replicated ships: 1`.
+
+### 3.4 Start the joiner
+
+On the **other** computer, same build, with the host's IP:
+
+- **Windows PowerShell**:
+  ```
+  & ".\Project Hullbreach.exe" -hullbreachConnect 192.168.1.23
+  ```
+- **Windows cmd**:
+  ```
+  "Project Hullbreach.exe" -hullbreachConnect 192.168.1.23
+  ```
+- **Linux**:
+  ```
+  ./ProjectHullbreach.x86_64 -hullbreachConnect 192.168.1.23
+  ```
+- **macOS**:
+  ```
+  open -n "Project Hullbreach.app" --args -hullbreachConnect 192.168.1.23
+  ```
+
+(Replace `192.168.1.23` with the host's real address.)
+
+You should see in both: `Replicated ships: 2`.
+
+**Same computer, two copies**: every non-server copy also starts its own
+server listening on the port, so a second copy on the same computer
+collides with the first on 7979. Run two copies on two computers, or use
+Guide 2 (Relay) or Multiplayer Play Mode for a one-computer test.
+
+To use a different port (if 7979 is taken), add `-hullbreachPort 7980`
+to **both** the host and the joiner commands, and allow that port in the
+firewall.
+
+## Guide 4: signing in with a platform account
+
+> **Needs unmerged work.** This guide only works once pull request
+> [#50](https://github.com/lognd/project-hullbreach-game/pull/50)
+> (server-side session check) and
+> [#51](https://github.com/lognd/project-hullbreach-game/pull/51)
+> (the sign-in screen, built on #50) are merged, **and** someone has done
+> the one-time editor step from #51 below and committed the result. On a
+> `main` that does not have them, none of the options below exist and
+> there is no sign-in screen. Full details are in `docs/platform-link.md`
+> once #50 is merged.
+
+What you will show: a player signs in with a platform account on the
+lobby screen; the game server checks that sign-in with the platform; the
+in-game HUD says who is signed in; and a server can be set to refuse
+players who are not signed in.
+
+### 4.1 One-time editor step (from #51)
+
+After pulling a `main` that includes #51, open the project, then run the
+menu **Hullbreach -> Online -> Add sign-in screen to lobby scene**. It
+creates `Assets/Prefabs/UI/SignInCanvas.prefab` and adds it to
+`LobbyScene` without touching the rest of the lobby. Save the scene
+(**Ctrl+S** / **Cmd+S**). If it is already in the repo (check for
+`Assets/Prefabs/UI/SignInCanvas.prefab`), skip this step. Without it the
+lobby still works, but everyone simply plays offline.
+
+### 4.2 Start the platform and make an account
+
+Follow the [platform README](https://github.com/lognd/project-hullbreach-platform#readme)
+("Setup (once)" and "Run it"). In short you will have the database, the
+API, and the website running, and:
+
+- the API answers at `http://127.0.0.1:8000` (open
+  `http://127.0.0.1:8000/api/docs` in a browser; you should see the API
+  docs page);
+- the website is at `http://localhost:5173`. Use its **Register** link
+  to create an account. Write down the username and password.
+
+Run the platform on the **same computer** as the game copy that hosts,
+because the game's default platform address is `http://127.0.0.1:8000`
+(this computer). If you run the platform inside WSL on Windows, Windows
+programs normally reach it at `127.0.0.1:8000` too.
+
+### 4.3 Game options for the platform
+
+| Option | Environment variable | Default | Meaning |
+| --- | --- | --- | --- |
+| `-hullbreachPlatformUrl <url>` | `HULLBREACH_PLATFORM_URL` | `http://127.0.0.1:8000` | Where the platform API is. Used to sign in and to check players. |
+| `-hullbreachPlatformTimeout <seconds>` | (none) | `5` | How long to wait for the platform. |
+| `-hullbreachRequirePlatformAuth` | `HULLBREACH_REQUIRE_PLATFORM_AUTH` (`1`, `true` or `yes`) | off | Server only: kick anyone not signed in. |
+| (environment only) | `HULLBREACH_PLATFORM_SERVER_KEY` | unset | Server only: the key the platform gives game servers. Never pass it as an option; `-hullbreachPlatformServerKey` is ignored with a warning. |
+
+In the Relay lobby flow the **host's copy is the server**, so the
+"server only" settings go on the host's command line. Plain `http://`
+platform addresses only work in the editor and in **Development Build**
+builds; a non-development build needs an `https://` address.
+
+### 4.4 Demo with sign-in optional (the default)
+
+1. Make sure the platform is running (4.2).
+2. Start the host copy from a terminal (Windows PowerShell, in the lobby
+   build folder from 2.3):
+   ```
+   & ".\Project Hullbreach.exe" -hullbreachPlatformUrl http://127.0.0.1:8000
+   ```
+   (The URL shown is the default, so double-clicking the `.exe` works
+   too; writing it out makes the demo explicit.)
+3. The first thing the lobby shows is the sign-in form: **HULLBREACH**,
+   "Sign in with your Hullbreach account", **Username**, **Password**,
+   **SIGN IN**, and **PLAY OFFLINE**.
+4. Type the account you made and click **SIGN IN**. It shows `Signing
+   in...` and then the form closes; a small bar in the top-right corner
+   says **Signed in as <name>** with a **SIGN OUT** button.
+5. Start a second copy (or use the second computer, which must reach the
+   platform; see 4.6) and click **PLAY OFFLINE** on it, or sign in with a
+   second account.
+6. Host and join as in Guide 2, then **START GAME**.
+
+You should see on the HUD, on a second line under `Replicated ships`:
+
+- signed-in player: `Platform: signed in as <name>`
+- offline player: `Platform: guest (Guest #<id>)`
+- for a moment while connecting: `Platform: waiting for server
+  admission...`
+
+The host's log (see [where logs are](#where-the-logs-are)) shows
+`Hullbreach platform: config url=http://127.0.0.1:8000 timeout=5s
+requireAuth=no serverKey=not set` and `Hullbreach platform: server allows
+guests; platform sign-in is optional (pass -hullbreachRequirePlatformAuth
+to require it).`
+
+### 4.5 Demo with sign-in required
+
+1. Close all copies. Start the host with the require flag:
+   ```
+   & ".\Project Hullbreach.exe" -hullbreachRequirePlatformAuth
+   ```
+   cmd: `"Project Hullbreach.exe" -hullbreachRequirePlatformAuth`;
+   Linux: `./ProjectHullbreach.x86_64 -hullbreachRequirePlatformAuth`.
+2. On the host, **sign in** (the host's own player is checked too).
+3. On the second copy, click **PLAY OFFLINE**, then join the host's lobby
+   and let the host start the game.
+
+You should see: the offline player is disconnected and its HUD shows
+`Platform: rejected - This server requires a Hullbreach account. Sign in
+and reconnect.` The host's log shows `Hullbreach platform: server
+REQUIRES platform sign-in; unverified players are disconnected.` and
+`Hullbreach platform: disconnecting rejected peer <n>.` It also warns
+that `HULLBREACH_PLATFORM_SERVER_KEY` is not set; that is fine for a local
+demo (the platform does not check the key yet).
+
+Then sign the second player in (account bar -> **SIGN IN**), rejoin, and
+show it is admitted with `Platform: signed in as <name>`.
+
+To set a server key or require-auth through the environment instead
+(PowerShell; replace the placeholder with the key from the platform's
+settings, never commit it):
+
+```
+$env:HULLBREACH_REQUIRE_PLATFORM_AUTH = "1"
+$env:HULLBREACH_PLATFORM_SERVER_KEY = "<dev server key>"
+& ".\Project Hullbreach.exe"
+```
+
+Linux/macOS: `HULLBREACH_REQUIRE_PLATFORM_AUTH=1 HULLBREACH_PLATFORM_SERVER_KEY='<dev server key>' ./ProjectHullbreach.x86_64`.
+
+### 4.6 Players on another computer
+
+Each copy signs in with the platform itself, so a player on another
+computer needs `-hullbreachPlatformUrl http://<platform computer's
+IP>:8000`, and the platform must listen on the network instead of only
+on `127.0.0.1` (the platform's `--host` option, for example
+`uv run hullbreach_server --host 0.0.0.0`, plus a firewall rule for TCP
+port 8000). If the platform runs inside WSL, other computers cannot
+reach it without extra WSL network setup; for a demo, keep every copy on
+the platform's computer, or ask in chat.
+
+Note: on the direct (LAN) path the sign-in token travels unencrypted;
+over Relay it is encrypted. Use test accounts for demos.
+
+## Guide 5: dedicated Linux server
+
+A dedicated server is the game built with no window, which only runs
+matches. Players connect to it with the direct options from Guide 3.
+
+1. Unity: **File -> Build Profiles** -> **Linux Server** (needs the
+   "Linux Dedicated Server Build Support" module from 0.4). Click
+   **Switch Platform**.
+2. Make `MultiplayerGame` the **first** scene for this profile (same
+   reason and same method as [3.1](#31-make-a-direct-connect-build-important)).
+3. Click **Build**, pick an empty folder outside the repo, and name the
+   file `HullbreachServer`. You get `HullbreachServer.x86_64` plus a
+   `HullbreachServer_Data` folder.
+4. Copy the whole folder to the Linux machine (for example zip it, or
+   `scp -r hullbreach-server user@host:~/`).
+5. On the Linux machine:
+   ```
+   cd ~/hullbreach-server
+   chmod +x ./HullbreachServer.x86_64
+   ./HullbreachServer.x86_64 -batchmode -nographics -hullbreachDirect -logFile -
+   ```
+   `-hullbreachDirect` is **required**: without a direct-mode option the
+   server does not listen on any port. `-logFile -` prints the log to the
+   terminal instead of a file. Add `-hullbreachPort <n>` for another
+   port and `-hullbreachRequirePlatformAuth` plus the environment
+   variables from Guide 4 to use the platform.
+6. Open UDP 7979 on that machine (`sudo ufw allow 7979/udp`) and, for a
+   cloud server, in its provider's firewall / security group.
+7. Players start the direct build from Guide 3 with
+   `-hullbreachConnect <server IP>`.
+
+Stop the server with **Ctrl+C**. To keep it running after you log out,
+run it inside `tmux` or `screen`, or as a systemd service.
+
+Note that player builds (`-hullbreachConnect`) also run their own small
+server; that is harmless on separate machines. This guide has not yet
+been walked end to end; the scene-order step is the part most likely to
+need adjusting.
+
+## Demo script for standup
+
+A five-minute run. Do the "before" part ahead of time.
+
+Before standup:
+
+- [ ] `git pull` on `main`; Unity opened once so it has imported.
+- [ ] Lobby build made (Guide 2.3), Development Build ticked, copied to a
+      second computer if you have one.
+- [ ] Project linked to Unity services; `LobbyScene` shows `Online`.
+- [ ] For the sign-in part (only if #50 and #51 are merged): platform
+      running (`http://127.0.0.1:8000/api/docs` loads), two test accounts
+      made, sign-in prefab present (Guide 4.1).
+
+During standup:
+
+1. [ ] (30 s) Say what it is: Unity game + platform, diagram above.
+2. [ ] (1 min) Single player: `DemoScene`, Play, place two blocks, Tab,
+      fly, fire.
+3. [ ] (2 min) Multiplayer: start the host copy; sign in; **HOST WITH
+      RELAY**; read out the invite code; second copy joins by code; both
+      names under **PLAYERS**; **START GAME**; point at `Replicated
+      ships: 2`; fly one ship and show it move on the other screen.
+4. [ ] (1 min) Platform: point at `Platform: signed in as <name>` on the
+      HUD; second copy plays offline and shows `Platform: guest (...)`.
+5. [ ] (30 s, optional) Restart the host with
+      `-hullbreachRequirePlatformAuth`; offline player joins and gets
+      `Platform: rejected - This server requires a Hullbreach account.
+      Sign in and reconnect.`
+
+If anything fails live, fall back to step 2 and show the logs later.
+
+## Troubleshooting
+
+### Where the logs are
+
+Most problems are explained in the log. Search it for `Hullbreach` or
+`Exception`.
+
+- **In the editor**: the **Console** window. Full file: Windows
+  `%LOCALAPPDATA%\Unity\Editor\Editor.log`, macOS
+  `~/Library/Logs/Unity/Editor.log`, Linux `~/.config/unity3d/Editor.log`.
+- **A build** (`Player.log`; the previous run is `Player-prev.log`):
+  - Windows: `%USERPROFILE%\AppData\LocalLow\Company of Theseus\Project Hullbreach\Player.log`
+    (paste that into the File Explorer address bar; `AppData` is hidden
+    otherwise).
+  - macOS: `~/Library/Logs/Company of Theseus/Project Hullbreach/Player.log`
+  - Linux: `~/.config/unity3d/Company of Theseus/Project Hullbreach/Player.log`
+- Any build can be told where to write it: add
+  `-logFile C:\dev\host.log` (Windows) or `-logFile -` (Linux, print to
+  the terminal). Use a different file per copy when running two on one
+  computer.
+
+When asking for help, paste the command you ran and the last 30 lines of
+the log.
+
+### Setup and Unity
+
+**"git is not recognized" / "git: command not found"**
+Cause: Git is not installed, or the terminal was opened before it was.
+Fix: install Git (0.2), then close and reopen the terminal.
+
+**"This project was saved with a different editor version" / Unity
+offers to upgrade**
+Cause: you opened it with a Unity other than 6000.0.43f1.
+Fix: click **Quit** (never Continue/upgrade), install 6000.0.43f1 (0.4),
+and in Unity Hub's project list pick that version next to the project.
+If you already upgraded, run `git checkout -- Packages ProjectSettings`
+in the repo folder to undo it.
+
+**Console full of red package errors after opening (for example about
+`com.unity.netcode` or `com.unity.services.multiplayer`)**
+Cause: package download failed (no internet, proxy) or wrong Unity
+version.
+Fix: check the version, make sure you are online, close Unity, delete
+the `Library` folder inside the project (it is rebuilt), reopen. Do not
+edit `Packages/manifest.json`.
+
+**Everything is pink**
+Cause: shaders still compiling, or a broken first import.
+Fix: wait for the import; see "Things that bite people" below.
+
+**The build fails mentioning IL2CPP, C++, or Visual Studio**
+Cause: IL2CPP needs a C++ compiler.
+Fix: install Visual Studio with **Desktop development with C++**
+(Windows) or Xcode (Mac), then restart Unity.
+
+**Build option for Linux / Linux Server missing or greyed out**
+Cause: the module is not installed.
+Fix: Unity Hub -> Installs -> the gear next to 6000.0.43f1 -> **Add
+modules** -> tick Linux Build Support (IL2CPP) and Linux Dedicated Server
+Build Support.
+
+### Relay lobby
+
+**Lobby status says `Online service error`; log says `Hullbreach online
+services could not start: ...`**
+Cause: the project is not linked to Unity Cloud, you are not in its
+organization, Lobby/Relay are off for that project, or no internet.
+Fix: Guide 2.1. Read the text after `could not start:` for which one.
+After linking, make a fresh build: builds keep the project ID they were
+built with.
+
+**Host can't see the joiner's lobby, or REFRESH finds nothing**
+Cause: the two copies were built from editors linked to different Unity
+Cloud projects, or the lobby is private.
+Fix: build both from the same linked project; for private lobbies use
+**JOIN BY CODE**.
+
+**Join code rejected / `Hullbreach lobby operation failed: ...` when
+joining**
+Cause: typo (codes are short and easy to mistype), the host left or
+the lobby was deleted, the lobby is full, or the password is wrong.
+Fix: copy-paste the **INVITE CODE** exactly, make sure the host is still
+in the waiting room, enter the password if there is one. `Enter a lobby
+code.` means the code box was empty.
+
+**Second copy on the same computer joins as the same player / is "already
+a member"**
+Cause: two copies of one build share the saved Unity anonymous sign-in.
+Fix: use a second computer, or Multiplayer Play Mode with separate
+virtual players.
+
+**Match loads but stays on `Waiting for Netcode connection...`**
+Cause: the Relay connection did not come up (network blocks UDP), or in
+direct mode see Guide 3 below.
+Fix: try another network (phone hotspot); check the log for transport
+errors.
+
+### Direct / LAN
+
+**Joiner stays on `Waiting for Netcode connection...`**
+Cause, most likely first:
+1. The build starts on `LobbyScene` instead of `MultiplayerGame` (see
+   3.1), so the server never admits anyone. Rebuild with
+   `MultiplayerGame` first.
+2. The host's firewall blocks UDP 7979. On Windows: Start -> "Windows
+   Defender Firewall" -> **Allow an app or feature through Windows
+   Defender Firewall** -> **Change settings** -> tick **Private** for
+   Project Hullbreach (or remove it and start the host again to get the
+   prompt). Linux: `sudo ufw allow 7979/udp`.
+3. Wrong IP: re-check with `ipconfig` / `hostname -I` on the host; check
+   the log for `Invalid -hullbreachConnect address`.
+4. The computers cannot reach each other (guest or campus Wi-Fi). Test
+   with `ping 192.168.1.23` from the joiner; if it times out, use another
+   network.
+5. Different ports: both sides must use the same `-hullbreachPort` (or
+   neither).
+
+**Second copy on the same computer fails or the log mentions binding the
+port / address in use**
+Cause: both copies try to listen on 7979.
+Fix: run the second copy on another computer, or use Relay (Guide 2) or
+Multiplayer Play Mode for a one-computer test.
+
+### Platform sign-in (Guide 4)
+
+**Sign-in shows `Cannot reach the Hullbreach servers (...). You can
+still play offline.`**
+Cause: the platform API is not running, or it is at a different address.
+Fix: open `http://127.0.0.1:8000/api/docs` in a browser on the same
+computer. If it does not load, start the platform (platform README "Run
+it"). If the platform is elsewhere, pass
+`-hullbreachPlatformUrl http://<ip>:8000`.
+
+**Sign-in error mentions `request blocked`**
+Cause: a plain `http://` address in a non-development build.
+Fix: rebuild with **Development Build** ticked, or use an `https://`
+platform address.
+
+**`Wrong username or password.`**
+Cause: what it says; usernames are exact.
+Fix: re-type, or register a new account on the website.
+
+**`Too many sign-in attempts. Wait a minute and try again.`**
+Cause: the platform rate-limits failed logins per username.
+Fix: wait a minute.
+
+**`Enter a username and password.`** Both boxes must be filled.
+
+**There is no sign-in screen at all**
+Cause: #50/#51 are not merged into your copy, or the editor step (4.1)
+was not done, or the scene was not saved.
+Fix: `git pull`, check for `Assets/Prefabs/UI/SignInCanvas.prefab`, run
+**Hullbreach -> Online -> Add sign-in screen to lobby scene**, save, and
+rebuild.
+
+**HUD says `Platform: guest (...)` although you signed in**
+Cause: the server could not confirm the session (platform down or
+unreachable *from the host*, session expired), or you signed out.
+Fix: the reason is printed after the name, e.g. `Platform: guest (Guest
+#2) - <reason>`. Make sure the host can reach the platform (the host's
+`-hullbreachPlatformUrl` must work from the host's computer), sign in
+again, rejoin.
+
+**Kicked with `Platform: rejected - ...`**
+Cause and fix by message (the server has `-hullbreachRequirePlatformAuth`):
+- `This server requires a Hullbreach account. Sign in and reconnect.`
+  You chose Play offline. Sign in and rejoin, or restart the host
+  without the flag.
+- `Your platform session is invalid or expired. Sign in again.` Sign
+  out and in again. (With a server key set, a wrong key shows this for
+  everyone.)
+- `Could not verify your platform session (...)` The host cannot reach
+  the platform; the server refuses when unsure. Fix the host's platform
+  URL or start the platform.
+- `No platform sign-in received in time.` The player's game did not
+  send its sign-in within 10 seconds; usually a stalled connection.
+  Rejoin.
+
+### Unsigned build warnings
+
+**Windows: "Windows protected your PC"** Click **More info** -> **Run
+anyway**. Our builds are not code-signed.
+
+**macOS: "Project Hullbreach" cannot be opened / Apple cannot check it**
+Right-click (Control-click) the app -> **Open** -> **Open**; on newer
+macOS go to **System Settings -> Privacy & Security** and click **Open
+Anyway**. If it says the app is "damaged" after copying it from another
+computer, run `xattr -dr com.apple.quarantine "Project Hullbreach.app"`
+in its folder.
+
+---
+
+# Developer guide
+
+Everything below is the reference material for working on the code.
+Some of it predates the networking work; where it disagrees with
+**Start here** above, Start here is newer.
+
+
 ## Where the project actually is right now
+
+(This section was written before the networking work; for what runs
+today see **Start here** above and [docs/netcode.md](docs/netcode.md).)
 
 Read this before anything else, because the shape of the repo changed and
 the old README did not keep up.
@@ -253,11 +1198,13 @@ is in making the handling deliberate and framerate-independent.
    builds the `Library/` folder. That takes a while, five to fifteen
    minutes depending on your machine. It is normal. Do not commit
    `Library/`; it is ignored.
-5. **Play it.** Open `Assets/Scenes/RocketScene.unity` (double-click in
-   the Project window) and press Play. Hold **Space** to fire both
+5. **Play it.** Open `Assets/Scenes/DemoScene.unity` (double-click in
+   the Project window) and press Play; see [Guide 1](#guide-1-single-player-quick-look)
+   and [Playing the demo](#playing-the-demo). For multiplayer start from
+   `Assets/Scenes/LobbyScene.unity` ([Guide 2](#guide-2-multiplayer-through-the-relay-lobby)).
+   The older `RocketScene` is still there: hold **Space** to fire both
    thrusters, **A**/**D** to turn while thrusting, and **left mouse** to
-   fire the gun, which shoves the ship backward. There is no menu and no
-   networking yet; the scene is the whole game.
+   fire the gun, which shoves the ship backward.
 6. **Pick an editor for code.** Edit -> Preferences -> External Tools ->
    External Script Editor. VS Code with the "Unity" extension works, and
    `.vscode/` already has the attach-debugger config. Rider is great if
@@ -268,11 +1215,10 @@ is in making the handling deliberate and framerate-independent.
 
 File -> Build Profiles -> Linux Server (or Platforms -> Dedicated Server
 -> Linux). Build to a folder outside the repo. The result is a headless
-binary that hosts a match. Note that the template's `ServerScene` was
-deleted along with the rest of the template, and `EditorBuildSettings.asset`
-still points at scenes that are gone, so a build will not produce anything
-playable until that is fixed. A CI build for the server is on the list in
-`TODO.md`.
+binary that hosts a match. It only listens when started with a direct-mode
+option, and it needs `MultiplayerGame` as its first scene; the full steps
+are in [Guide 5](#guide-5-dedicated-linux-server). A CI build for the
+server is on the list in `TODO.md`.
 
 ## Sprint 1, and where each story lives
 
@@ -361,9 +1307,9 @@ Deferred engineering work lives in `TODO.md`.
 
 ## Playing the demo
 
-Open `Assets/Scenes/DemoScene.unity` and press Play. It is registered as
-the first scene in `ProjectSettings/EditorBuildSettings.asset`, alongside
-`RocketScene`.
+Open `Assets/Scenes/DemoScene.unity` and press Play. It is registered in
+`ProjectSettings/EditorBuildSettings.asset` after `LobbyScene` and
+`MultiplayerGame`, alongside `RocketScene`.
 
 The scene starts in **Build** mode with the player ship paused on a
 circular orbit around the big planet, and a `TargetShip` flying the same
