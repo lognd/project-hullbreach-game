@@ -116,12 +116,14 @@ Known limits, recorded for follow-up:
   only shown as verified when it arrives together with a token the
   platform accepted, but the platform does not confirm the pair. A
   platform change to return `username` from `/session` would close this.
-- The platform route currently authenticates the player's bearer token
-  only; it does not check `X-Server-Key` yet (`require_game_server`
-  exists but no route uses it). The game server already sends the key so
-  nothing changes on this side when the platform starts requiring it.
-  The platform answers a bad key with the same 401 as a bad token, so a
-  wrong key will show up as "invalid or expired" on every player.
+- Newer platforms (platform PR #41) require `X-Server-Key` on
+  `GET /api/v1/auth/session` and check it before the token; older ones
+  ignore it. The game server always sends the key, so both work. A key
+  problem is reported as the operator's fault, not the player's (see
+  [failure modes](#failure-modes)): every player is then refused or kept
+  a guest with "platform refused this game server's key", and the fix is
+  to set `HULLBREACH_PLATFORM_SERVER_KEY` on the game server to one of the
+  platform's `HULLBREACH_GAME_SERVER_API_KEYS`.
 - The hello travels inside the Netcode connection, which is not
   encrypted on the direct path. Relay connections are DTLS-protected.
 
@@ -172,10 +174,19 @@ Login (`PlatformClient.MapLogin`):
 | no HTTP answer (refused, DNS, timeout, insecure HTTP blocked) | `Unreachable` | "Cannot reach the Hullbreach servers (...)." |
 | empty username or password (no request sent) | `InvalidCredentials` | "Enter a username and password." |
 
-Session check (`PlatformClient.MapSession`): 200 with `user_id` is
-`Valid`; 401 is `Invalid` (missing, expired or revoked token, and also a
-rejected server key); a transport failure is `Unreachable`; anything else
-is `Failed`. The handshake table above shows how the gate reacts to each.
+Session check (`PlatformClient.MapSession`). The platform's error body is
+`{"detail": "..."}`; the key is checked before the token:
+
+| Platform answer | `SessionStatus` | Reason the gate shows |
+| --- | --- | --- |
+| 200 with `user_id` | `Valid` | (admitted, verified) |
+| 401 `not authenticated` (or any 401 not about the key) | `Invalid` | "Your platform session is invalid or expired. Sign in again." |
+| 401 `server key missing` / `invalid server key` | `Failed` | "Could not verify your platform session (platform refused this game server's key (invalid server key); set HULLBREACH_PLATFORM_SERVER_KEY to one of the platform's game server keys)." |
+| 503 `server key not configured` | `Failed` | "Could not verify your platform session (platform has no game server keys configured (...))." |
+| no HTTP answer | `Unreachable` | "Could not verify your platform session (...)." |
+| anything else | `Failed` | "Could not verify your platform session (session check failed (HTTP n))." |
+
+The handshake table above shows how the gate reacts to each.
 
 <!-- describes: Assets/Scripts/Hullbreach.Platform/PlatformClient.cs::PlatformClient.MapLogin -->
 <!-- describes: Assets/Scripts/Hullbreach.Platform/PlatformClient.cs::PlatformClient.MapSession -->
