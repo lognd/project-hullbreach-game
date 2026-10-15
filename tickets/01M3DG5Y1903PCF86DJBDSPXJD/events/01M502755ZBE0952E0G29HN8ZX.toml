@@ -1,0 +1,6 @@
+kind = "field"
+field = "scope"
+new = ["Assets/Scripts/Hullbreach.Platform/SignInModel.cs", "Assets/Scripts/Hullbreach.Platform/PlatformSession.cs", "Assets/Tests/EditMode/Hullbreach.Platform.Tests/**", "Assets/Scripts/Hullbreach.NetCode.Entities/HullbreachSignInView.cs", "Assets/Editor/Hullbreach.Editor/LobbySceneBuilder.cs", "docs/platform-link.md", "docs/netcode.md"]
+at = "2026-10-15T15:17:16Z"
+actor = "stevendangkhoi"
+rev = 1
