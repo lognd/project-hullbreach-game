@@ -14,6 +14,9 @@
 - `netcode.md`: read this if you are working on `Hullbreach.Net` or the
   authoritative-server story (S47/S48); it covers the wire message
   design, quantization, and the Netcode for Entities runtime bridge.
+- `platform-link.md`: read this if you are working on sign-in or on how
+  the game server checks a player's platform session at connect; it
+  covers configuration, the handshake and every failure mode.
 - `roadmap.md`: read this if you want to know what is built, in
   progress, or not started yet, against the course's story numbers.
 - `design/ui-port.md`: read this if you are working on the HUD or any
