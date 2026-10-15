@@ -1,0 +1,6 @@
+kind = "comment"
+subtype = "note"
+body = "The radar surface is the S57 minimap (S57-1 ~GTFBF99, S57-3 ~6T58VK7). This ticket adds hazard warning blips and the warning phase on top of it."
+at = "2026-10-15T14:47:29Z"
+actor = "a-carten"
+rev = 1

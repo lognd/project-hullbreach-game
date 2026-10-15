@@ -1,0 +1,18 @@
+kind = "create"
+title = "S57-3: Minimap HUD view and prefab in the single-player scene"
+type = "task"
+category = "todo"
+priority = "medium"
+points = 3
+parent = "01M500EVPWWECD3A2C08TJ1K5Q"
+labels = ["owner:a-carten", "game", "milestone:0.3.0", "creates:Assets/Scripts/Hullbreach.Game/Hud/MinimapView.cs", "creates:Assets/Scripts/Hullbreach.Game/Hud/MinimapView.cs.meta"]
+scope = ["Assets/Editor/Hullbreach.Editor/HudPrefabBuilder.cs", "Assets/Scripts/Hullbreach.Game/DemoMode.cs", "Assets/Scripts/Hullbreach.Game/GravityWorld.cs", "Assets/Scenes/DemoScene.unity", "docs/design/ui-port.md", "Assets/Scripts/Hullbreach.Game/Hud/MinimapView.cs", "Assets/Scripts/Hullbreach.Game/Hud/MinimapView.cs.meta"]
+acceptance = ["HudPrefabBuilder generates a Minimap prefab (uGUI) with a MinimapView anchored to a screen corner that does not overlap the StatusPanel or HullWarningBanner at 1280x720 and 1920x1080.", "In DemoScene the minimap shows the own ship (with heading), the enemy ship(s), every GravityWorld planet and the arena bounds when configured, all positioned from MinimapModel output and refreshed every frame.", "A destroyed enemy's blip disappears within one frame; planets and bounds do not flicker or reallocate per frame (blips are pooled).", "MinimapView contains no projection maths beyond copying MinimapModel output to RectTransforms; ui-port.md documents the view and prefab layout."]
+body = "Unity side of S57-1. GravityWorld may need a read-only accessor for its planets; enemy ships come from the same source WorldSink.TryNearestEnemy uses."
+at = "2026-10-15T14:47:00Z"
+actor = "a-carten"
+rev = 1
+
+[[links]]
+kind = "blocked-by"
+target = "01M500FAJ4Z1WG0BNMAGTFBF99"

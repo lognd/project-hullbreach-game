@@ -1,0 +1,14 @@
+kind = "create"
+title = "S57-2: Engine-free EnemyIndicatorModel for the off-screen enemy arrow"
+type = "task"
+category = "todo"
+priority = "medium"
+points = 2
+parent = "01M500EVPWWECD3A2C08TJ1K5Q"
+labels = ["owner:a-carten", "game", "milestone:0.3.0", "creates:Assets/Scripts/Hullbreach.Hud/EnemyIndicatorModel.cs", "creates:Assets/Scripts/Hullbreach.Hud/EnemyIndicatorModel.cs.meta", "creates:Assets/Tests/EditMode/Hullbreach.Hud.Tests/EnemyIndicatorModelTests.cs", "creates:Assets/Tests/EditMode/Hullbreach.Hud.Tests/EnemyIndicatorModelTests.cs.meta"]
+scope = ["docs/design/ui-port.md", "Assets/Scripts/Hullbreach.Hud/EnemyIndicatorModel.cs", "Assets/Scripts/Hullbreach.Hud/EnemyIndicatorModel.cs.meta", "Assets/Tests/EditMode/Hullbreach.Hud.Tests/EnemyIndicatorModelTests.cs", "Assets/Tests/EditMode/Hullbreach.Hud.Tests/EnemyIndicatorModelTests.cs.meta"]
+acceptance = ["EnemyIndicatorModel takes own ship position, enemy positions, camera centre, viewport half-extents (world units), screen size (px) and an inset margin (px), references no UnityEngine type, and returns Mode (Hidden, EdgeArrow, OnScreenMarker), screen position, arrow angle and distance.", "The target is the enemy nearest to the own ship (same rule as IWorldSink.TryNearestEnemy); with no enemies Mode is Hidden.", "When the target lies outside the viewport shrunk by the inset, Mode is EdgeArrow, the position lies on the inset rectangle along the ray from the screen centre to the target within 1 px, and the arrow angle is within 2 degrees of the bearing from the screen centre to the target.", "When the target lies inside the inset viewport, Mode is OnScreenMarker at the target's screen position within 1 px (or Hidden when the marker option is off).", "Distance text is formatted with the invariant culture (passes HudCultureTests style checks).", "EnemyIndicatorModelTests cover all four quadrants, the corners, the inset boundary, the no-enemy case and nearest-enemy selection, and pass under tools/plaincs/run_tests.sh; ui-port.md module reference lists EnemyIndicatorModel."]
+body = "Pure geometry for the S57 edge-of-screen enemy arrow; engine-free so the bearing and clamping maths is unit-tested outside Unity."
+at = "2026-10-15T14:46:46Z"
+actor = "a-carten"
+rev = 1

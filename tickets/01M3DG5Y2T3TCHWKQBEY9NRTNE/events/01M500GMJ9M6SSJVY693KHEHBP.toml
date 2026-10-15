@@ -1,0 +1,6 @@
+kind = "comment"
+subtype = "note"
+body = "The arena-bounds outline on the radar is delivered by S57-1/S57-3 (minimap). This ticket keeps the on-screen boundary rendering and must expose arena bounds the minimap can read."
+at = "2026-10-15T14:47:29Z"
+actor = "a-carten"
+rev = 1

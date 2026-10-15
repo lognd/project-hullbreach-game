@@ -1,0 +1,6 @@
+kind = "comment"
+subtype = "decision"
+body = "Radar question answered: both. S57 (~8TJ1K5Q) adds a HUD minimap (S57-1 model, S57-3 view) and an edge-of-screen enemy arrow (S57-2/S57-4). S45-2 should render hazard warning blips on that minimap rather than build a separate radar."
+at = "2026-10-15T14:47:29Z"
+actor = "a-carten"
+rev = 1

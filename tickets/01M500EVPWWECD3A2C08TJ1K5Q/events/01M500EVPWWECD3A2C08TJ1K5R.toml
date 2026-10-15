@@ -1,0 +1,24 @@
+kind = "create"
+title = "S57: Always know where the enemy is from a HUD minimap and an off-screen enemy arrow"
+type = "story"
+category = "todo"
+priority = "medium"
+points = 13
+parent = "01M3DG5Y06HCEC2NK39DR1347N"
+persona = "player"
+capability = "to see my ship, the enemy ship(s), planets/gravity wells and the arena bounds on a HUD minimap, plus an edge-of-screen arrow toward an off-screen enemy"
+outcome_text = "I can find, chase or evade my opponent without losing track of them when they leave the camera view"
+labels = ["owner:a-carten", "game", "milestone:0.3.0"]
+scope = ["docs/design/ui-port.md"]
+acceptance = ["In DemoScene and MultiplayerGame the HUD shows a minimap with own ship, every enemy ship, every planet/gravity well and the arena bounds, updated every frame.", "When the nearest enemy is outside the camera viewport an arrow on the screen edge points toward it; when it is on screen the arrow is replaced by an on-screen marker (or hidden).", "All geometry (projection, clamping, bearing) lives in engine-free Hullbreach.Hud models covered by tests that pass under tools/plaincs/run_tests.sh and Unity EditMode.", "docs/design/ui-port.md documents the minimap and enemy indicator models, views and prefab layout."]
+body = """
+Product-owner ask (Logan): a HUD minimap and a small enemy-direction indicator. No minimap or enemy indicator exists today.
+
+Answers the S45 (T-0034) open question "Radar as a minimap or an edge-of-screen indicator?": both. The minimap built here is the radar surface S45-2 (T-0099) will add hazard warning blips to, and its arena-bounds outline covers the "on the radar" half of S41-2 (T-0090); on-screen boundary rendering stays with S41-2.
+
+Related code: IWorldSink.TryNearestEnemy (nearest-enemy rule shared with SeekingThrusterBehaviour), GravityWorld.PlanetSpec, ClientReplica (multiplayer ships and GravityWellSpawned), HUD models in Assets/Scripts/Hullbreach.Hud/, views in Assets/Scripts/Hullbreach.Game/Hud/, prefabs from HudPrefabBuilder.
+
+Split: S57-1 minimap model, S57-2 enemy indicator model, S57-3 minimap view/prefab (single-player), S57-4 enemy indicator view/prefab (single-player), S57-5 multiplayer data feed."""
+at = "2026-10-15T14:46:31Z"
+actor = "a-carten"
+rev = 1
