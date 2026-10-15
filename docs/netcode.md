@@ -43,6 +43,13 @@ Use `-hullbreachPort <1-65535>` to select the port and
 `-hullbreachConnect <IPv4-or-IPv6-address>` for a client target; either of the
 latter arguments also enables direct mode.
 
+Before `HullbreachNetCodeServerSystem` joins a connection to the match, the
+platform handshake must admit it: the client sends its platform token in a
+hello RPC and the server validates it against the platform API (optional by
+default, enforced with `-hullbreachRequirePlatformAuth`). See
+[platform-link.md](platform-link.md) for the flags, environment variables and
+failure modes.
+
 `HullbreachNetCodeServerSystem` owns the existing `ServerSimulation`. Gameplay
 does not start while the connection is still in the lobby: loading the
 multiplayer ghost SubScene joins each `NetworkId` with the demo's nine-block
