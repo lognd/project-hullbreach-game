@@ -8,20 +8,24 @@ points = 3
 parent = "01M3DG5Y14KAMJ8NTGHC8BW9YV"
 reporter = "mcnairrobotics"
 created = "2026-10-16T15:31:17Z"
-updated = "2026-10-16T15:31:32Z"
+updated = "2026-10-16T15:31:41Z"
 labels = ["owner:mcnairrobotics", "game", "netcode", "milestone:0.3.0"]
 scope = ["Assets/Editor/Hullbreach.Editor/HullbreachBuild.cs", "docs/reference/hullbreach-editor.md"]
 
 [[acceptance]]
-text = "HullbreachBuild.BuildFromCommandLine builds the Windows client from -executeMethod with LobbyScene first and MultiplayerGame in the scene list, and exits non-zero on failure."
+text = "HullbreachBuild.BuildFromCommandLine builds the Windows client headless from -executeMethod with LobbyScene first and MultiplayerGame in the scene list, falling back to Mono when IL2CPP is missing."
 bound = false
 
 [[acceptance]]
-text = "The same entry point builds a dedicated server for an installed Dedicated Server module and explains which Hub module is missing otherwise."
+text = "Asked for a dedicated server without the Dedicated Server module, it names the missing Unity Hub module and exits non-zero."
 bound = false
 
 [[acceptance]]
-text = "play build wraps it so nobody opens Build Profiles."
+text = "With the Dedicated Server module installed it builds a server player that opens MultiplayerGame."
+bound = false
+
+[[acceptance]]
+text = "play build wraps the entry point so a beginner never opens Build Profiles."
 bound = false
 +++
 
