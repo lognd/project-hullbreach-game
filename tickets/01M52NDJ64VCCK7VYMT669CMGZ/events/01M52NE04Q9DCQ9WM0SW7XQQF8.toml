@@ -1,0 +1,8 @@
+kind = "field"
+field = "body"
+old = "Build scripts for the beginner demo flow: one editor entry point callable headless (Unity -batchmode -executeMethod) that builds the client and the dedicated server with the right scene list, falling back to Mono when IL2CPP is not installed, and writes build-info.json (commit, kind, development flag, scenes) that the doctor reads to judge freshness."
+new = "Build scripts for the beginner demo flow: one editor entry point callable headless (Unity -batchmode -executeMethod Hullbreach.Editor.HullbreachBuild.BuildFromCommandLine) that builds the client and the dedicated server with the right scene list, falls back to Mono when IL2CPP is not installed, and writes hullbreach-build.json (commit, kind, development flag, backend, scenes) that the doctor reads to judge freshness."
+reason = "fix scope and stamp file name"
+at = "2026-10-16T15:31:32Z"
+actor = "mcnairrobotics"
+rev = 1

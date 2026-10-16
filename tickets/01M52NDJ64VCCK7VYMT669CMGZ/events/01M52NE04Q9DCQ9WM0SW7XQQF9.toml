@@ -1,0 +1,8 @@
+kind = "field"
+field = "scope"
+old = ["Assets/Editor/Build/**", "docs/build.md"]
+new = ["Assets/Editor/Hullbreach.Editor/HullbreachBuild.cs", "docs/reference/hullbreach-editor.md"]
+reason = "fix scope and stamp file name"
+at = "2026-10-16T15:31:32Z"
+actor = "mcnairrobotics"
+rev = 1
