@@ -1,0 +1,27 @@
+kind = "evidence"
+accepts = [3]
+captured_at = "2026-10-16T15:35:19Z"
+digest = "e7896897b0e09a35b6de0234a92c617575125dfe62fdadd642caf9ca436b8666"
+exit_code = 0
+inline = """
+============================= test session starts ==============================
+platform linux -- Python 3.11.15, pytest-9.1.1, pluggy-1.7.0
+rootdir: <worktree>/tools/hbtools
+configfile: pyproject.toml
+collected 19 items
+
+tools/hbtools/tests/unit/test_platform_api.py ...................        [100%]
+
+-------------- generated xml file: /tmp/frob-pytest-528834-0.xml ---------------
+============================== 19 passed in 0.03s ==============================
+"""
+passed = true
+provider = "pytest"
+ref = "tools/hbtools/tests/unit/test_platform_api.py"
+size = 466
+status = "measured"
+test_count = 19
+tests_digest = "e7f3720888f4ed691f083fc22e2af0fb265b9cbe4bb039659c77103d2f6614d8"
+at = "2026-10-16T15:35:19Z"
+actor = "mcnairrobotics"
+rev = 1

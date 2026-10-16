@@ -8,7 +8,7 @@ points = 8
 parent = "01M3DG5Y14KAMJ8NTGHC8BW9YV"
 reporter = "mcnairrobotics"
 created = "2026-10-16T15:33:06Z"
-updated = "2026-10-16T15:35:18Z"
+updated = "2026-10-16T15:35:19Z"
 labels = ["owner:mcnairrobotics", "game", "netcode", "milestone:0.3.0"]
 scope = ["tools/hbtools/**", "doctor.cmd", "doctor.sh", "play.cmd", "play.sh", "docs/doctor.md", "README.md", "Assets/Scripts/Hullbreach.Net/OnlineSmoke.cs", "Assets/Scripts/Hullbreach.NetCode.Entities/HullbreachLobbyService.cs"]
 
@@ -22,7 +22,7 @@ bound = true
 
 [[acceptance]]
 text = "The platform checks tell a game server key mismatch apart from a bad token and never print or store the key, password or token."
-bound = false
+bound = true
 
 [[acceptance]]
 text = "doctor --collect zips the logs and doctor output with keys, passwords and tokens redacted."
