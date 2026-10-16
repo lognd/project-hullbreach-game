@@ -15,6 +15,7 @@ from typani import Err, Ok, Result
 from hbtools import unity
 from hbtools.builds import Build, BuildKind, build_folder, head_commit, read_build
 from hbtools.config import (
+    DEFAULT_PLATFORM_URL,
     ONLINE_SMOKE_ENV,
     PASSWORD_ENV,
     SERVER_KEY_ENV,
@@ -56,7 +57,9 @@ WINDOWED_ARGS = [
 
 # Player log lines worth echoing to the console while a demo runs.
 WATCH_PREFIX = "Hullbreach "
-PROOF_LINE = "replicated ships:"
+# In the match = the server replicated at least one ship (MatchStatus in C#);
+# "replicated ships: 0" only means connected, not yet admitted.
+PROOF_RE = re.compile(r"replicated ships: [1-9]")
 SMOKE_PASSED = "smoke test PASSED"
 SMOKE_FAILED = "smoke test FAILED"
 REJECTED_LINE = "server rejected this client"
@@ -317,19 +320,26 @@ def has(player: Player, text: str) -> bool:
     return any(text in line for line in player.seen)
 
 
+def in_match(player: Player) -> str | None:
+    """The first log line proving the player sees a ship in the match, if any."""
+    return next((ln for ln in player.seen if PROOF_RE.search(ln)), None)
+
+
 def summary(ctx: PlayCtx, players: list[Player]) -> int:
     """Say plainly whether each player reached the match; 0 only if all did."""
     say = ctx.reporter
     say.heading("Result")
     ok = True
     for player in players:
-        proof = next((ln for ln in player.seen if PROOF_LINE in ln), None)
+        proof = in_match(player)
         rejected = next((ln for ln in player.seen if REJECTED_LINE in ln), None)
-        if proof is not None:
-            say.say(f"[PASS] {player.name}: in the match ({proof.strip()})")
-        elif rejected is not None:
+        # A rejection wins: the client connects (ships: 0) before the server
+        # turns it away.
+        if rejected is not None:
             ok = False
             say.say(f"[FAIL] {player.name}: {rejected.strip()}")
+        elif proof is not None:
+            say.say(f"[PASS] {player.name}: in the match ({proof.strip()})")
         else:
             ok = False
             say.say(f"[FAIL] {player.name}: did not reach the match. Log: {player.log}")
@@ -464,7 +474,7 @@ def run_players(
                 stop_when_in
                 and headless
                 and bool(wanted)
-                and all(has(p, PROOF_LINE) or has(p, REJECTED_LINE) for p in wanted)
+                and all(in_match(p) or has(p, REJECTED_LINE) for p in wanted)
             )
 
         watch(ctx, players, seconds, done=all_in)
@@ -579,7 +589,7 @@ def server(
     )
     ctx.reporter.say(
         f"    Players type:  {ctx.host.play_cmd} join <this computer's IP>"
-        + (" --platform" if platform else "")
+        + (" --platform" + _url_suffix(ctx) if platform else "")
         + _port_suffix(ctx)
     )
     players: list[Player] = []
@@ -737,3 +747,8 @@ class _Forever:
 
 def _port_suffix(ctx: PlayCtx) -> str:
     return "" if ctx.config.port == 7979 else f" --port {ctx.config.port}"
+
+
+def _url_suffix(ctx: PlayCtx) -> str:
+    url = ctx.config.platform_url
+    return "" if url == DEFAULT_PLATFORM_URL else f" --platform-url {url}"

@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from hbtools import play, unity
-from hbtools.config import SERVER_KEY_ENV, TOKEN_ENV, USERNAME_ENV
+from hbtools.config import SERVER_KEY_ENV, TOKEN_ENV, URL_ENV, USERNAME_ENV
 from hbtools.host import EDITOR_ENV, detect_host
 
 from .conftest import FakeHttp, World, done, reply, write_build
@@ -102,6 +102,25 @@ def test_rejected_client_shows_the_reason(world: World) -> None:
     assert "[FAIL] client: Hullbreach platform: server rejected this client" in (
         world.text
     )
+
+
+def test_rejection_after_connecting_is_a_failure(world: World) -> None:
+    write_build(world.root)
+    world.runner.log_lines = lambda argv: [
+        "Hullbreach match: connected as #1; replicated ships: 0",
+        "Hullbreach platform: server rejected this client: sign-in required",
+    ]
+    assert play.join(world.play(), "127.0.0.1", True, 30) == 1
+    assert "[PASS]" not in world.text
+
+
+def test_connected_without_ships_is_not_in_the_match(world: World) -> None:
+    write_build(world.root)
+    world.runner.log_lines = lambda argv: [
+        "Hullbreach match: connected as #1; replicated ships: 0"
+    ]
+    assert play.join(world.play(), "127.0.0.1", True, 30) == 1
+    assert "did not reach the match" in world.text
 
 
 def _key_platform(world: World) -> None:
@@ -275,3 +294,14 @@ def test_headless_host_stays_up_for_friends(world: World) -> None:
     assert play.host(ctx, headless=True, seconds=30) == 0, world.text
     assert ctx.clock() >= 30
     assert "[PASS] host: in the match" in world.text
+
+
+def test_server_join_hint_names_a_custom_platform_url(world: World) -> None:
+    write_build(world.root)
+    world.env[URL_ENV] = "http://10.0.0.5:8002"
+    world.http = FakeHttp(
+        handler=lambda method, url, headers: reply(401, {"detail": "nope"})
+    )
+    assert play.server(world.play(), 5, platform=True, skip_key_check=True) == 0
+    assert "join <this computer's IP> --platform --platform-url " in world.text
+    assert "http://10.0.0.5:8002" in world.text

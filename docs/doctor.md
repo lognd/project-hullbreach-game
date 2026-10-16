@@ -149,12 +149,12 @@ editor menu **Hullbreach -> Build**.
 | `play online` | The game at the Relay lobby | (interactive) |
 | `play online --profile <name>` | The same, as another Unity player (second copy on one computer) | (interactive) |
 | `play online --headless` | Unity Services smoke test (`HULLBREACH_ONLINE_SMOKE=1`): anonymous sign-in, private lobby with a Relay allocation, leave | `Hullbreach online: smoke test PASSED` |
-| `play host` | Host: runs the match and plays (`-hullbreachDirect`) | `replicated ships:` |
-| `play join <ip>` | Joins a host or server (`-hullbreachConnect <ip>`) | `replicated ships:` |
+| `play host` | Host: runs the match and plays (`-hullbreachDirect`) | `replicated ships: N` with N at least 1 |
+| `play join <ip>` | Joins a host or server (`-hullbreachConnect <ip>`) | `replicated ships: N` with N at least 1; `server rejected this client` is a FAIL even after connecting |
 | `play two-local` | A host and a client on this computer | both reach the match |
 | `play server` | Headless server, no player of its own (`-hullbreachServer`) | runs until Ctrl+C or `--seconds` |
 | `play host --platform [--require-auth]` | Host that signs in and checks players with the platform | |
-| `play join <ip> --platform` | A player who signs in | `Platform: signed in as` |
+| `play join <ip> --platform` | A player who signs in | as `play join`, after `signed in ... as '<name>'` |
 | `play server --platform [--require-auth]` | Server that verifies (or requires) sign-in; checks its key first | |
 | `play build [server]` | See [Building](#building) | `HullbreachBuild: OK` |
 | `play logs [--follow]` | The newest game log | |
