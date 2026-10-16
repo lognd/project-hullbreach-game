@@ -3,9 +3,10 @@ rem Shared bootstrap for doctor.cmd and play.cmd: make sure uv exists, then
 rem run the Python tool. All real logic lives in tools\hbtools (one
 rem implementation for every OS); this file only finds or installs uv.
 setlocal
+rem %~dp0 must be read before shift: shift moves %0 too.
+set "HB_HERE=%~dp0"
 set "HB_TOOL=%~1"
 shift
-set "HB_HERE=%~dp0"
 set "HB_ARGS="
 :collect
 if "%~1"=="" goto args_done
