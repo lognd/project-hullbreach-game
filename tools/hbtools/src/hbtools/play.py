@@ -441,6 +441,7 @@ def run_players(
     seconds: float | None,
     expect_match: list[str],
     gap: float = 6.0,
+    stop_when_in: bool = True,
 ) -> int:
     """Start players in order, watch their logs, then report who reached the match."""
     players: list[Player] = []
@@ -460,7 +461,8 @@ def run_players(
 
         def all_in(_: list[Player]) -> bool:
             return (
-                headless
+                stop_when_in
+                and headless
                 and bool(wanted)
                 and all(has(p, PROOF_LINE) or has(p, REJECTED_LINE) for p in wanted)
             )
@@ -502,7 +504,15 @@ def host(
         f"{_port_suffix(ctx)}\n"
         f"    ({ctx.host.doctor_cmd} --demo guest shows this computer's IP.)"
     )
-    return run_players(ctx, [("host", game, args, extra)], headless, seconds, ["host"])
+    # A host is in its own match at once; keep it up so friends can still join.
+    return run_players(
+        ctx,
+        [("host", game, args, extra)],
+        headless,
+        seconds,
+        ["host"],
+        stop_when_in=False,
+    )
 
 
 def join(

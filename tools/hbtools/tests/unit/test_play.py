@@ -266,3 +266,12 @@ def test_build_hides_unity_stack_frames(world: World, tmp_path: Path) -> None:
     )
     assert play.build(world.play(), "client") == 0, world.text
     assert "Mono JIT Code" not in world.text
+
+
+def test_headless_host_stays_up_for_friends(world: World) -> None:
+    write_build(world.root)
+    world.runner.log_lines = in_match
+    ctx = world.play()
+    assert play.host(ctx, headless=True, seconds=30) == 0, world.text
+    assert ctx.clock() >= 30
+    assert "[PASS] host: in the match" in world.text
