@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Hullbreach.Net;
 using Unity.Services.Authentication;
 using Unity.Services.Core;
 using Unity.Services.Multiplayer;
@@ -23,6 +24,7 @@ namespace Hullbreach.NetCode.Entities
         ISession _session;
         IReadOnlyList<ISessionInfo> _publicSessions = Array.Empty<ISessionInfo>();
         bool _loadingGameScene;
+        string _loggedStatus;
 
         public const string DefaultLobbyScene = "LobbyScene";
         public const string DefaultGameScene = "MultiplayerGame";
@@ -68,6 +70,7 @@ namespace Hullbreach.NetCode.Entities
 
         async void Start()
         {
+            bool smoke = OnlineSmoke.Requested(Environment.GetEnvironmentVariable(OnlineSmoke.EnvVar));
             try
             {
                 await InitializeAsync();
@@ -76,6 +79,27 @@ namespace Hullbreach.NetCode.Entities
             catch (Exception exception)
             {
                 Debug.LogWarning($"Hullbreach online services could not start: {exception.Message}");
+                if (smoke) Debug.LogWarning($"{OnlineSmoke.LogPrefix} smoke test FAILED: Unity Services did not start: {exception.Message}");
+                return;
+            }
+
+            if (smoke) await RunSmokeAsync();
+        }
+
+        // Demo/testing aid (`play online --headless`): create a private Relay lobby,
+        // log its code, leave it again. No clicks, so it runs on a headless player.
+        async Task RunSmokeAsync()
+        {
+            try
+            {
+                await HostAsync(OnlineSmoke.LobbyName(DateTime.UtcNow), 2, isPrivate: true);
+                Debug.Log($"{OnlineSmoke.LogPrefix} smoke lobby created, join code {_session?.Code}");
+                await LeaveAsync();
+                Debug.Log($"{OnlineSmoke.LogPrefix} smoke test PASSED");
+            }
+            catch (Exception exception)
+            {
+                Debug.LogWarning($"{OnlineSmoke.LogPrefix} smoke test FAILED: {exception.Message}");
             }
         }
 
@@ -90,7 +114,17 @@ namespace Hullbreach.NetCode.Entities
             try
             {
                 if (UnityServices.State != ServicesInitializationState.Initialized)
-                    await UnityServices.InitializeAsync();
+                {
+                    // A profile makes a second copy on this computer a different player.
+                    string profile = OnlineSmoke.Profile(Environment.GetCommandLineArgs());
+                    var options = new InitializationOptions();
+                    if (profile != null)
+                    {
+                        options.SetProfile(profile);
+                        Debug.Log($"{OnlineSmoke.LogPrefix} Unity Services profile '{profile}'");
+                    }
+                    await UnityServices.InitializeAsync(options);
+                }
 
                 if (!AuthenticationService.Instance.IsSignedIn)
                     await AuthenticationService.Instance.SignInAnonymouslyAsync();
@@ -351,6 +385,12 @@ namespace Hullbreach.NetCode.Entities
 
         void NotifyChanged()
         {
+            // One log line per status change, so Player.log shows how far the lobby got.
+            if (Status != _loggedStatus)
+            {
+                _loggedStatus = Status;
+                Debug.Log(OnlineSmoke.StatusLine(Status, LastError));
+            }
             Changed?.Invoke();
         }
     }

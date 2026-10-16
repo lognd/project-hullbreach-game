@@ -1,0 +1,8 @@
+kind = "transition"
+from = "todo"
+to = "done"
+outcome = "done"
+reason = "Shipped in b87e52f..c5fdce1: doctor and play scripts; all six criteria bound (pytest + plaincs OnlineSmoke); fresh-clone walk-through proved guest, platform and online smoke on Windows."
+at = "2026-10-16T15:36:18Z"
+actor = "mcnairrobotics"
+rev = 1

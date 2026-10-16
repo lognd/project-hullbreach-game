@@ -15,7 +15,8 @@ leaving this assembly and its wire contract engine-independent.
 ## Netcode for Entities adapter
 
 `HullbreachNetCodeBootstrap` creates 50 Hz server and client worlds, but leaves
-their transports idle until the player hosts or joins. `HullbreachLobbyService`
+their transports idle until the player hosts or joins (direct launches differ;
+see [Direct and LAN launch](#direct-and-lan-launch)). `HullbreachLobbyService`
 then uses Unity Authentication plus the Multiplayer Services session API to
 create Lobby and Relay resources; the package's built-in Entities handler
 configures the worlds, starts the host, and connects clients. Relay avoids port
@@ -30,6 +31,11 @@ either kind with Unity Lobby's native 8-64 character password, list open public
 lobbies, and join by lobby code. The short `ISession.Code` in the waiting room
 is the player-facing invite code.
 
+Before the lobby, the scene's `SignInCanvas` overlay asks the player to sign in
+with a Hullbreach platform account or to play offline; the token it obtains is
+what the client presents in the platform handshake. See
+[platform-link.md](platform-link.md#sign-in-screen).
+
 Only the host sees the waiting room's **Start Game** button. Pressing it locks
 the lobby and publishes the gameplay scene name as a member-visible session
 property; every member then loads `Assets/Scenes/MultiplayerGame.unity`. The
@@ -37,11 +43,6 @@ Lobby scene is first in Build Settings, and the multiplayer scene is second.
 Use `Hullbreach > Online > Rebuild lobby and multiplayer scenes` only if the
 generated scene/prefab structure needs to be reset; normal visual edits should
 be made directly to the prefab.
-
-Direct/LAN testing remains available by launching with `-hullbreachDirect`.
-Use `-hullbreachPort <1-65535>` to select the port and
-`-hullbreachConnect <IPv4-or-IPv6-address>` for a client target; either of the
-latter arguments also enables direct mode.
 
 Before `HullbreachNetCodeServerSystem` joins a connection to the match, the
 platform handshake must admit it: the client sends its platform token in a
@@ -86,6 +87,45 @@ and fins use the same two-click facing selection as the demo. Press `Tab` to
 switch between Build and Flight. In Flight, `W/S` control thrust, `A/D` steer,
 and Space or left click fires. Placement/removal, collision resolution,
 projectile hits, damage, structural failure, and gravity are server-authoritative.
+
+### Direct and LAN launch
+
+<!-- describes: Assets/Scripts/Hullbreach.NetCode.Entities/HullbreachNetCodeBootstrap.cs::HullbreachDirectLaunch -->
+<!-- describes: Assets/Scripts/Hullbreach.NetCode.Entities/HullbreachNetCodeBootstrap.cs::HullbreachDirectLaunch.Plan -->
+<!-- describes: Assets/Scripts/Hullbreach.NetCode.Entities/HullbreachNetCodeBootstrap.cs::HullbreachNetCodeBootstrap -->
+<!-- describes: Assets/Scripts/Hullbreach.NetCode.Entities/HullbreachNetCodeBootstrap.cs::HullbreachNetCodeBootstrap.Initialize -->
+
+Without the lobby, a player or server is started from the command line.
+`HullbreachDirectLaunch`
+parses the arguments once into a
+[`DirectLaunchPlan`](reference/hullbreach-net.md#directlaunchplan) and logs
+its `Describe()` line; `HullbreachNetCodeBootstrap` then creates exactly the
+worlds that role needs:
+
+| Launch | Worlds | Network |
+| --- | --- | --- |
+| no direct arguments | client + server (idle) | none until the lobby hosts or joins |
+| `-hullbreachDirect [-hullbreachPort N]` (host) | client + server | server listens on 0.0.0.0:N, local client joins it |
+| `-hullbreachConnect <ip> [-hullbreachPort N]` (client) | client only | dials `<ip>:N` |
+| `-hullbreachServer [-hullbreachPort N]`, or a dedicated server build | server only | listens on 0.0.0.0:N |
+
+N defaults to 7979 (UDP). A client-only process matters: NetCode's own
+autoconnect forces loopback in a client+server player, so before S47-5 a
+`-hullbreachConnect` player opened its own server and dialled itself.
+
+Every direct role loads `MultiplayerGame` right after the first scene
+(`RuntimeInitializeLoadType.AfterSceneLoad`), because nothing else would:
+in the lobby flow only START GAME loads it. The lobby view does not start
+Unity Services in a direct launch, and the HUD's Leave button closes the
+game instead of returning to a lobby that was never joined. A desktop
+player run with `-batchmode -nographics -hullbreachServer` is a headless
+dedicated server, which is how the scripts run one where the Dedicated
+Server build module is not installed.
+
+Log lines to look for in `Player.log`: `Hullbreach direct: role=...`,
+`Hullbreach direct: loading MultiplayerGame for role=...`,
+`Hullbreach server: peer #N joined the match (K in match).` and, on each
+client, `Hullbreach match: connected as #N; replicated ships: K`.
 
 ### Unity Services setup
 

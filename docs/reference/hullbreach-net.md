@@ -639,3 +639,89 @@ this on an empty `GameObject` in any scene to see it run.
 (replica, netId, block) so the two clients do not share quads, moves it with
 its ship, and destroys any quad whose block or ship the replica no longer
 has; `OnDestroy` removes the rest.
+
+### LaunchRole
+
+<!-- describes: Assets/Scripts/Hullbreach.Net/DirectLaunchPlan.cs::LaunchRole -->
+
+What this process is for when it starts: `Lobby` (no direct arguments, the
+normal Relay lobby flow), `Host` (server plus local client), `Client`
+(client world only, dials an address) or `Server` (server world only, no
+player). Chosen by `DirectLaunchPlan.Parse`.
+
+### DirectLaunchPlan
+
+<!-- describes: Assets/Scripts/Hullbreach.Net/DirectLaunchPlan.cs::DirectLaunchPlan -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/DirectLaunchPlan.cs::DirectLaunchPlan.DirectArg -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/DirectLaunchPlan.cs::DirectLaunchPlan.ConnectArg -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/DirectLaunchPlan.cs::DirectLaunchPlan.PortArg -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/DirectLaunchPlan.cs::DirectLaunchPlan.ServerArg -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/DirectLaunchPlan.cs::DirectLaunchPlan.DefaultPort -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/DirectLaunchPlan.cs::DirectLaunchPlan.GameScene -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/DirectLaunchPlan.cs::DirectLaunchPlan.LoopbackAddress -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/DirectLaunchPlan.cs::DirectLaunchPlan.Role -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/DirectLaunchPlan.cs::DirectLaunchPlan.Port -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/DirectLaunchPlan.cs::DirectLaunchPlan.ConnectAddress -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/DirectLaunchPlan.cs::DirectLaunchPlan.Warnings -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/DirectLaunchPlan.cs::DirectLaunchPlan.IsDirect -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/DirectLaunchPlan.cs::DirectLaunchPlan.CreatesServerWorld -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/DirectLaunchPlan.cs::DirectLaunchPlan.CreatesClientWorld -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/DirectLaunchPlan.cs::DirectLaunchPlan.LoadsGameScene -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/DirectLaunchPlan.cs::DirectLaunchPlan.Parse -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/DirectLaunchPlan.cs::DirectLaunchPlan.Describe -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/DirectLaunchPlan.cs::DirectLaunchPlan.MatchStatus -->
+
+Engine-free reading of the direct/LAN command line (S47-5), so the Unity
+bootstrap is a thin switch over `Role`. Rules, in priority order:
+
+| Arguments | Role |
+| --- | --- |
+| dedicated server build, or `-hullbreachServer` | `Server` (`-hullbreachConnect` ignored with a warning) |
+| `-hullbreachConnect <ip>` | `Client` |
+| `-hullbreachDirect` or `-hullbreachPort <port>` | `Host` |
+| none of these | `Lobby` |
+
+Argument names are case-insensitive. `-hullbreachPort` must be 1-65535,
+otherwise 7979 is used with a warning. The client address must be a
+numeric IPv4 address (or `localhost`); anything else falls back to
+`127.0.0.1` with a warning, which `Warnings` carries for the bootstrap to
+log. Every direct role (`IsDirect`) loads `MultiplayerGame` itself, since
+only the lobby's START GAME would otherwise load it (`LoadsGameScene`).
+A `Client` never creates a server world, so two copies on one machine do
+not fight over the port and a remote join really dials the remote host.
+
+`Describe()` is the one greppable line per process, for example
+`Hullbreach direct: role=client connect=10.0.0.5:7979 scene=MultiplayerGame`.
+`MatchStatus(id, ships)` is the proof line a client logs when its match
+view changes: `Hullbreach match: connected as #2; replicated ships: 2`.
+Launch scripts and log checks grep for both.
+
+### OnlineSmoke
+
+<!-- describes: Assets/Scripts/Hullbreach.Net/OnlineSmoke.cs::OnlineSmoke -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/OnlineSmoke.cs::OnlineSmoke.EnvVar -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/OnlineSmoke.cs::OnlineSmoke.LogPrefix -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/OnlineSmoke.cs::OnlineSmoke.Requested -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/OnlineSmoke.cs::OnlineSmoke.LobbyName -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/OnlineSmoke.cs::OnlineSmoke.StatusLine -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/OnlineSmoke.cs::OnlineSmoke.ProfileArg -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/OnlineSmoke.cs::OnlineSmoke.Profile -->
+
+Engine-free rules of the headless online smoke test, a demo/testing aid.
+`HullbreachLobbyService` logs every lobby status change as
+`Hullbreach online: <status>` (with the error in brackets when there is
+one), so `Player.log` shows how far Unity Services sign-in got. When the
+environment variable `HULLBREACH_ONLINE_SMOKE` is `1`, `true`, `yes` or
+`host`, the lobby scene also creates a private Relay lobby named
+`Hullbreach smoke <utc time>`, logs
+`Hullbreach online: smoke lobby created, join code <code>`, leaves it, and
+logs `Hullbreach online: smoke test PASSED` (or `... FAILED: <reason>`).
+`play online --headless` sets the variable; see
+[doctor.md](../doctor.md#play-commands).
+
+Unity Authentication remembers one anonymous player per **profile**, so
+two copies of the game on one computer are the same player and cannot
+both be in one lobby. `-hullbreachProfile <name>` (letters, digits, `-`
+and `_`, at most 30) starts Unity Services under that profile; anything
+else is ignored and the default profile is used. `play online --profile
+<name>` passes it.

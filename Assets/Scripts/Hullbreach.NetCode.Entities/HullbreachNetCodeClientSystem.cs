@@ -55,6 +55,7 @@ namespace Hullbreach.NetCode.Entities
         readonly Dictionary<uint, HullbreachNetCodeClient.ProjectileVisual> _projectiles =
             new Dictionary<uint, HullbreachNetCodeClient.ProjectileVisual>();
         uint _clientTick;
+        string _lastMatchStatus;
 
         protected override void OnCreate()
         {
@@ -100,6 +101,14 @@ namespace Hullbreach.NetCode.Entities
             // Lobby connections intentionally carry no gameplay traffic. The
             // controller only exists in MultiplayerGame after the host starts.
             if (!HullbreachNetworkGameplayController.Active) return;
+
+            // Greppable proof that this client reached the match (scripts and docs use it).
+            string matchStatus = DirectLaunchPlan.MatchStatus(networkId.Value, _replica.Ships.Count);
+            if (matchStatus != _lastMatchStatus)
+            {
+                _lastMatchStatus = matchStatus;
+                Debug.Log(matchStatus);
+            }
 
             Entity connection = SystemAPI.GetSingletonEntity<NetworkId>();
             if (!EntityManager.HasComponent<NetworkStreamInGame>(connection))

@@ -1,0 +1,6 @@
+kind = "comment"
+subtype = "note"
+body = "Proven on a fresh Windows 11 ARM64 clone (Unity 6000.0.43f1, Windows Mono module only), shipped in e839aee: criterion 1, play.cmd build -> 'IL2CPP is not installed for windows; building with Mono instead', scenes LobbyScene, MultiplayerGame, DemoScene, RocketScene, exit 0; criterion 2, play.cmd build server (and --target linux) -> 'FAILED the Windows (Linux) Dedicated Server Build Support module is not installed', exit 1; criterion 4, play build is the only command used. Criterion 3 is not proven: no Dedicated Server module is installed on this machine, so the ticket stays open until someone with the module runs play build server."
+at = "2026-10-16T15:32:53Z"
+actor = "mcnairrobotics"
+rev = 1

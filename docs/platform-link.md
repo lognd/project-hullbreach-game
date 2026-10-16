@@ -116,12 +116,14 @@ Known limits, recorded for follow-up:
   only shown as verified when it arrives together with a token the
   platform accepted, but the platform does not confirm the pair. A
   platform change to return `username` from `/session` would close this.
-- The platform route currently authenticates the player's bearer token
-  only; it does not check `X-Server-Key` yet (`require_game_server`
-  exists but no route uses it). The game server already sends the key so
-  nothing changes on this side when the platform starts requiring it.
-  The platform answers a bad key with the same 401 as a bad token, so a
-  wrong key will show up as "invalid or expired" on every player.
+- Newer platforms (platform PR #41) require `X-Server-Key` on
+  `GET /api/v1/auth/session` and check it before the token; older ones
+  ignore it. The game server always sends the key, so both work. A key
+  problem is reported as the operator's fault, not the player's (see
+  [failure modes](#failure-modes)): every player is then refused or kept
+  a guest with "platform refused this game server's key", and the fix is
+  to set `HULLBREACH_PLATFORM_SERVER_KEY` on the game server to one of the
+  platform's `HULLBREACH_GAME_SERVER_API_KEYS`.
 - The hello travels inside the Netcode connection, which is not
   encrypted on the direct path. Relay connections are DTLS-protected.
 
@@ -172,10 +174,19 @@ Login (`PlatformClient.MapLogin`):
 | no HTTP answer (refused, DNS, timeout, insecure HTTP blocked) | `Unreachable` | "Cannot reach the Hullbreach servers (...)." |
 | empty username or password (no request sent) | `InvalidCredentials` | "Enter a username and password." |
 
-Session check (`PlatformClient.MapSession`): 200 with `user_id` is
-`Valid`; 401 is `Invalid` (missing, expired or revoked token, and also a
-rejected server key); a transport failure is `Unreachable`; anything else
-is `Failed`. The handshake table above shows how the gate reacts to each.
+Session check (`PlatformClient.MapSession`). The platform's error body is
+`{"detail": "..."}`; the key is checked before the token:
+
+| Platform answer | `SessionStatus` | Reason the gate shows |
+| --- | --- | --- |
+| 200 with `user_id` | `Valid` | (admitted, verified) |
+| 401 `not authenticated` (or any 401 not about the key) | `Invalid` | "Your platform session is invalid or expired. Sign in again." |
+| 401 `server key missing` / `invalid server key` | `Failed` | "Could not verify your platform session (platform refused this game server's key (invalid server key); set HULLBREACH_PLATFORM_SERVER_KEY to one of the platform's game server keys)." |
+| 503 `server key not configured` | `Failed` | "Could not verify your platform session (platform has no game server keys configured (...))." |
+| no HTTP answer | `Unreachable` | "Could not verify your platform session (...)." |
+| anything else | `Failed` | "Could not verify your platform session (session check failed (HTTP n))." |
+
+The handshake table above shows how the gate reacts to each.
 
 <!-- describes: Assets/Scripts/Hullbreach.Platform/PlatformClient.cs::PlatformClient.MapLogin -->
 <!-- describes: Assets/Scripts/Hullbreach.Platform/PlatformClient.cs::PlatformClient.MapSession -->
@@ -226,15 +237,87 @@ which is fine under the .NET SDK where the test runs.
 `PlatformSession` holds the signed-in username and token for this run of
 the game only; nothing is written to disk (persisting the session between
 launches is S07-3). The sign-in screen writes it; the client handshake
-system reads it when it says hello. Treat `Token` as a secret: it may be
-passed to the handshake and nowhere else.
+system reads it when it says hello. `PlayOffline` records that the player
+chose to play without an account (the hello then carries no token, so the
+server treats them as a guest or, in required mode, turns them away);
+`HasChosen` is true once either answer was given this run. Treat `Token`
+as a secret: it may be passed to the handshake and nowhere else.
+
+Demo/testing aid: a headless client cannot click the sign-in screen, so
+at startup (before the first scene) `HullbreachPlatformRuntime` calls
+`SignInFromEnvironment`. When `HULLBREACH_PLATFORM_TOKEN` is set it signs
+in with that token and the name in `HULLBREACH_PLATFORM_USERNAME`, and
+logs `Hullbreach platform: signed in from HULLBREACH_PLATFORM_TOKEN as
+'<name>' (demo/testing aid).` (the name only, never the token). It is
+environment-only, never a command-line argument, so the token does not
+show up in process listings.
 
 <!-- describes: Assets/Scripts/Hullbreach.Platform/PlatformSession.cs::PlatformSession -->
 <!-- describes: Assets/Scripts/Hullbreach.Platform/PlatformSession.cs::PlatformSession.IsSignedIn -->
+<!-- describes: Assets/Scripts/Hullbreach.Platform/PlatformSession.cs::PlatformSession.IsOffline -->
+<!-- describes: Assets/Scripts/Hullbreach.Platform/PlatformSession.cs::PlatformSession.HasChosen -->
 <!-- describes: Assets/Scripts/Hullbreach.Platform/PlatformSession.cs::PlatformSession.Username -->
 <!-- describes: Assets/Scripts/Hullbreach.Platform/PlatformSession.cs::PlatformSession.Token -->
 <!-- describes: Assets/Scripts/Hullbreach.Platform/PlatformSession.cs::PlatformSession.SignIn -->
+<!-- describes: Assets/Scripts/Hullbreach.Platform/PlatformSession.cs::PlatformSession.PlayOffline -->
 <!-- describes: Assets/Scripts/Hullbreach.Platform/PlatformSession.cs::PlatformSession.SignOut -->
+<!-- describes: Assets/Scripts/Hullbreach.Platform/PlatformSession.cs::PlatformSession.TokenEnv -->
+<!-- describes: Assets/Scripts/Hullbreach.Platform/PlatformSession.cs::PlatformSession.UsernameEnv -->
+<!-- describes: Assets/Scripts/Hullbreach.Platform/PlatformSession.cs::PlatformSession.SignInFromEnvironment -->
+
+## Sign-in screen
+
+S07-2. The first thing `LobbyScene` shows is the sign-in form, an overlay
+canvas (`Assets/Prefabs/UI/SignInCanvas.prefab`, sort order 10) above the
+lobby canvas. It blocks the lobby until the player either signs in or
+presses **Play offline**; after that only a small account bar stays in the
+top-right corner ("Signed in as name" with **Sign out**, or "Playing
+offline" with **Sign in**, which brings the form back). Returning to the
+lobby later in the same run does not ask again: `SignInModel` starts from
+whatever `PlatformSession` already holds.
+
+`SignInModel` (engine-free, unit-tested in `SignInModelTests`) owns all
+of the screen's behaviour; `HullbreachSignInView` only copies its
+properties onto the widgets and forwards clicks.
+
+| State | Form | Account bar | Notes |
+| --- | --- | --- | --- |
+| `Editing` | shown, editable | hidden | message line shows the last error in red |
+| `Busy` | shown, read-only | hidden | "Signing in..."; a second submit is ignored; **Play offline** still works and a late answer is dropped |
+| `SignedIn` | hidden | "Signed in as name" | token kept in `PlatformSession` (memory only) |
+| `Offline` | hidden | "Playing offline" | no token; hello carries none |
+
+The message for each failed sign-in is the `LoginOutcome` message from
+the [failure modes](#failure-modes) table; an unreachable platform adds
+"You can still play offline." The password field is cleared as soon as a
+request is sent, and neither the password nor the token is ever logged or
+shown. Enter in the password field submits.
+
+The prefab is generated by `LobbySceneBuilder`. For an existing project,
+`Hullbreach > Online > Add sign-in screen to lobby scene` creates the
+prefab and adds it to `LobbyScene` without resetting the lobby prefab or
+the multiplayer scenes; the full `Rebuild lobby and multiplayer scenes`
+also includes it. A lobby scene without the sign-in canvas still works:
+the player is simply offline.
+
+<!-- describes: Assets/Scripts/Hullbreach.Platform/SignInModel.cs::SignInState -->
+<!-- describes: Assets/Scripts/Hullbreach.Platform/SignInModel.cs::SignInModel -->
+<!-- describes: Assets/Scripts/Hullbreach.Platform/SignInModel.cs::SignInModel.UnreachableHint -->
+<!-- describes: Assets/Scripts/Hullbreach.Platform/SignInModel.cs::SignInModel.SignInModel -->
+<!-- describes: Assets/Scripts/Hullbreach.Platform/SignInModel.cs::SignInModel.Changed -->
+<!-- describes: Assets/Scripts/Hullbreach.Platform/SignInModel.cs::SignInModel.State -->
+<!-- describes: Assets/Scripts/Hullbreach.Platform/SignInModel.cs::SignInModel.Message -->
+<!-- describes: Assets/Scripts/Hullbreach.Platform/SignInModel.cs::SignInModel.IsError -->
+<!-- describes: Assets/Scripts/Hullbreach.Platform/SignInModel.cs::SignInModel.LastStatus -->
+<!-- describes: Assets/Scripts/Hullbreach.Platform/SignInModel.cs::SignInModel.CanSubmit -->
+<!-- describes: Assets/Scripts/Hullbreach.Platform/SignInModel.cs::SignInModel.IsDone -->
+<!-- describes: Assets/Scripts/Hullbreach.Platform/SignInModel.cs::SignInModel.AccountLine -->
+<!-- describes: Assets/Scripts/Hullbreach.Platform/SignInModel.cs::SignInModel.Submit -->
+<!-- describes: Assets/Scripts/Hullbreach.Platform/SignInModel.cs::SignInModel.PlayOffline -->
+<!-- describes: Assets/Scripts/Hullbreach.Platform/SignInModel.cs::SignInModel.SignOut -->
+<!-- describes: Assets/Scripts/Hullbreach.Platform/SignInModel.cs::SignInModel.MessageFor -->
+<!-- describes: Assets/Scripts/Hullbreach.NetCode.Entities/HullbreachSignInView.cs::HullbreachSignInView -->
+<!-- describes: Assets/Editor/Hullbreach.Editor/LobbySceneBuilder.cs::LobbySceneBuilder.AddSignInMenu -->
 
 ## Hullbreach.Platform module reference
 
