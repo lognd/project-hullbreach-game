@@ -105,6 +105,11 @@ def rule_name(port: int) -> str:
     return f"Project Hullbreach UDP {port}"
 
 
+def prompt_rule_name() -> str:
+    """The rule name Windows gives the game when its firewall prompt is answered."""
+    return f"{PRODUCT.lower()}.exe"
+
+
 def firewall_plan(kind: HostKind, port: int) -> FirewallPlan:
     """The firewall commands for one kind of computer."""
     if kind == "windows":
@@ -114,10 +119,18 @@ def firewall_plan(kind: HostKind, port: int) -> FirewallPlan:
             f"protocol=UDP localport={port}"
         )
         return FirewallPlan(
-            # Our rule, or the one Windows makes when you click "Allow access".
+            # Our rule, or the ones Windows names after the game's .exe when
+            # someone answers its "allow access" prompt (Allow or Cancel).
             status_argvs=[
                 ["netsh", "advfirewall", "firewall", "show", "rule", f"name={name}"],
-                ["netsh", "advfirewall", "firewall", "show", "rule", f"name={PRODUCT}"],
+                [
+                    "netsh",
+                    "advfirewall",
+                    "firewall",
+                    "show",
+                    "rule",
+                    f"name={prompt_rule_name()}",
+                ],
             ],
             ok_markers=["Rule Name:"],
             block_pattern=r"Action:\s+Block",

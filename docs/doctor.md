@@ -88,7 +88,7 @@ commands for the demo. Exit code: 0 when nothing failed, 1 otherwise.
 | `build.scenes` | `LobbyScene` first, `MultiplayerGame` included | all | [Build](../README.md#build-the-game-with-one-command) |
 | `build.server` | A dedicated server build, or the game build as a headless server | guest, platform | [Build](../README.md#build-the-game-with-one-command) |
 | `net.port` | UDP game port (7979, or `--port`) is free | guest, platform | [Direct / LAN](../README.md#direct--lan) |
-| `net.firewall` | Firewall allows the game port; offers the exact rule (Windows `netsh`, asks first) | guest, platform | [Direct / LAN](../README.md#direct--lan) |
+| `net.firewall` | Firewall allows the game port; offers the exact rule (Windows `netsh`, asks first); flags the Block rule `project hullbreach.exe` that a cancelled Windows prompt leaves | guest, platform | [Direct / LAN](../README.md#direct--lan) |
 | `net.lan` | This computer's LAN addresses and which one to give a friend | guest, platform | [3.2](../README.md#32-find-the-hosts-ip-address) |
 | `platform.url` | The platform address is a valid URL | platform | [4.2](../README.md#42-start-the-platform-and-make-an-account) |
 | `platform.health` | `GET /api/v1/health` answers, with the platform version | platform | [4.2](../README.md#42-start-the-platform-and-make-an-account) |

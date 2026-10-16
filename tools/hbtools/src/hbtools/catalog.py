@@ -30,8 +30,8 @@ from hbtools.config import (
 from hbtools.errors import PlatformError
 from hbtools.host import (
     EDITOR_ENV,
-    PRODUCT,
     UNITY_VERSION,
+    prompt_rule_name,
     python_summary,
     set_env_line,
 )
@@ -670,8 +670,10 @@ def check_firewall(ctx: Ctx) -> Outcome:
             steps.insert(
                 0,
                 "Start menu -> 'Windows Defender Firewall with Advanced Security' "
-                f"-> Inbound Rules -> delete the '{PRODUCT}' rules marked with a "
-                "red circle.",
+                f"-> Inbound Rules -> delete the '{prompt_rule_name()}' rules "
+                "marked with a red circle (or, in an administrator PowerShell: "
+                f'netsh advfirewall firewall delete rule name="{prompt_rule_name()}"'
+                "), then run the doctor again.",
             )
     else:
         steps.append(plan.fix_text)

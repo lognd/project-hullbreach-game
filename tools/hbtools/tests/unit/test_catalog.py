@@ -163,12 +163,23 @@ def test_windows_firewall_block_rule_is_called_out(
 ) -> None:
     world.host = make_host(tmp_path, "Windows", "11")
     world.runner.rules += [
-        (("netsh",), done("Rule Name: Project Hullbreach\nAction: Block\n"))
+        (("netsh",), done("Rule Name: project hullbreach.exe\nAction: Block\n"))
     ]
     outcome = catalog.check_firewall(world.ctx(Options(fix_firewall=True)))
     assert outcome.status is Status.WARN
     assert "BLOCKS" in outcome.detail
     assert "red circle" in outcome.fix[0]
+    assert 'delete rule name="project hullbreach.exe"' in outcome.fix[0]
+
+
+def test_windows_firewall_looks_up_the_prompt_rule_by_exe_name(
+    world: World, tmp_path: Path
+) -> None:
+    # Windows names prompt-made rules after the .exe, so a lookup by the
+    # product name alone missed a Block rule on a real machine.
+    world.host = make_host(tmp_path, "Windows", "11")
+    names = [argv[-1] for argv in world.host.firewall(7979).status_argvs]
+    assert names == ["name=Project Hullbreach UDP 7979", "name=project hullbreach.exe"]
 
 
 def test_linux_ufw(world: World) -> None:
