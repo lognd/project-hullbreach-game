@@ -156,12 +156,19 @@ How the pieces talk to each other:
 | Run a five-minute demo at standup | [Demo script for standup](#demo-script-for-standup) |
 | Fix something that went wrong | [Troubleshooting](#troubleshooting) |
 
-**What has been tested, honestly.** Guide 1 and Guide 2 follow the flow
-the team has used and the docs in [docs/netcode.md](docs/netcode.md).
-Guide 3 and Guide 5 depend on a build setting described in those guides
-that has not yet been walked end to end in the editor; if a step does
-not match what you see, say so in the team chat. Guide 4 needs two pull
-requests that are not merged yet (see the guide).
+**What has been tested, honestly.** On a fresh Windows 11 clone with
+only the Windows (Mono) build module, the doctor and `play` commands
+were walked top to bottom: `play build` made the game; `play two-local`
+and a separate `play host` / `play join 127.0.0.1` both reached the
+match (Guide 3); `play online --headless` signed in to Unity Services
+and created a Relay lobby (Guide 2, without a second player clicking
+JOIN CODE); and against a local platform with sign-in required, a
+signed-in client was admitted under its account name while a guest was
+turned away with the reason shown (Guide 4.5). Not tested yet: the
+Linux and Windows Dedicated Server builds (Guide 5; the modules were
+not installed, so `play server` used the game build), macOS and Linux
+players, and a Relay match between two people clicking through the
+lobby. If a step does not match what you see, say so in the team chat.
 
 ## Words you will see
 
@@ -1187,7 +1194,10 @@ Cause, most likely first:
    Firewall" -> **Allow an app or feature through Windows
    Defender Firewall** -> **Change settings** -> tick **Private** for
    Project Hullbreach (or remove it and start the host again to get the
-   prompt). Linux: `sudo ufw allow 7979/udp`.
+   prompt). Linux: `sudo ufw allow 7979/udp`. If someone clicked
+   **Cancel** on the Windows prompt, Windows adds a **Block** rule named
+   `project hullbreach.exe` that beats any Allow rule; the doctor's
+   `net.firewall` check says so and shows how to delete it.
 3. Wrong IP: re-check with `ipconfig` / `hostname -I` on the host; check
    the log for `Invalid -hullbreachConnect address`.
 4. The computers cannot reach each other (guest or campus Wi-Fi). Test
