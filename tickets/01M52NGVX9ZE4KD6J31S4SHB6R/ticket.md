@@ -26,7 +26,7 @@ bound = true
 
 [[acceptance]]
 text = "doctor --collect zips the logs and doctor output with keys, passwords and tokens redacted."
-bound = false
+bound = true
 
 [[acceptance]]
 text = "play online, host, join, server, two-local, build and logs start the right player, take secrets only from the environment or a prompt, and report whether each player reached the match."
