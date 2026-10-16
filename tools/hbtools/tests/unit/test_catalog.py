@@ -293,3 +293,10 @@ def test_full_doctor_on_an_empty_machine_blocks_but_lists_everything(
     assert statuses["unity.modules"] is Status.PENDING
     assert statuses["platform.health"] is Status.FAIL
     assert statuses["platform.serverkey.accepted"] is Status.PENDING
+
+
+def test_loopback_advice_keeps_the_platform_port(world: World) -> None:
+    ctx = world.ctx(url="http://127.0.0.1:8002")
+    ctx.state["lan"] = "192.168.1.20"
+    outcome = catalog.check_loopback(ctx)
+    assert "--platform-url http://192.168.1.20:8002" in outcome.detail

@@ -801,11 +801,14 @@ def check_loopback(ctx: Ctx) -> Outcome:
     """127.0.0.1 means "this computer": wrong once players are on other machines."""
     url = ctx.config.platform_url
     lan = ctx.state.get("lan", "<your-lan-ip>")
+    parsed = urllib.parse.urlparse(url)
+    port = f":{parsed.port}" if parsed.port else ""
+    lan_url = f"{parsed.scheme}://{lan}{port}"
     if is_loopback_url(url):
         return passed(
             f"{url} only works when the platform, server and players all run on "
             "this computer.\nFor players on other computers: start the platform "
-            f"with --host 0.0.0.0 and use --platform-url http://{lan}:8000 everywhere."
+            f"with --host 0.0.0.0 and use --platform-url {lan_url} everywhere."
         )
     return passed(
         f"{url} is a network address; every computer (players and server) must "
