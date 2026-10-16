@@ -109,7 +109,9 @@ def _scan(code: int, log_path: Path) -> UnityRun:
     if log_path.is_file():
         text = log_path.read_text(encoding="utf-8", errors="replace")
     errors = sorted(set(COMPILE_ERROR.findall(text)))
-    results = [ln.strip() for ln in text.splitlines() if BUILD_PREFIX in ln]
+    # Only our own messages: Unity echoes a stack frame naming the class per log.
+    lines = (ln.strip() for ln in text.splitlines())
+    results = [ln for ln in lines if ln.startswith(BUILD_PREFIX)]
     logger.info("unity exit %s, %d compile errors, log %s", code, len(errors), log_path)
     return UnityRun(
         code=code, log_path=log_path, compile_errors=errors, result_lines=results

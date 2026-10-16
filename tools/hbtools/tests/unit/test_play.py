@@ -252,3 +252,17 @@ def test_build_reports_a_missing_module(world: World, tmp_path: Path) -> None:
     )
     assert play.build(world.play(), "server") == 1
     assert "[FAIL] The build did not finish" in world.text
+
+
+def test_build_hides_unity_stack_frames(world: World, tmp_path: Path) -> None:
+    frame = (
+        "0x0000015ab5d6c3ec (Mono JIT Code) Hullbreach.Editor.HullbreachBuild:"
+        "BuildFromCommandLine () (at Assets/Editor/HullbreachBuild.cs:66)"
+    )
+    _editor_world(
+        world,
+        tmp_path,
+        ["HullbreachBuild: OK linux client -> Builds/linux-client", frame],
+    )
+    assert play.build(world.play(), "client") == 0, world.text
+    assert "Mono JIT Code" not in world.text
