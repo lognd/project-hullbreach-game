@@ -8,13 +8,13 @@ points = 8
 parent = "01M3DG5Y14KAMJ8NTGHC8BW9YV"
 reporter = "mcnairrobotics"
 created = "2026-10-16T15:33:06Z"
-updated = "2026-10-16T15:33:06Z"
+updated = "2026-10-16T15:35:13Z"
 labels = ["owner:mcnairrobotics", "game", "netcode", "milestone:0.3.0"]
 scope = ["tools/hbtools/**", "doctor.cmd", "doctor.sh", "play.cmd", "play.sh", "docs/doctor.md", "README.md", "Assets/Scripts/Hullbreach.Net/OnlineSmoke.cs", "Assets/Scripts/Hullbreach.NetCode.Entities/HullbreachLobbyService.cs"]
 
 [[acceptance]]
 text = "The doctor prints PASS, WARN or FAIL for every check with numbered fix steps and a README link, and after a blocking failure it still lists the checks that wait on it."
-bound = false
+bound = true
 
 [[acceptance]]
 text = "doctor --demo online, guest or platform checks only what that demo needs and ends with the exact commands to run next."
