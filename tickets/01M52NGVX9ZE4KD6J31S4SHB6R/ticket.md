@@ -8,7 +8,7 @@ points = 8
 parent = "01M3DG5Y14KAMJ8NTGHC8BW9YV"
 reporter = "mcnairrobotics"
 created = "2026-10-16T15:33:06Z"
-updated = "2026-10-16T15:35:19Z"
+updated = "2026-10-16T15:35:20Z"
 labels = ["owner:mcnairrobotics", "game", "netcode", "milestone:0.3.0"]
 scope = ["tools/hbtools/**", "doctor.cmd", "doctor.sh", "play.cmd", "play.sh", "docs/doctor.md", "README.md", "Assets/Scripts/Hullbreach.Net/OnlineSmoke.cs", "Assets/Scripts/Hullbreach.NetCode.Entities/HullbreachLobbyService.cs"]
 
@@ -30,7 +30,7 @@ bound = true
 
 [[acceptance]]
 text = "play online, host, join, server, two-local, build and logs start the right player, take secrets only from the environment or a prompt, and report whether each player reached the match."
-bound = false
+bound = true
 
 [[acceptance]]
 text = "A headless online smoke run signs in to Unity Services, creates a private Relay lobby and leaves it, and reports pass or fail from the lobby status."
