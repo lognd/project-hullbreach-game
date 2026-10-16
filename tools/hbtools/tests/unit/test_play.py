@@ -114,6 +114,7 @@ def test_rejection_after_connecting_is_a_failure(world: World) -> None:
     ]
     assert play.join(world.play(), "127.0.0.1", True, 30) == 1
     assert "[PASS]" not in world.text
+    assert "--demo platform" in world.text
 
 
 def test_connected_without_ships_is_not_in_the_match(world: World) -> None:

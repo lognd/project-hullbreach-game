@@ -337,6 +337,7 @@ def summary(ctx: PlayCtx, players: list[Player]) -> int:
     say = ctx.reporter
     say.heading("Result")
     ok = True
+    demo = "guest"
     for player in players:
         proof = in_match(player)
         rejected = next((ln for ln in player.seen if REJECTED_LINE in ln), None)
@@ -344,6 +345,8 @@ def summary(ctx: PlayCtx, players: list[Player]) -> int:
         # turns it away.
         if rejected is not None:
             ok = False
+            # Only a sign-in check turns a client away: the platform demo.
+            demo = "platform"
             say.say(f"[FAIL] {player.name}: {rejected.strip()}")
         elif proof is not None:
             say.say(f"[PASS] {player.name}: in the match ({proof.strip()})")
@@ -351,7 +354,7 @@ def summary(ctx: PlayCtx, players: list[Player]) -> int:
             ok = False
             say.say(f"[FAIL] {player.name}: did not reach the match. Log: {player.log}")
     if not ok:
-        say.say(f"    Run {ctx.host.doctor_cmd} --demo guest, or read the logs above.")
+        say.say(f"    Run {ctx.host.doctor_cmd} --demo {demo}, or read the logs above.")
     return 0 if ok else 1
 
 
