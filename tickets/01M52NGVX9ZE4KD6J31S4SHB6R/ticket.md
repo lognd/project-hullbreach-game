@@ -2,13 +2,14 @@
 id = "01M52NGVX9ZE4KD6J31S4SHB6R"
 title = "S47-7: Doctor and play scripts for the online, guest and platform demos"
 type = "task"
-category = "todo"
+category = "done"
+outcome = "done"
 priority = "high"
 points = 8
 parent = "01M3DG5Y14KAMJ8NTGHC8BW9YV"
 reporter = "mcnairrobotics"
 created = "2026-10-16T15:33:06Z"
-updated = "2026-10-16T15:35:25Z"
+updated = "2026-10-16T15:36:18Z"
 labels = ["owner:mcnairrobotics", "game", "netcode", "milestone:0.3.0"]
 scope = ["tools/hbtools/**", "doctor.cmd", "doctor.sh", "play.cmd", "play.sh", "docs/doctor.md", "README.md", "Assets/Scripts/Hullbreach.Net/OnlineSmoke.cs", "Assets/Scripts/Hullbreach.NetCode.Entities/HullbreachLobbyService.cs"]
 
