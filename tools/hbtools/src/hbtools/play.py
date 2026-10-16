@@ -241,8 +241,15 @@ def start_player(
     """Start one player with its own log file; secrets travel only in extra_env."""
     ctx.play_logs.mkdir(parents=True, exist_ok=True)
     log = ctx.play_logs / f"{name}.log"
-    if log.exists():
-        log.unlink()
+    try:
+        log.unlink(missing_ok=True)
+    except OSError as error:
+        # Windows locks the log of a player that is still running.
+        logger.warning("cannot replace %s: %s", log, error)
+        return Err(ToolError.AlreadyRunning).note(
+            f"{log} is in use: close the other {name} (or wait for it to stop), "
+            "then try again"
+        )
     argv = player_argv(build_, role_args, log, headless)
     logger.info("starting %s: %s (env names %s)", name, argv, sorted(extra_env or {}))
     started = ctx.runner.spawn(argv, cwd=build_.folder, env=extra_env)

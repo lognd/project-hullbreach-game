@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
+
 from hbtools import play, unity
 from hbtools.config import SERVER_KEY_ENV, TOKEN_ENV, URL_ENV, USERNAME_ENV
 from hbtools.host import EDITOR_ENV, detect_host
@@ -305,3 +307,17 @@ def test_server_join_hint_names_a_custom_platform_url(world: World) -> None:
     assert play.server(world.play(), 5, platform=True, skip_key_check=True) == 0
     assert "join <this computer's IP> --platform --platform-url " in world.text
     assert "http://10.0.0.5:8002" in world.text
+
+
+def test_second_copy_with_a_locked_log_explains(
+    world: World, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    write_build(world.root)
+
+    def locked(self: Path, missing_ok: bool = False) -> None:
+        raise PermissionError("in use by another process")
+
+    monkeypatch.setattr(Path, "unlink", locked)
+    assert play.server(world.play(), 5) == 1
+    assert "still running" in world.text
+    assert not world.runner.spawned

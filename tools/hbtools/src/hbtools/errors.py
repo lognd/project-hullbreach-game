@@ -50,3 +50,4 @@ class ToolError(ErrorSet):
     BuildFailed = "the Unity build failed"
     Cancelled = "cancelled by the user"
     Unsupported = "this command is not supported on this computer"
+    AlreadyRunning = "another copy of this player is still running"
