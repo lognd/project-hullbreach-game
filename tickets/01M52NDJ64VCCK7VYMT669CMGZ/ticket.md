@@ -8,7 +8,7 @@ points = 3
 parent = "01M3DG5Y14KAMJ8NTGHC8BW9YV"
 reporter = "mcnairrobotics"
 created = "2026-10-16T15:31:17Z"
-updated = "2026-10-16T15:31:41Z"
+updated = "2026-10-16T15:32:53Z"
 labels = ["owner:mcnairrobotics", "game", "netcode", "milestone:0.3.0"]
 scope = ["Assets/Editor/Hullbreach.Editor/HullbreachBuild.cs", "docs/reference/hullbreach-editor.md"]
 
