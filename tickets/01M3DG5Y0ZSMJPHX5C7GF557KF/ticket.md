@@ -2,26 +2,27 @@
 id = "01M3DG5Y0ZSMJPHX5C7GF557KF"
 title = "S42: Shoot a basic cannon"
 type = "story"
-category = "todo"
+category = "done"
+outcome = "done"
 priority = "critical"
 parent = "01M3DG5Y06HCEC2NK39DR1347N"
 reporter = "human"
 created = "2026-09-26T00:00:00Z"
-updated = "2026-09-26T00:00:00Z"
+updated = "2026-10-26T09:16:11Z"
 aliases = ["T-0031"]
 labels = ["jira:SCRUM-63", "owner:GingerVHS", "game", "milestone:0.1.0"]
 
 [[acceptance]]
 text = "A cannon fires in the direction it is mounted with a cooldown."
-bound = false
+bound = true
 
 [[acceptance]]
 text = "A projectile that hits a block damages that block and applies an impulse to the ship."
-bound = false
+bound = true
 
 [[acceptance]]
 text = "Hits are resolved the same way on both players' screens."
-bound = false
+bound = true
 +++
 
 https://aliens-against-humanity.atlassian.net/browse/SCRUM-63
