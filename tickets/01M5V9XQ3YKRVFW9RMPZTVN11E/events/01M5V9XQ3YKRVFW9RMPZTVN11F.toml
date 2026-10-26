@@ -1,0 +1,9 @@
+kind = "create"
+title = "Server: construct MatchStateMachine, tick it, destroy core at 255 damage"
+type = "bug"
+category = "todo"
+priority = "medium"
+body = "found while working ~3Y92T1Z: ServerSimulation.ApplyProjectileImpact never destroys the core (key != CoreKey) and nothing constructs Hullbreach.Match.MatchStateMachine, so MatchEndFeed.Shared is still never raised in a live match."
+at = "2026-10-26T05:11:25Z"
+actor = "lognd"
+rev = 1

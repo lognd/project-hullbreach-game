@@ -1,0 +1,9 @@
+kind = "create"
+title = "S46 follow-up: forfeit win on disconnect and draw policy"
+type = "task"
+category = "todo"
+priority = "medium"
+body = "found while working ~3Y92T1Z: disconnect and same-tick double-core-loss end with no winner and no platform report; decide forfeit and tiebreak policy (with S46-2)."
+at = "2026-10-26T05:11:25Z"
+actor = "lognd"
+rev = 1
