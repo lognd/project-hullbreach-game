@@ -8,7 +8,7 @@ points = 5
 parent = "01M3DG5Y0HT0GE1F2YVQY24SSN"
 reporter = "human"
 created = "2026-09-26T00:00:00Z"
-updated = "2026-10-26T08:31:03Z"
+updated = "2026-10-26T08:31:10Z"
 aliases = ["T-0051"]
 labels = ["jira:SCRUM-123", "owner:mcnairrobotics", "game", "milestone:0.1.0"]
 
@@ -22,7 +22,7 @@ bound = true
 
 [[acceptance]]
 text = "A server and client exchange messages end to end over an ITransport implementation under loss and reordering"
-bound = false
+bound = true
 +++
 
 UDP transport and serializer for the NetMessages wire format
