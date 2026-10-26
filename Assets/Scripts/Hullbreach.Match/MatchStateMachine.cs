@@ -44,9 +44,6 @@ namespace Hullbreach.Match
     // frob:doc docs/reference/hullbreach-match.md#matchstatemachine
     public sealed class MatchStateMachine
     {
-        // A core block this damaged counts as destroyed (ServerSimulation caps damage at 255).
-        const int DestroyedDamage = 255;
-
         readonly MatchParticipant _a;
         readonly MatchParticipant _b;
         readonly MatchEndFeed _feed;
@@ -139,7 +136,7 @@ namespace Hullbreach.Match
         static int CoreHealth(BlockGrid grid)
         {
             if (!grid.CoreKey.HasValue || !grid.TryGet(grid.CoreKey.Value, out Block core)) return 0;
-            return Math.Max(0, DestroyedDamage - core.Damage);
+            return Math.Max(0, Connectivity.DestroyedDamage - core.Damage);
         }
 
         // A peer leaving a Running match forfeits it: the remaining peer wins and is reported,
@@ -155,11 +152,9 @@ namespace Hullbreach.Match
             End(MatchResult.Forfeit, remaining);
         }
 
-        static bool CoreBreached(BlockGrid grid)
-        {
-            if (!grid.CoreKey.HasValue) return true;
-            return !grid.TryGet(grid.CoreKey.Value, out Block core) || core.Damage >= DestroyedDamage;
-        }
+        // Only a destroyed core ends a match; an isolated one is still alive.
+        static bool CoreBreached(BlockGrid grid) =>
+            Connectivity.ClassifyCore(grid) == CoreState.Destroyed;
 
         void End(MatchResult result, int winnerPeer)
         {
