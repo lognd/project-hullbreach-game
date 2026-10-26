@@ -1,0 +1,7 @@
+kind = "transition"
+from = "done"
+to = "todo"
+reason = "S32-2 had no dedicated detector; only indirect via ReachableFromCore/FindDetached"
+at = "2026-10-26T09:01:19Z"
+actor = "mcnairrobotics"
+rev = 1
