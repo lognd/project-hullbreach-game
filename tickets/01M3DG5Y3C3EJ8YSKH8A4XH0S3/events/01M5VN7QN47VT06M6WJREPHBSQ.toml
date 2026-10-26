@@ -1,0 +1,7 @@
+kind = "field"
+field = "acceptance"
+new = ["Local inputs move the predicted ship immediately, before any server reply", "ShipState carries the server-acked input tick (19-byte wire, round-trips)", "Reconcile drops acked inputs, replays the rest and corrects divergence", "On a throttled lossy link the predicted pose tracks the server far closer than the lagging replica"]
+moved = []
+at = "2026-10-26T08:29:07Z"
+actor = "mcnairrobotics"
+rev = 1

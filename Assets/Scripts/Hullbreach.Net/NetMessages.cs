@@ -500,11 +500,16 @@ namespace Hullbreach.Net
         public readonly ushort Av;
 
         // frob:doc docs/reference/hullbreach-net.md#shipstate
-        public const int ByteSize = 1 + 2 + 2 + 2 + 2 + 2 + 2 + 2;
+        public const int ByteSize = 1 + 2 + 2 + 2 + 2 + 2 + 2 + 2 + 4;
+
+        // Newest input tick the server had applied to this ship; 0 if none (S48-1).
+        // frob:doc docs/reference/hullbreach-net.md#shipstate
+        public readonly uint AckedInputTick;
 
         // frob:doc docs/reference/hullbreach-net.md#shipstate
-        public ShipState(ushort netId, short px, short py, ushort rot, short vx, short vy, ushort av)
+        public ShipState(ushort netId, short px, short py, ushort rot, short vx, short vy, ushort av, uint ackedInputTick = 0)
         {
+            AckedInputTick = ackedInputTick;
             NetId = netId;
             Px = px;
             Py = py;
@@ -525,6 +530,7 @@ namespace Hullbreach.Net
             w.WriteI16(Vx);
             w.WriteI16(Vy);
             w.WriteU16(Av);
+            w.WriteU32(AckedInputTick);
         }
 
         // frob:doc docs/reference/hullbreach-net.md#shipstate
@@ -538,7 +544,8 @@ namespace Hullbreach.Net
             short vx = r.ReadI16();
             short vy = r.ReadI16();
             ushort av = r.ReadU16();
-            return new ShipState(netId, px, py, rot, vx, vy, av);
+            uint acked = r.ReadU32();
+            return new ShipState(netId, px, py, rot, vx, vy, av, acked);
         }
     }
 

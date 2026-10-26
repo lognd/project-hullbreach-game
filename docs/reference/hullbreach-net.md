@@ -338,12 +338,15 @@ i32, peer B i32. Sent once to every connected peer.
 <!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::ShipState.Vx -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::ShipState.Vy -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::ShipState.Av -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::ShipState.AckedInputTick -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::ShipState.ByteSize -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::ShipState.ShipState -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::ShipState.Write -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::ShipState.Read -->
 
-Server -> client, UNRELIABLE, ~30-50 Hz: this tick's pose. Losing one is
+Server -> client, UNRELIABLE, ~30-50 Hz: this tick's pose plus
+`AckedInputTick`, the newest input tick the server had applied to the ship
+(0 if none), which the owning client reconciles against. Losing one is
 harmless since the next one supersedes it. See docs/netcode.md#message-table
 for the byte layout and quantization.
 
@@ -494,6 +497,14 @@ and to which ship, without re-parsing wire bytes.
 <!-- describes: Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ClientReplica.TryInterpolate -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ClientReplica.TryInterpolateAt -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ClientReplica.InterpolationDelayTicks -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ClientReplica.SetLocalShip -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ClientReplica.Predict -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ClientReplica.TryGetPredicted -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ClientReplica.PredictionTickRate -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ClientReplica.MaxPendingInputs -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ClientReplica.PredictionGravity -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ClientReplica.LastCorrection -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ClientReplica.PendingInputCount -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ClientReplica.ApplyReceived -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ClientReplica.ApplyReliable -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ClientReplica.MaxReliableWindow -->
@@ -523,6 +534,21 @@ newest pose rather than extrapolating. `NetDemo` draws this way.
 Projectiles are not part of `ClientReplica`; on the Netcode for Entities
 path the ghost pose already declares `Smoothing` on position and rotation
 (`HullbreachGhostPose`).
+
+Local-ship prediction (S48-1): the client that drives a ship calls
+`SetLocalShip(netId)` once, then `Predict(input)` for every input it sends.
+That steps a private `ShipBody` copy with the same deterministic
+`ShipBody.Step` the server runs, so `TryGetPredicted` moves with no
+round-trip wait; set `PredictionTickRate` and `PredictionGravity` to the
+server's values so both integrate alike. Each input is also kept (at most
+`MaxPendingInputs`) until acknowledged. When a `ShipState` for the local
+ship arrives, inputs at or before its `AckedInputTick` are dropped, the
+predicted body is reset to the server pose and the remaining inputs are
+replayed on top; `LastCorrection` is how far that moved the predicted
+position (0 when the guess was right). The correction snaps rather than
+blends. Fire is not predicted (the server owns projectiles), and a block
+change rebuilds the predicted body from the replica grid. `NetDemo`
+predicts its thruster ship.
 
 Baselines are per ship. `ApplySnapshot` installs a ship only if no newer
 snapshot or removal already covers its `NetId` (it returns false
