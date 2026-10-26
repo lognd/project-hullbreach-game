@@ -2,7 +2,8 @@
 id = "01M3DG5Y2XHYVF28B6TCH4JS5N"
 title = "S42-3: Deterministic hit resolution so both clients agree on impacts"
 type = "task"
-category = "todo"
+category = "done"
+outcome = "done"
 priority = "critical"
 points = 2
 parent = "01M3DG5Y0ZSMJPHX5C7GF557KF"
