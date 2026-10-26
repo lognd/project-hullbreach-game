@@ -2,11 +2,12 @@
 id = "01M5VP8KEQGKSSKWC0NFXE2KNB"
 title = "ClientReplica stamps poses with arrival tick; same-tick arrivals snap instead of interpolate"
 type = "bug"
-category = "in-progress"
+category = "done"
+outcome = "fixed"
 priority = "medium"
 reporter = "mcnairrobotics"
 created = "2026-10-26T08:47:04Z"
-updated = "2026-10-26T08:53:13Z"
+updated = "2026-10-26T08:54:38Z"
 labels = ["game", "creates:changelog.d/01M5VP8KEQGKSSKWC0NFXE2KNB.fixed.md"]
 scope = ["Assets/Scripts/Hullbreach.Net/**", "Assets/Scripts/Hullbreach.Game/NetDemo.cs", "Assets/Scripts/Hullbreach.NetCode.Entities/HullbreachNetCodeClientSystem.cs", "Assets/Tests/EditMode/Hullbreach.Net.Tests/**", "docs/reference/hullbreach-net.md", "docs/netcode.md", "changelog.d/01M5VP8KEQGKSSKWC0NFXE2KNB.fixed.md"]
 
