@@ -1,0 +1,5 @@
+kind = "changelog-exempt"
+reason = "ledger reconciliation: code and tests already shipped earlier; no new user-visible change. Evidence is the plain-C# NUnit harness (not Unity-compiled)"
+at = "2026-10-26T09:09:56Z"
+actor = "mcnairrobotics"
+rev = 1

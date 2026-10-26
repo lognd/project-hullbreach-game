@@ -1,0 +1,6 @@
+kind = "comment"
+subtype = "note"
+body = "Reconciliation 2026-10-26: S36-1..S36-3 closed with evidence. AC1 (near-thruster stress higher) is covered by FemTests.CoreAtCenter_HasHigherStressThanTheEnds and the load tests; AC2 (brace lowers stress) is covered by FemTests.AddingABrace_LowersStressInTheBracedArms in PR #86 (pending merge); AC3 (60-block ship holds the frame budget on the reference laptop) is NOT evidenced, see S36-4 ~RM44NEV. Story left open."
+at = "2026-10-26T09:10:52Z"
+actor = "mcnairrobotics"
+rev = 1

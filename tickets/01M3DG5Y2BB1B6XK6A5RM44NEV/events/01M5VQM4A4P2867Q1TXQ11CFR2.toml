@@ -1,0 +1,6 @@
+kind = "comment"
+subtype = "note"
+body = "Reconciliation 2026-10-26: benchmarks exist (SolverBenchmarks.Benchmark_100Blocks etc., numbers in docs/roadmap.md Performance: 100 blocks median 0.17 ms/tick Release, rebuild/buckling ticks up to 43-95 ms) but they assert only finiteness and allocation (<= 4096 B/tick), no ms budget. Still missing: (1) an agreed frame budget number, (2) a defined reference laptop and a measurement on it (only a WSL2 dev box was measured). Left open."
+at = "2026-10-26T09:10:50Z"
+actor = "mcnairrobotics"
+rev = 1
