@@ -2,7 +2,8 @@
 id = "01M3DG5Y2FQRFRW3CRWJ24V0FQ"
 title = "S38-1: StressCriteria and DamageModel detaching a block past its failure threshold"
 type = "task"
-category = "todo"
+category = "done"
+outcome = "fixed"
 priority = "critical"
 points = 3
 parent = "01M3DG5Y0V6ZWSJZQW0H5VM80Z"
