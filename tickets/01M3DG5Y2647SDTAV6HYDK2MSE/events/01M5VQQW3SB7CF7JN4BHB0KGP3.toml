@@ -1,0 +1,6 @@
+kind = "comment"
+subtype = "note"
+body = "Reconciliation 2026-10-26: no named-design serialization exists (docs/roadmap.md: no BlockGrid design format). ShipSnapshot (wire format) is the closest, but a saved-design file format, versioning, and local-vs-platform storage are open design questions (roadmap marks it needs-platform), so it was not invented here. Left open."
+at = "2026-10-26T09:12:53Z"
+actor = "mcnairrobotics"
+rev = 1
