@@ -7,7 +7,7 @@ priority = "medium"
 parent = "01M3DG5Y06HCEC2NK39DR1347N"
 reporter = "human"
 created = "2026-09-26T00:00:00Z"
-updated = "2026-09-26T00:00:00Z"
+updated = "2026-10-26T09:16:36Z"
 aliases = ["T-0033"]
 labels = ["jira:SCRUM-65", "owner:GingerVHS", "game", "physics", "milestone:0.3.0"]
 

@@ -1,0 +1,6 @@
+kind = "comment"
+subtype = "note"
+body = "Reconciled against code. Exists: SeekingThrusterBehaviour (thruster variant 1) that thrusts toward the nearest enemy, tested by SeekingThruster_PullsTowardNearestEnemy and fallback tests. Missing: the homing shot itself, and welding a thruster block onto the victim on hit (no code path attaches a block to another ship). Not closed: the ticket conversation questions are unanswered (fires constantly vs on victim input vs random, destroyable by shooting), so the weld semantics are undecided design."
+at = "2026-10-26T09:16:34Z"
+actor = "mcnairrobotics"
+rev = 1

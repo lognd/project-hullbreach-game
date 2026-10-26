@@ -1,0 +1,6 @@
+kind = "comment"
+subtype = "note"
+body = "Reconciled against code. Missing: no welded or unremovable flag on blocks, and no rule in Hullbreach.Builder PlacementRules or ServerSimulation block removal that refuses removal. Blocked on S44-1 because a weld flag has nothing to be set by yet and its serialization form is undecided. Left open."
+at = "2026-10-26T09:16:35Z"
+actor = "mcnairrobotics"
+rev = 1

@@ -1,0 +1,6 @@
+kind = "comment"
+subtype = "note"
+body = "Reconciled against code. Only the seeking thruster block behaviour exists. Criteria 1 to 3 are unbound: no homing shot, no weld onto victim, no unremovable rule. See comments on S44-1 and S44-2. Needs a design decision on weld semantics before implementation."
+at = "2026-10-26T09:16:36Z"
+actor = "mcnairrobotics"
+rev = 1
