@@ -462,6 +462,10 @@ logging seam (`HullbreachUnityPlatformLog` adapts it to `Debug.Log`).
   works under WSL with the Windows `dotnet.exe` (WSLENV forwarding does
   not reach the test host there), e.g.
   `tools/plaincs/run_tests.sh --filter "FullyQualifiedName~PlatformLiveIntegrationTests" -e HULLBREACH_PLATFORM_IT_URL=http://127.0.0.1:8002 -e HULLBREACH_PLATFORM_IT_USER=<user> -e HULLBREACH_PLATFORM_IT_PASSWORD=<password> -e HULLBREACH_PLATFORM_SERVER_KEY=<dev key>`.
+  `ReporterPostsAMatch_AgainstRealPlatform_Is201AndMovesRatings` also needs a
+  second account (`HULLBREACH_PLATFORM_IT_USER2` / `_PASSWORD2`): it admits both
+  through the gate, reports a match with `MatchResultReporter`, expects
+  `Recorded`, and checks both ratings moved via `GET /api/v1/me`.
   Use a throwaway account and a dev-only key: `-e` values are visible in
   the process list.
   Add `--logger "console;verbosity=detailed"` to see its `[platform-it]`

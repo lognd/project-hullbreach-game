@@ -65,6 +65,77 @@ namespace Hullbreach.Platform.Tests
 
         static string Env(string name) => Environment.GetEnvironmentVariable(name);
 
+        // Reads the caller's rating from GET /api/v1/me.
+        static int RatingOf(string url, string token)
+        {
+            using (var http = new HttpClient())
+            {
+                var message = new HttpRequestMessage(HttpMethod.Get, url + "/api/v1/me");
+                message.Headers.TryAddWithoutValidation("Authorization", "Bearer " + token);
+                string body = http.SendAsync(message).GetAwaiter().GetResult().Content.ReadAsStringAsync().GetAwaiter().GetResult();
+                var match = System.Text.RegularExpressions.Regex.Match(body, "\"rating\"\\s*:\\s*(\\d+)");
+                Assert.IsTrue(match.Success, "no rating in /me answer");
+                return int.Parse(match.Groups[1].Value);
+            }
+        }
+
+        // Second account for the report test; the first comes from the _USER/_PASSWORD pair.
+        const string User2Env = "HULLBREACH_PLATFORM_IT_USER2";
+        const string Password2Env = "HULLBREACH_PLATFORM_IT_PASSWORD2";
+
+        // Reports one match from two real sessions and checks the platform answers 201 and moves both ratings.
+        // frob:doc docs/platform-link.md#reporting-a-finished-match
+        [Test]
+        public void ReporterPostsAMatch_AgainstRealPlatform_Is201AndMovesRatings()
+        {
+            string url = Env(UrlEnv);
+            if (string.IsNullOrEmpty(url))
+                Assert.Ignore(UrlEnv + " not set; live platform test skipped.");
+            if (string.IsNullOrEmpty(Env(User2Env)))
+                Assert.Ignore(User2Env + " not set; live report test skipped.");
+
+            var log = new ConsoleLog();
+            var http = new BlockingHttp();
+            var clientConfig = PlatformConfig.FromEnvironment(new[] { PlatformConfig.UrlArg, url }, _ => null, log);
+            var serverConfig = PlatformConfig.FromEnvironment(new[] { PlatformConfig.UrlArg, url, PlatformConfig.RequireAuthArg },
+                Env, log);
+            Assert.IsTrue(serverConfig.HasServerKey, "HULLBREACH_PLATFORM_SERVER_KEY must be set.");
+
+            LoginOutcome a = default, b = default;
+            new PlatformClient(clientConfig, http, log).Login(Env(UserEnv), Env(PasswordEnv), o => a = o);
+            new PlatformClient(clientConfig, http, log).Login(Env(User2Env), Env(Password2Env), o => b = o);
+            Assert.AreEqual(LoginStatus.Success, a.Status, a.Message);
+            Assert.AreEqual(LoginStatus.Success, b.Status, b.Message);
+            int beforeA = RatingOf(url, a.Token), beforeB = RatingOf(url, b.Token);
+
+            var serverClient = new PlatformClient(serverConfig, http, log);
+            var gate = new PlatformAdmissionGate(serverClient, true, serverConfig.HelloTimeoutSeconds, log);
+            gate.OnConnected(1, 0);
+            gate.OnHello(1, a.Token, a.Username, 0.1);
+            gate.OnConnected(2, 0);
+            gate.OnHello(2, b.Token, b.Username, 0.1);
+
+            var reporter = new MatchResultReporter(serverClient, gate, log);
+            string matchId = Guid.NewGuid().ToString();
+            Assert.IsTrue(reporter.ReportFinished(matchId, 1, 1, new PlayerMatchStats(null, 900, 14, 30, 240), 2,
+                new PlayerMatchStats(null, 400, 12, 28, 200), 240, 0));
+            Assert.AreEqual(0, reporter.PendingCount);
+            Assert.IsTrue(reporter.TryTakeFinished(out var outcome));
+            Say("report outcome: " + outcome);
+            Assert.AreEqual(MatchReportStatus.Recorded, outcome.Status);
+
+            int afterA = RatingOf(url, a.Token), afterB = RatingOf(url, b.Token);
+            Say($"ratings: {a.Username} {beforeA}->{afterA}, {b.Username} {beforeB}->{afterB}");
+            Assert.Greater(afterA, beforeA);
+            Assert.Less(afterB, beforeB);
+
+            foreach (string line in log.Lines)
+            {
+                StringAssert.DoesNotContain(a.Token, line);
+                StringAssert.DoesNotContain(serverConfig.ServerKey, line);
+            }
+        }
+
         static void Say(string line) => TestContext.Progress.WriteLine("[platform-it] " + line);
 
         [Test]
