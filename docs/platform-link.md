@@ -201,6 +201,54 @@ The handshake table above shows how the gate reacts to each.
 <!-- describes: Assets/Scripts/Hullbreach.Platform/PlatformOutcomes.cs::SessionOutcome.IsValid -->
 <!-- describes: Assets/Scripts/Hullbreach.Platform/PlatformOutcomes.cs::SessionOutcome.ToString -->
 
+## Reporting a finished match
+
+The dedicated server posts the result of a finished match to
+`POST /api/v1/matches` with the `X-Server-Key` header (never a user token).
+The body is `match_id` (a client-chosen UUID, the idempotency key),
+`winner_id`, `duration_seconds` and exactly two distinct `players`, each with
+`user_id`, `damage_dealt`, `blocks_destroyed`, `blocks_placed` and
+`time_alive_seconds`. `MatchResultReport.Validate` checks what the platform
+would answer 422 to, so a bad report is never sent.
+
+| Platform answer | `MatchReportStatus` | Retried |
+| --- | --- | --- |
+| 201 first report | `Recorded` | no |
+| 200 identical replay | `AlreadyRecorded` | no |
+| 404 unknown player | `UnknownPlayer` | no |
+| 409 `match_id` reused with a different body | `Conflict` | no |
+| 401 bad server key, 422, other 4xx | `Rejected` | no |
+| 503 no server keys configured, other 5xx | `ServerError` | yes |
+| no HTTP answer | `Unreachable` | yes |
+| invalid report or no server key (nothing sent) | `InvalidReport` / `Rejected` | no |
+
+Retry safety: `MatchResultReporter` resends the byte-identical body with the
+same `match_id` after 2, 5, 15, 30, 60 and 120 seconds (seven attempts in
+all), so a lost answer turns into a harmless 200 replay. It then gives up
+with a warning. The server key never appears in a log line or outcome.
+
+Guests: the reporter is a no-op when the server key is not configured, when
+either player is a guest (no verified account id), or when the winner is not
+one of the two players. Account ids come from `PlatformAdmissionGate.TryGetUserId`.
+
+Hook: the match-end flow calls
+`HullbreachPlatformAuthServerSystem.ReportFinishedMatch`. No caller exists
+yet because the server has no match state machine (roadmap S46-1); wiring it
+in is the follow-up. The system ticks the reporter every update.
+
+<!-- describes: Assets/Scripts/Hullbreach.Platform/PlatformClient.cs::PlatformClient.PostMatchResult -->
+<!-- describes: Assets/Scripts/Hullbreach.Platform/PlatformClient.cs::PlatformClient.MapMatchReport -->
+<!-- describes: Assets/Scripts/Hullbreach.Platform/PlatformClient.cs::PlatformClient.MatchesPath -->
+<!-- describes: Assets/Scripts/Hullbreach.Platform/PlatformOutcomes.cs::MatchReportStatus -->
+<!-- describes: Assets/Scripts/Hullbreach.Platform/PlatformOutcomes.cs::MatchReportOutcome -->
+<!-- describes: Assets/Scripts/Hullbreach.Platform/PlatformOutcomes.cs::MatchReportOutcome.IsStored -->
+<!-- describes: Assets/Scripts/Hullbreach.Platform/PlatformOutcomes.cs::MatchReportOutcome.IsRetryable -->
+<!-- describes: Assets/Scripts/Hullbreach.Platform/MatchResultReport.cs::PlayerMatchStats -->
+<!-- describes: Assets/Scripts/Hullbreach.Platform/MatchResultReport.cs::MatchResultReport -->
+<!-- describes: Assets/Scripts/Hullbreach.Platform/MatchResultReporter.cs::MatchResultReporter -->
+<!-- describes: Assets/Scripts/Hullbreach.Platform/PlatformAdmissionGate.cs::PlatformAdmissionGate.TryGetUserId -->
+<!-- describes: Assets/Scripts/Hullbreach.NetCode.Entities/HullbreachPlatformAuthServerSystem.cs::HullbreachPlatformAuthServerSystem.ReportFinishedMatch -->
+
 ## HTTP transport
 
 `IPlatformHttp` is the seam between the engine-free code and a real HTTP

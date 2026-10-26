@@ -14,6 +14,9 @@ namespace Hullbreach.Platform
         // frob:doc docs/platform-link.md#hullbreachplatform-module-reference
         public const string SessionPath = "/api/v1/auth/session";
 
+        // frob:doc docs/platform-link.md#reporting-a-finished-match
+        public const string MatchesPath = "/api/v1/matches";
+
         // frob:doc docs/platform-link.md#hullbreachplatform-module-reference
         public const string ServerKeyHeader = "X-Server-Key";
 
@@ -90,6 +93,84 @@ namespace Hullbreach.Platform
                     _log.Warning($"Hullbreach platform: session check {outcome.Status} ({outcome.Message}).");
                 onComplete(outcome);
             });
+        }
+
+        // Reports a finished match. Safe to resend unchanged after a transient failure: the
+        // platform keys on match_id, so a replay answers 200 and rates nobody twice.
+        // frob:doc docs/platform-link.md#reporting-a-finished-match
+        public void PostMatchResult(MatchResultReport report, Action<MatchReportOutcome> onComplete)
+        {
+            if (report == null) throw new ArgumentNullException(nameof(report));
+            if (onComplete == null) throw new ArgumentNullException(nameof(onComplete));
+            string invalid = report.Validate();
+            if (invalid != null)
+            {
+                _log.Warning($"Hullbreach platform: match report not sent: {invalid}.");
+                onComplete(new MatchReportOutcome(MatchReportStatus.InvalidReport, report.MatchId, invalid));
+                return;
+            }
+            if (!_config.HasServerKey)
+            {
+                const string noKey = "no game server key configured (" + PlatformConfig.ServerKeyEnv + ")";
+                _log.Warning($"Hullbreach platform: match report not sent: {noKey}.");
+                onComplete(new MatchReportOutcome(MatchReportStatus.Rejected, report.MatchId, noKey));
+                return;
+            }
+
+            var headers = new List<KeyValuePair<string, string>>
+            {
+                new KeyValuePair<string, string>(ServerKeyHeader, _config.ServerKey),
+            };
+            var request = new PlatformHttpRequest(PlatformHttpMethod.Post, _config.BaseUrl + MatchesPath,
+                report.ToJson(), headers, _config.TimeoutSeconds);
+            _http.Send(request, response =>
+            {
+                MatchReportOutcome outcome = MapMatchReport(report.MatchId, response);
+                if (outcome.IsStored)
+                    _log.Info($"Hullbreach platform: match report {outcome}.");
+                else
+                    _log.Warning($"Hullbreach platform: match report failed: {outcome}.");
+                onComplete(outcome);
+            });
+        }
+
+        // frob:doc docs/platform-link.md#failure-modes
+        public static MatchReportOutcome MapMatchReport(string matchId, PlatformHttpResponse response)
+        {
+            if (response.IsTransportFailure)
+                return new MatchReportOutcome(MatchReportStatus.Unreachable, matchId,
+                    "platform unreachable (" + response.TransportError + ")");
+
+            string detail = Detail(response.Body);
+            string suffix = detail.Length > 0 ? ": " + detail : string.Empty;
+            switch (response.StatusCode)
+            {
+                case 201:
+                    return new MatchReportOutcome(MatchReportStatus.Recorded, matchId, "match recorded");
+                case 200:
+                    return new MatchReportOutcome(MatchReportStatus.AlreadyRecorded, matchId,
+                        "match was already recorded");
+                case 404:
+                    return new MatchReportOutcome(MatchReportStatus.UnknownPlayer, matchId,
+                        "a reported player has no platform account" + suffix);
+                case 409:
+                    return new MatchReportOutcome(MatchReportStatus.Conflict, matchId,
+                        "match_id was already used with a different report" + suffix);
+                case 401:
+                    return new MatchReportOutcome(MatchReportStatus.Rejected, matchId,
+                        "platform refused this game server's key" + suffix + "; set " + PlatformConfig.ServerKeyEnv +
+                        " to one of the platform's game server keys");
+                case 422:
+                    return new MatchReportOutcome(MatchReportStatus.Rejected, matchId,
+                        "platform rejected the report body (HTTP 422)" + suffix);
+                case 503:
+                    return new MatchReportOutcome(MatchReportStatus.ServerError, matchId,
+                        "platform cannot take match reports right now (HTTP 503)" + suffix);
+                default:
+                    return new MatchReportOutcome(
+                        response.StatusCode >= 500 ? MatchReportStatus.ServerError : MatchReportStatus.Rejected,
+                        matchId, "match report failed (HTTP " + response.StatusCode + ")");
+            }
         }
 
         // frob:doc docs/platform-link.md#failure-modes
