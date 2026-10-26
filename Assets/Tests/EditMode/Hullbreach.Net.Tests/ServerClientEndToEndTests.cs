@@ -183,7 +183,7 @@ namespace Hullbreach.Net.Tests
             var buf = new byte[1024];
             while (clientTransport.TryReceive(out _, buf, out int length))
             {
-                replica.ApplyReceived(buf, length, clientTick);
+                replica.ApplyReceived(buf, length);
             }
         }
     }

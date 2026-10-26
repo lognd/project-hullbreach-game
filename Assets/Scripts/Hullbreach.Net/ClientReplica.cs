@@ -231,23 +231,27 @@ namespace Hullbreach.Net
             return true;
         }
 
-        // Unreliable and unordered by design; see the reference page.
+        // Unreliable and unordered by design; poses are stamped with the server tick they carry.
+        // frob:ticket 01M5VP8KEQGKSSKWC0NFXE2KNB
         // frob:doc docs/reference/hullbreach-net.md#clientreplica
-        public void ApplyState(ShipState state, uint tick)
+        public void ApplyState(ShipState state)
         {
             if (!_ships.TryGetValue(state.NetId, out var replica)) return;
 
             var sample = new PoseSample
             {
-                Tick = tick,
+                Tick = state.ServerTick,
                 Position = new float2(Quantization.UnpackPosition(state.Px), Quantization.UnpackPosition(state.Py)),
                 Rotation = Quantization.UnpackAngle(state.Rot),
                 Velocity = new float2(Quantization.UnpackPosition(state.Vx), Quantization.UnpackPosition(state.Vy)),
                 AngularVelocity = Quantization.UnpackAngle(state.Av),
             };
 
-            replica.Older = replica.Newer;
+            // The first pose after a snapshot has no real predecessor (its sample is tick 0).
+            bool first = replica.Newer == null || replica.Newer.Value.Tick == 0;
+            replica.Older = first ? sample : replica.Newer;
             replica.Newer = sample;
+            if (state.ServerTick > LatestServerTick) LatestServerTick = state.ServerTick;
 
             replica.Body.Position = sample.Position;
             replica.Body.Rotation = sample.Rotation;
@@ -352,6 +356,11 @@ namespace Hullbreach.Net
             LastCorrection = hadPrediction ? math.length(replica.Predicted.Position - before) : 0f;
         }
 
+        // Newest server tick any pose has carried; the clock TryInterpolateAt renders against.
+        // frob:ticket 01M5VP8KEQGKSSKWC0NFXE2KNB
+        // frob:doc docs/reference/hullbreach-net.md#clientreplica
+        public uint LatestServerTick { get; private set; }
+
         // How many ticks behind the newest state a view should render so it always
         // has two real samples to blend (S48-2). frob:doc docs/reference/hullbreach-net.md#clientreplica
         public const float InterpolationDelayTicks = 1f;
@@ -368,7 +377,7 @@ namespace Hullbreach.Net
             return true;
         }
 
-        // Blends by client tick: renderTick may be fractional and is clamped to the
+        // Blends by server tick: renderTick may be fractional and is clamped to the
         // last two samples (no extrapolation). False if the ship has no pose pair.
         // frob:ticket 01M3DG5Y3DCMV0TQED17NGJF5D
         // frob:doc docs/reference/hullbreach-net.md#clientreplica
@@ -427,7 +436,7 @@ namespace Hullbreach.Net
         // only the first `length` bytes are read, and wire data never throws.
         // frob:doc docs/reference/hullbreach-net.md#clientreplica
         // frob:invariant INV-001
-        public ReplicaApplyResult ApplyReceived(byte[] into, int length, uint clientTick = 0)
+        public ReplicaApplyResult ApplyReceived(byte[] into, int length)
         {
             if (into == null || length < 1 || length > into.Length) return ReplicaApplyResult.Malformed;
 
@@ -444,7 +453,7 @@ namespace Hullbreach.Net
                 {
                     var state = ShipState.Read(ref r);
                     if (r.Failed) return ReplicaApplyResult.Malformed;
-                    ApplyState(state, clientTick);
+                    ApplyState(state);
                     return ReplicaApplyResult.Applied;
                 }
                 case MessageKind.GravityWellSpawned:

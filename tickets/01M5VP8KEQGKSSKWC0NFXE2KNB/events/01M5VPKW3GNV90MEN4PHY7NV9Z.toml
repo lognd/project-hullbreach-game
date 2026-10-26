@@ -1,0 +1,7 @@
+kind = "field"
+field = "acceptance"
+new = ["Poses are stamped with the server tick; the strict ThrottledLink smoothing assertion passes"]
+moved = []
+at = "2026-10-26T08:53:13Z"
+actor = "mcnairrobotics"
+rev = 1

@@ -500,16 +500,22 @@ namespace Hullbreach.Net
         public readonly ushort Av;
 
         // frob:doc docs/reference/hullbreach-net.md#shipstate
-        public const int ByteSize = 1 + 2 + 2 + 2 + 2 + 2 + 2 + 2 + 4;
+        public const int ByteSize = 1 + 2 + 2 + 2 + 2 + 2 + 2 + 2 + 4 + 4;
 
         // Newest input tick the server had applied to this ship; 0 if none (S48-1).
         // frob:doc docs/reference/hullbreach-net.md#shipstate
         public readonly uint AckedInputTick;
 
+        // Server tick this pose was sampled on; the replica's interpolation clock.
+        // frob:ticket 01M5VP8KEQGKSSKWC0NFXE2KNB
         // frob:doc docs/reference/hullbreach-net.md#shipstate
-        public ShipState(ushort netId, short px, short py, ushort rot, short vx, short vy, ushort av, uint ackedInputTick = 0)
+        public readonly uint ServerTick;
+
+        // frob:doc docs/reference/hullbreach-net.md#shipstate
+        public ShipState(ushort netId, short px, short py, ushort rot, short vx, short vy, ushort av, uint ackedInputTick = 0, uint serverTick = 0)
         {
             AckedInputTick = ackedInputTick;
+            ServerTick = serverTick;
             NetId = netId;
             Px = px;
             Py = py;
@@ -531,6 +537,7 @@ namespace Hullbreach.Net
             w.WriteI16(Vy);
             w.WriteU16(Av);
             w.WriteU32(AckedInputTick);
+            w.WriteU32(ServerTick);
         }
 
         // frob:doc docs/reference/hullbreach-net.md#shipstate
@@ -545,7 +552,8 @@ namespace Hullbreach.Net
             short vy = r.ReadI16();
             ushort av = r.ReadU16();
             uint acked = r.ReadU32();
-            return new ShipState(netId, px, py, rot, vx, vy, av, acked);
+            uint serverTick = r.ReadU32();
+            return new ShipState(netId, px, py, rot, vx, vy, av, acked, serverTick);
         }
     }
 

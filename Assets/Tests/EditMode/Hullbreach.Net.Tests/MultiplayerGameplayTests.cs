@@ -101,7 +101,7 @@ namespace Hullbreach.Net.Tests
         static void ApplyOutbox(ServerOutbox outbox, ClientReplica replica)
         {
             foreach (var entry in outbox.Entries)
-                replica.ApplyReceived(entry.Bytes, entry.Bytes.Length, 0);
+                replica.ApplyReceived(entry.Bytes, entry.Bytes.Length);
         }
     }
 }

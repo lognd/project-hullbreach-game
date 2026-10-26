@@ -21,15 +21,15 @@ namespace Hullbreach.Net.Tests
             return replica;
         }
 
-        static ShipState StateAt(float x, float rot)
-            => new ShipState(Id, Quantization.PackPosition(x), 0, Quantization.PackAngle(rot), 0, 0, 0);
+        static ShipState StateAt(float x, float rot, uint serverTick)
+            => new ShipState(Id, Quantization.PackPosition(x), 0, Quantization.PackAngle(rot), 0, 0, 0, 0, serverTick);
 
         [Test]
         public void InterpolateAt_BlendsByTick_AndClampsWithoutExtrapolating()
         {
             var replica = ReplicaWithShip();
-            replica.ApplyState(StateAt(10f, 0f), 10);
-            replica.ApplyState(StateAt(20f, 0f), 12);
+            replica.ApplyState(StateAt(10f, 0f, 10));
+            replica.ApplyState(StateAt(20f, 0f, 12));
 
             Assert.IsTrue(replica.TryInterpolateAt(Id, 11f, out var mid, out _));
             Assert.AreEqual(15f, mid.x, 0.05f);
@@ -50,13 +50,32 @@ namespace Hullbreach.Net.Tests
         public void Interpolate_RotationTakesTheShortArcAcrossTheWrap()
         {
             var replica = ReplicaWithShip();
-            replica.ApplyState(StateAt(0f, 6.2f), 1);
-            replica.ApplyState(StateAt(0f, 0.2f), 2);
+            replica.ApplyState(StateAt(0f, 6.2f, 1));
+            replica.ApplyState(StateAt(0f, 0.2f, 2));
 
             replica.TryInterpolateAt(Id, 1.5f, out _, out float rot);
             float wrapped = math.abs(math.fmod(rot + Tau, Tau));
             float distToZero = math.min(wrapped, Tau - wrapped);
             Assert.Less(distToZero, 0.1f, $"midpoint of 6.2 -> 0.2 should sit near 0, got {rot}");
+        }
+
+        [Test]
+        public void SameArrivalTick_PosesBlendOverTheirServerTickSpan()
+        {
+            var replica = ReplicaWithShip();
+            Receive(replica, StateAt(10f, 0f, 10));
+            Receive(replica, StateAt(20f, 0f, 11));
+
+            Assert.IsTrue(replica.TryInterpolateAt(Id, 10.5f, out var mid, out _));
+            Assert.AreEqual(15f, mid.x, 0.05f, "a zero arrival span must not snap to the newer pose");
+        }
+
+        static void Receive(ClientReplica replica, ShipState state)
+        {
+            var buf = new byte[ShipState.ByteSize];
+            var w = new ByteWriter(buf);
+            state.Write(ref w);
+            replica.ApplyReceived(buf, w.Position);
         }
 
         [Test]
@@ -105,13 +124,13 @@ namespace Hullbreach.Net.Tests
                 outbox.Clear();
                 hub.Tick();
                 while (clientTransport.TryReceive(out _, scratch, out int len))
-                    replica.ApplyReceived(scratch, len, tick);
+                    replica.ApplyReceived(scratch, len);
 
                 if (tick < 60 || !replica.Ships.TryGetValue((ushort)peer, out var ship)) continue;
                 for (int f = 0; f < subframes; f++)
                 {
                     raw.Add(math.length(ship.Position));
-                    float renderTick = tick - ClientReplica.InterpolationDelayTicks + f / (float)subframes;
+                    float renderTick = replica.LatestServerTick - ClientReplica.InterpolationDelayTicks + f / (float)subframes;
                     Assert.IsTrue(replica.TryInterpolateAt((ushort)peer, renderTick, out var p, out _));
                     smooth.Add(math.length(p));
                 }
@@ -120,10 +139,7 @@ namespace Hullbreach.Net.Tests
             Assert.Greater(smooth.Count, 400);
             float rawJump = MaxStep(raw), smoothJump = MaxStep(smooth);
             Assert.Greater(rawJump, 0f, "the ship must be moving");
-            // Poses are stamped with arrival ticks, so two arriving on one tick (now in true send
-            // order) get a zero span and snap; the tolerance covers that until the replica reads a
-            // server tick (follow-up ticket).
-            Assert.Less(smoothJump, rawJump * 1.25f, $"interpolated max step {smoothJump} vs raw {rawJump}");
+            Assert.Less(smoothJump, rawJump, $"interpolated max step {smoothJump} vs raw {rawJump}");
         }
 
         static float MaxStep(List<float> s)

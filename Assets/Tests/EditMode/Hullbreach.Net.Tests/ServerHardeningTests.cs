@@ -20,7 +20,7 @@ namespace Hullbreach.Net.Tests
         static void Deliver(ServerOutbox outbox, int peer, ClientReplica replica)
         {
             foreach (var e in outbox.Entries)
-                if (e.Peer == peer) replica.ApplyReceived(e.Bytes, e.Bytes.Length, 0);
+                if (e.Peer == peer) replica.ApplyReceived(e.Bytes, e.Bytes.Length);
         }
 
         [Test]
