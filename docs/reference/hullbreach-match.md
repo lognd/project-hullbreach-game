@@ -112,5 +112,33 @@ event, so use the constructor with `winnerPeer = -1`) and exposes:
 
 `HullbreachResultsView` (`Hullbreach.NetCode.Entities`, inspector-wired
 like `HullbreachSignInView`) mirrors the model onto TMP texts and two
-buttons: `Show(model)` / `Hide()`. No prefab or scene wiring exists yet,
-and nothing calls `Show` until the server/client flow is connected.
+buttons: `Show(model)` / `Hide()`. It implements `IResultsPresenter`. No
+prefab or scene wiring exists yet; add `HullbreachResultsHost` next to it.
+
+### ResultsFlow
+
+<!-- describes: Assets/Scripts/Hullbreach.Match/ResultsFlow.cs::IResultsPresenter -->
+<!-- describes: Assets/Scripts/Hullbreach.Match/ResultsFlow.cs::IResultsPresenter.Show -->
+<!-- describes: Assets/Scripts/Hullbreach.Match/ResultsFlow.cs::IResultsPresenter.Hide -->
+<!-- describes: Assets/Scripts/Hullbreach.Match/ResultsFlow.cs::ResultsFlow -->
+<!-- describes: Assets/Scripts/Hullbreach.Match/ResultsFlow.cs::ResultsFlow.ResultsFlow -->
+<!-- describes: Assets/Scripts/Hullbreach.Match/ResultsFlow.cs::ResultsFlow.Attach -->
+<!-- describes: Assets/Scripts/Hullbreach.Match/ResultsFlow.cs::ResultsFlow.OnEnded -->
+<!-- describes: Assets/Scripts/Hullbreach.Match/ResultsFlow.cs::ResultsFlow.Dispose -->
+<!-- describes: Assets/Scripts/Hullbreach.NetCode.Entities/HullbreachResultsHost.cs::HullbreachResultsHost -->
+
+Wiring for the results screen (engine-free, tested in `ResultsFlowTests`).
+`ResultsFlow.Attach(feed)` subscribes to a `MatchEndFeed`; on `Ended` it builds
+the model with `FromEnded` and calls `IResultsPresenter.Show`. The feed args do
+not carry the `MatchResult`, so pass a `resultOf` function (for example
+`_ => machine.Result`); without one a `WinnerPeer` that is neither peer
+(`-1`, a draw) shows as `Draw` and anything else as `CoreBreached`. A rematch or
+lobby pick hides the presenter and invokes the matching callback.
+
+`HullbreachResultsHost` (`Hullbreach.NetCode.Entities`) is the Unity glue: it
+attaches a flow to `MatchEndFeed.Shared`, sends rematch to
+`HullbreachLobbyService.StartGameAsync` (lobby host only; a guest waits) and
+lobby to `LeaveAndReturnToLobbyAsync`. Limit: `MatchEndFeed.Shared` is raised
+in the server process, and the state machine does not raise it for a draw
+today, so a remote client sees the screen only once a replicated end event
+exists. The Unity code here was not compiled in the editor.

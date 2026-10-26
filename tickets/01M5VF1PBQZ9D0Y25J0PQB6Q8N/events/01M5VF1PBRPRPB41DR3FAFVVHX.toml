@@ -1,0 +1,11 @@
+kind = "create"
+title = "Wire match-end feed to the results screen"
+type = "task"
+category = "todo"
+priority = "medium"
+parent = "01M3DG5Y134BJMWZH7S1QV7EY9"
+scope = ["Assets/Scripts/Hullbreach.Match/**", "Assets/Scripts/Hullbreach.NetCode.Entities/**", "Assets/Tests/EditMode/Hullbreach.Match.Tests/**", "docs/**", "changelog.d/**"]
+body = "ResultsScreenModel and HullbreachResultsView exist but nothing calls Show; route MatchEndFeed to them."
+at = "2026-10-26T06:40:58Z"
+actor = "a-carten"
+rev = 1
