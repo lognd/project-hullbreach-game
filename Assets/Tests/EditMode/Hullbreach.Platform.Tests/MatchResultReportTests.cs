@@ -204,7 +204,6 @@ namespace Hullbreach.Platform.Tests
         }
 
         // frob:ticket 01M5VGS9DWNF85ZAQ0GD5X8A1J
-        // frob:tests Hullbreach.Platform.MatchResultReporter
         [Test]
         public void Feed_DrawIsNeverReported()
         {

@@ -130,7 +130,6 @@ namespace Hullbreach.Match.Tests
         }
 
         // frob:ticket 01M5VGS9DWNF85ZAQ0GD5X8A1J
-        // frob:tests Hullbreach.Match.MatchStateMachine
         [Test]
         public void BothCoresDestroyedTogether_IsADraw_RaisesTheFeedWithDrawResult()
         {
@@ -215,7 +214,6 @@ namespace Hullbreach.Match.Tests
         }
 
         // frob:ticket 01M5VGS9DWNF85ZAQ0GD5X8A1J
-        // frob:tests Hullbreach.Match.MatchStateMachine
         [Test]
         public void TimeLimit_EqualHealth_RaisesADraw()
         {

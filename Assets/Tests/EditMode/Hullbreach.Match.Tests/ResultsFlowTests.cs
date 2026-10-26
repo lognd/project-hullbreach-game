@@ -21,7 +21,6 @@ namespace Hullbreach.Match.Tests
         static MatchEndedArgs Ended(int winner) => new MatchEndedArgs("m", winner, 1, A, 2, B, 60);
 
         // frob:ticket 01M5VGS9DWNF85ZAQ0GD5X8A1J
-        // frob:tests Hullbreach.Match.ResultsFlow
         [Test]
         public void ArgsResult_IsUsed_InsteadOfInference()
         {
@@ -36,7 +35,6 @@ namespace Hullbreach.Match.Tests
         }
 
         // frob:ticket 01M5VGS9DWNF85ZAQ0GD5X8A1J
-        // frob:tests Hullbreach.Match.ResultsFlow
         [Test]
         public void SameMatchIdTwice_IsShownOnce()
         {

@@ -247,7 +247,6 @@ namespace Hullbreach.Net.Tests
         }
 
         // frob:ticket 01M5VGS9DWNF85ZAQ0GD5X8A1J
-        // frob:tests Hullbreach.Net.MatchEnded
         [Test]
         public void MatchEnded_RoundTrips_ResultWinnerStatsAndId()
         {
@@ -265,7 +264,6 @@ namespace Hullbreach.Net.Tests
         }
 
         // frob:ticket 01M5VGS9DWNF85ZAQ0GD5X8A1J
-        // frob:tests Hullbreach.Net.MatchEnded
         [Test]
         public void MatchEnded_Draw_KeepsNoWinner()
         {
@@ -279,7 +277,6 @@ namespace Hullbreach.Net.Tests
         }
 
         // frob:ticket 01M5VGS9DWNF85ZAQ0GD5X8A1J
-        // frob:tests Hullbreach.Net.MatchEnded
         [Test]
         public void MatchEnded_Truncated_FailsTheReader()
         {
@@ -292,7 +289,6 @@ namespace Hullbreach.Net.Tests
         }
 
         // frob:ticket 01M5VGS9DWNF85ZAQ0GD5X8A1J
-        // frob:tests Hullbreach.Net.MatchEnded
         [Test]
         public void MatchEnded_UnknownResultByte_FailsTheReader()
         {
@@ -304,7 +300,6 @@ namespace Hullbreach.Net.Tests
         }
 
         // frob:ticket 01M5VGS9DWNF85ZAQ0GD5X8A1J
-        // frob:tests Hullbreach.Net.MatchEnded
         [Test]
         public void MatchEnded_LongId_IsCutToMaxIdLength()
         {

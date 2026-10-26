@@ -26,7 +26,6 @@ namespace Hullbreach.Net.Tests
         static ShipSnapshot Snap(uint seq, ushort netId) => new ShipSnapshot(seq, netId, Line(), 0, 0, 0, 0, 0, 0);
 
         // frob:ticket 01M5VGS9DWNF85ZAQ0GD5X8A1J
-        // frob:tests Hullbreach.Net.ClientReplica
         [Test]
         public void MatchEnded_RaisesTheReplicaFeed_WithTheResult()
         {
@@ -45,7 +44,6 @@ namespace Hullbreach.Net.Tests
         }
 
         // frob:ticket 01M5VGS9DWNF85ZAQ0GD5X8A1J
-        // frob:tests Hullbreach.Net.ClientReplica
         [Test]
         public void MatchEnded_WithoutAFeed_IsDroppedQuietly()
         {

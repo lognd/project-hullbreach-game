@@ -137,7 +137,6 @@ namespace Hullbreach.Net.Tests
         }
 
         // frob:ticket 01M5VGS9DWNF85ZAQ0GD5X8A1J
-        // frob:tests Hullbreach.Net.ServerSimulation
         [Test]
         public void Forfeit_SendsMatchEndedToTheRemainingPeer_WithTheResult()
         {
@@ -160,7 +159,6 @@ namespace Hullbreach.Net.Tests
         }
 
         // frob:ticket 01M5VGS9DWNF85ZAQ0GD5X8A1J
-        // frob:tests Hullbreach.Net.ServerSimulation
         [Test]
         public void Draw_SendsMatchEndedToBothPeers_ExactlyOnce()
         {
