@@ -8,7 +8,7 @@ points = 5
 parent = "01M3DG5Y157XVFXF2844EP0ZKH"
 reporter = "human"
 created = "2026-09-26T00:00:00Z"
-updated = "2026-10-26T08:29:19Z"
+updated = "2026-10-26T08:29:31Z"
 aliases = ["T-0108"]
 labels = ["jira:SCRUM-164", "owner:mcnairrobotics", "game", "netcode", "milestone:0.2.0"]
 
@@ -18,7 +18,7 @@ bound = true
 
 [[acceptance]]
 text = "ShipState carries the server-acked input tick (19-byte wire, round-trips)"
-bound = false
+bound = true
 
 [[acceptance]]
 text = "Reconcile drops acked inputs, replays the rest and corrects divergence"
