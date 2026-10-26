@@ -1,0 +1,6 @@
+kind = "comment"
+subtype = "note"
+body = "Left open by catch-up audit: gravity constants are only Unity-inspector fields (GravityWorld PlanetSpec array, surfaceRestitution) and hardcoded in ServerSimulation.ConfigureDemoArena. There is no config file or loader, so client and server can diverge. Needs a decided config format and a shared loader before this can close."
+at = "2026-10-26T09:13:36Z"
+actor = "mcnairrobotics"
+rev = 1

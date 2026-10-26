@@ -1,0 +1,5 @@
+kind = "changelog-exempt"
+reason = "ledger-catch-up-code-already-shipped, verified by plain-C# World and ShipGravityTests, not Unity-compiled. Close contact is resolved by surface push-out and a softened core, not a repulsive force term"
+at = "2026-10-26T09:13:30Z"
+actor = "mcnairrobotics"
+rev = 1

@@ -1,0 +1,6 @@
+kind = "comment"
+subtype = "note"
+body = "Reconciliation 2026-10-26: not implemented; no build cooldown or cost exists (only cannon cooldown). Cooldown vs resource cost and their values are an open design question on S34, so nothing was invented. Left open pending a decision."
+at = "2026-10-26T09:12:48Z"
+actor = "mcnairrobotics"
+rev = 1

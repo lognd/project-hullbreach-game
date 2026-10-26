@@ -422,6 +422,27 @@ would be drawn underneath solid hull and never seen.
 Which per-block overlay `ShipRenderer` tints with, cycled by `DemoMode`'s O
 key: `None`, `Stress`, `LoadBearing`, `Damage`, `Buckling`.
 
+#### Stress-to-color mapping (S37)
+
+The mapping lives in one place, `ShipRenderer`, so every scene that shows
+a ship (Build and combat share the same component) uses the same colors.
+
+- `Stress`: ratio = max(`BlockStress.DuctileRatio`, `BlockStress.BrittleRatio`,
+  `ExtraRatioSource(key)`), clamped to 0..1. 0 is green, 0.5 is yellow, 1
+  (at or past the failure threshold) is red, linear in between.
+- Critical flash: any block whose ratio is at or above
+  `FlashRatioThreshold` (default 0.8, `DemoMode.CriticalRatio` overrides)
+  pulses toward alarm red on top of the active overlay.
+- `Buckling`: `ExtraRatioSource` ratio, blue (no risk) to red (>= 1).
+- `Damage`: white (intact) to black (`DamageFraction` 1).
+- `LoadBearing`: magenta for articulation points, a darkened type color
+  otherwise.
+
+Known limits: the palette is green-yellow-red only, with no red-green
+colorblind alternative yet (S37-2 is open). In Build mode `ShipStructure`
+returns early without solving, so the Stress overlay there shows the last
+solve rather than a live one.
+
 ### ShipStructure
 
 <!-- describes: Assets/Scripts/Hullbreach.Game/ShipStructure.cs::ShipStructure -->
