@@ -634,6 +634,7 @@ next expected sequence and then drains whatever the gap closing unblocks.
 <!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.Ships -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.MaxPeerId -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.FirstFragmentId -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.ConfigureDemoArena -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.Join -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.Leave -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.TryDequeueDroppedPeer -->
@@ -887,6 +888,50 @@ not fight over the port and a remote join really dials the remote host.
 `MatchStatus(id, ships)` is the proof line a client logs when its match
 view changes: `Hullbreach match: connected as #2; replicated ships: 2`.
 Launch scripts and log checks grep for both.
+
+### ArenaConfig
+
+<!-- describes: Assets/Scripts/Hullbreach.Net/ArenaConfig.cs::ArenaBodyConfig -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ArenaConfig.cs::ArenaBodyConfig.X -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ArenaConfig.cs::ArenaBodyConfig.Y -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ArenaConfig.cs::ArenaBodyConfig.Mu -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ArenaConfig.cs::ArenaBodyConfig.Radius -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ArenaConfig.cs::ArenaBodyConfig.Restitution -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ArenaConfig.cs::ArenaBodyConfig.ArenaBodyConfig -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ArenaConfig.cs::ArenaBodyConfig.ToGravityBody -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ArenaConfig.cs::ArenaConfig -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ArenaConfig.cs::ArenaConfig.Bodies -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ArenaConfig.cs::ArenaConfig.SpawnLateral -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ArenaConfig.cs::ArenaConfig.SpawnAltitude -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ArenaConfig.cs::ArenaConfig.SpawnVertical -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ArenaConfig.cs::ArenaConfig.SpawnAngleStep -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ArenaConfig.cs::ArenaConfig.ArenaConfig -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ArenaConfig.cs::ArenaConfig.Defaults -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ArenaConfig.cs::ConfigResult -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ArenaConfig.cs::ConfigResult.IsOk -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ArenaConfig.cs::ConfigResult.Value -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ArenaConfig.cs::ConfigResult.Error -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ArenaConfig.cs::ConfigResult.Ok -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ArenaConfig.cs::ConfigResult.Fail -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ArenaConfig.cs::ArenaConfigLoader -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ArenaConfig.cs::ArenaConfigLoader.Parse -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ArenaConfig.cs::ArenaConfigLoader.LoadFile -->
+
+Gravity and arena constants for the demo arena (S40-3), engine-free.
+`ArenaConfig` holds the gravity bodies (`x`, `y`, `mu`, `radius`,
+`restitution`) and the spawn ring (`lateral`, `altitude`, `vertical`,
+`angleStep`, in multiples of pi) that ships orbit `Bodies[0]` on.
+`ArenaConfig.Defaults()` is exactly what `ServerSimulation.ConfigureDemoArena`
+hard-coded before, and the no-argument `ConfigureDemoArena()` still uses it.
+
+`ArenaConfigLoader.Parse(json)` / `LoadFile(path)` read a JSON object such as
+`{"bodies":[{"x":0,"y":-60,"mu":900,"radius":18}],"spawn":{"altitude":30}}`.
+Omitted keys keep their defaults (a `bodies` array replaces the default
+list; each body needs `mu` and `radius`). Bad input (not an object, empty
+`bodies`, non-finite or non-numeric values, `mu`/`radius`/`spawn.altitude`
+not positive, `restitution` outside [0, 1], unreadable file) returns a
+`ConfigResult` with `IsOk == false` and an `Error` sentence; nothing throws.
+`ConfigureDemoArena(ArenaConfig)` applies a loaded config.
 
 ### OnlineSmoke
 

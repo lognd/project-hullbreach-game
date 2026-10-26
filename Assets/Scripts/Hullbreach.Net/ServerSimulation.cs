@@ -192,21 +192,29 @@ namespace Hullbreach.Net
             }
         }
 
-        public void ConfigureDemoArena()
+        // Sets up the built-in arena; same as ConfigureDemoArena(ArenaConfig.Defaults()).
+        // frob:doc docs/reference/hullbreach-net.md#serversimulation
+        public void ConfigureDemoArena() => ConfigureDemoArena(ArenaConfig.Defaults());
+
+        // Builds the gravity field from config and puts every ship in orbit around Bodies[0].
+        // frob:doc docs/reference/hullbreach-net.md#serversimulation
+        public void ConfigureDemoArena(ArenaConfig config)
         {
             _gravity.Clear();
-            _gravity.Add(new GravityBody(new float2(0f, -60f), 900f, 18f, 0.2f));
-            _gravity.Add(new GravityBody(new float2(45f, 20f), 120f, 6f, 0.2f));
+            foreach (ArenaBodyConfig body in config.Bodies) _gravity.Add(body.ToGravityBody());
 
+            ArenaBodyConfig primary = config.Bodies[0];
+            var center = new float2(primary.X, primary.Y);
             var peers = new List<int>(_peers.Keys);
             peers.Sort();
             for (int i = 0; i < peers.Count; i++)
             {
                 ShipBody ship = _peers[peers[i]].Ship;
-                float angle = i * math.PI * 0.18f;
-                float2 relative = new float2(math.sin(angle) * 12f, 30f + math.cos(angle) * 2f);
-                ship.Position = new float2(0f, -60f) + relative;
-                float speed = math.sqrt(900f / math.max(1f, math.length(relative)));
+                float angle = i * math.PI * config.SpawnAngleStep;
+                float2 relative = new float2(math.sin(angle) * config.SpawnLateral,
+                    config.SpawnAltitude + math.cos(angle) * config.SpawnVertical);
+                ship.Position = center + relative;
+                float speed = math.sqrt(primary.Mu / math.max(1f, math.length(relative)));
                 float2 tangent = math.normalizesafe(new float2(-relative.y, relative.x));
                 ship.Velocity = tangent * speed;
                 ship.Rotation = angle;
