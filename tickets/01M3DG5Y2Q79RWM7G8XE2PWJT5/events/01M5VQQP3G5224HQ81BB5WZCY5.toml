@@ -1,0 +1,20 @@
+kind = "evidence"
+captured_at = "2026-10-26T09:12:40Z"
+digest = "94835bcf7bfc84ae6309b5bf079d51a9737184cd640b83cc1cb479cf561bb62b"
+exit_code = 0
+inline = """
+Test run for \\\\wsl.localhost\\Ubuntu-22.04\\home\\logan\\projects\\project-hullbreach\\game\\.claude\\worktrees\\agent-aae3d1587faab58cb\\tools\\plaincs\\Hullbreach.Plain.Tests\\bin\\Release\\net8.0\\Hullbreach.Plain.Tests.dll (.NETCoreApp,Version=v8.0)\r
+A total of 1 test files matched the specified pattern.\r
+\r
+Passed!  - Failed:     0, Passed:     1, Skipped:     0, Total:     1, Duration: 54 ms - Hullbreach.Plain.Tests.dll (net8.0)\r
+\r
+Workload updates are available. Run `dotnet workload list` for more information.\r
+"""
+passed = true
+provider = "command"
+ref = "run_tests.sh --filter FullyQualifiedName~MultiplayerGameplayTests.CannonProjectile_NearPlanetoid_CurvesTowardIt"
+size = 507
+status = "measured"
+at = "2026-10-26T09:12:40Z"
+actor = "mcnairrobotics"
+rev = 1
