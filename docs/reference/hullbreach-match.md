@@ -29,8 +29,12 @@ is 255. Endings:
   reporter attached to `MatchEndFeed.Shared` turns that into `POST /api/v1/matches`.
 - Both cores breached in the same tick: `Draw`, no winner, nothing raised. The
   platform's `MatchReport` requires `winner_id` to be one of the two players, so
-  a draw cannot be reported; the machine logs a warning saying so (the tiebreak
-  is S46-2).
+  a draw cannot be reported; the machine logs a warning saying so.
+- The optional `timeLimitSeconds` constructor argument (S46-2; 0 or less means
+  no limit) is checked in `Tick` after the core checks: once the clock has run
+  that long since `Start` with both cores alive, the tiebreak is core health
+  (255 minus the core block's damage). Higher health wins as `TimeLimit` and is
+  reported like a core win; equal health is a `Draw` (unreported).
 - A participant `Disconnect`s while running: `Forfeit`, the remaining peer wins,
   and the feed is raised like a core win (same warning log names the leaver).
 
@@ -51,7 +55,7 @@ The clock, feed, match-id factory and log are injected; the feed defaults to
 
 <!-- describes: Assets/Scripts/Hullbreach.Match/MatchStateMachine.cs::MatchResult -->
 
-`None` (not ended), `CoreBreached` and `Forfeit` (both have a winner and are
+`None` (not ended), `CoreBreached`, `Forfeit` and `TimeLimit` (all have a winner and are
 reported), `Draw` (unreported).
 
 ### MatchParticipant

@@ -13,7 +13,7 @@ namespace Hullbreach.Match
         Ended,
     }
 
-    // Why an Ended match ended; CoreBreached and Forfeit have a winner and are reported to the platform.
+    // Why an Ended match ended; CoreBreached, Forfeit and TimeLimit have a winner and are reported to the platform.
     // frob:doc docs/reference/hullbreach-match.md#matchresult
     public enum MatchResult
     {
@@ -21,6 +21,7 @@ namespace Hullbreach.Match
         CoreBreached,
         Draw,
         Forfeit,
+        TimeLimit,
     }
 
     // One side of the match: its network peer, its ship's grid, and a stats snapshot source.
@@ -49,6 +50,7 @@ namespace Hullbreach.Match
     // core is breached the match ends once and MatchEndFeed.Raise tells the platform reporter.
     // frob:ticket 01M3DG5Y35GWWAHRPBN3Y92T1Z
     // frob:ticket 01M5V8S9HK53WMKF29MXJYM8Z5
+    // frob:ticket 01M3DG5Y36WE3D2224D54MR2S6
     // frob:doc docs/reference/hullbreach-match.md#matchstatemachine
     public sealed class MatchStateMachine
     {
@@ -61,6 +63,7 @@ namespace Hullbreach.Match
         readonly Func<double> _clock;
         readonly Func<string> _newMatchId;
         readonly IPlatformLog _log;
+        readonly double _timeLimit;
         double _startedAt;
 
         // frob:doc docs/reference/hullbreach-match.md#matchstatemachine
@@ -77,11 +80,13 @@ namespace Hullbreach.Match
         // frob:doc docs/reference/hullbreach-match.md#matchstatemachine
         public string MatchId { get; private set; } = string.Empty;
 
-        // clock returns seconds; feed defaults to MatchEndFeed.Shared, newMatchId to a random uuid.
+        // clock returns seconds; timeLimitSeconds <= 0 means no limit; feed defaults to MatchEndFeed.Shared, newMatchId to a random uuid.
         // frob:doc docs/reference/hullbreach-match.md#matchstatemachine
         public MatchStateMachine(MatchParticipant a, MatchParticipant b, Func<double> clock,
-            MatchEndFeed feed = null, Func<string> newMatchId = null, IPlatformLog log = null)
+            MatchEndFeed feed = null, Func<string> newMatchId = null, IPlatformLog log = null,
+            double timeLimitSeconds = 0)
         {
+            _timeLimit = timeLimitSeconds;
             _a = a ?? throw new ArgumentNullException(nameof(a));
             _b = b ?? throw new ArgumentNullException(nameof(b));
             _clock = clock ?? throw new ArgumentNullException(nameof(clock));
@@ -121,6 +126,25 @@ namespace Hullbreach.Match
             if (aDown && bDown) End(MatchResult.Draw, -1);
             else if (aDown) End(MatchResult.CoreBreached, _b.Peer);
             else if (bDown) End(MatchResult.CoreBreached, _a.Peer);
+            else if (_timeLimit > 0 && _clock() - _startedAt >= _timeLimit) EndOnTimeLimit();
+        }
+
+        // Time is up with both cores alive: the higher core health wins, equal health is a Draw.
+        // frob:ticket 01M3DG5Y36WE3D2224D54MR2S6
+        void EndOnTimeLimit()
+        {
+            int healthA = CoreHealth(_a.Grid);
+            int healthB = CoreHealth(_b.Grid);
+            _log.Info($"Hullbreach match {MatchId}: time limit {_timeLimit}s reached, core health {healthA} vs {healthB}.");
+            if (healthA == healthB) End(MatchResult.Draw, -1);
+            else End(MatchResult.TimeLimit, healthA > healthB ? _a.Peer : _b.Peer);
+        }
+
+        // Core health is the undamaged part of the core block (255 minus damage).
+        static int CoreHealth(BlockGrid grid)
+        {
+            if (!grid.CoreKey.HasValue || !grid.TryGet(grid.CoreKey.Value, out Block core)) return 0;
+            return Math.Max(0, DestroyedDamage - core.Damage);
         }
 
         // A peer leaving a Running match forfeits it: the remaining peer wins and is reported,
