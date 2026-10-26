@@ -47,6 +47,24 @@ namespace Hullbreach.Platform.Tests
             Assert.IsNull(_model.LastStatus);
         }
 
+        // frob:ticket ~BDSPXJD
+        // frob:tests SignInModel.SubmitClearing
+        [Test]
+        public void SubmitClearingBlanksPasswordFieldAfterEverySubmit()
+        {
+            string field = Password;
+            _http.Enqueue(PlatformHttpResponse.Http(401, "{}"));
+            _model.SubmitClearing("pilot", () => field, v => field = v);
+            Assert.AreEqual(string.Empty, field);
+            Assert.AreEqual(SignInState.Editing, _model.State);
+
+            field = Password;
+            _http.Enqueue(LoginOk("Pilot"));
+            _model.SubmitClearing("pilot", () => field, v => field = v);
+            Assert.AreEqual(string.Empty, field);
+            Assert.AreEqual(SignInState.SignedIn, _model.State);
+        }
+
         [Test]
         public void SuccessStoresTokenInMemoryAndShowsCanonicalName()
         {
