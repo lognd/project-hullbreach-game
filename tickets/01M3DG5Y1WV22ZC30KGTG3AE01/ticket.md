@@ -2,7 +2,8 @@
 id = "01M3DG5Y1WV22ZC30KGTG3AE01"
 title = "S31-2: UndoStack reversing placements and removals at least ten deep"
 type = "task"
-category = "todo"
+category = "done"
+outcome = "done"
 priority = "high"
 points = 2
 parent = "01M3DG5Y0MFJ6RPX9B9VVEG7XQ"
