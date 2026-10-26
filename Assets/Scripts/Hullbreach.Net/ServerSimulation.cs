@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using Unity.Mathematics;
 using Hullbreach.Core;
 using Hullbreach.Builder;
+using Hullbreach.Match;
+using Hullbreach.Platform;
 using Hullbreach.Ship;
 using Hullbreach.Ship.Behaviours;
 using Hullbreach.Structure;
@@ -42,7 +44,20 @@ namespace Hullbreach.Net
         // ShipState stream enabled by default.
         public bool EmitPoseMessages = true;
 
+        // Where a finished match is announced; defaults to the shared feed the platform reporter watches.
+        // frob:doc docs/reference/hullbreach-net.md#serversimulation
+        public MatchEndFeed MatchFeed = MatchEndFeed.Shared;
+
+        // Sink for match lifecycle lines; null means silent.
+        // frob:doc docs/reference/hullbreach-net.md#serversimulation
+        public IPlatformLog MatchLog;
+
         float Dt => 1f / TickRate;
+
+        // The current (or last) match; null until two peers have joined.
+        // frob:ticket 01M5V9XQ3YKRVFW9RMPZTVN11E
+        // frob:doc docs/reference/hullbreach-net.md#serversimulation
+        public MatchStateMachine Match { get; private set; }
 
         readonly GravityField _gravity = new GravityField();
 
@@ -266,8 +281,30 @@ namespace Hullbreach.Net
             // Includes the joiner itself; see the reference page.
             var snapshot = BuildSnapshot(state, NextSequence());
             foreach (var kv in _peers) EmitReliable(kv.Key, snapshot);
+            StartMatchIfReady();
             return JoinResult.Joined;
         }
+
+        // Builds and starts a fresh machine once exactly two peers are in and no match is live.
+        // The clock is simulated time (ticks * Dt), so no wall clock leaks into the server.
+        // frob:ticket 01M5V9XQ3YKRVFW9RMPZTVN11E
+        void StartMatchIfReady()
+        {
+            if (_peers.Count != 2) return;
+            if (Match != null && Match.Phase != MatchPhase.Ended) return;
+
+            var ids = new List<int>(_peers.Keys);
+            ids.Sort();
+            Match = new MatchStateMachine(
+                ParticipantFor(ids[0]), ParticipantFor(ids[1]),
+                () => _tickIndex * (double)Dt, MatchFeed, null, MatchLog);
+            Match.Start();
+        }
+
+        // Stats are not tracked by the server yet; the reporter fills in the user id from the gate.
+        // frob:ticket 01M5V9XQ3YKRVFW9RMPZTVN11E
+        MatchParticipant ParticipantFor(int peer) =>
+            new MatchParticipant(peer, _peers[peer].Ship.Grid, () => new PlayerMatchStats(string.Empty, 0, 0, 0, 0));
 
         // Safe to call for an unknown peer (no-op); tells the others the ship is gone.
         // frob:doc docs/reference/hullbreach-net.md#serversimulation
@@ -289,6 +326,7 @@ namespace Hullbreach.Net
         void RemovePeer(int peer, PeerState state)
         {
             _peers.Remove(peer);
+            Match?.Disconnect(peer);
             foreach (var p in _projectiles)
                 if (p.OwnerPeer == peer) p.OwnerPeer = -1;
             BroadcastReliable(new ShipRemoved(NextSequence(), state.NetId));
@@ -360,6 +398,9 @@ namespace Hullbreach.Net
                 if (state.Ship.Grid.Count == 0) continue;
                 if (EmitPoseMessages) EmitUnreliable(peer, BuildState(state));
             }
+
+            // Last, so impacts and structural damage from this tick are already on the grids.
+            Match?.Tick();
         }
 
         void ResolveShipContacts(List<int> peerIds, float dt)

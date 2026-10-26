@@ -31,6 +31,9 @@ is 255. Endings:
   platform report requires a winner; the tiebreak is S46-2).
 - A participant `Disconnect`s while running: `Abandoned`, no winner, nothing raised.
 
+`ServerSimulation` constructs, starts and ticks the machine itself (see
+`hullbreach-net.md#serversimulation`).
+
 After `Ended`, `Tick` and `Disconnect` do nothing, so the feed cannot fire twice.
 The clock, feed, match-id factory and log are injected; the feed defaults to
 `MatchEndFeed.Shared`.

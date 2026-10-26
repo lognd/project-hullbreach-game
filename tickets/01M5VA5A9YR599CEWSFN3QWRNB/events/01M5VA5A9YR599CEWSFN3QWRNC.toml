@@ -1,0 +1,9 @@
+kind = "create"
+title = "Server: track per-player match stats (damage, blocks) for the report"
+type = "bug"
+category = "todo"
+priority = "medium"
+body = "found while working ~ZTVN11E: ServerSimulation.ParticipantFor reports zeros"
+at = "2026-10-26T05:15:34Z"
+actor = "lognd"
+rev = 1
