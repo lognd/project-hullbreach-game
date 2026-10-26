@@ -130,6 +130,11 @@ namespace Hullbreach.Net
         // frob:doc docs/reference/hullbreach-net.md#clientreplica
         public MatchEndFeed MatchFeed { get; set; }
 
+        // The two peers once the server announced the match start (both ready); null until then.
+        // frob:ticket 01M3DG5Y1NW8M51ENVBT7EVKQY
+        // frob:doc docs/reference/hullbreach-net.md#clientreplica
+        public (int PeerA, int PeerB)? MatchStartedPeers { get; private set; }
+
         uint _lastAppliedSequence;
         bool _haveBaseline;
 
@@ -337,6 +342,7 @@ namespace Hullbreach.Net
                 case MessageKind.PowerupApplied:
                 case MessageKind.ShipRemoved:
                 case MessageKind.MatchEnded:
+                case MessageKind.MatchStarted:
                 {
                     // u32 sequence number right after the kind byte; a body that
                     // turns out short is skipped in order by ApplyOne.
@@ -487,6 +493,13 @@ namespace Hullbreach.Net
                     var m = MatchEnded.Read(ref r);
                     if (r.Failed) return false;
                     MatchFeed?.Raise(m.Args);
+                    return true;
+                }
+                case MessageKind.MatchStarted:
+                {
+                    var m = MatchStarted.Read(ref r);
+                    if (r.Failed) return false;
+                    MatchStartedPeers = (m.PeerA, m.PeerB);
                     return true;
                 }
                 default:

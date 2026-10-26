@@ -1,0 +1,7 @@
+kind = "field"
+field = "acceptance"
+new = ["ReadyGate starts only when both peers are ready, and a disconnect before ready drops the peer and its flag", "With RequireReady on, ServerSimulation starts the match only after both peers ready and sends a reliable MatchStarted to both", "ReadyUp and MatchStarted round-trip on the wire and ClientReplica applies MatchStarted"]
+moved = []
+at = "2026-10-26T08:28:14Z"
+actor = "mcnairrobotics"
+rev = 1

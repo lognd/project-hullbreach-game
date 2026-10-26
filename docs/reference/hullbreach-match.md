@@ -149,3 +149,23 @@ lobby to `LeaveAndReturnToLobbyAsync`. A remote client gets the end through the
 replicated `MatchEnded` message (`hullbreach-net.md#matchended`), which
 `ClientReplica.MatchFeed` raises on `MatchEndFeed.Shared`. The Unity code here
 was not compiled in the editor.
+
+### ReadyGate
+
+<!-- describes: Assets/Scripts/Hullbreach.Match/ReadyGate.cs::ReadyGateState -->
+<!-- describes: Assets/Scripts/Hullbreach.Match/ReadyGate.cs::ReadyResult -->
+<!-- describes: Assets/Scripts/Hullbreach.Match/ReadyGate.cs::ReadyGate -->
+<!-- describes: Assets/Scripts/Hullbreach.Match/ReadyGate.cs::ReadyGate.State -->
+<!-- describes: Assets/Scripts/Hullbreach.Match/ReadyGate.cs::ReadyGate.PeerCount -->
+<!-- describes: Assets/Scripts/Hullbreach.Match/ReadyGate.cs::ReadyGate.ReadyGate -->
+<!-- describes: Assets/Scripts/Hullbreach.Match/ReadyGate.cs::ReadyGate.AddPeer -->
+<!-- describes: Assets/Scripts/Hullbreach.Match/ReadyGate.cs::ReadyGate.RemovePeer -->
+<!-- describes: Assets/Scripts/Hullbreach.Match/ReadyGate.cs::ReadyGate.SetReady -->
+<!-- describes: Assets/Scripts/Hullbreach.Match/ReadyGate.cs::ReadyGate.IsReady -->
+
+Engine-free ready-up gate (tested in `ReadyGateTests`). It is `Waiting` until
+exactly the required number of peers (default 2) are present and every one is
+ready, then `Started` for good. `AddPeer` adds a not-ready peer; `RemovePeer`
+drops a peer and its flag while `Waiting` (a disconnect before ready);
+`SetReady` returns a `ReadyResult` (`Accepted`, `UnknownPeer`,
+`AlreadyStarted`). Once `Started`, adds, removes and ready calls are ignored.

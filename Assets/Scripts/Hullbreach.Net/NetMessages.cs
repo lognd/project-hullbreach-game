@@ -27,6 +27,8 @@ namespace Hullbreach.Net
         GravityWellSpawned = 9,
         ShipRemoved = 10,
         MatchEnded = 11,
+        ReadyUp = 12,
+        MatchStarted = 13,
     }
 
     // Client -> server, unreliable: this tick's intent. Latest-wins on drop.
@@ -386,6 +388,89 @@ namespace Hullbreach.Net
             int placed = r.ReadI32();
             int alive = r.ReadI32();
             return new PlayerMatchStats(string.Empty, damage, destroyed, placed, alive);
+        }
+    }
+
+    // Client -> server, reliable: this player is ready (or no longer ready) to start the match.
+    // frob:ticket 01M3DG5Y1NW8M51ENVBT7EVKQY
+    // frob:doc docs/reference/hullbreach-net.md#readyup
+    public readonly struct ReadyUp
+    {
+        // frob:doc docs/reference/hullbreach-net.md#readyup
+        public const int ByteSize = 1 + 1;
+
+        // frob:doc docs/reference/hullbreach-net.md#readyup
+        public readonly bool Ready;
+
+        // frob:doc docs/reference/hullbreach-net.md#readyup
+        public ReadyUp(bool ready) => Ready = ready;
+
+        // frob:doc docs/reference/hullbreach-net.md#readyup
+        public void Write(ref ByteWriter w)
+        {
+            w.WriteU8((byte)MessageKind.ReadyUp);
+            w.WriteU8(Ready ? (byte)1 : (byte)0);
+        }
+
+        // Reads the MessageKind byte too; a flag byte other than 0 or 1 fails the reader.
+        // frob:doc docs/reference/hullbreach-net.md#readyup
+        public static ReadyUp Read(ref ByteReader r)
+        {
+            r.ReadU8();
+            byte flag = r.ReadU8();
+            if (r.Failed || flag > 1)
+            {
+                r.Fail();
+                return default;
+            }
+            return new ReadyUp(flag == 1);
+        }
+    }
+
+    // Server -> client, reliable ordered: both peers were ready and the match is now running.
+    // frob:ticket 01M3DG5Y1NW8M51ENVBT7EVKQY
+    // frob:doc docs/reference/hullbreach-net.md#matchstarted
+    public readonly struct MatchStarted
+    {
+        // frob:doc docs/reference/hullbreach-net.md#matchstarted
+        public const int ByteSize = 1 + 4 + 4 + 4;
+
+        // frob:doc docs/reference/hullbreach-net.md#matchstarted
+        public readonly uint Sequence;
+
+        // The two peers (ship NetIds) the match was started for, lower id first.
+        // frob:doc docs/reference/hullbreach-net.md#matchstarted
+        public readonly int PeerA;
+
+        // frob:doc docs/reference/hullbreach-net.md#matchstarted
+        public readonly int PeerB;
+
+        // frob:doc docs/reference/hullbreach-net.md#matchstarted
+        public MatchStarted(uint sequence, int peerA, int peerB)
+        {
+            Sequence = sequence;
+            PeerA = peerA;
+            PeerB = peerB;
+        }
+
+        // frob:doc docs/reference/hullbreach-net.md#matchstarted
+        public void Write(ref ByteWriter w)
+        {
+            w.WriteU8((byte)MessageKind.MatchStarted);
+            w.WriteU32(Sequence);
+            w.WriteI32(PeerA);
+            w.WriteI32(PeerB);
+        }
+
+        // Reads the MessageKind byte too, mirroring Write; check r.Failed afterwards.
+        // frob:doc docs/reference/hullbreach-net.md#matchstarted
+        public static MatchStarted Read(ref ByteReader r)
+        {
+            r.ReadU8();
+            uint seq = r.ReadU32();
+            int a = r.ReadI32();
+            int b = r.ReadI32();
+            return new MatchStarted(seq, a, b);
         }
     }
 

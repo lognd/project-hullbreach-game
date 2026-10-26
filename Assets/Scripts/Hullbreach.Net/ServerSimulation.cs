@@ -49,9 +49,18 @@ namespace Hullbreach.Net
         // frob:doc docs/reference/hullbreach-net.md#serversimulation
         public double MatchTimeLimitSeconds = 600.0;
 
+        // When true a full lobby waits for both peers to send ReadyUp before the match starts (S28-3);
+        // false keeps the legacy start-on-second-join behaviour.
+        // frob:ticket 01M3DG5Y1NW8M51ENVBT7EVKQY
+        // frob:doc docs/reference/hullbreach-net.md#serversimulation
+        public bool RequireReady;
+
         // Where a finished match is announced; defaults to the shared feed the platform reporter watches.
         // frob:doc docs/reference/hullbreach-net.md#serversimulation
         public MatchEndFeed MatchFeed = MatchEndFeed.Shared;
+
+        // Tracks who has readied while RequireReady is on; replaced once its match has ended.
+        ReadyGate _gate = new ReadyGate();
 
         // The match whose end was already sent to the clients, so each end is announced once.
         MatchStateMachine _announcedMatch;
@@ -301,6 +310,7 @@ namespace Hullbreach.Net
             // Includes the joiner itself; see the reference page.
             var snapshot = BuildSnapshot(state, NextSequence());
             foreach (var kv in _peers) EmitReliable(kv.Key, snapshot);
+            if (RequireReady) TrackForReady(peer);
             StartMatchIfReady();
             return JoinResult.Joined;
         }
@@ -312,6 +322,7 @@ namespace Hullbreach.Net
         {
             if (_peers.Count != 2) return;
             if (Match != null && Match.Phase != MatchPhase.Ended) return;
+            if (RequireReady && _gate.State != ReadyGateState.Started) return;
 
             var ids = new List<int>(_peers.Keys);
             ids.Sort();
@@ -320,7 +331,42 @@ namespace Hullbreach.Net
             Match = new MatchStateMachine(
                 ParticipantFor(ids[0]), ParticipantFor(ids[1]),
                 () => _tickIndex * (double)Dt, MatchFeed, null, MatchLog, MatchTimeLimitSeconds);
-            Match.Start();
+            if (Match.Start() && RequireReady) AnnounceMatchStart(ids[0], ids[1]);
+        }
+
+        // Adds the joiner to the gate; a gate whose match already ended is replaced by a fresh one.
+        // frob:ticket 01M3DG5Y1NW8M51ENVBT7EVKQY
+        void TrackForReady(int peer)
+        {
+            if (_gate.State == ReadyGateState.Started && (Match == null || Match.Phase == MatchPhase.Ended))
+                _gate = new ReadyGate(2, MatchLog);
+            foreach (int id in _peers.Keys) _gate.AddPeer(id);
+        }
+
+        // Handles a peer's ReadyUp; the second ready starts the match and tells both peers.
+        // Ignored (false) when ready-up is off, the peer has no ship, or the gate already started.
+        // frob:ticket 01M3DG5Y1NW8M51ENVBT7EVKQY
+        // frob:doc docs/reference/hullbreach-net.md#serversimulation
+        public bool SetReady(int peer, bool ready)
+        {
+            if (!RequireReady || !_peers.ContainsKey(peer)) return false;
+            if (_gate.SetReady(peer, ready) != ReadyResult.Accepted) return false;
+            StartMatchIfReady();
+            return true;
+        }
+
+        // Tells every connected peer, reliably and in order, that the match is running.
+        // frob:ticket 01M3DG5Y1NW8M51ENVBT7EVKQY
+        void AnnounceMatchStart(int peerA, int peerB)
+        {
+            var message = new MatchStarted(NextSequence(), peerA, peerB);
+            foreach (int peer in _peers.Keys)
+            {
+                var buffer = new byte[MatchStarted.ByteSize];
+                var w = new ByteWriter(buffer);
+                message.Write(ref w);
+                _outbox.Send(peer, reliable: true, buffer, w.Position);
+            }
         }
 
         // Stats come from the match tally; the reporter fills in the user id from the gate.
@@ -366,6 +412,7 @@ namespace Hullbreach.Net
         void RemovePeer(int peer, PeerState state)
         {
             _peers.Remove(peer);
+            _gate.RemovePeer(peer);
             Match?.Disconnect(peer);
             AnnounceMatchEnd();
             foreach (var p in _projectiles)

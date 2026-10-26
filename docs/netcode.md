@@ -209,6 +209,15 @@ too, even though the original design note only called it out for
 | `PowerupApplied` | server->client, reliable | `u32 seq, u16 netId, i8 x, i8 y, u8 variant, u16 seconds10` | 12 B |
 | `GravityWellSpawned` | server->client, reliable | `i16 px, i16 py, i16 mu, u8 radius, u16 seconds10` | 10 B |
 | `ShipRemoved` | server->client, reliable ordered | `u32 seq, u16 netId` | 7 B |
+| `ReadyUp` | client->server, reliable | `u8 ready` | 2 B |
+| `MatchStarted` | server->client, reliable ordered | `u32 seq, i32 peerA, i32 peerB` | 13 B |
+
+### Ready-up
+
+With `ServerSimulation.RequireReady` on, a full lobby waits: each client sends
+`ReadyUp`, the engine-free `ReadyGate` (Hullbreach.Match) tracks both flags,
+and when both are set the server starts the match and sends `MatchStarted`
+to both. A disconnect before the start removes that peer and its flag.
 
 ### Decoding untrusted bytes
 
