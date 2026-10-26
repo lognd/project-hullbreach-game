@@ -2,7 +2,8 @@
 id = "01M3DG5Y1XRRZJT3NTBZM0Y0W8"
 title = "S31-3: Undo tests"
 type = "task"
-category = "todo"
+category = "done"
+outcome = "done"
 priority = "high"
 points = 1
 parent = "01M3DG5Y0MFJ6RPX9B9VVEG7XQ"
