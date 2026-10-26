@@ -24,7 +24,6 @@ namespace Hullbreach.Net.Tests
             return (server, raised);
         }
 
-        // frob:tests Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.Join
         [Test]
         public void Match_StartsOnlyWhenSecondPeerJoins()
         {
@@ -35,7 +34,6 @@ namespace Hullbreach.Net.Tests
             Assert.AreEqual(MatchPhase.Running, server.Match.Phase);
         }
 
-        // frob:tests Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.Tick
         [Test]
         public void ImpactsThatDestroyACore_RaiseMatchEndOnce_WithTheShooterAsWinner()
         {
@@ -65,7 +63,6 @@ namespace Hullbreach.Net.Tests
             Assert.AreEqual(2, raised[0].PeerB);
         }
 
-        // frob:tests Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.Leave
         [Test]
         public void LeavingMidMatch_AbandonsIt_AndNothingIsRaised()
         {
