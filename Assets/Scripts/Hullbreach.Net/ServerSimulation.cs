@@ -76,6 +76,30 @@ namespace Hullbreach.Net
         // frob:doc docs/reference/hullbreach-net.md#serversimulation
         public MatchStateMachine Match { get; private set; }
 
+        // Queue match id the next match is reported under; null means a fresh random uuid.
+        string _queueMatchId;
+
+        // Names the next match with the platform's queue id (S29-3); false when the id is bad or a match is live.
+        // frob:ticket 01M3DG5Y1Q243GK60T3RHV8HRV
+        // frob:doc docs/reference/hullbreach-net.md#serversimulation
+        public bool AssignQueueMatch(string matchId)
+        {
+            ConfigResult<string> id = QueueMatchId.Normalize(matchId);
+            if (!id.IsOk)
+            {
+                MatchLog?.Warning($"Hullbreach match: queue match id rejected: {id.Error}.");
+                return false;
+            }
+            if (Match != null && Match.Phase != MatchPhase.Ended)
+            {
+                MatchLog?.Warning($"Hullbreach match: queue match id {id.Value} ignored; a match is already live.");
+                return false;
+            }
+            _queueMatchId = id.Value;
+            MatchLog?.Info($"Hullbreach match: next match will be reported as {id.Value}.");
+            return true;
+        }
+
         readonly GravityField _gravity = new GravityField();
 
         // Exposed so a test/host can add permanent bodies (planets) before
@@ -336,9 +360,12 @@ namespace Hullbreach.Net
             ids.Sort();
             _tallies.Clear();
             foreach (int id in ids) _tallies[id] = new MatchTally { StartTick = _tickIndex };
+            string queueId = _queueMatchId;
+            _queueMatchId = null;
             Match = new MatchStateMachine(
                 ParticipantFor(ids[0]), ParticipantFor(ids[1]),
-                () => _tickIndex * (double)Dt, MatchFeed, null, MatchLog, MatchTimeLimitSeconds);
+                () => _tickIndex * (double)Dt, MatchFeed, queueId == null ? (Func<string>)null : () => queueId,
+                MatchLog, MatchTimeLimitSeconds);
             if (Match.Start() && RequireReady) AnnounceMatchStart(ids[0], ids[1]);
         }
 
