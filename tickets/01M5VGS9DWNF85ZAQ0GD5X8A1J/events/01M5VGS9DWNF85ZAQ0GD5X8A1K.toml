@@ -1,0 +1,11 @@
+kind = "create"
+title = "Replicate match end to clients with the real MatchResult"
+type = "task"
+category = "todo"
+priority = "medium"
+parent = "01M3DG5Y134BJMWZH7S1QV7EY9"
+scope = ["Assets/Scripts/**", "Assets/Tests/**", "docs/**", "changelog.d/**"]
+body = "MatchEndFeed is server-only, draws are not raised, and ResultsFlow cannot know the real result. Carry MatchResult in the args, raise for draws (not reported), add a MatchEnded reliable message and a client hook."
+at = "2026-10-26T07:11:19Z"
+actor = "mcnairrobotics"
+rev = 1
