@@ -1,0 +1,6 @@
+kind = "comment"
+subtype = "note"
+body = "Reconciliation 2026-10-26: not implemented. Needs the Unity builder UI (Sprint 3, docs/design/ui-port.md) on top of S35-1's design format. Left open."
+at = "2026-10-26T09:12:55Z"
+actor = "mcnairrobotics"
+rev = 1

@@ -1,0 +1,6 @@
+kind = "comment"
+subtype = "note"
+body = "Reconciliation 2026-10-26: AC1 (live per-block color) is implemented in Unity-only ShipRenderer and not verifiable in the plain harness; live only while the sim runs (Build mode does not solve). AC2 documented by S37-3 (docs/reference/hullbreach-game.md). AC3 (colorblind palette) not implemented, see S37-2 ~GM0B19P. Story left open."
+at = "2026-10-26T09:12:41Z"
+actor = "mcnairrobotics"
+rev = 1
