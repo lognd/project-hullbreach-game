@@ -44,6 +44,11 @@ namespace Hullbreach.Net
         // ShipState stream enabled by default.
         public bool EmitPoseMessages = true;
 
+        // Match length in seconds of simulated time; 0 or less disables the limit (default 10 minutes).
+        // frob:ticket 01M3DG5Y36WE3D2224D54MR2S6
+        // frob:doc docs/reference/hullbreach-net.md#serversimulation
+        public double MatchTimeLimitSeconds = 600.0;
+
         // Where a finished match is announced; defaults to the shared feed the platform reporter watches.
         // frob:doc docs/reference/hullbreach-net.md#serversimulation
         public MatchEndFeed MatchFeed = MatchEndFeed.Shared;
@@ -311,7 +316,7 @@ namespace Hullbreach.Net
             foreach (int id in ids) _tallies[id] = new MatchTally { StartTick = _tickIndex };
             Match = new MatchStateMachine(
                 ParticipantFor(ids[0]), ParticipantFor(ids[1]),
-                () => _tickIndex * (double)Dt, MatchFeed, null, MatchLog);
+                () => _tickIndex * (double)Dt, MatchFeed, null, MatchLog, MatchTimeLimitSeconds);
             Match.Start();
         }
 

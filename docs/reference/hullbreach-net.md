@@ -507,6 +507,7 @@ next expected sequence and then drains whatever the gap closing unblocks.
 <!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.Gravity -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.MatchFeed -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.MatchLog -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.MatchTimeLimitSeconds -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.Match -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.ServerSimulation -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.Ships -->
@@ -539,7 +540,9 @@ is raised once with the other peer as winner. `Leave`/timeout of a peer
 calls `MatchStateMachine.Disconnect`. The machine's clock is simulated
 time (ticks * dt). A peer leaving mid-match is a forfeit win for the
 other peer, which is reported; a same-tick double core loss is a draw and
-is not reported (the platform needs a winner), with a logged warning.
+is not reported (the platform needs a winner), with a logged warning. `MatchTimeLimitSeconds` (default 600, 0 disables) is passed
+to the machine: at expiry the higher core health wins (reported as `TimeLimit`),
+equal health is an unreported draw.
 Per-player stats come from a tally the server keeps for the live match:
 `DamageDealt` (damage applied by the peer's projectiles), `BlocksDestroyed`
 (blocks those projectiles destroyed outright), `BlocksPlaced` (placements

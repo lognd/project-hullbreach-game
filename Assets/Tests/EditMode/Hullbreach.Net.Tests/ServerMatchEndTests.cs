@@ -112,5 +112,19 @@ namespace Hullbreach.Net.Tests
             Assert.AreEqual(1, raised[0].StatsA.BlocksPlaced);
             Assert.AreEqual(0, raised[0].StatsB.BlocksPlaced);
         }
+
+        // frob:ticket 01M3DG5Y36WE3D2224D54MR2S6
+        [Test]
+        public void TimeLimit_ExpiryWithEqualCores_EndsAsUnreportedDraw()
+        {
+            var (server, raised) = Arena();
+            server.MatchTimeLimitSeconds = 1.0;
+            server.Join(1, Ship(Core()));
+            server.Join(2, Ship(Core()));
+            for (int i = 0; i < 60; i++) server.Tick();
+            Assert.AreEqual(MatchPhase.Ended, server.Match.Phase);
+            Assert.AreEqual(MatchResult.Draw, server.Match.Result);
+            Assert.AreEqual(0, raised.Count);
+        }
     }
 }

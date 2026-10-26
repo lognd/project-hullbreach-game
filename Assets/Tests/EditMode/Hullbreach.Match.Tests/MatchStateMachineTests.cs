@@ -176,5 +176,61 @@ namespace Hullbreach.Match.Tests
             Assert.AreNotEqual(a.MatchId, b.MatchId);
             Assert.AreEqual(36, a.MatchId.Length, "a uuid string");
         }
+
+        // frob:ticket 01M3DG5Y36WE3D2224D54MR2S6
+        MatchStateMachine Limited(double limit) => new MatchStateMachine(
+            new MatchParticipant(1, _gridA, () => new PlayerMatchStats(UserA, 900, 14, 30, 240)),
+            new MatchParticipant(2, _gridB, () => new PlayerMatchStats(UserB, 400, 12, 28, 200)),
+            () => _now, _feed, () => "match-" + (++_ids), null, limit);
+
+        static void Hurt(BlockGrid g, byte damage) => g.TrySet(CoreCell, g.TryGet(CoreCell, out Block b) ? b.WithDamage(damage) : b);
+
+        [Test]
+        public void TimeLimit_BeforeExpiry_KeepsRunning()
+        {
+            var m = Limited(60);
+            m.Start();
+            _now += 59;
+            m.Tick();
+            Assert.AreEqual(MatchPhase.Running, m.Phase);
+        }
+
+        [Test]
+        public void TimeLimit_HealthierCoreWins_AndIsReportedOnce()
+        {
+            var m = Limited(60);
+            m.Start();
+            Hurt(_gridA, (byte)100);
+            _now += 60;
+            m.Tick();
+            m.Tick();
+            Assert.AreEqual(MatchResult.TimeLimit, m.Result);
+            Assert.AreEqual(2, m.WinnerPeer);
+            Assert.AreEqual(1, _raised.Count);
+            Assert.AreEqual(2, _raised[0].WinnerPeer);
+        }
+
+        [Test]
+        public void TimeLimit_EqualHealth_IsUnreportedDraw()
+        {
+            var m = Limited(60);
+            m.Start();
+            Hurt(_gridA, 40);
+            Hurt(_gridB, 40);
+            _now += 61;
+            m.Tick();
+            Assert.AreEqual(MatchResult.Draw, m.Result);
+            Assert.AreEqual(-1, m.WinnerPeer);
+            Assert.AreEqual(0, _raised.Count);
+        }
+
+        [Test]
+        public void NoTimeLimit_NeverExpires()
+        {
+            _machine.Start();
+            _now += 100000;
+            _machine.Tick();
+            Assert.AreEqual(MatchPhase.Running, _machine.Phase);
+        }
     }
 }
