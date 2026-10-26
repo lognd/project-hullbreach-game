@@ -1,0 +1,6 @@
+kind = "comment"
+subtype = "note"
+body = "Criterion 3 is ambiguous (no physics model of attachment exists; blocks are cells of the ship's rigid grid). Most literal reading tested: a builder-placed block stays in the grid, is not detached from the core, and keeps a fixed ship-local offset (rigid distance to core, LocalToWorld/WorldToLocal round trip) while ShipBody translates and rotates. Tests: Hullbreach.Ship.Tests/BuilderAttachedBlockTests.cs. The tests passed on first run: a coverage gap, not a bug."
+at = "2026-10-26T09:03:35Z"
+actor = "mcnairrobotics"
+rev = 1
