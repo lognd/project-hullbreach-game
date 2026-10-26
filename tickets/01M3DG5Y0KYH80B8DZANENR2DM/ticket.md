@@ -2,26 +2,27 @@
 id = "01M3DG5Y0KYH80B8DZANENR2DM"
 title = "S30: Place a block with two clicks"
 type = "story"
-category = "todo"
+category = "done"
+outcome = "done"
 priority = "critical"
 parent = "01M3DG5Y03DJ72WRTEGD6EBC3C"
 reporter = "human"
 created = "2026-09-26T00:00:00Z"
-updated = "2026-09-26T00:00:00Z"
+updated = "2026-10-26T08:20:26Z"
 aliases = ["T-0019"]
 labels = ["jira:SCRUM-51", "owner:stevendangkhoi", "game", "milestone:0.1.0"]
 
 [[acceptance]]
 text = "Hovering shows whether a location is valid before the first click; an invalid location cannot be selected."
-bound = false
+bound = true
 
 [[acceptance]]
 text = "After the first click, moving the cursor previews the orientation and the second click commits it."
-bound = false
+bound = true
 
 [[acceptance]]
 text = "The placed block is attached to the hull and moves with the ship."
-bound = false
+bound = true
 +++
 
 https://aliens-against-humanity.atlassian.net/browse/SCRUM-51
