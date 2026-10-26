@@ -31,13 +31,15 @@ namespace Hullbreach.NetCode.Entities
 
         void OnEnable()
         {
-            _model = new SignInModel(HullbreachPlatformRuntime.Client, HullbreachPlatformRuntime.Log);
+            _model = new SignInModel(HullbreachPlatformRuntime.Client, HullbreachPlatformRuntime.Log,
+                HullbreachPlatformRuntime.TokenStore);
             _model.Changed += Refresh;
             signInButton.onClick.AddListener(Submit);
             passwordInput.onSubmit.AddListener(SubmitFromField);
             playOfflineButton.onClick.AddListener(_model.PlayOffline);
             signOutButton.onClick.AddListener(_model.SignOut);
             Refresh();
+            _model.TryRestore();
         }
 
         void OnDisable()

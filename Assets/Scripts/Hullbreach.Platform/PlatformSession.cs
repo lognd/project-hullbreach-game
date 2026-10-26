@@ -2,8 +2,8 @@ using System;
 
 namespace Hullbreach.Platform
 {
-    // The signed-in player's platform session, in memory only for this run (S07-3
-    // owns persisting it). The sign-in screen writes it; the client handshake reads it.
+    // The signed-in player's platform session, in memory only for this run
+    // (SessionTokenStore, S07-3, carries it across launches). The sign-in screen writes it; the client handshake reads it.
     // frob:doc docs/platform-link.md#client-session
     public static class PlatformSession
     {

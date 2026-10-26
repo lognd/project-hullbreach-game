@@ -22,15 +22,17 @@ namespace Hullbreach.Platform
 
         readonly PlatformClient _client;
         readonly IPlatformLog _log;
+        readonly SessionTokenStore _store;
 
         // Bumped by every submit and by leaving Busy, so a late login answer is dropped.
         int _attempt;
 
         // frob:doc docs/platform-link.md#sign-in-screen
-        public SignInModel(PlatformClient client, IPlatformLog log = null)
+        public SignInModel(PlatformClient client, IPlatformLog log = null, SessionTokenStore store = null)
         {
             _client = client ?? throw new ArgumentNullException(nameof(client));
             _log = log ?? NullPlatformLog.Instance;
+            _store = store;
             // Returning to the lobby later in the run must not ask again.
             if (PlatformSession.IsSignedIn)
             {
@@ -78,6 +80,17 @@ namespace Hullbreach.Platform
             State == SignInState.SignedIn ? "Signed in as " + PlatformSession.Username :
             State == SignInState.Offline ? "Playing offline" : string.Empty;
 
+        // S07-3: reuse the token remembered from a previous launch if the platform still accepts it.
+        // frob:doc docs/platform-link.md#remembered-session
+        public void TryRestore()
+        {
+            if (_store == null || State != SignInState.Editing) return;
+            if (!_store.TryLoad(out string username, out string token)) return;
+            int attempt = ++_attempt;
+            Set(SignInState.Busy, "Restoring your session...", isError: false);
+            _client.ValidateSession(token, outcome => OnRestore(attempt, username, token, outcome));
+        }
+
         // frob:doc docs/platform-link.md#sign-in-screen
         public void Submit(string username, string password)
         {
@@ -110,6 +123,7 @@ namespace Hullbreach.Platform
             _attempt++;
             bool wasSignedIn = State == SignInState.SignedIn;
             PlatformSession.SignOut();
+            _store?.Clear();
             _log.Info(wasSignedIn
                 ? "Hullbreach sign-in: signed out; the session token was discarded."
                 : "Hullbreach sign-in: leaving offline mode to sign in.");
@@ -132,10 +146,32 @@ namespace Hullbreach.Platform
             if (outcome.IsSuccess)
             {
                 PlatformSession.SignIn(outcome.Username, outcome.Token);
+                _store?.Save(outcome.Username, outcome.Token);
                 Set(SignInState.SignedIn, "Signed in as " + outcome.Username + ".", isError: false);
                 return;
             }
             Set(SignInState.Editing, MessageFor(outcome), isError: true);
+        }
+
+        void OnRestore(int attempt, string username, string token, SessionOutcome outcome)
+        {
+            if (attempt != _attempt || State != SignInState.Busy)
+            {
+                _log.Info($"Hullbreach sign-in: dropping a late {outcome.Status} session check; the player moved on.");
+                return;
+            }
+            if (outcome.IsValid)
+            {
+                PlatformSession.SignIn(username, token);
+                _log.Info($"Hullbreach sign-in: restored the remembered session for '{username}'.");
+                Set(SignInState.SignedIn, "Signed in as " + username + ".", isError: false);
+                return;
+            }
+            // Only a 401 proves the token is dead; an unreachable platform keeps it for next time.
+            bool expired = outcome.Status == SessionStatus.Invalid;
+            if (expired) _store.Clear();
+            _log.Info($"Hullbreach sign-in: remembered session not restored ({outcome.Status}).");
+            Set(SignInState.Editing, expired ? "Your saved session expired. Sign in again." : string.Empty, isError: false);
         }
 
         void Set(SignInState state, string message, bool isError)
