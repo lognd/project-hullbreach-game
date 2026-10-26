@@ -30,6 +30,11 @@ either kind with Unity Lobby's native 8-64 character password, list open public
 lobbies, and join by lobby code. The short `ISession.Code` in the waiting room
 is the player-facing invite code.
 
+Before the lobby, the scene's `SignInCanvas` overlay asks the player to sign in
+with a Hullbreach platform account or to play offline; the token it obtains is
+what the client presents in the platform handshake. See
+[platform-link.md](platform-link.md#sign-in-screen).
+
 Only the host sees the waiting room's **Start Game** button. Pressing it locks
 the lobby and publishes the gameplay scene name as a member-visible session
 property; every member then loads `Assets/Scenes/MultiplayerGame.unity`. The
