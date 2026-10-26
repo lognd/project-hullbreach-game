@@ -113,9 +113,7 @@ namespace Hullbreach.Game
             var scratch = new byte[512];
             while (_serverTransport.TryReceive(out int from, scratch, out int length))
             {
-                var r = new ByteReader(scratch, 0, length);
-                var input = InputMessage.Read(ref r);
-                if (!r.Failed) _server.SetInput(from, input);
+                HostInbox.Dispatch(_server, from, scratch, length);
             }
 
             _server.Tick();

@@ -708,8 +708,19 @@ peers are ready the match starts and a reliable `MatchStarted` goes to both.
 A peer that leaves before the start drops out with its flag, so a newcomer
 can take its place. `SetReady` returns false when `RequireReady` is off or
 the peer is unknown. Default is off, which keeps start-on-second-join. The
-host does not yet decode an incoming `ReadyUp` byte stream (`NetDemo` only
-decodes `InputMessage`), so nothing calls `SetReady` outside tests.
+host decodes incoming `ReadyUp` through `HostInbox.Dispatch` (below).
+
+### HostInbox
+
+<!-- describes: Assets/Scripts/Hullbreach.Net/HostInbox.cs::HostInbox -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/HostInbox.cs::HostInbox.Dispatch -->
+
+`HostInbox.Dispatch(server, peer, buffer, length)` reads the `MessageKind`
+byte of one datagram from a peer and calls `SetInput` (`Input`) or
+`SetReady` (`ReadyUp`). It returns false, applying nothing, for an empty
+datagram, a truncated or malformed message, or a kind a client must not send.
+The peer is always the transport's sender id. `NetDemo` calls it for every
+datagram its server transport receives.
 
 ### JoinResult
 
