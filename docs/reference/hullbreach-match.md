@@ -100,8 +100,8 @@ event, so use the constructor with `winnerPeer = -1`) and exposes:
 - `Headline`: `VICTORY` / `DEFEAT` for the local peer, `<name> WINS` for a
   spectator or server view, `DRAW` when nobody won.
 - `Reason`: `Core breached`, `Opponent left the match (forfeit)`,
-  `Both cores breached`. A `MatchResult` without wording (a time limit
-  from S46-2, say) is shown as its spaced-out enum name and logged, never
+  `Both cores breached`, `Time limit reached`. A `MatchResult` without
+  wording is shown as its spaced-out enum name and logged, never
   thrown on, so adding a reason needs no change here beyond nicer text.
 - `Duration` (`m:ss`, `h:mm:ss` from an hour) and one `ResultsPlayerRow`
   per side: name (display name from `nameOf`, else `Player 1` / `Player 2`),

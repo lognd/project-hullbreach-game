@@ -41,6 +41,12 @@ namespace Hullbreach.Match.Tests
         }
 
         [Test]
+        public void TimeLimit_NamesTheLimit()
+        {
+            Assert.That(Make(MatchResult.TimeLimit, 1).Reason, Is.EqualTo("Time limit reached"));
+        }
+
+        [Test]
         public void Draw_HasNoWinner()
         {
             var m = Make(MatchResult.Draw, -1, 1);

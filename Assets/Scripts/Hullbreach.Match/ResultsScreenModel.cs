@@ -139,6 +139,7 @@ namespace Hullbreach.Match
                 case MatchResult.CoreBreached: return "Core breached";
                 case MatchResult.Forfeit: return "Opponent left the match (forfeit)";
                 case MatchResult.Draw: return "Both cores breached";
+                case MatchResult.TimeLimit: return "Time limit reached";
                 case MatchResult.None: return "Match ended";
                 default:
                     // New reasons (time limit, S46-2) arrive as enum names; show them spaced out.
