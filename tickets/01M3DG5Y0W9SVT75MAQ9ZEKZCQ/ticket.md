@@ -7,13 +7,13 @@ priority = "critical"
 parent = "01M3DG5Y05HP0YSRB6819FBK2S"
 reporter = "human"
 created = "2026-09-26T00:00:00Z"
-updated = "2026-09-26T00:00:00Z"
+updated = "2026-10-26T09:10:59Z"
 aliases = ["T-0028"]
 labels = ["jira:SCRUM-60", "owner:GingerVHS", "game", "physics", "milestone:0.1.0"]
 
 [[acceptance]]
 text = "A thruster mounted off the center of mass produces rotation as well as translation."
-bound = false
+bound = true
 
 [[acceptance]]
 text = "Doubling a ship's mass with no added thrust roughly halves its acceleration."
