@@ -6,7 +6,7 @@ category = "todo"
 priority = "medium"
 reporter = "lognd"
 created = "2026-10-26T05:11:25Z"
-updated = "2026-10-26T05:11:25Z"
+updated = "2026-10-26T05:15:40Z"
 +++
 
 found while working ~3Y92T1Z: ServerSimulation.ApplyProjectileImpact never destroys the core (key != CoreKey) and nothing constructs Hullbreach.Match.MatchStateMachine, so MatchEndFeed.Shared is still never raised in a live match.
