@@ -14,7 +14,7 @@ labels = ["jira:SCRUM-125", "owner:mcnairrobotics", "game", "milestone:0.1.0"]
 
 [[acceptance]]
 text = "ReadyGate starts only when both peers are ready, and a disconnect before ready drops the peer and its flag"
-bound = false
+bound = true
 
 [[acceptance]]
 text = "With RequireReady on, ServerSimulation starts the match only after both peers ready and sends a reliable MatchStarted to both"
