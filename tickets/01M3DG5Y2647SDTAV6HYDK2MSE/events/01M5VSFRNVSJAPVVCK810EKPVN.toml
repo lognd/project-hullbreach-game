@@ -1,0 +1,6 @@
+kind = "field"
+field = "scope"
+new = ["docs/reference/hullbreach-net.md", "Assets/Scripts/Hullbreach.Net/BlockGridDesign.cs*", "Assets/Tests/EditMode/Hullbreach.Net.Tests/BlockGridDesignTests.cs*"]
+at = "2026-10-26T09:43:24Z"
+actor = "mcnairrobotics"
+rev = 1
