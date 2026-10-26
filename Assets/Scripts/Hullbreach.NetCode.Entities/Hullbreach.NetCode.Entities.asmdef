@@ -5,6 +5,7 @@
         "Hullbreach.Core",
         "Hullbreach.Builder",
         "Hullbreach.Net",
+        "Hullbreach.Match",
         "Hullbreach.Platform",
         "Hullbreach.Ship",
         "Unity.Burst",
