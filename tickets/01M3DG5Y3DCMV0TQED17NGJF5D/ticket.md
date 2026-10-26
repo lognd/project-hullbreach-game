@@ -2,13 +2,14 @@
 id = "01M3DG5Y3DCMV0TQED17NGJF5D"
 title = "S48-2: Interpolation for the opponent ship and projectiles"
 type = "task"
-category = "todo"
+category = "done"
+outcome = "fixed"
 priority = "critical"
 points = 3
 parent = "01M3DG5Y157XVFXF2844EP0ZKH"
 reporter = "human"
 created = "2026-09-26T00:00:00Z"
-updated = "2026-10-26T08:23:04Z"
+updated = "2026-10-26T08:23:16Z"
 aliases = ["T-0109"]
 labels = ["jira:SCRUM-165", "owner:mcnairrobotics", "game", "netcode", "milestone:0.2.0"]
 
