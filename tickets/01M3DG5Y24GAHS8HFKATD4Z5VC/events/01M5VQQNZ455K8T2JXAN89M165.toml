@@ -1,0 +1,6 @@
+kind = "comment"
+subtype = "note"
+body = "Reconciliation 2026-10-26: wire and client side exist (BlockPlaced message, ClientReplica.ApplyBlockPlaced, round-trip tests), but ServerSimulation.TryPlaceBlock refuses unless the peer is in build mode (state.IsBuilding), so mid-match placement is gated off. Enabling it is a rule change that depends on S34-3 (cooldown/cost) and the frozen-vs-drifting decision, so it is not implemented here. Left open."
+at = "2026-10-26T09:12:47Z"
+actor = "mcnairrobotics"
+rev = 1
