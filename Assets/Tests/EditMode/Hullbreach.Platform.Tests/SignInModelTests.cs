@@ -47,8 +47,7 @@ namespace Hullbreach.Platform.Tests
             Assert.IsNull(_model.LastStatus);
         }
 
-        // frob:ticket ~BDSPXJD
-        // frob:tests SignInModel.SubmitClearing
+        // frob:ticket 01M3DG5Y1903PCF86DJBDSPXJD
         [Test]
         public void SubmitClearingBlanksPasswordFieldAfterEverySubmit()
         {

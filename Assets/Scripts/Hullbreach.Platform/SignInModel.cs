@@ -105,7 +105,7 @@ namespace Hullbreach.Platform
         }
 
         // Reads the password, blanks the field before sending, then submits (S07-2 criterion 3).
-        // frob:ticket ~BDSPXJD
+        // frob:ticket 01M3DG5Y1903PCF86DJBDSPXJD
         // frob:doc docs/platform-link.md#sign-in-screen
         public void SubmitClearing(string username, Func<string> readPassword, Action<string> writePassword)
         {

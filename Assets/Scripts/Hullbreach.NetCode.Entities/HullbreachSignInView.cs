@@ -54,7 +54,7 @@ namespace Hullbreach.NetCode.Entities
         void SubmitFromField(string _) => Submit();
 
         // The model blanks the password field as it sends, so the clearing is unit-tested.
-        // frob:ticket ~BDSPXJD
+        // frob:ticket 01M3DG5Y1903PCF86DJBDSPXJD
         void Submit() =>
             _model.SubmitClearing(usernameInput.text, () => passwordInput.text, v => passwordInput.text = v);
 
