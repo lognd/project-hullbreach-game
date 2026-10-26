@@ -81,6 +81,23 @@ namespace Hullbreach.Net
             _rng = seed.HasValue ? new Random(seed.Value) : new Random();
         }
 
+        // Hub tuned to a throttled link: one-way delay is half the round trip,
+        // rounded down to whole ticks plus one tick of jitter for the fraction.
+        // frob:ticket 01M3DG5Y3EWDFMPEXFWR9YHWQY
+        // frob:doc docs/reference/hullbreach-net.md#loopbacktransport
+        public static LoopbackTransport Throttled(float tickRate, float roundTripMs, float lossRate, int? seed = null)
+        {
+            double oneWayTicks = roundTripMs * 0.5 * 0.001 * tickRate;
+            int whole = (int)Math.Floor(oneWayTicks + 1e-6);
+            var hub = new LoopbackTransport(seed)
+            {
+                DelayTicks = whole,
+                JitterTicks = oneWayTicks - whole > 1e-6 ? 1 : 0,
+                UnreliableDropRate = lossRate,
+            };
+            return hub;
+        }
+
         // frob:doc docs/reference/hullbreach-net.md#loopbacktransport
         public ITransport CreateEndpoint(out int id)
         {
