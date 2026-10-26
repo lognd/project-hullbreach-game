@@ -1,0 +1,7 @@
+kind = "transition"
+from = "done"
+to = "todo"
+reason = "criterion 3 was bound to Builder tests only; no test covered attached-and-moves-with-ship"
+at = "2026-10-26T09:03:31Z"
+actor = "mcnairrobotics"
+rev = 1

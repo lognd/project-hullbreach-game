@@ -2,13 +2,12 @@
 id = "01M3DG5Y0KYH80B8DZANENR2DM"
 title = "S30: Place a block with two clicks"
 type = "story"
-category = "done"
-outcome = "done"
+category = "todo"
 priority = "critical"
 parent = "01M3DG5Y03DJ72WRTEGD6EBC3C"
 reporter = "human"
 created = "2026-09-26T00:00:00Z"
-updated = "2026-10-26T08:20:26Z"
+updated = "2026-10-26T09:03:31Z"
 aliases = ["T-0019"]
 labels = ["jira:SCRUM-51", "owner:stevendangkhoi", "game", "milestone:0.1.0"]
 
