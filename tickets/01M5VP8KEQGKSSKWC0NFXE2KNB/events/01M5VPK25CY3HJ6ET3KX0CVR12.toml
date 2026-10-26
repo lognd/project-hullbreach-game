@@ -1,0 +1,7 @@
+kind = "field"
+field = "labels"
+old = ["game"]
+new = ["game", "creates:changelog.d/01M5VP8KEQGKSSKWC0NFXE2KNB.fixed.md"]
+at = "2026-10-26T08:52:47Z"
+actor = "mcnairrobotics"
+rev = 1

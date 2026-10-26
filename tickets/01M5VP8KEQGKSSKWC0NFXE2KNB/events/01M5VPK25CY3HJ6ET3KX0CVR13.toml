@@ -1,0 +1,6 @@
+kind = "field"
+field = "scope"
+new = ["Assets/Scripts/Hullbreach.Net/**", "Assets/Scripts/Hullbreach.Game/NetDemo.cs", "Assets/Scripts/Hullbreach.NetCode.Entities/HullbreachNetCodeClientSystem.cs", "Assets/Tests/EditMode/Hullbreach.Net.Tests/**", "docs/reference/hullbreach-net.md", "docs/netcode.md", "changelog.d/01M5VP8KEQGKSSKWC0NFXE2KNB.fixed.md"]
+at = "2026-10-26T08:52:47Z"
+actor = "mcnairrobotics"
+rev = 1
