@@ -3,6 +3,7 @@
     "rootNamespace": "Hullbreach.Ship.Tests",
     "references": [
         "Hullbreach.Core",
+        "Hullbreach.Builder",
         "Hullbreach.Ship",
         "Hullbreach.World",
         "Unity.Mathematics",
