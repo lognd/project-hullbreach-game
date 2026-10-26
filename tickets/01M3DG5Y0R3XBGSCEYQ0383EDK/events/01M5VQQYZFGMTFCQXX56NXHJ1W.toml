@@ -1,0 +1,6 @@
+kind = "comment"
+subtype = "note"
+body = "Reconciliation 2026-10-26: S35 not started; blocked on the storage decision (local vs platform) and the design file format, see S35-1 ~YDK2MSE. Both acceptance criteria unevidenced."
+at = "2026-10-26T09:12:56Z"
+actor = "mcnairrobotics"
+rev = 1
