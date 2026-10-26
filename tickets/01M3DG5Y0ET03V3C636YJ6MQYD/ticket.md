@@ -7,7 +7,7 @@ priority = "critical"
 points = 3
 reporter = "human"
 created = "2026-09-26T00:00:00Z"
-updated = "2026-10-26T05:09:37Z"
+updated = "2026-10-26T05:09:38Z"
 aliases = ["T-0014"]
 labels = ["jira:SCRUM-37", "owner:lognd", "game", "platform", "milestone:0.2.0"]
 
@@ -17,7 +17,7 @@ bound = true
 
 [[acceptance]]
 text = "A result submitted by an unauthenticated caller is rejected."
-bound = false
+bound = true
 
 [[acceptance]]
 text = "Both players' histories show the match within seconds of the report."
