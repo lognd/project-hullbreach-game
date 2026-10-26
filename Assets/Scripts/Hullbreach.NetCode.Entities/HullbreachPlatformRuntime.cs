@@ -72,6 +72,7 @@ namespace Hullbreach.NetCode.Entities
     {
         static PlatformConfig s_config;
         static PlatformClient s_client;
+        static SessionTokenStore s_store;
 
         // frob:doc docs/platform-link.md#configuration
         public static readonly IPlatformLog Log = new HullbreachUnityPlatformLog();
@@ -93,6 +94,11 @@ namespace Hullbreach.NetCode.Entities
         public static PlatformClient Client =>
             s_client ??= new PlatformClient(Config, new HullbreachUnityPlatformHttp(), Log);
 
+        // Remembered session file under the per-user data folder (S07-3).
+        // frob:doc docs/platform-link.md#remembered-session
+        public static SessionTokenStore TokenStore =>
+            s_store ??= new SessionTokenStore(System.IO.Path.Combine(Application.persistentDataPath, "platform-session.txt"), Log);
+
         // Headless demo clients cannot click the sign-in screen, so a token handed
         // over in the environment signs them in before the first scene loads.
         // frob:doc docs/platform-link.md#client-session
@@ -106,6 +112,7 @@ namespace Hullbreach.NetCode.Entities
         {
             s_config = null;
             s_client = null;
+            s_store = null;
         }
     }
 }

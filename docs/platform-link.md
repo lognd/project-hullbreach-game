@@ -292,8 +292,8 @@ which is fine under the .NET SDK where the test runs.
 ## Client session
 
 `PlatformSession` holds the signed-in username and token for this run of
-the game only; nothing is written to disk (persisting the session between
-launches is S07-3). The sign-in screen writes it; the client handshake
+the game only; the [remembered session](#remembered-session) is what
+carries it to the next launch. The sign-in screen writes it; the client handshake
 system reads it when it says hello. `PlayOffline` records that the player
 chose to play without an account (the hello then carries no token, so the
 server treats them as a guest or, in required mode, turns them away);
@@ -375,6 +375,37 @@ the player is simply offline.
 <!-- describes: Assets/Scripts/Hullbreach.Platform/SignInModel.cs::SignInModel.MessageFor -->
 <!-- describes: Assets/Scripts/Hullbreach.NetCode.Entities/HullbreachSignInView.cs::HullbreachSignInView -->
 <!-- describes: Assets/Editor/Hullbreach.Editor/LobbySceneBuilder.cs::LobbySceneBuilder.AddSignInMenu -->
+
+## Remembered session
+
+S07-3. After a successful sign-in `SessionTokenStore` writes the username
+and token to `platform-session.txt` under Unity's per-user
+`Application.persistentDataPath` (two lines: username, token; the file
+is plain text, so it relies on the per-user folder's permissions). On the
+next launch the sign-in screen calls `SignInModel.TryRestore`, which
+checks the stored token with `GET /api/v1/auth/session` while the form
+shows "Restoring your session...":
+
+| Platform answer | Result | Stored file |
+| --- | --- | --- |
+| 200 | `SignedIn` as the stored username; `PlatformSession.Token` carries the token | kept |
+| 401 | form shown with "Your saved session expired. Sign in again." | deleted |
+| unreachable / other | form shown, no message | kept for next launch |
+
+The stored token is presented when joining a match exactly as a fresh one
+is: the client handshake reads `PlatformSession.Token` into the hello (see
+[the handshake](#handshake)). **Sign out** deletes
+the file; **Play offline** leaves it alone. A malformed file is deleted,
+and an unwritable folder only logs a warning (the player signs in again
+next launch). Neither the token nor the password is ever logged.
+
+<!-- describes: Assets/Scripts/Hullbreach.Platform/SessionTokenStore.cs::SessionTokenStore -->
+<!-- describes: Assets/Scripts/Hullbreach.Platform/SessionTokenStore.cs::SessionTokenStore.SessionTokenStore -->
+<!-- describes: Assets/Scripts/Hullbreach.Platform/SessionTokenStore.cs::SessionTokenStore.Save -->
+<!-- describes: Assets/Scripts/Hullbreach.Platform/SessionTokenStore.cs::SessionTokenStore.TryLoad -->
+<!-- describes: Assets/Scripts/Hullbreach.Platform/SessionTokenStore.cs::SessionTokenStore.Clear -->
+<!-- describes: Assets/Scripts/Hullbreach.Platform/SignInModel.cs::SignInModel.TryRestore -->
+<!-- describes: Assets/Scripts/Hullbreach.NetCode.Entities/HullbreachPlatformRuntime.cs::HullbreachPlatformRuntime.TokenStore -->
 
 ## Hullbreach.Platform module reference
 
