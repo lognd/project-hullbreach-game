@@ -1,0 +1,7 @@
+kind = "field"
+field = "acceptance"
+new = ["Reliable sends arrive in send order, including same-tick and under jitter"]
+moved = []
+at = "2026-10-26T08:48:21Z"
+actor = "mcnairrobotics"
+rev = 1

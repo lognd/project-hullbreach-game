@@ -70,11 +70,9 @@ namespace Hullbreach.Net.Tests
             server.Join(p1, Ship());
             server.Join(p2, Ship());
 
-            // One Pump per message: LoopbackTransport.Tick releases same-tick messages newest-first.
+            // Same-tick messages now arrive in send order, so one Pump drains all three.
             SendReady(c1, serverId, true);
-            Pump(hub, serverTransport, server);
             SendReady(c1, serverId, false);
-            Pump(hub, serverTransport, server);
             SendReady(c2, serverId, true);
             Pump(hub, serverTransport, server);
             Assert.IsNull(server.Match);

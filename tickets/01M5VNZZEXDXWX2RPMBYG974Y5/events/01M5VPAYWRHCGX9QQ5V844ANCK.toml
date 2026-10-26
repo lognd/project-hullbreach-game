@@ -1,0 +1,6 @@
+kind = "field"
+field = "scope"
+new = ["Assets/Scripts/Hullbreach.Net/LoopbackTransport.cs", "Assets/Tests/EditMode/Hullbreach.Net.Tests/*.cs", "docs/reference/hullbreach-net.md", "changelog.d/*"]
+at = "2026-10-26T08:48:21Z"
+actor = "mcnairrobotics"
+rev = 1
