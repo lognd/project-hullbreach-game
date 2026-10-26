@@ -2,7 +2,8 @@
 id = "01M3DG5Y22DWE1666WKFYRMFJ5"
 title = "S33-3: Palette tests"
 type = "task"
-category = "todo"
+category = "done"
+outcome = "done"
 priority = "high"
 points = 1
 parent = "01M3DG5Y0PKYGBXMHTC9BQE40M"
