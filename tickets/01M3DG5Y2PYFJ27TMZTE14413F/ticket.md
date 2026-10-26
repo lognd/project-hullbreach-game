@@ -2,7 +2,8 @@
 id = "01M3DG5Y2PYFJ27TMZTE14413F"
 title = "S40-1: GravityField, GravityBody, and OrbitHelper with the attractive-then-repulsive force law"
 type = "task"
-category = "todo"
+category = "done"
+outcome = "done"
 priority = "high"
 points = 3
 parent = "01M3DG5Y0X02V7SGJ0Y3J7550F"
