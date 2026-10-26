@@ -1,0 +1,6 @@
+kind = "comment"
+subtype = "note"
+body = "Criteria 1 and 2 are evidenced by plain-C# tests (bound), server side only, not Unity-compiled. Criterion 3 (well area and lifetime visible to both players) is unmet, see S43-2 note. Story stays open until S43-2 closes."
+at = "2026-10-26T09:13:39Z"
+actor = "mcnairrobotics"
+rev = 1
