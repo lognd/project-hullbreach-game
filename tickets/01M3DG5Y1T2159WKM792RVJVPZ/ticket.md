@@ -2,7 +2,8 @@
 id = "01M3DG5Y1T2159WKM792RVJVPZ"
 title = "S30-3: Edit-mode tests for placement rules and the builder session"
 type = "task"
-category = "todo"
+category = "done"
+outcome = "done"
 priority = "critical"
 points = 2
 parent = "01M3DG5Y0KYH80B8DZANENR2DM"
