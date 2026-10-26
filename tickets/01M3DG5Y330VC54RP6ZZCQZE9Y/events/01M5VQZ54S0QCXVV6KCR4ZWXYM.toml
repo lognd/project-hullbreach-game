@@ -1,0 +1,6 @@
+kind = "comment"
+subtype = "note"
+body = "Reconciled against code. Not implemented: no radar warning for hazards. Needs Unity HUD work and depends on S45-1. Left open."
+at = "2026-10-26T09:16:52Z"
+actor = "mcnairrobotics"
+rev = 1

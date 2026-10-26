@@ -1,0 +1,6 @@
+kind = "comment"
+subtype = "note"
+body = "Reconciled against code. Not implemented: no hazard spawner anywhere in Assets. Open design: hazard types, spawn lead time, positions, interaction with ServerSimulation. Left open."
+at = "2026-10-26T09:16:52Z"
+actor = "mcnairrobotics"
+rev = 1
