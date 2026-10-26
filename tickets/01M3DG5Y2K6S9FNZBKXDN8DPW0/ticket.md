@@ -2,7 +2,8 @@
 id = "01M3DG5Y2K6S9FNZBKXDN8DPW0"
 title = "S39-2: SteeringModel and BlockFacing for control fins"
 type = "task"
-category = "todo"
+category = "done"
+outcome = "done"
 priority = "critical"
 points = 2
 parent = "01M3DG5Y0W9SVT75MAQ9ZEKZCQ"
