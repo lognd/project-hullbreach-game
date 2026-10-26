@@ -12,7 +12,7 @@ scope = ["Assets/Scripts/Hullbreach.Net/**", "Assets/Scripts/Hullbreach.Game/Net
 
 [[acceptance]]
 text = "Poses are stamped with the server tick; the strict ThrottledLink smoothing assertion passes"
-bound = false
+bound = true
 +++
 
 found while working ~YG974Y5: with LoopbackTransport delivering same-tick messages in send order, ThrottledLink_InterpolatedViewJumpsLessThanRawSnapping needed a 1.25x tolerance. Poses carry no server tick, so two arriving on one tick get span 0 and snap. Fix: stamp with a server tick, then restore the strict assertion.
