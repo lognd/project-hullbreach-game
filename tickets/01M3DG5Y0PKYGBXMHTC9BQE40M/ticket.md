@@ -2,22 +2,23 @@
 id = "01M3DG5Y0PKYGBXMHTC9BQE40M"
 title = "S33: Choose from a block palette"
 type = "story"
-category = "todo"
+category = "done"
+outcome = "done"
 priority = "high"
 parent = "01M3DG5Y03DJ72WRTEGD6EBC3C"
 reporter = "human"
 created = "2026-09-26T00:00:00Z"
-updated = "2026-09-26T00:00:00Z"
+updated = "2026-10-26T08:20:26Z"
 aliases = ["T-0022"]
 labels = ["jira:SCRUM-54", "owner:stevendangkhoi", "game", "milestone:0.1.0"]
 
 [[acceptance]]
 text = "The builder shows every available block type with its mass and any cost."
-bound = false
+bound = true
 
 [[acceptance]]
 text = "The ship's total mass and block count are visible and update as blocks are added or removed."
-bound = false
+bound = true
 +++
 
 https://aliens-against-humanity.atlassian.net/browse/SCRUM-54

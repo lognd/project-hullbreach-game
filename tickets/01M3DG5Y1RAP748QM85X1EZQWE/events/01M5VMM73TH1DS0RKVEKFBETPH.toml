@@ -1,0 +1,8 @@
+kind = "transition"
+from = "todo"
+to = "done"
+outcome = "done"
+reason = "ledger-catch-up-code-already-shipped"
+at = "2026-10-26T08:18:28Z"
+actor = "mcnairrobotics"
+rev = 1
