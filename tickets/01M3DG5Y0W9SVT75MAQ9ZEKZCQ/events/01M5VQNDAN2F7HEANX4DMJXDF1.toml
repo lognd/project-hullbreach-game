@@ -1,0 +1,6 @@
+kind = "comment"
+subtype = "note"
+body = "Criteria 1-3 are evidenced by plain-C# ShipBodyTests (bound), but the story cannot close while child S39-3 (Unity ShipController keyboard mapping) is open. Close S39-3 after a Unity editor verification, then close this story."
+at = "2026-10-26T09:11:32Z"
+actor = "mcnairrobotics"
+rev = 1

@@ -1,0 +1,5 @@
+kind = "changelog-exempt"
+reason = "ledger-catch-up-code-already-shipped, criteria bound to plain-C# ShipBodyTests, not Unity-compiled, child S39-3 (Unity ShipController) stays open"
+at = "2026-10-26T09:11:29Z"
+actor = "mcnairrobotics"
+rev = 1
