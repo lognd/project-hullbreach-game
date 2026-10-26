@@ -2,11 +2,11 @@
 id = "01M5VPSN6KVQRJ4PEF61GQH13M"
 title = "ClientReplica accepts older-server-tick poses as the newer interpolation sample"
 type = "bug"
-category = "todo"
+category = "in-progress"
 priority = "medium"
 reporter = "mcnairrobotics"
 created = "2026-10-26T08:56:23Z"
-updated = "2026-10-26T08:56:23Z"
+updated = "2026-10-26T08:56:53Z"
 labels = ["game", "creates:changelog.d/*.fixed.md"]
 scope = ["Assets/Scripts/Hullbreach.Net/ClientReplica.cs", "Assets/Tests/EditMode/Hullbreach.Net.Tests/ClientInterpolationTests.cs", "docs/reference/hullbreach-net.md", "changelog.d/*.fixed.md"]
 
