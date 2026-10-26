@@ -2,7 +2,8 @@
 id = "01M3DG5Y2GB5TTGSV0X6FE2XGE"
 title = "S38-2: BucklingAnalysis and GeometricStiffness for compressive failure"
 type = "task"
-category = "todo"
+category = "done"
+outcome = "fixed"
 priority = "critical"
 points = 5
 parent = "01M3DG5Y0V6ZWSJZQW0H5VM80Z"
