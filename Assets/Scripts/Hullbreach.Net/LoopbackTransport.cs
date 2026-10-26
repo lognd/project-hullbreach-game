@@ -59,6 +59,10 @@ namespace Hullbreach.Net
         // each target's own queue rather than every message in the hub.
         readonly Dictionary<int, List<Pending>> _inFlight = new Dictionary<int, List<Pending>>();
 
+        // Latest ready tick handed to a reliable send per (from, to) link, so
+        // jitter can never let a later reliable send overtake an earlier one.
+        readonly Dictionary<(int from, int to), int> _reliableFloor = new Dictionary<(int, int), int>();
+
         int _nextId = 1;
         int _tick;
         readonly Random _rng;
@@ -120,7 +124,14 @@ namespace Hullbreach.Net
         // frob:doc docs/reference/hullbreach-net.md#loopbacktransport
         public void Disconnect(int id, int other)
         {
-            if (_endpoints.Remove(id)) _inFlight.Remove(id);
+            if (_endpoints.Remove(id))
+            {
+                _inFlight.Remove(id);
+                var stale = new List<(int from, int to)>();
+                foreach (var key in _reliableFloor.Keys)
+                    if (key.from == id || key.to == id) stale.Add(key);
+                foreach (var key in stale) _reliableFloor.Remove(key);
+            }
             if (_endpoints.TryGetValue(other, out var ep)) ep.RaiseDisconnected(id);
         }
 
@@ -131,11 +142,19 @@ namespace Hullbreach.Net
 
             int jitter = JitterTicks > 0 ? _rng.Next(0, JitterTicks + 1) : 0;
             var data = payload.ToArray();
-            list.Add(new Pending { From = from, ReadyAtTick = _tick + DelayTicks + jitter, Data = data });
+            int readyAt = _tick + DelayTicks + jitter;
+            if (reliable)
+            {
+                // Reliable-ordered: never ready earlier than the previous reliable on this link.
+                if (_reliableFloor.TryGetValue((from, to), out int floor) && floor > readyAt) readyAt = floor;
+                _reliableFloor[(from, to)] = readyAt;
+            }
+            list.Add(new Pending { From = from, ReadyAtTick = readyAt, Data = data });
         }
 
         // Moves every message whose delay has elapsed into its target's
-        // ready queue. Call once per simulation tick.
+        // ready queue in send order. Call once per simulation tick.
+        // frob:ticket 01M5VNZZEXDXWX2RPMBYG974Y5
         // frob:doc docs/reference/hullbreach-net.md#loopbacktransport
         public void Tick()
         {
@@ -146,14 +165,16 @@ namespace Hullbreach.Net
                 if (list.Count == 0) continue;
                 if (!_endpoints.TryGetValue(kv.Key, out var ep)) { list.Clear(); continue; }
 
-                for (int i = list.Count - 1; i >= 0; i--)
+                // Forward pass keeps send order for everything released on the same tick.
+                int kept = 0;
+                for (int i = 0; i < list.Count; i++)
                 {
                     if (list[i].ReadyAtTick <= _tick)
-                    {
                         ep.Ready.Enqueue((list[i].From, list[i].Data));
-                        list.RemoveAt(i);
-                    }
+                    else
+                        list[kept++] = list[i];
                 }
+                list.RemoveRange(kept, list.Count - kept);
             }
         }
     }

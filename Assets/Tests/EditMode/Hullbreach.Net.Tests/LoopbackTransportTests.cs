@@ -97,30 +97,92 @@ namespace Hullbreach.Net.Tests
             Assert.IsFalse(a.TryReceive(out _, new byte[16], out _));
         }
 
-        [Test]
-        public void Jitter_CanReorderTwoReliableMessages()
+        static System.Collections.Generic.List<string> Drain(LoopbackTransport hub, ITransport rx, int ticks)
         {
-            // A wide jitter window with a fixed seed known to reorder.
-            var hub = new LoopbackTransport(seed: 42) { DelayTicks = 1, JitterTicks = 10 };
+            var order = new System.Collections.Generic.List<string>();
+            var buf = new byte[16];
+            for (int i = 0; i < ticks; i++)
+            {
+                hub.Tick();
+                while (rx.TryReceive(out _, buf, out int len))
+                    order.Add(Encoding.ASCII.GetString(buf, 0, len));
+            }
+            return order;
+        }
+
+        [Test]
+        public void ReliableSends_InOneTick_ArriveInSendOrder()
+        {
+            var hub = new LoopbackTransport { DelayTicks = 1 };
             var a = hub.CreateEndpoint(out int idA);
             var b = hub.CreateEndpoint(out int idB);
             hub.Connect(idA, idB);
 
-            a.SendReliable(idB, Payload("first"));
-            a.SendReliable(idB, Payload("second"));
+            for (int i = 0; i < 5; i++) a.SendReliable(idB, Payload("m" + i));
 
-            var order = new System.Collections.Generic.List<string>();
-            var buf = new byte[16];
-            for (int i = 0; i < 20; i++)
+            CollectionAssert.AreEqual(new[] { "m0", "m1", "m2", "m3", "m4" }, Drain(hub, b, 3));
+        }
+
+        [Test]
+        public void ReliableSends_StayOrdered_UnderJitter()
+        {
+            for (int seed = 0; seed < 50; seed++)
             {
-                hub.Tick();
-                while (b.TryReceive(out _, buf, out int len))
-                    order.Add(Encoding.ASCII.GetString(buf, 0, len));
-            }
+                var hub = new LoopbackTransport(seed) { DelayTicks = 1, JitterTicks = 10 };
+                var a = hub.CreateEndpoint(out int idA);
+                var b = hub.CreateEndpoint(out int idB);
+                hub.Connect(idA, idB);
 
-            Assert.AreEqual(2, order.Count);
-            CollectionAssert.Contains(order, "first");
-            CollectionAssert.Contains(order, "second");
+                var want = new System.Collections.Generic.List<string>();
+                for (int i = 0; i < 20; i++) { want.Add("m" + i); a.SendReliable(idB, Payload("m" + i)); }
+
+                CollectionAssert.AreEqual(want, Drain(hub, b, 40), "seed " + seed);
+            }
+        }
+
+        [Test]
+        public void ReliableSends_StayOrdered_OnThrottledProfile()
+        {
+            var hub = LoopbackTransport.Throttled(50f, 100f, 0.02f, seed: 7);
+            var a = hub.CreateEndpoint(out int idA);
+            var b = hub.CreateEndpoint(out int idB);
+            hub.Connect(idA, idB);
+
+            var want = new System.Collections.Generic.List<string>();
+            var got = new System.Collections.Generic.List<string>();
+            for (int t = 0; t < 100; t++)
+            {
+                for (int k = 0; k < 2; k++)
+                {
+                    string m = "t" + t + "k" + k;
+                    want.Add(m);
+                    a.SendReliable(idB, Payload(m));
+                }
+                got.AddRange(Drain(hub, b, 1));
+            }
+            got.AddRange(Drain(hub, b, 10));
+
+            CollectionAssert.AreEqual(want, got);
+        }
+
+        [Test]
+        public void Jitter_CanReorderUnreliableMessages()
+        {
+            bool reordered = false;
+            for (int seed = 0; seed < 50 && !reordered; seed++)
+            {
+                var hub = new LoopbackTransport(seed) { DelayTicks = 1, JitterTicks = 10 };
+                var a = hub.CreateEndpoint(out int idA);
+                var b = hub.CreateEndpoint(out int idB);
+                hub.Connect(idA, idB);
+                for (int i = 0; i < 10; i++) a.SendUnreliable(idB, Payload("m" + i));
+                var got = Drain(hub, b, 20);
+                Assert.AreEqual(10, got.Count);
+                var sorted = new System.Collections.Generic.List<string>(got);
+                sorted.Sort(System.StringComparer.Ordinal);
+                reordered = !sorted.Equals(got) && !System.Linq.Enumerable.SequenceEqual(sorted, got);
+            }
+            Assert.IsTrue(reordered, "unreliable sends may reorder under jitter");
         }
     }
 }

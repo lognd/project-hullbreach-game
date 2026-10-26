@@ -164,12 +164,13 @@ logical participant (the server, each client); every endpoint can address
 every other by the peer id `CreateEndpoint` returned for it.
 
 Simulates a lossy, jittery network on purpose (see `UnreliableDropRate`/
-`DelayTicks`/`JitterTicks`): unreliable sends may be dropped, and BOTH
-channels may be delivered out of send order, exactly like a real
-transport's internal channels can. Nothing here ever drops or duplicates a
-reliable message; it only reorders and delays it, which is why
-`ClientReplica` buffers reliable events by sequence number rather than
-trusting arrival order.
+`DelayTicks`/`JitterTicks`): unreliable sends may be dropped or delivered
+out of send order. Reliable sends are never dropped or duplicated and are
+delivered in send order per (sender, receiver) link: jitter can delay a
+reliable message but never lets a later one overtake it, and messages
+released on the same `Tick` come out oldest first. `ClientReplica` still
+buffers reliable events by sequence number, because a real transport is
+not required to keep that order (see the `SendReliable` contract above).
 
 Advance time by calling `Tick` once per simulation tick; nothing is
 delivered until enough ticks have passed.
