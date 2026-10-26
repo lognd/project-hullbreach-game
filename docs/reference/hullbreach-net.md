@@ -299,6 +299,35 @@ empty. `Read` consumes the kind byte, and fails the reader on a truncated
 body, an id longer than `MaxIdLength` or an unknown result byte. Draws are
 sent too; only the platform reporter skips them.
 
+### ReadyUp
+
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::ReadyUp -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::ReadyUp.ByteSize -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::ReadyUp.Ready -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::ReadyUp.ReadyUp -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::ReadyUp.Write -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::ReadyUp.Read -->
+
+Client -> server, reliable (`MessageKind.ReadyUp` = 12): the peer is ready
+(or, with `false`, no longer ready) to start. Layout: kind u8, flag u8
+(0 or 1; `Read` fails the reader on anything else or a truncated body).
+The server only acts on it when `ServerSimulation.RequireReady` is on.
+
+### MatchStarted
+
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::MatchStarted -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::MatchStarted.ByteSize -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::MatchStarted.Sequence -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::MatchStarted.PeerA -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::MatchStarted.PeerB -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::MatchStarted.MatchStarted -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::MatchStarted.Write -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::MatchStarted.Read -->
+
+Server -> client, reliable ordered (`MessageKind.MatchStarted` = 13): both
+peers were ready and the match began. Layout: kind u8, sequence u32, peer A
+i32, peer B i32. Sent once to every connected peer.
+
 ### ShipState
 
 <!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::ShipState -->
@@ -468,6 +497,7 @@ and to which ship, without re-parsing wire bytes.
 <!-- describes: Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ClientReplica.MaxReliableWindow -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ClientReplica.TryDequeueEvent -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ClientReplica.BuildInput -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ClientReplica.MatchStartedPeers -->
 
 The non-authoritative twin of `ServerSimulation`: applies `ShipSnapshot`/
 `ShipState`/reliable events received over an `ITransport` (or fed directly
@@ -505,6 +535,9 @@ buffered and deferred counts are capped by the same constant) or
 bytes are read. A reliable message with a readable header but a short or
 undecodable body still consumes its sequence slot, so one bad message
 cannot stall the stream. Sequence comparison is wrap-safe.
+
+`MatchStartedPeers` is null until a `MatchStarted` arrives, then holds the
+two peer ids the server announced (a lobby can switch to the match view).
 
 ### ReplicaApplyResult
 
@@ -546,6 +579,8 @@ next expected sequence and then drains whatever the gap closing unblocks.
 <!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.MatchLog -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.MatchTimeLimitSeconds -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.Match -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.RequireReady -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.SetReady -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.ServerSimulation -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.Ships -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.MaxPeerId -->
@@ -627,6 +662,15 @@ whose tick is older than the last accepted one. Peer identity is always the
 `peer` argument, never `InputMessage.NetId`. Projectile hits test a circle
 of `ProjectileSpec.Radius` against the block cells (`ProjectileHitTest`)
 and skip the owner's ship.
+
+Ready-up (S28-3): with `RequireReady` on, joining no longer starts the match.
+The host calls `SetReady(peer, ready)` for each decoded `ReadyUp`; once both
+peers are ready the match starts and a reliable `MatchStarted` goes to both.
+A peer that leaves before the start drops out with its flag, so a newcomer
+can take its place. `SetReady` returns false when `RequireReady` is off or
+the peer is unknown. Default is off, which keeps start-on-second-join. The
+host does not yet decode an incoming `ReadyUp` byte stream (`NetDemo` only
+decodes `InputMessage`), so nothing calls `SetReady` outside tests.
 
 ### JoinResult
 
