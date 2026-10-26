@@ -14,7 +14,7 @@ labels = ["jira:SCRUM-123", "owner:mcnairrobotics", "game", "milestone:0.1.0"]
 
 [[acceptance]]
 text = "The wire serializer round-trips every NetMessages kind, including randomized inputs"
-bound = false
+bound = true
 
 [[acceptance]]
 text = "Decoding untrusted bytes is bounded: truncated, oversized and malformed input fails the reader without throwing"
