@@ -60,6 +60,11 @@ namespace Hullbreach.Game
 
             _replica1 = new ClientReplica();
             _replica2 = new ClientReplica();
+
+            // Client 1 drives the thruster ship: predict it locally (S48-1).
+            _replica1.PredictionTickRate = tickRate;
+            _replica1.PredictionGravity = _server.Gravity;
+            _replica1.SetLocalShip((ushort)_peerThruster);
         }
 
         static ShipSnapshot Design(SnapshotBlock[] blocks, float2 position)
@@ -97,7 +102,9 @@ namespace Hullbreach.Game
 
             float thrust = Input.GetAxisRaw("Vertical");
             float steer = Input.GetAxisRaw("Horizontal");
-            SendInput(_client1Transport, InputMessage.FromFloats((ushort)_peerThruster, _clientTick, thrust, steer, false));
+            var localInput = InputMessage.FromFloats((ushort)_peerThruster, _clientTick, thrust, steer, false);
+            SendInput(_client1Transport, localInput);
+            _replica1.Predict(localInput);
 
             bool fire = _fireTimer <= 0f;
             if (fire) _fireTimer = 1f;
@@ -154,6 +161,7 @@ namespace Hullbreach.Game
                 float2 drawPos = ship.Position;
                 float drawRot = ship.Rotation;
                 if (replica.TryInterpolateAt(netId, renderTick, out var ip, out var ir)) { drawPos = ip; drawRot = ir; }
+                if (netId == (ushort)_peerThruster && replicaIndex == 1 && replica.TryGetPredicted(out var pp, out var pr)) { drawPos = pp; drawRot = pr; }
                 foreach (var block in ship.Grid.All)
                 {
                     var visKey = (replicaIndex, netId, block.Key);

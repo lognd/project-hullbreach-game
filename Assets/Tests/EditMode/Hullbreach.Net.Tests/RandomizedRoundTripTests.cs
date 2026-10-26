@@ -369,7 +369,8 @@ namespace Hullbreach.Net.Tests
             (ushort)rng.Next(0, ushort.MaxValue + 1),
             (short)rng.Next(short.MinValue, short.MaxValue + 1),
             (short)rng.Next(short.MinValue, short.MaxValue + 1),
-            (ushort)rng.Next(0, ushort.MaxValue + 1));
+            (ushort)rng.Next(0, ushort.MaxValue + 1),
+            (uint)rng.Next(int.MinValue, int.MaxValue));
 
         static void AssertShipStateEqual(ShipState expected, ShipState actual)
         {
@@ -380,6 +381,7 @@ namespace Hullbreach.Net.Tests
             Assert.AreEqual(expected.Vx, actual.Vx);
             Assert.AreEqual(expected.Vy, actual.Vy);
             Assert.AreEqual(expected.Av, actual.Av);
+            Assert.AreEqual(expected.AckedInputTick, actual.AckedInputTick);
         }
     }
 }

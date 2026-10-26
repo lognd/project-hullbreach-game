@@ -4,6 +4,7 @@ using Unity.Mathematics;
 using Hullbreach.Core;
 using Hullbreach.Platform;
 using Hullbreach.Ship;
+using Hullbreach.World;
 
 namespace Hullbreach.Net
 {
@@ -89,7 +90,28 @@ namespace Hullbreach.Net
             public ShipBody Body = new ShipBody();
             public PoseSample? Older;
             public PoseSample? Newer;
+
+            // Local-ship prediction (S48-1): a private body stepped by unacked inputs.
+            public ShipBody Predicted;
+            public bool PredictionStale = true;
         }
+
+        // One unacknowledged local input, kept to replay on top of each server pose.
+        readonly struct PendingInput
+        {
+            public readonly uint Tick;
+            public readonly ShipInput Input;
+
+            public PendingInput(uint tick, ShipInput input)
+            {
+                Tick = tick;
+                Input = input;
+            }
+        }
+
+        readonly List<PendingInput> _pendingInputs = new List<PendingInput>();
+        ushort _localNetId;
+        bool _hasLocal;
 
         readonly Dictionary<ushort, ReplicaShip> _ships = new Dictionary<ushort, ReplicaShip>();
         readonly Dictionary<uint, byte[]> _pendingReliable = new Dictionary<uint, byte[]>();
@@ -226,6 +248,103 @@ namespace Hullbreach.Net
             replica.Body.Rotation = sample.Rotation;
             replica.Body.Velocity = sample.Velocity;
             replica.Body.AngularVelocity = sample.AngularVelocity;
+
+            if (_hasLocal && state.NetId == _localNetId) Reconcile(replica, state.AckedInputTick);
+        }
+
+        // Server ticks per second the predicted body is stepped at; must match the server.
+        // frob:doc docs/reference/hullbreach-net.md#clientreplica
+        public float PredictionTickRate = 50f;
+
+        // Most unacknowledged inputs kept; the oldest is dropped past this so a dead link cannot grow memory.
+        // frob:doc docs/reference/hullbreach-net.md#clientreplica
+        public const int MaxPendingInputs = 128;
+
+        // Gravity the predicted body feels; set it to the server's field so prediction matches.
+        // frob:doc docs/reference/hullbreach-net.md#clientreplica
+        public GravityField PredictionGravity { get; set; }
+
+        // Distance the predicted position moved on the latest reconcile (0 = prediction was right).
+        // frob:doc docs/reference/hullbreach-net.md#clientreplica
+        public float LastCorrection { get; private set; }
+
+        // Inputs sent but not yet acknowledged by the server.
+        // frob:doc docs/reference/hullbreach-net.md#clientreplica
+        public int PendingInputCount => _pendingInputs.Count;
+
+        // Marks which ship this client drives; clears any prediction state for a previous one.
+        // frob:ticket 01M3DG5Y3C3EJ8YSKH8A4XH0S3
+        // frob:doc docs/reference/hullbreach-net.md#clientreplica
+        public void SetLocalShip(ushort netId)
+        {
+            _localNetId = netId;
+            _hasLocal = true;
+            _pendingInputs.Clear();
+            LastCorrection = 0f;
+        }
+
+        // Applies an input to the predicted local ship now, without waiting for the server.
+        // Returns false when no local ship is set or it is not known yet.
+        // frob:ticket 01M3DG5Y3C3EJ8YSKH8A4XH0S3
+        // frob:doc docs/reference/hullbreach-net.md#clientreplica
+        public bool Predict(InputMessage input)
+        {
+            if (!_hasLocal || !_ships.TryGetValue(_localNetId, out var replica)) return false;
+
+            var shipInput = new ShipInput(input.ThrustAxisFloat, input.SteerFloat, false);
+            if (_pendingInputs.Count >= MaxPendingInputs) _pendingInputs.RemoveAt(0);
+            _pendingInputs.Add(new PendingInput(input.Tick, shipInput));
+
+            EnsurePredicted(replica);
+            replica.Predicted.Step(shipInput, 1f / PredictionTickRate);
+            return true;
+        }
+
+        // The local ship's predicted pose. False when there is no local ship to predict.
+        // frob:ticket 01M3DG5Y3C3EJ8YSKH8A4XH0S3
+        // frob:doc docs/reference/hullbreach-net.md#clientreplica
+        public bool TryGetPredicted(out float2 position, out float rotation)
+        {
+            position = float2.zero;
+            rotation = 0f;
+            if (!_hasLocal || !_ships.TryGetValue(_localNetId, out var replica)) return false;
+
+            EnsurePredicted(replica);
+            position = replica.Predicted.Position;
+            rotation = replica.Predicted.Rotation;
+            return true;
+        }
+
+        // Builds (or rebuilds after a block change) the private predicted body from the replica's blocks.
+        void EnsurePredicted(ReplicaShip replica)
+        {
+            if (replica.Predicted != null && !replica.PredictionStale) return;
+
+            var body = new ShipBody { Gravity = PredictionGravity };
+            foreach (var kv in replica.Body.Grid.All) body.Grid.TryAdd(kv.Key, kv.Value);
+            body.RebuildDerivedViews();
+            body.Position = replica.Body.Position;
+            body.Rotation = replica.Body.Rotation;
+            body.Velocity = replica.Body.Velocity;
+            body.AngularVelocity = replica.Body.AngularVelocity;
+            replica.Predicted = body;
+            replica.PredictionStale = false;
+        }
+
+        // Rewinds the predicted body to the server pose, then replays inputs the server has not seen yet.
+        void Reconcile(ReplicaShip replica, uint ackedTick)
+        {
+            _pendingInputs.RemoveAll(p => AtOrBehind(p.Tick, ackedTick));
+
+            bool hadPrediction = replica.Predicted != null && !replica.PredictionStale;
+            float2 before = hadPrediction ? replica.Predicted.Position : replica.Body.Position;
+
+            replica.PredictionStale = true;
+            EnsurePredicted(replica);
+            float dt = 1f / PredictionTickRate;
+            foreach (var p in _pendingInputs) replica.Predicted.Step(p.Input, dt);
+
+            LastCorrection = hadPrediction ? math.length(replica.Predicted.Position - before) : 0f;
         }
 
         // How many ticks behind the newest state a view should render so it always
@@ -509,6 +628,7 @@ namespace Hullbreach.Net
         {
             if (!_ships.TryGetValue(m.NetId, out var replica)) return;
             int key = BlockKey.Pack(m.X, m.Y);
+            replica.PredictionStale = true;
             if (replica.Body.Grid.TryRemove(key))
             {
                 RunLocalDetach(replica);
@@ -520,6 +640,7 @@ namespace Hullbreach.Net
         {
             if (!_ships.TryGetValue(m.NetId, out var replica)) return;
             int key = BlockKey.Pack(m.X, m.Y);
+            replica.PredictionStale = true;
             if (replica.Body.Grid.TryGet(key, out var block))
                 replica.Body.Grid.TrySet(key, block.WithDamage(m.Damage));
             _events.Enqueue(new ReplicaEvent(ReplicaEventKind.BlockDamaged, m.NetId, m.X, m.Y, replica.Body.LocalToWorld(BlockGrid.CenterOf(key))));
@@ -529,6 +650,7 @@ namespace Hullbreach.Net
         {
             if (!_ships.TryGetValue(m.NetId, out var replica)) return;
             int key = BlockKey.Pack(m.X, m.Y);
+            replica.PredictionStale = true;
             replica.Body.Grid.TryAdd(key, new Block(m.TypeId, m.Mods));
             replica.Body.RebuildDerivedViews();
             _events.Enqueue(new ReplicaEvent(ReplicaEventKind.BlockPlaced, m.NetId, m.X, m.Y, replica.Body.LocalToWorld(BlockGrid.CenterOf(key))));
@@ -554,6 +676,7 @@ namespace Hullbreach.Net
             if (_ships.TryGetValue(m.NetId, out var replica))
             {
                 int key = BlockKey.Pack(m.X, m.Y);
+                replica.PredictionStale = true;
                 if (replica.Body.Grid.TryGet(key, out var block))
                     replica.Body.Grid.TrySet(key, block.WithModifiers(BlockVariants.With(block.Modifiers, m.Variant)));
             }

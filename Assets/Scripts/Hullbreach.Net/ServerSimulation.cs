@@ -755,7 +755,8 @@ namespace Hullbreach.Net
             Quantization.PackAngle(state.Ship.Rotation),
             Quantization.PackPosition(state.Ship.Velocity.x),
             Quantization.PackPosition(state.Ship.Velocity.y),
-            Quantization.PackAngle(state.Ship.AngularVelocity));
+            Quantization.PackAngle(state.Ship.AngularVelocity),
+            state.HasInput ? state.LatestInput.Tick : 0u);
 
         uint NextSequence() => ++_sequence;
 
