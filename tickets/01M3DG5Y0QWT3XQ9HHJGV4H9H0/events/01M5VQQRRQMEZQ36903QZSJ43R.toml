@@ -1,0 +1,6 @@
+kind = "comment"
+subtype = "note"
+body = "Reconciliation 2026-10-26: S34 not started (docs/roadmap.md row 12). S34-1..S34-3 left open, each with the specific blocker in its comment."
+at = "2026-10-26T09:12:50Z"
+actor = "mcnairrobotics"
+rev = 1
