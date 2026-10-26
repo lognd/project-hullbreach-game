@@ -537,8 +537,14 @@ the core block in the grid at 255 (the core is never removed), which the
 machine counts as breached, so `MatchFeed` (default `MatchEndFeed.Shared`)
 is raised once with the other peer as winner. `Leave`/timeout of a peer
 calls `MatchStateMachine.Disconnect`. The machine's clock is simulated
-time (ticks * dt). Per-player stats are zeros for now; the draw and
-disconnect reporting policy is separate work.
+time (ticks * dt). A peer leaving mid-match is a forfeit win for the
+other peer, which is reported; a same-tick double core loss is a draw and
+is not reported (the platform needs a winner), with a logged warning.
+Per-player stats come from a tally the server keeps for the live match:
+`DamageDealt` (damage applied by the peer's projectiles), `BlocksDestroyed`
+(blocks those projectiles destroyed outright), `BlocksPlaced` (placements
+while the match is running) and `TimeAliveSeconds` (match length). The
+tally survives the peer's removal so a forfeit still reports it.
 
 `Join` re-broadcasts the new ship's snapshot (reliable) to every OTHER
 connected peer so they can build a replica for it; the joining peer

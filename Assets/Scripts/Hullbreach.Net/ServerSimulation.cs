@@ -80,7 +80,18 @@ namespace Hullbreach.Net
             public readonly Dictionary<int, bool> Failing = new Dictionary<int, bool>();
         }
 
+        // Per-peer counters for the match report. They live outside PeerState so the report
+        // can still be read after the peer's ship is removed (forfeit on leave).
+        sealed class MatchTally
+        {
+            public uint StartTick;
+            public int DamageDealt;
+            public int BlocksDestroyed;
+            public int BlocksPlaced;
+        }
+
         readonly Dictionary<int, PeerState> _peers = new Dictionary<int, PeerState>();
+        readonly Dictionary<int, MatchTally> _tallies = new Dictionary<int, MatchTally>();
         readonly IServerOutbox _outbox;
 
         uint _sequence;
@@ -198,6 +209,7 @@ namespace Hullbreach.Net
 
             state.Ship.RebuildDerivedViews();
             state.Solver.MarkTopologyChanged();
+            Tally(peer, 0, 0, 1);
             BroadcastReliable(new BlockPlaced(NextSequence(), state.NetId, (sbyte)x, (sbyte)y, typeId, modifiers));
             return true;
         }
@@ -295,16 +307,36 @@ namespace Hullbreach.Net
 
             var ids = new List<int>(_peers.Keys);
             ids.Sort();
+            _tallies.Clear();
+            foreach (int id in ids) _tallies[id] = new MatchTally { StartTick = _tickIndex };
             Match = new MatchStateMachine(
                 ParticipantFor(ids[0]), ParticipantFor(ids[1]),
                 () => _tickIndex * (double)Dt, MatchFeed, null, MatchLog);
             Match.Start();
         }
 
-        // Stats are not tracked by the server yet; the reporter fills in the user id from the gate.
+        // Stats come from the match tally; the reporter fills in the user id from the gate.
+        // Time alive is the match length: a ship is alive until the match ends.
         // frob:ticket 01M5V9XQ3YKRVFW9RMPZTVN11E
-        MatchParticipant ParticipantFor(int peer) =>
-            new MatchParticipant(peer, _peers[peer].Ship.Grid, () => new PlayerMatchStats(string.Empty, 0, 0, 0, 0));
+        // frob:ticket 01M5VA5A9YR599CEWSFN3QWRNB
+        MatchParticipant ParticipantFor(int peer)
+        {
+            var tally = _tallies[peer];
+            return new MatchParticipant(peer, _peers[peer].Ship.Grid, () => new PlayerMatchStats(
+                string.Empty, tally.DamageDealt, tally.BlocksDestroyed, tally.BlocksPlaced,
+                (int)Math.Round((_tickIndex - tally.StartTick) * (double)Dt)));
+        }
+
+        // Adds to a peer's tally only while a match is live; no-op for unknown peers or no match.
+        // frob:ticket 01M5VA5A9YR599CEWSFN3QWRNB
+        void Tally(int peer, int damage, int destroyed, int placed)
+        {
+            if (Match == null || Match.Phase != MatchPhase.Running) return;
+            if (!_tallies.TryGetValue(peer, out var tally)) return;
+            tally.DamageDealt += damage;
+            tally.BlocksDestroyed += destroyed;
+            tally.BlocksPlaced += placed;
+        }
 
         // Safe to call for an unknown peer (no-op); tells the others the ship is gone.
         // frob:doc docs/reference/hullbreach-net.md#serversimulation
@@ -521,6 +553,7 @@ namespace Hullbreach.Net
 
             int newDamage = math.min(255, block.Damage + p.Spec.Damage);
             bool destroyed = newDamage >= 255 && key != grid.CoreKeyOrDefault();
+            Tally(p.OwnerPeer, newDamage - block.Damage, destroyed ? 1 : 0, 0);
 
             if (destroyed)
             {

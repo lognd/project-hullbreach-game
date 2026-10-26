@@ -64,15 +64,53 @@ namespace Hullbreach.Net.Tests
         }
 
         [Test]
-        public void LeavingMidMatch_AbandonsIt_AndNothingIsRaised()
+        public void LeavingMidMatch_IsAForfeitWin_ForTheRemainingPeer_AndIsRaised()
         {
             var (server, raised) = Arena();
             server.Join(1, Ship(Core()));
             server.Join(2, Ship(Core()));
             server.Leave(2);
             server.Tick();
-            Assert.AreEqual(MatchResult.Abandoned, server.Match.Result);
-            Assert.AreEqual(0, raised.Count);
+            Assert.AreEqual(MatchResult.Forfeit, server.Match.Result);
+            Assert.AreEqual(1, server.Match.WinnerPeer);
+            Assert.AreEqual(1, raised.Count);
+            Assert.AreEqual(1, raised[0].WinnerPeer);
+        }
+
+        [Test]
+        public void ReportedStats_CountTheWinnersDamage_AndDestroyedCore_NotZeros()
+        {
+            var (server, raised) = Arena();
+            server.Join(1, Ship(Core(), new SnapshotBlock(0, 1, BlockTypes.Cannon, 0, 0)));
+            server.Join(2, Ship(Core()));
+            server.Ships[1].Position = float2.zero;
+            server.Ships[2].Position = new float2(0f, 4f);
+
+            uint tick = 1;
+            for (int i = 0; i < 3000 && server.Match.Phase == MatchPhase.Running; i++)
+            {
+                server.SetInput(1, InputMessage.FromFloats(1, tick, 0f, 0f, true));
+                server.SetInput(2, InputMessage.FromFloats(2, tick, 0f, 0f, false));
+                tick++;
+                server.Tick();
+            }
+            Assert.AreEqual(1, raised.Count);
+            Assert.Greater(raised[0].StatsA.DamageDealt, 0, "the shooter dealt damage");
+            Assert.AreEqual(0, raised[0].StatsB.DamageDealt, "the target never fired");
+            Assert.Greater(raised[0].StatsA.TimeAliveSeconds, 0);
+        }
+
+        [Test]
+        public void BlocksPlacedDuringTheMatch_AreCounted()
+        {
+            var (server, raised) = Arena();
+            server.Join(1, Ship(Core()));
+            server.Join(2, Ship(Core()));
+            server.SetInput(1, new InputMessage(1, 1, 0, 0, InputMessage.BuildModeBit));
+            Assert.IsTrue(server.TryPlaceBlock(1, 1, 0, BlockTypes.Hull, 0));
+            server.Leave(2);
+            Assert.AreEqual(1, raised[0].StatsA.BlocksPlaced);
+            Assert.AreEqual(0, raised[0].StatsB.BlocksPlaced);
         }
     }
 }
