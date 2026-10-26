@@ -1,0 +1,5 @@
+kind = "changelog-exempt"
+reason = "ledger-catch-up-code-already-shipped, server and Unity projectiles both add GravityField acceleration, covered by new server test, not Unity-compiled"
+at = "2026-10-26T09:13:31Z"
+actor = "mcnairrobotics"
+rev = 1

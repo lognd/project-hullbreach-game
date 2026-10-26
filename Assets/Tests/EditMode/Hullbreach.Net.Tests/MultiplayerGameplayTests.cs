@@ -1,6 +1,7 @@
 using NUnit.Framework;
 using Unity.Mathematics;
 using Hullbreach.Core;
+using Hullbreach.World;
 
 namespace Hullbreach.Net.Tests
 {
@@ -116,6 +117,50 @@ namespace Hullbreach.Net.Tests
 
             // The target has no thrusters, so any velocity came from the hit impulse.
             Assert.Greater(math.length(server.Ships[2].Velocity), 0f, "a hit must transfer the shot impulse to the ship");
+        }
+
+        [Test]
+        public void CannonProjectile_NearPlanetoid_CurvesTowardIt()
+        {
+            var server = new ServerSimulation(new ServerOutbox()) { TickRate = 50f };
+            server.Join(1, Ship(
+                Core(),
+                new SnapshotBlock(0, 1, BlockTypes.Cannon, 0, 0)));
+            server.Gravity.Add(new GravityBody(new float2(15f, 6f), 400f, 2f, 0.2f));
+            server.Ships[1].Position = float2.zero;
+            server.SetInput(1, InputMessage.FromFloats(1, 1, 0f, 0f, true));
+
+            for (int i = 0; i < 6; i++) server.Tick();
+
+            Assert.Greater(server.Projectiles.Count, 0, "the cannon should have fired");
+            // A shot fired straight up has no sideways velocity without gravity.
+            Assert.Greater(server.Projectiles[0].Velocity.x, 0.01f, "the shot should bend toward the planetoid");
+        }
+
+        [TestCase((byte)1, 1f)]
+        [TestCase((byte)2, -1f)]
+        public void GravityGunShot_CreatesWellAtImpact_ThatPullsOrPushesAndExpires(byte variant, float expectedSign)
+        {
+            var server = new ServerSimulation(new ServerOutbox()) { TickRate = 50f };
+            server.Join(1, Ship(
+                Core(),
+                new SnapshotBlock(0, 1, BlockTypes.Cannon, BlockVariants.With(0, variant), 0)));
+            server.Join(2, Ship(Core()));
+            server.Ships[1].Position = float2.zero;
+            server.Ships[2].Position = new float2(0f, 4f);
+            server.SetInput(1, InputMessage.FromFloats(1, 1, 0f, 0f, true));
+            server.SetInput(2, InputMessage.FromFloats(2, 1, 0f, 0f, false));
+
+            Assert.AreEqual(0, server.Gravity.Count);
+            for (int i = 0; i < 12; i++) server.Tick();
+            server.SetInput(1, InputMessage.FromFloats(1, 2, 0f, 0f, false));
+
+            Assert.GreaterOrEqual(server.Gravity.Count, 1, "the hit should leave a well behind");
+            float2 pull = server.Gravity.AccelerationAt(new float2(6f, 4f));
+            Assert.AreEqual(expectedSign, math.sign(-pull.x), "gun variant sets pull or push direction");
+
+            for (int i = 0; i < 600; i++) server.Tick();
+            Assert.AreEqual(0, server.Gravity.Count, "the well must expire after its lifetime");
         }
 
         static void ApplyOutbox(ServerOutbox outbox, ClientReplica replica)

@@ -1,0 +1,6 @@
+kind = "comment"
+subtype = "note"
+body = "Left open by catch-up audit: no visual for a gravity well exists in Hullbreach.Game or Hullbreach.Hud. ClientReplica raises ReplicaEventKind.GravityWellSpawned but nothing consumes it to draw the well area or remaining lifetime. Needs Unity rendering work and art decisions. S43 criterion 3 is unmet."
+at = "2026-10-26T09:13:37Z"
+actor = "mcnairrobotics"
+rev = 1

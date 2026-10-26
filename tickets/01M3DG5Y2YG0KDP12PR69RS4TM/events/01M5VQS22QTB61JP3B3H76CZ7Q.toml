@@ -1,0 +1,5 @@
+kind = "changelog-exempt"
+reason = "ledger-catch-up-code-already-shipped, behaviours and server well drop covered by plain-C# tests, not Unity-compiled"
+at = "2026-10-26T09:13:32Z"
+actor = "mcnairrobotics"
+rev = 1
