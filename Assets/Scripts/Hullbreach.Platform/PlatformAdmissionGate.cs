@@ -64,6 +64,9 @@ namespace Hullbreach.Platform
             public double HelloDeadline;
             public bool HelloSeen;
 
+            // Platform account id; null for guests and until the session check passes.
+            public string UserId;
+
             // Bumped per connection so a late HTTP callback cannot touch a reused peer id.
             public int Generation;
         }
@@ -164,6 +167,20 @@ namespace Hullbreach.Platform
         // frob:doc docs/platform-link.md#handshake
         public bool IsAdmitted(int peer) => _peers.TryGetValue(peer, out PeerState state) && state.Phase == Phase.Admitted;
 
+        // The verified platform account behind a peer; false for guests and unknown peers.
+        // frob:doc docs/platform-link.md#reporting-a-finished-match
+        public bool TryGetUserId(int peer, out string userId)
+        {
+            if (_peers.TryGetValue(peer, out PeerState state) && state.Phase == Phase.Admitted &&
+                !string.IsNullOrEmpty(state.UserId))
+            {
+                userId = state.UserId;
+                return true;
+            }
+            userId = null;
+            return false;
+        }
+
         // Decisions are queued so the ECS system can apply them on its own update.
         // frob:doc docs/platform-link.md#handshake
         public bool TryTakeDecision(out AdmissionDecision decision)
@@ -225,6 +242,7 @@ namespace Hullbreach.Platform
         void Admit(int peer, PeerState state, bool verified, string displayName, string userId, string reason)
         {
             state.Phase = Phase.Admitted;
+            state.UserId = verified ? userId : null;
             var decision = new AdmissionDecision(peer, true, verified, displayName, userId, reason);
             _log.Info("Hullbreach platform: " + decision);
             _decisions.Enqueue(decision);

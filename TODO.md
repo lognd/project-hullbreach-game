@@ -40,7 +40,8 @@ tickets.
       ticks, or raising `BucklingEveryNTicks`, would hide it.
 - [ ] Replace the template's FPS gameplay (weapons, character, spectator)
       with ship building and hull breaching.
-- [ ] Server: report match results to the platform API over HTTPS.
+- [x] Server: report match results to the platform API over HTTPS.
+      Client, retry and hook are done; wiring waits on the match end (S46-1).
 - [ ] Decide on Unity Gaming Services vs. our own relay for matchmaking.
 
 ## Sprint status (as of 2026-09-20, branch physics-model)

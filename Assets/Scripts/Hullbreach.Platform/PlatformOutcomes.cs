@@ -81,4 +81,54 @@ namespace Hullbreach.Platform
         // frob:doc docs/platform-link.md#failure-modes
         public override string ToString() => $"{Status} user_id='{UserId}' role='{Role}' ({Message})";
     }
+
+    // One status per way a match report can end; Retryable ones are safe to resend as-is.
+    // frob:doc docs/platform-link.md#reporting-a-finished-match
+    public enum MatchReportStatus
+    {
+        // 201: the platform stored the match and rated both players.
+        Recorded,
+        // 200: the same match_id and body were already stored; nothing was rated again.
+        AlreadyRecorded,
+        // Refused before sending: the report itself is malformed.
+        InvalidReport,
+        // 404: a player id has no platform account.
+        UnknownPlayer,
+        // 409: this match_id was already used with a different body.
+        Conflict,
+        // 401, 422 or an unexpected 4xx: resending the same request cannot help.
+        Rejected,
+        // No HTTP answer at all.
+        Unreachable,
+        // 503 or another 5xx: the platform could not take the report right now.
+        ServerError,
+    }
+
+    // Result of POST /matches. Message is safe to log; the server key never appears in it.
+    // frob:doc docs/platform-link.md#reporting-a-finished-match
+    public readonly struct MatchReportOutcome
+    {
+        public readonly MatchReportStatus Status;
+        public readonly string MatchId;
+        public readonly string Message;
+
+        // frob:doc docs/platform-link.md#reporting-a-finished-match
+        public MatchReportOutcome(MatchReportStatus status, string matchId, string message)
+        {
+            Status = status;
+            MatchId = matchId ?? string.Empty;
+            Message = message ?? string.Empty;
+        }
+
+        // True when the platform holds the match, whether this call or an earlier one stored it.
+        // frob:doc docs/platform-link.md#reporting-a-finished-match
+        public bool IsStored => Status == MatchReportStatus.Recorded || Status == MatchReportStatus.AlreadyRecorded;
+
+        // match_id makes a replay idempotent, so only transient failures are worth resending.
+        // frob:doc docs/platform-link.md#reporting-a-finished-match
+        public bool IsRetryable => Status == MatchReportStatus.Unreachable || Status == MatchReportStatus.ServerError;
+
+        // frob:doc docs/platform-link.md#reporting-a-finished-match
+        public override string ToString() => $"{Status} match_id='{MatchId}' ({Message})";
+    }
 }

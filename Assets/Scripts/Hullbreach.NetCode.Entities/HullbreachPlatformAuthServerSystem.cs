@@ -22,7 +22,10 @@ namespace Hullbreach.NetCode.Entities
         readonly Dictionary<int, Entity> _connections = new Dictionary<int, Entity>();
         readonly HashSet<int> _tracked = new HashSet<int>();
         readonly Dictionary<int, double> _pendingDisconnects = new Dictionary<int, double>();
+        static HullbreachPlatformAuthServerSystem s_instance;
         PlatformAdmissionGate _gate;
+        MatchResultReporter _reporter;
+        double _now;
         EntityQuery _newConnectionQuery;
         EntityQuery _connectionQuery;
         EntityQuery _helloQuery;
@@ -32,6 +35,8 @@ namespace Hullbreach.NetCode.Entities
             PlatformConfig config = HullbreachPlatformRuntime.Config;
             _gate = new PlatformAdmissionGate(HullbreachPlatformRuntime.Client, config.RequireAuth,
                 config.HelloTimeoutSeconds, HullbreachPlatformRuntime.Log);
+            _reporter = new MatchResultReporter(HullbreachPlatformRuntime.Client, _gate, HullbreachPlatformRuntime.Log);
+            s_instance = this;
             Debug.Log(config.RequireAuth
                 ? "Hullbreach platform: server REQUIRES platform sign-in; unverified players are disconnected."
                 : "Hullbreach platform: server allows guests; platform sign-in is optional (pass -hullbreachRequirePlatformAuth to require it).");
@@ -48,12 +53,34 @@ namespace Hullbreach.NetCode.Entities
             RequireForUpdate<NetworkStreamDriver>();
         }
 
+        protected override void OnDestroy()
+        {
+            if (s_instance == this) s_instance = null;
+        }
+
+        // The match-end flow calls this once per finished two-player match. It is a no-op
+        // (false) without a game server key, or when either player is a guest or unverified.
+        // frob:doc docs/platform-link.md#reporting-a-finished-match
+        public static bool ReportFinishedMatch(string matchId, int winnerPeer, int peerA, PlayerMatchStats statsA,
+            int peerB, PlayerMatchStats statsB, int durationSeconds)
+        {
+            if (s_instance == null)
+            {
+                Debug.LogWarning($"Hullbreach platform: match {matchId} not reported: the platform auth server system is not running.");
+                return false;
+            }
+            return s_instance._reporter.ReportFinished(matchId, winnerPeer, peerA, statsA, peerB, statsB,
+                durationSeconds, s_instance._now);
+        }
+
         protected override void OnUpdate()
         {
             double now = SystemAPI.Time.ElapsedTime;
+            _now = now;
             TrackConnections(now);
             ConsumeHellos(now);
             _gate.Tick(now);
+            _reporter.Tick(now);
             ApplyDecisions(now);
             DisconnectRejected(now);
         }
