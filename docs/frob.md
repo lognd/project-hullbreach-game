@@ -97,6 +97,17 @@ PATH="$PWD/tools/plaincs:$PATH" frob ticket evidence add --provider command T-00
   --ref "run_tests.sh --filter FullyQualifiedName~ServerHardeningTests"
 ```
 
+`frob test --base <ref>` selects C# tests by owning project; a test under a
+Unity `.asmdef` assembly (all of `Assets/Tests/EditMode/**`) is routed to a
+`unity` provider that frob 0.532.0 does not implement, so it refuses with
+`E-TESTS-UNITY-PROVIDER`. Do not wait for it: the same EditMode sources are
+compiled into `tools/plaincs`, so the `run_tests.sh` command above is the
+honest, real-run evidence for them (it records the NUnit pass/fail output
+verbatim; it never relabels another provider). Upstream gap: ticket ~VPQPZJ0.
+A ticket with no acceptance
+criteria closes with a `criteria_evidenced passed vacuously` warning, so
+give a ticket criteria before relying on its evidence.
+
 The `dotnet` provider that `[evidence.dotnet]` configures is not offered by
 `frob ticket evidence add` in 0.532.0, and the `unity` pack/provider
 (batch-mode Unity test runs) is design only until a later release.
