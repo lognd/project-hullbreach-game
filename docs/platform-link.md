@@ -237,10 +237,9 @@ Hook: the match-end flow raises `MatchEndFeed.Shared` with a `MatchEndedArgs`
 that feed in `OnCreate` (and detaches in `OnDestroy`), so a raised match end
 becomes `POST /api/v1/matches`; the system ticks the reporter every update.
 `HullbreachPlatformAuthServerSystem.ReportFinishedMatch` stays as a direct
-entry point. Nothing raises the feed yet because the server has no match state
-machine (roadmap S46-1): that state machine must build the `MatchEndedArgs`
-(a fresh uuid `match_id` per match) and call `MatchEndFeed.Shared.Raise` once
-when a core is breached.
+entry point. `Hullbreach.Match.MatchStateMachine` (roadmap S46-1) raises the feed once, with a
+fresh uuid `match_id`, when a core is breached; draws and disconnects raise nothing.
+It is not yet constructed by the server (follow-up ticket).
 
 <!-- describes: Assets/Scripts/Hullbreach.Platform/PlatformClient.cs::PlatformClient.PostMatchResult -->
 <!-- describes: Assets/Scripts/Hullbreach.Platform/PlatformClient.cs::PlatformClient.MapMatchReport -->
