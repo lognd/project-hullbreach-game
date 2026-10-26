@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Hullbreach.Platform;
 using NUnit.Framework;
 
@@ -37,6 +38,38 @@ namespace Hullbreach.Platform.Tests
             Assert.IsFalse(PlatformSession.IsOffline);
             PlatformSession.SignOut();
             Assert.IsFalse(PlatformSession.HasChosen);
+        }
+
+        static System.Func<string, string> Env(Dictionary<string, string> values) =>
+            name => values.TryGetValue(name, out string value) ? value : null;
+
+        [Test]
+        public void EnvironmentToken_SignsIn_AndNeverLogsTheToken()
+        {
+            var log = new RecordingPlatformLog();
+            bool used = PlatformSession.SignInFromEnvironment(Env(new Dictionary<string, string>
+            {
+                [PlatformSession.TokenEnv] = " secret-token-value ",
+                [PlatformSession.UsernameEnv] = "pilot",
+            }), log);
+            Assert.IsTrue(used);
+            Assert.IsTrue(PlatformSession.IsSignedIn);
+            Assert.AreEqual("secret-token-value", PlatformSession.Token);
+            Assert.AreEqual("pilot", PlatformSession.Username);
+            StringAssert.Contains("pilot", log.All);
+            StringAssert.DoesNotContain("secret-token-value", log.All);
+        }
+
+        [Test]
+        public void NoEnvironmentToken_LeavesTheSessionAlone()
+        {
+            var log = new RecordingPlatformLog();
+            Assert.IsFalse(PlatformSession.SignInFromEnvironment(Env(new Dictionary<string, string>
+            {
+                [PlatformSession.TokenEnv] = "  ",
+            }), log));
+            Assert.IsFalse(PlatformSession.HasChosen);
+            Assert.IsEmpty(log.Lines);
         }
     }
 }

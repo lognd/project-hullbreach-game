@@ -6,6 +6,7 @@ using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
 using Unity.NetCode;
+using UnityEngine;
 
 namespace Hullbreach.NetCode.Entities
 {
@@ -90,7 +91,10 @@ namespace Hullbreach.NetCode.Entities
                 _connections[peer] = entities[i];
                 bool admitted = EntityManager.HasComponent<HullbreachPlatformAdmitted>(entities[i]);
                 if (gameplayLoaded && admitted && _joinedPeers.Add(peer))
+                {
                     _simulation.Join(peer, CreateStarterShip(peer));
+                    Debug.Log($"Hullbreach server: peer #{peer} joined the match ({_joinedPeers.Count} in match).");
+                }
             }
 
             var disconnected = new List<int>();
@@ -101,6 +105,7 @@ namespace Hullbreach.NetCode.Entities
             {
                 _joinedPeers.Remove(peer);
                 _simulation.Leave(peer);
+                Debug.Log($"Hullbreach server: peer #{peer} left the match ({_joinedPeers.Count} in match).");
                 if (_shipGhosts.TryGetValue(peer, out Entity ghost) && EntityManager.Exists(ghost))
                     EntityManager.DestroyEntity(ghost);
                 _shipGhosts.Remove(peer);

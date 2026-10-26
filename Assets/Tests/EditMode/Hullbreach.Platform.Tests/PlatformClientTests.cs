@@ -156,5 +156,31 @@ namespace Hullbreach.Platform.Tests
             Assert.AreEqual(SessionStatus.Failed, PlatformClient.MapSession(PlatformHttpResponse.Http(200, "{\"role\":\"player\"}")).Status);
             Assert.AreEqual(SessionStatus.Failed, PlatformClient.MapSession(PlatformHttpResponse.Http(200, "<html>")).Status);
         }
+
+        [TestCase("server key missing")]
+        [TestCase("invalid server key")]
+        public void MapSession_ServerKeyRejection_IsAnOperatorFailure_NotAnExpiredSession(string detail)
+        {
+            var outcome = PlatformClient.MapSession(PlatformHttpResponse.Http(401, "{\"detail\":\"" + detail + "\"}"));
+            Assert.AreEqual(SessionStatus.Failed, outcome.Status);
+            StringAssert.Contains(detail, outcome.Message);
+            StringAssert.Contains(PlatformConfig.ServerKeyEnv, outcome.Message);
+        }
+
+        [Test]
+        public void MapSession_BadTokenWithGoodKey_IsInvalid()
+        {
+            var outcome = PlatformClient.MapSession(PlatformHttpResponse.Http(401, "{\"detail\":\"not authenticated\"}"));
+            Assert.AreEqual(SessionStatus.Invalid, outcome.Status);
+        }
+
+        [Test]
+        public void MapSession_PlatformWithoutKeys_SaysSo()
+        {
+            var outcome = PlatformClient.MapSession(PlatformHttpResponse.Http(503, "{\"detail\":\"server key not configured\"}"));
+            Assert.AreEqual(SessionStatus.Failed, outcome.Status);
+            StringAssert.Contains("no game server keys", outcome.Message);
+            Assert.AreEqual(SessionStatus.Failed, PlatformClient.MapSession(PlatformHttpResponse.Http(503, "")).Status);
+        }
     }
 }

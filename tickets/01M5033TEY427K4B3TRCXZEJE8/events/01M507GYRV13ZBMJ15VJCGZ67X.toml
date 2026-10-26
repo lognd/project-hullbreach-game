@@ -1,0 +1,6 @@
+kind = "comment"
+subtype = "note"
+body = "Live proof at 8eb3d7b, Windows development player (Mono, built with HullbreachBuild.BuildFromCommandLine; build scene list LobbyScene first, no reordering), headless on one machine. Host (-hullbreachDirect): 'Hullbreach direct: loading MultiplayerGame for role=host.', 'Hullbreach server: peer #2 joined the match (2 in match).', 'Hullbreach match: connected as #1; replicated ships: 2'. Client (-hullbreachConnect 127.0.0.1): 'Hullbreach direct: loading MultiplayerGame for role=client.', 'Hullbreach match: connected as #2; replicated ships: 2'. Server role (-batchmode -hullbreachServer -hullbreachPort 7990) admitted two direct clients, both logged 'replicated ships: 2'. Criterion 3 (Linux dedicated server build) is NOT proven: the Linux Dedicated Server Build Support module is not installed on the test machine, so the ticket stays open until someone with that module runs ./play.sh build server + play server."
+at = "2026-10-15T16:50:00Z"
+actor = "mcnairrobotics"
+rev = 1
