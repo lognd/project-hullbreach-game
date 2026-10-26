@@ -104,6 +104,16 @@ namespace Hullbreach.Platform
             _client.Login(username, password, outcome => OnLogin(attempt, outcome));
         }
 
+        // Reads the password, blanks the field before sending, then submits (S07-2 criterion 3).
+        // frob:ticket 01M3DG5Y1903PCF86DJBDSPXJD
+        // frob:doc docs/platform-link.md#sign-in-screen
+        public void SubmitClearing(string username, Func<string> readPassword, Action<string> writePassword)
+        {
+            string password = readPassword();
+            writePassword(string.Empty);
+            Submit(username, password);
+        }
+
         // Allowed while Busy too, so a slow or dead platform never traps the player.
         // frob:doc docs/platform-link.md#sign-in-screen
         public void PlayOffline()

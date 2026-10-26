@@ -53,13 +53,10 @@ namespace Hullbreach.NetCode.Entities
 
         void SubmitFromField(string _) => Submit();
 
-        void Submit()
-        {
-            string password = passwordInput.text;
-            // The password is not kept on screen once it has been sent.
-            passwordInput.text = string.Empty;
-            _model.Submit(usernameInput.text, password);
-        }
+        // The model blanks the password field as it sends, so the clearing is unit-tested.
+        // frob:ticket 01M3DG5Y1903PCF86DJBDSPXJD
+        void Submit() =>
+            _model.SubmitClearing(usernameInput.text, () => passwordInput.text, v => passwordInput.text = v);
 
         void Refresh()
         {
