@@ -3,6 +3,10 @@
 - `getting-started.md`: read this if you have never used Unity or written
   code and just want to install the project, play the demo, and make
   small changes safely.
+- `doctor.md`: read this if you run or change the doctor and the play
+  scripts (`doctor.cmd`/`doctor.sh`, `play.cmd`/`play.sh`); it lists every
+  check, every play command, the build entry point and how secrets are
+  kept out of logs.
 - `architecture.md`: read this if you are ready to read the C# code and
   want to understand how the project is split up and why.
 - `adding-a-block-behaviour.md`: read this if you want to add a new

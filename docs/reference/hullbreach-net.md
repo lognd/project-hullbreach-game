@@ -695,3 +695,33 @@ not fight over the port and a remote join really dials the remote host.
 `MatchStatus(id, ships)` is the proof line a client logs when its match
 view changes: `Hullbreach match: connected as #2; replicated ships: 2`.
 Launch scripts and log checks grep for both.
+
+### OnlineSmoke
+
+<!-- describes: Assets/Scripts/Hullbreach.Net/OnlineSmoke.cs::OnlineSmoke -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/OnlineSmoke.cs::OnlineSmoke.EnvVar -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/OnlineSmoke.cs::OnlineSmoke.LogPrefix -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/OnlineSmoke.cs::OnlineSmoke.Requested -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/OnlineSmoke.cs::OnlineSmoke.LobbyName -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/OnlineSmoke.cs::OnlineSmoke.StatusLine -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/OnlineSmoke.cs::OnlineSmoke.ProfileArg -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/OnlineSmoke.cs::OnlineSmoke.Profile -->
+
+Engine-free rules of the headless online smoke test, a demo/testing aid.
+`HullbreachLobbyService` logs every lobby status change as
+`Hullbreach online: <status>` (with the error in brackets when there is
+one), so `Player.log` shows how far Unity Services sign-in got. When the
+environment variable `HULLBREACH_ONLINE_SMOKE` is `1`, `true`, `yes` or
+`host`, the lobby scene also creates a private Relay lobby named
+`Hullbreach smoke <utc time>`, logs
+`Hullbreach online: smoke lobby created, join code <code>`, leaves it, and
+logs `Hullbreach online: smoke test PASSED` (or `... FAILED: <reason>`).
+`play online --headless` sets the variable; see
+[doctor.md](../doctor.md#play-commands).
+
+Unity Authentication remembers one anonymous player per **profile**, so
+two copies of the game on one computer are the same player and cannot
+both be in one lobby. `-hullbreachProfile <name>` (letters, digits, `-`
+and `_`, at most 30) starts Unity Services under that profile; anything
+else is ignored and the default profile is used. `play online --profile
+<name>` passes it.

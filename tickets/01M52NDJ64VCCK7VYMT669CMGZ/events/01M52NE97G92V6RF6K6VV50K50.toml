@@ -1,0 +1,9 @@
+kind = "field"
+field = "acceptance"
+old = ["HullbreachBuild.BuildFromCommandLine builds the Windows client from -executeMethod with LobbyScene first and MultiplayerGame in the scene list, and exits non-zero on failure.", "The same entry point builds a dedicated server for an installed Dedicated Server module and explains which Hub module is missing otherwise.", "play build wraps it so nobody opens Build Profiles."]
+new = ["HullbreachBuild.BuildFromCommandLine builds the Windows client headless from -executeMethod with LobbyScene first and MultiplayerGame in the scene list, falling back to Mono when IL2CPP is missing.", "Asked for a dedicated server without the Dedicated Server module, it names the missing Unity Hub module and exits non-zero.", "With the Dedicated Server module installed it builds a server player that opens MultiplayerGame.", "play build wraps the entry point so a beginner never opens Build Profiles."]
+reason = "split provable criteria"
+moved = [0, 0, 0]
+at = "2026-10-16T15:31:41Z"
+actor = "mcnairrobotics"
+rev = 1
