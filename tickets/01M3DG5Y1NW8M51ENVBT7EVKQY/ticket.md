@@ -8,7 +8,7 @@ points = 2
 parent = "01M3DG5Y0HT0GE1F2YVQY24SSN"
 reporter = "human"
 created = "2026-09-26T00:00:00Z"
-updated = "2026-10-26T08:28:25Z"
+updated = "2026-10-26T08:28:32Z"
 aliases = ["T-0053"]
 labels = ["jira:SCRUM-125", "owner:mcnairrobotics", "game", "milestone:0.1.0"]
 
@@ -22,7 +22,7 @@ bound = true
 
 [[acceptance]]
 text = "ReadyUp and MatchStarted round-trip on the wire and ClientReplica applies MatchStarted"
-bound = false
+bound = true
 +++
 
 Ready-up handshake and match start with both ships visible
