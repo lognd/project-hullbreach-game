@@ -2,12 +2,13 @@
 id = "01M3DG5Y0NYCG6S3SA36MNKBZD"
 title = "S32: Build around a core"
 type = "story"
-category = "todo"
+category = "done"
+outcome = "done"
 priority = "critical"
 parent = "01M3DG5Y03DJ72WRTEGD6EBC3C"
 reporter = "human"
 created = "2026-09-26T00:00:00Z"
-updated = "2026-10-26T08:20:04Z"
+updated = "2026-10-26T08:20:26Z"
 aliases = ["T-0021"]
 labels = ["jira:SCRUM-53", "owner:GingerVHS", "game", "milestone:0.1.0"]
 
