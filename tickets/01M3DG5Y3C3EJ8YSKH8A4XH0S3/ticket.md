@@ -8,9 +8,25 @@ points = 5
 parent = "01M3DG5Y157XVFXF2844EP0ZKH"
 reporter = "human"
 created = "2026-09-26T00:00:00Z"
-updated = "2026-09-26T00:00:00Z"
+updated = "2026-10-26T08:29:07Z"
 aliases = ["T-0108"]
 labels = ["jira:SCRUM-164", "owner:mcnairrobotics", "game", "netcode", "milestone:0.2.0"]
+
+[[acceptance]]
+text = "Local inputs move the predicted ship immediately, before any server reply"
+bound = false
+
+[[acceptance]]
+text = "ShipState carries the server-acked input tick (19-byte wire, round-trips)"
+bound = false
+
+[[acceptance]]
+text = "Reconcile drops acked inputs, replays the rest and corrects divergence"
+bound = false
+
+[[acceptance]]
+text = "On a throttled lossy link the predicted pose tracks the server far closer than the lagging replica"
+bound = false
 +++
 
 Client-side prediction with server reconciliation for the local ship
