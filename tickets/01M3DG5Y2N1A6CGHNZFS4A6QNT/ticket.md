@@ -2,7 +2,8 @@
 id = "01M3DG5Y2N1A6CGHNZFS4A6QNT"
 title = "S39-4: Physics tests: off-center thruster rotates, doubled mass halves acceleration"
 type = "task"
-category = "todo"
+category = "done"
+outcome = "done"
 priority = "critical"
 points = 2
 parent = "01M3DG5Y0W9SVT75MAQ9ZEKZCQ"
