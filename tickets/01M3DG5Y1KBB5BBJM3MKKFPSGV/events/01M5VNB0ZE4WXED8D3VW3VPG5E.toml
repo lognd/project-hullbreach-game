@@ -1,0 +1,7 @@
+kind = "field"
+field = "acceptance"
+new = ["The wire serializer round-trips every NetMessages kind, including randomized inputs", "Decoding untrusted bytes is bounded: truncated, oversized and malformed input fails the reader without throwing", "A server and client exchange messages end to end over an ITransport implementation under loss and reordering"]
+moved = []
+at = "2026-10-26T08:30:55Z"
+actor = "mcnairrobotics"
+rev = 1
