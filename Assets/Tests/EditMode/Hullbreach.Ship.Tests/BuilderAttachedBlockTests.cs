@@ -31,7 +31,6 @@ namespace Hullbreach.Ship.Tests
             return ship;
         }
 
-        // frob:tests Hullbreach.Builder.BuilderSession
         [Test]
         public void PlacedBlock_IsAttachedToTheCore()
         {
@@ -43,7 +42,6 @@ namespace Hullbreach.Ship.Tests
             Assert.IsEmpty(detached, "a block the builder accepted must be connected to the core");
         }
 
-        // frob:tests Hullbreach.Ship.ShipBody
         [Test]
         public void PlacedBlock_MovesAndRotatesWithTheShip()
         {
