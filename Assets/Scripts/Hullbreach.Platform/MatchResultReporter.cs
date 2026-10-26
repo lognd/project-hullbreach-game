@@ -69,6 +69,23 @@ namespace Hullbreach.Platform
             return Submit(report, now);
         }
 
+        // Reports every match the feed announces until the returned handle is disposed.
+        // The clock is read at each match end so retries keep the server's time base.
+        // frob:doc docs/platform-link.md#reporting-a-finished-match
+        public IDisposable Attach(MatchEndFeed feed, Func<double> clock)
+        {
+            if (feed == null) throw new ArgumentNullException(nameof(feed));
+            if (clock == null) throw new ArgumentNullException(nameof(clock));
+            Action<MatchEndedArgs> handler = args =>
+            {
+                _log.Info($"Hullbreach platform: match {args.MatchId} ended; reporting it.");
+                ReportFinished(args.MatchId, args.WinnerPeer, args.PeerA, args.StatsA, args.PeerB, args.StatsB,
+                    args.DurationSeconds, clock());
+            };
+            feed.Ended += handler;
+            return new Detach(() => feed.Ended -= handler);
+        }
+
         // Queues a ready report; false when it is invalid or the server is unconfigured.
         // frob:doc docs/platform-link.md#reporting-a-finished-match
         public bool Submit(MatchResultReport report, double now)
@@ -128,6 +145,18 @@ namespace Hullbreach.Platform
                 _log.Warning($"Hullbreach platform: giving up on match {item.Report.MatchId} after {item.Attempts} attempts.");
             _pending.Remove(item);
             _finished.Enqueue(outcome);
+        }
+
+        sealed class Detach : IDisposable
+        {
+            Action _undo;
+            public Detach(Action undo) => _undo = undo;
+
+            public void Dispose()
+            {
+                _undo?.Invoke();
+                _undo = null;
+            }
         }
 
         static PlayerMatchStats With(PlayerMatchStats stats, string userId) =>

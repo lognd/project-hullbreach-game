@@ -179,6 +179,48 @@ namespace Hullbreach.Platform.Tests
             Assert.AreEqual(MatchReportStatus.Recorded, outcome.Status);
         }
 
+        MatchEndedArgs Ended(int winner = 1) => new MatchEndedArgs(Match, winner, 1,
+            new PlayerMatchStats(null, 900, 14, 30, 240), 2, new PlayerMatchStats(null, 400, 12, 28, 200), 240);
+
+        [Test]
+        public void Feed_MatchEndPostsOneReportUsingTheClock()
+        {
+            PlatformClient client = Client();
+            var reporter = new MatchResultReporter(client, Gate(client), _log);
+            var feed = new MatchEndFeed();
+            double clock = 42;
+            using (reporter.Attach(feed, () => clock))
+            {
+                int baseline = _http.Requests.Count;
+                _http.Enqueue(PlatformHttpResponse.Http(503, "{}"));
+                Assert.AreEqual(1, feed.Raise(Ended()));
+                Assert.AreEqual(baseline + 1, _http.Requests.Count);
+                StringAssert.Contains("\"winner_id\":\"" + UserA + "\"", _http.Requests[baseline].Body);
+                Assert.AreEqual(1, reporter.PendingCount, "503 stays queued for the backoff");
+                // Backoff is measured from the clock the feed handler read (42 + 2s).
+                reporter.Tick(43);
+                Assert.AreEqual(baseline + 1, _http.Requests.Count);
+            }
+        }
+
+        [Test]
+        public void Feed_DisposedSubscriptionAndGuestsSendNothing()
+        {
+            PlatformClient client = Client();
+            var feed = new MatchEndFeed();
+            Assert.AreEqual(0, feed.Raise(Ended()), "no subscriber");
+
+            var reporter = new MatchResultReporter(client, Gate(client), _log);
+            reporter.Attach(feed, () => 0).Dispose();
+            Assert.AreEqual(0, feed.Raise(Ended()), "unsubscribed");
+
+            var guests = new MatchResultReporter(client, Gate(client, peer2Verified: false), _log);
+            using (guests.Attach(feed, () => 0))
+                Assert.AreEqual(1, feed.Raise(Ended()));
+            Assert.AreEqual(0, _http.Requests.FindAll(r => r.Url.EndsWith("/matches")).Count);
+            Assert.Throws<System.ArgumentNullException>(() => reporter.Attach(null, () => 0));
+        }
+
         [Test]
         public void Reporter_IsANoOpForGuestsAndUnconfiguredServers()
         {

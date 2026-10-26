@@ -25,6 +25,7 @@ namespace Hullbreach.NetCode.Entities
         static HullbreachPlatformAuthServerSystem s_instance;
         PlatformAdmissionGate _gate;
         MatchResultReporter _reporter;
+        System.IDisposable _matchEndSubscription;
         double _now;
         EntityQuery _newConnectionQuery;
         EntityQuery _connectionQuery;
@@ -36,6 +37,8 @@ namespace Hullbreach.NetCode.Entities
             _gate = new PlatformAdmissionGate(HullbreachPlatformRuntime.Client, config.RequireAuth,
                 config.HelloTimeoutSeconds, HullbreachPlatformRuntime.Log);
             _reporter = new MatchResultReporter(HullbreachPlatformRuntime.Client, _gate, HullbreachPlatformRuntime.Log);
+            // A match ending on MatchEndFeed.Shared is reported to the platform from here on.
+            _matchEndSubscription = _reporter.Attach(MatchEndFeed.Shared, () => _now);
             s_instance = this;
             Debug.Log(config.RequireAuth
                 ? "Hullbreach platform: server REQUIRES platform sign-in; unverified players are disconnected."
@@ -55,10 +58,12 @@ namespace Hullbreach.NetCode.Entities
 
         protected override void OnDestroy()
         {
+            _matchEndSubscription?.Dispose();
             if (s_instance == this) s_instance = null;
         }
 
-        // The match-end flow calls this once per finished two-player match. It is a no-op
+        // Direct entry point; the match-end flow normally raises MatchEndFeed.Shared instead.
+        // Reports one finished two-player match. It is a no-op
         // (false) without a game server key, or when either player is a guest or unverified.
         // frob:doc docs/platform-link.md#reporting-a-finished-match
         public static bool ReportFinishedMatch(string matchId, int winnerPeer, int peerA, PlayerMatchStats statsA,
