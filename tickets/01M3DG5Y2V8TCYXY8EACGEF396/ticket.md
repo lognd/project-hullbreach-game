@@ -2,7 +2,8 @@
 id = "01M3DG5Y2V8TCYXY8EACGEF396"
 title = "S42-1: CannonBehaviour recording a ShotRequest with cooldown"
 type = "task"
-category = "todo"
+category = "done"
+outcome = "done"
 priority = "critical"
 points = 2
 parent = "01M3DG5Y0ZSMJPHX5C7GF557KF"
