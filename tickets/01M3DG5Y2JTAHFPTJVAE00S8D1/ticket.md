@@ -2,7 +2,8 @@
 id = "01M3DG5Y2JTAHFPTJVAE00S8D1"
 title = "S39-1: ShipBody integrator applying per-block thruster force and torque at the mount point"
 type = "task"
-category = "todo"
+category = "done"
+outcome = "done"
 priority = "critical"
 points = 5
 parent = "01M3DG5Y0W9SVT75MAQ9ZEKZCQ"
