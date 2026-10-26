@@ -4,6 +4,8 @@
     "references": [
         "Hullbreach.Net",
         "Hullbreach.Core",
+        "Hullbreach.Match",
+        "Hullbreach.Platform",
         "Hullbreach.Ship",
         "Hullbreach.World",
         "Hullbreach.Structure",

@@ -505,6 +505,9 @@ next expected sequence and then drains whatever the gap closing unblocks.
 <!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.TickRate -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.TimeoutSeconds -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.Gravity -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.MatchFeed -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.MatchLog -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.Match -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.ServerSimulation -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.Ships -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.MaxPeerId -->
@@ -525,6 +528,17 @@ transport (a `MonoBehaviour`, a headless loop) drains that outbox and
 forwards it. That separation is deliverable 4's whole point: this class,
 and therefore the entire server simulation, compiles and tests without
 knowing sockets exist.
+
+Match end: when the second peer joins (and no match is live) the server
+builds a `Hullbreach.Match.MatchStateMachine` over the two ships' grids,
+starts it, and ticks it at the end of every `Tick`, after impacts and
+structural damage. A projectile that takes the core to damage 255 leaves
+the core block in the grid at 255 (the core is never removed), which the
+machine counts as breached, so `MatchFeed` (default `MatchEndFeed.Shared`)
+is raised once with the other peer as winner. `Leave`/timeout of a peer
+calls `MatchStateMachine.Disconnect`. The machine's clock is simulated
+time (ticks * dt). Per-player stats are zeros for now; the draw and
+disconnect reporting policy is separate work.
 
 `Join` re-broadcasts the new ship's snapshot (reliable) to every OTHER
 connected peer so they can build a replica for it; the joining peer
