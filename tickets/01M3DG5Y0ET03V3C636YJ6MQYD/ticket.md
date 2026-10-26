@@ -11,6 +11,10 @@ updated = "2026-10-26T05:09:49Z"
 aliases = ["T-0014"]
 labels = ["jira:SCRUM-37", "owner:lognd", "game", "platform", "milestone:0.2.0"]
 
+[[links]]
+kind = "blocked-by"
+target = "01M5V8S9HK53WMKF29MXJYM8Z5"
+
 [[acceptance]]
 text = "An authenticated game server can submit a match result once; a duplicate submission is recognized and not double-counted."
 bound = true
