@@ -55,7 +55,7 @@ namespace Hullbreach.Net.Tests
                 replica.Predict(InputMessage.FromFloats(Id, t, 1f, 0f, false));
 
             // The server saw only the first 4 inputs and says the ship is still at the origin.
-            replica.ApplyState(new ShipState(Id, 0, 0, 0, 0, 0, 0, 4), 12);
+            replica.ApplyState(new ShipState(Id, 0, 0, 0, 0, 0, 0, 4));
 
             Assert.AreEqual(6, replica.PendingInputCount, "inputs up to the ack are dropped");
             Assert.Greater(replica.LastCorrection, 0f, "the over-eager prediction had to be corrected");
@@ -66,8 +66,8 @@ namespace Hullbreach.Net.Tests
         {
             var replica = LocalReplica();
             replica.TryGetPredicted(out var p0, out var r0);
-            replica.ApplyState(new ShipState(Id, 0, 0, 0, 0, 0, 0, 0), 1);
-            replica.ApplyState(new ShipState(Id, 0, 0, 0, 0, 0, 0, 0), 2);
+            replica.ApplyState(new ShipState(Id, 0, 0, 0, 0, 0, 0, 0));
+            replica.ApplyState(new ShipState(Id, 0, 0, 0, 0, 0, 0, 0));
             replica.TryGetPredicted(out var p1, out var r1);
             Assert.AreEqual(0f, replica.LastCorrection, 1e-5f);
             Assert.AreEqual(p0.x, p1.x, 1e-5f);
@@ -130,7 +130,7 @@ namespace Hullbreach.Net.Tests
                 outbox.Clear();
                 hub.Tick();
                 while (clientTransport.TryReceive(out _, scratch, out int len))
-                    replica.ApplyReceived(scratch, len, tick);
+                    replica.ApplyReceived(scratch, len);
 
             }
 

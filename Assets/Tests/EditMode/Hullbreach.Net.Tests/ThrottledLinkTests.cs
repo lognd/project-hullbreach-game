@@ -140,7 +140,7 @@ namespace Hullbreach.Net.Tests
                 hub.Tick();
 
                 while (clientTransport.TryReceive(out _, scratch, out int length))
-                    replica.ApplyReceived(scratch, length, (uint)tick);
+                    replica.ApplyReceived(scratch, length);
 
                 if (replica.Ships.TryGetValue((ushort)peer, out var rep))
                     ages.Add(AgeOfMatchingServerPose(rep.Position, history));
@@ -166,7 +166,7 @@ namespace Hullbreach.Net.Tests
             {
                 hub.Tick();
                 while (clientTransport.TryReceive(out _, scratch, out int length))
-                    replica.ApplyReceived(scratch, length, 0);
+                    replica.ApplyReceived(scratch, length);
             }
             Assert.IsFalse(replica.Ships[(ushort)peer].Grid.Contains(BlockKey.Pack(0, 1)),
                 "reliable destruction must converge despite the loss");

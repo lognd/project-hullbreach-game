@@ -341,13 +341,16 @@ i32, peer B i32. Sent once to every connected peer.
 <!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::ShipState.Av -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::ShipState.AckedInputTick -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::ShipState.ByteSize -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::ShipState.ServerTick -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::ShipState.ShipState -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::ShipState.Write -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::ShipState.Read -->
 
 Server -> client, UNRELIABLE, ~30-50 Hz: this tick's pose plus
 `AckedInputTick`, the newest input tick the server had applied to the ship
-(0 if none), which the owning client reconciles against. Losing one is
+(0 if none), which the owning client reconciles against, and `ServerTick`,
+the server tick the pose was sampled on (the replica's interpolation
+clock; the message is 23 bytes). Losing one is
 harmless since the next one supersedes it. See docs/netcode.md#message-table
 for the byte layout and quantization.
 
@@ -498,6 +501,7 @@ and to which ship, without re-parsing wire bytes.
 <!-- describes: Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ClientReplica.TryInterpolate -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ClientReplica.TryInterpolateAt -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ClientReplica.InterpolationDelayTicks -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ClientReplica.LatestServerTick -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ClientReplica.SetLocalShip -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ClientReplica.Predict -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ClientReplica.TryGetPredicted -->
@@ -526,10 +530,11 @@ reorders reliable messages (see `LoopbackTransport`'s jitter and
 `ITransport`'s ordering contract, docs/netcode.md#ordering...).
 
 Remote-ship smoothing (S48-2): `ApplyState` keeps the last two poses,
-stamped with the client tick they arrived on. A view calls
+stamped with the `ServerTick` each carries (not their arrival tick, so
+poses arriving together still span their true interval). A view calls
 `TryInterpolateAt(netId, renderTick, ...)` with `renderTick` =
-current tick - `InterpolationDelayTicks` + the fraction of the current
-tick elapsed, so it always draws between two real server poses. Rotation
+`LatestServerTick` - `InterpolationDelayTicks` + the fraction of the
+current tick elapsed, so it always draws between two real server poses. Rotation
 takes the shortest arc across the 0/2pi wrap, and a stale pair holds its
 newest pose rather than extrapolating. `NetDemo` draws this way.
 Projectiles are not part of `ClientReplica`; on the Netcode for Entities

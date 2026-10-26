@@ -90,14 +90,14 @@ namespace Hullbreach.Net.Tests
         }
 
         [Test]
-        public void ShipState_RoundTrips_AtExtremesAndIsExactly19Bytes()
+        public void ShipState_RoundTrips_AtExtremesAndIsExactly23Bytes()
         {
-            var msg = new ShipState(ushort.MaxValue, short.MinValue, short.MaxValue, ushort.MaxValue, short.MaxValue, short.MinValue, 0, uint.MaxValue);
+            var msg = new ShipState(ushort.MaxValue, short.MinValue, short.MaxValue, ushort.MaxValue, short.MaxValue, short.MinValue, 0, uint.MaxValue, 0xFEEDu);
             var buf = Buffer();
             var w = new ByteWriter(buf);
             msg.Write(ref w);
             Assert.AreEqual(ShipState.ByteSize, w.Position);
-            Assert.AreEqual(19, ShipState.ByteSize);
+            Assert.AreEqual(23, ShipState.ByteSize);
 
             var r = new ByteReader(buf);
             var back = ShipState.Read(ref r);
@@ -109,6 +109,7 @@ namespace Hullbreach.Net.Tests
             Assert.AreEqual(msg.Vy, back.Vy);
             Assert.AreEqual(msg.Av, back.Av);
             Assert.AreEqual(uint.MaxValue, back.AckedInputTick);
+            Assert.AreEqual(0xFEEDu, back.ServerTick);
         }
 
         [Test]

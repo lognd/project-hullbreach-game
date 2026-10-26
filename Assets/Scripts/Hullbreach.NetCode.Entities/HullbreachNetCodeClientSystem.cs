@@ -226,7 +226,7 @@ namespace Hullbreach.NetCode.Entities
                 offset += part.Length;
             }
             _pending.Remove(rpc.MessageId);
-            _replica.ApplyReceived(message, message.Length, _clientTick);
+            _replica.ApplyReceived(message, message.Length);
         }
     }
 }

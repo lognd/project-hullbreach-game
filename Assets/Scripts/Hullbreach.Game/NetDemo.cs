@@ -143,7 +143,7 @@ namespace Hullbreach.Game
         {
             var buf = new byte[1024];
             while (transport.TryReceive(out _, buf, out int length))
-                replica.ApplyReceived(buf, length, _clientTick);
+                replica.ApplyReceived(buf, length);
         }
 
         // Creates a quad per block lazily; see the reference page.
@@ -151,7 +151,7 @@ namespace Hullbreach.Game
         {
             if (replica == null) return;
             // Draw slightly in the past, blended between the last two server poses (S48-2).
-            float renderTick = _clientTick - ClientReplica.InterpolationDelayTicks + _tickAccumulator * tickRate;
+            float renderTick = replica.LatestServerTick - ClientReplica.InterpolationDelayTicks + _tickAccumulator * tickRate;
             foreach (var kv in replica.Ships)
             {
                 ushort netId = kv.Key;
