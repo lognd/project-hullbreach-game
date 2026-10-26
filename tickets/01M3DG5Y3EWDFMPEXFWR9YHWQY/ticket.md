@@ -2,13 +2,14 @@
 id = "01M3DG5Y3EWDFMPEXFWR9YHWQY"
 title = "S48-3: Throttled-connection test harness at 100 ms round trip and 2 percent loss"
 type = "task"
-category = "in-progress"
+category = "done"
+outcome = "fixed"
 priority = "critical"
 points = 3
 parent = "01M3DG5Y157XVFXF2844EP0ZKH"
 reporter = "human"
 created = "2026-09-26T00:00:00Z"
-updated = "2026-10-26T08:17:47Z"
+updated = "2026-10-26T08:18:07Z"
 aliases = ["T-0110"]
 labels = ["jira:SCRUM-166", "owner:mcnairrobotics", "game", "netcode", "milestone:0.2.0"]
 +++
