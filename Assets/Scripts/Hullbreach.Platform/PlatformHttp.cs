@@ -3,12 +3,13 @@ using System.Collections.Generic;
 
 namespace Hullbreach.Platform
 {
-    // Only the two verbs the auth endpoints use.
+    // The verbs the auth, match and queue endpoints use.
     // frob:doc docs/platform-link.md#hullbreachplatform-module-reference
     public enum PlatformHttpMethod
     {
         Get,
         Post,
+        Delete,
     }
 
     // One request, shaped so a fake can assert on it without a socket.

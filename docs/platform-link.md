@@ -450,6 +450,9 @@ logging seam (`HullbreachUnityPlatformLog` adapts it to `Debug.Log`).
 <!-- describes: Assets/Scripts/Hullbreach.Platform/PlatformLog.cs::NullPlatformLog.Info -->
 <!-- describes: Assets/Scripts/Hullbreach.Platform/PlatformLog.cs::NullPlatformLog.Warning -->
 
+`PlatformHttpMethod` has `Get`, `Post` and `Delete`; `Delete` exists for the
+matchmaking queue's leave call (`reference/hullbreach-net.md#matchmaking`).
+
 ## Testing
 
 - `tools/plaincs/run_tests.sh --filter "FullyQualifiedName~Hullbreach.Platform"`
