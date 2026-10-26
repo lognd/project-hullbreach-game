@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Net;
 
 namespace Hullbreach.Net
 {
@@ -163,10 +162,7 @@ namespace Hullbreach.Net
                 warnings.Add($"{ConnectArg} needs an IP address; using {LoopbackAddress}.");
                 return LoopbackAddress;
             }
-            string trimmed = text.Trim();
-            if (string.Equals(trimmed, "localhost", StringComparison.OrdinalIgnoreCase)) return LoopbackAddress;
-            if (IPAddress.TryParse(trimmed, out IPAddress parsed) && trimmed.IndexOf(':') < 0 && trimmed.Split('.').Length == 4)
-                return parsed.ToString();
+            if (LanEndpoint.TryParseAddress(text, out string address)) return address;
             warnings.Add($"Invalid {ConnectArg} address '{text}' (use a numeric IPv4 address such as 192.168.1.23); using {LoopbackAddress}.");
             return LoopbackAddress;
         }

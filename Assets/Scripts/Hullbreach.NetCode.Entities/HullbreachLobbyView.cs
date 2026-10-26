@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+using Hullbreach.Net;
 using TMPro;
 using Unity.Services.Multiplayer;
 using UnityEngine;
@@ -37,6 +38,12 @@ namespace Hullbreach.NetCode.Entities
         [SerializeField] Transform publicLobbyList;
         [SerializeField] GameObject publicLobbyRowTemplate;
 
+        // Optional: prefabs built before LAN join lack these, so every use is null-guarded.
+        [Header("LAN (no Unity Services)")]
+        [SerializeField] TMP_InputField lanAddressInput;
+        [SerializeField] Button lanHostButton;
+        [SerializeField] Button lanJoinButton;
+
         [Header("Waiting Room")]
         [SerializeField] TMP_Text roomTitleText;
         [SerializeField] TMP_Text roomDetailsText;
@@ -61,6 +68,8 @@ namespace Hullbreach.NetCode.Entities
             refreshButton.onClick.AddListener(RefreshPublic);
             startGameButton.onClick.AddListener(StartGame);
             leaveButton.onClick.AddListener(Leave);
+            if (lanHostButton != null) lanHostButton.onClick.AddListener(HostLan);
+            if (lanJoinButton != null) lanJoinButton.onClick.AddListener(JoinLan);
             Refresh();
         }
 
@@ -72,6 +81,8 @@ namespace Hullbreach.NetCode.Entities
             refreshButton.onClick.RemoveListener(RefreshPublic);
             startGameButton.onClick.RemoveListener(StartGame);
             leaveButton.onClick.RemoveListener(Leave);
+            if (lanHostButton != null) lanHostButton.onClick.RemoveListener(HostLan);
+            if (lanJoinButton != null) lanJoinButton.onClick.RemoveListener(JoinLan);
             ClearPublicRows();
         }
 
@@ -84,6 +95,24 @@ namespace Hullbreach.NetCode.Entities
         void JoinCode()
         {
             Run(_service.JoinByCodeAsync(joinCodeInput.text, joinPasswordInput.text));
+        }
+
+        // LAN host/join bypass Unity Services; a bad address shows as the local error.
+        // frob:doc docs/netcode.md#lan-host-and-join-from-the-lobby
+        void HostLan()
+        {
+            _localError = null;
+            if (!HullbreachLanLobby.TryHost(DirectLaunchPlan.DefaultPort, out string error)) _localError = error;
+            Refresh();
+        }
+
+        // frob:doc docs/netcode.md#lan-host-and-join-from-the-lobby
+        void JoinLan()
+        {
+            _localError = null;
+            string text = lanAddressInput != null ? lanAddressInput.text : null;
+            if (!HullbreachLanLobby.TryJoin(text, out string error)) _localError = error;
+            Refresh();
         }
 
         void RefreshPublic() => Run(_service.RefreshPublicSessionsAsync());
@@ -169,6 +198,8 @@ namespace Hullbreach.NetCode.Entities
             joinCodeButton.interactable = value;
             refreshButton.interactable = value;
             leaveButton.interactable = value;
+            if (lanHostButton != null) lanHostButton.interactable = value;
+            if (lanJoinButton != null) lanJoinButton.interactable = value;
         }
 
         async void Run(Task operation)
