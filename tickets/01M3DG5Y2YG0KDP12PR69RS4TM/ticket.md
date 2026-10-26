@@ -2,7 +2,8 @@
 id = "01M3DG5Y2YG0KDP12PR69RS4TM"
 title = "S43-1: GravityGunBehaviour and AntiGravityGunBehaviour placing temporary gravity wells"
 type = "task"
-category = "todo"
+category = "done"
+outcome = "done"
 priority = "high"
 points = 3
 parent = "01M3DG5Y107GDBD1ZZQK0H4AKX"
