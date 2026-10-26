@@ -143,14 +143,15 @@ namespace Hullbreach.Match.Tests
         }
 
         [Test]
-        public void DisconnectWhileRunning_Abandons_AndIsNotReported()
+        public void DisconnectWhileRunning_IsAForfeitWin_ForTheRemainingPeer_AndIsReported()
         {
             _machine.Start();
             _machine.Disconnect(2);
             Assert.AreEqual(MatchPhase.Ended, _machine.Phase);
-            Assert.AreEqual(MatchResult.Abandoned, _machine.Result);
-            Assert.AreEqual(-1, _machine.WinnerPeer);
-            Assert.AreEqual(0, _raised.Count);
+            Assert.AreEqual(MatchResult.Forfeit, _machine.Result);
+            Assert.AreEqual(1, _machine.WinnerPeer);
+            Assert.AreEqual(1, _raised.Count);
+            Assert.AreEqual(1, _raised[0].WinnerPeer);
         }
 
         [Test]
