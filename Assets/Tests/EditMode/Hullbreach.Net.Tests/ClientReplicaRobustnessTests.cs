@@ -25,6 +25,37 @@ namespace Hullbreach.Net.Tests
 
         static ShipSnapshot Snap(uint seq, ushort netId) => new ShipSnapshot(seq, netId, Line(), 0, 0, 0, 0, 0, 0);
 
+        // frob:ticket 01M5VGS9DWNF85ZAQ0GD5X8A1J
+        // frob:tests Hullbreach.Net.ClientReplica
+        [Test]
+        public void MatchEnded_RaisesTheReplicaFeed_WithTheResult()
+        {
+            var feed = new Hullbreach.Platform.MatchEndFeed();
+            var raised = new System.Collections.Generic.List<Hullbreach.Platform.MatchEndedArgs>();
+            feed.Ended += raised.Add;
+            var replica = new ClientReplica { MatchFeed = feed };
+            Feed(replica, Bytes(Snap(1, 1))); // establishes the sequence baseline
+            var args = new Hullbreach.Platform.MatchEndedArgs("m1", -1, 1, default, 2, default, 9, Hullbreach.Match.MatchResult.Draw);
+            var buf = new byte[MatchEnded.MaxByteSize];
+            var w = new ByteWriter(buf);
+            new MatchEnded(2, args).Write(ref w);
+            Feed(replica, Trim(buf, w.Position));
+            Assert.AreEqual(1, raised.Count);
+            Assert.AreEqual(Hullbreach.Match.MatchResult.Draw, raised[0].Result);
+        }
+
+        // frob:ticket 01M5VGS9DWNF85ZAQ0GD5X8A1J
+        // frob:tests Hullbreach.Net.ClientReplica
+        [Test]
+        public void MatchEnded_WithoutAFeed_IsDroppedQuietly()
+        {
+            var replica = new ClientReplica();
+            var buf = new byte[MatchEnded.MaxByteSize];
+            var w = new ByteWriter(buf);
+            new MatchEnded(1, new Hullbreach.Platform.MatchEndedArgs("m1", 1, 1, default, 2, default, 9, Hullbreach.Match.MatchResult.Forfeit)).Write(ref w);
+            Assert.DoesNotThrow(() => Feed(replica, Trim(buf, w.Position)));
+        }
+
         [Test]
         public void FarFutureSequence_IsDropped_AndDoesNotBlockLaterInOrderEvents()
         {

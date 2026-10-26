@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Unity.Mathematics;
 using Hullbreach.Core;
+using Hullbreach.Platform;
 using Hullbreach.Ship;
 
 namespace Hullbreach.Net
@@ -123,6 +124,11 @@ namespace Hullbreach.Net
         public const int MaxReliableWindow = 512;
 
         const uint HalfSequenceRange = 0x80000000u;
+
+        // Where a received MatchEnded is raised (a host sets MatchEndFeed.Shared); null drops it.
+        // frob:ticket 01M5VGS9DWNF85ZAQ0GD5X8A1J
+        // frob:doc docs/reference/hullbreach-net.md#clientreplica
+        public MatchEndFeed MatchFeed { get; set; }
 
         uint _lastAppliedSequence;
         bool _haveBaseline;
@@ -300,6 +306,7 @@ namespace Hullbreach.Net
                 case MessageKind.BlockDamaged:
                 case MessageKind.PowerupApplied:
                 case MessageKind.ShipRemoved:
+                case MessageKind.MatchEnded:
                 {
                     // u32 sequence number right after the kind byte; a body that
                     // turns out short is skipped in order by ApplyOne.
@@ -443,6 +450,13 @@ namespace Hullbreach.Net
                     var m = ShipRemoved.Read(ref r);
                     if (r.Failed) return false;
                     ApplyShipRemoved(m);
+                    return true;
+                }
+                case MessageKind.MatchEnded:
+                {
+                    var m = MatchEnded.Read(ref r);
+                    if (r.Failed) return false;
+                    MatchFeed?.Raise(m.Args);
                     return true;
                 }
                 default:

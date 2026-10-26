@@ -12,6 +12,7 @@ harness compiles and tests it.
 <!-- describes: Assets/Scripts/Hullbreach.Match/MatchStateMachine.cs::MatchStateMachine.Result -->
 <!-- describes: Assets/Scripts/Hullbreach.Match/MatchStateMachine.cs::MatchStateMachine.WinnerPeer -->
 <!-- describes: Assets/Scripts/Hullbreach.Match/MatchStateMachine.cs::MatchStateMachine.MatchId -->
+<!-- describes: Assets/Scripts/Hullbreach.Match/MatchStateMachine.cs::MatchStateMachine.EndedArgs -->
 <!-- describes: Assets/Scripts/Hullbreach.Match/MatchStateMachine.cs::MatchStateMachine.MatchStateMachine -->
 <!-- describes: Assets/Scripts/Hullbreach.Match/MatchStateMachine.cs::MatchStateMachine.Start -->
 <!-- describes: Assets/Scripts/Hullbreach.Match/MatchStateMachine.cs::MatchStateMachine.Tick -->
@@ -25,16 +26,19 @@ is 255. Endings:
 
 - One core breached: `CoreBreached`, the other peer wins, and the machine calls
   `MatchEndFeed.Raise` exactly once with a `MatchEndedArgs` (match id, winner,
-  both peers' `PlayerMatchStats`, duration in whole seconds). The platform
-  reporter attached to `MatchEndFeed.Shared` turns that into `POST /api/v1/matches`.
-- Both cores breached in the same tick: `Draw`, no winner, nothing raised. The
-  platform's `MatchReport` requires `winner_id` to be one of the two players, so
-  a draw cannot be reported; the machine logs a warning saying so.
+  both peers' `PlayerMatchStats`, duration in whole seconds, and the
+  `MatchResult`). The platform reporter attached to `MatchEndFeed.Shared`
+  turns that into `POST /api/v1/matches`. The same args stay readable as
+  `EndedArgs` (null until the match ends) so the server can replicate them.
+- Both cores breached in the same tick: `Draw`, no winner (`-1`), and the feed
+  is raised with `Result = Draw`. The platform's `MatchReport` requires
+  `winner_id` to be one of the two players, so `MatchResultReporter` skips
+  draws; the machine logs a warning saying so.
 - The optional `timeLimitSeconds` constructor argument (S46-2; 0 or less means
   no limit) is checked in `Tick` after the core checks: once the clock has run
   that long since `Start` with both cores alive, the tiebreak is core health
   (255 minus the core block's damage). Higher health wins as `TimeLimit` and is
-  reported like a core win; equal health is a `Draw` (unreported).
+  reported like a core win; equal health is a `Draw` (raised, not reported).
 - A participant `Disconnect`s while running: `Forfeit`, the remaining peer wins,
   and the feed is raised like a core win (same warning log names the leaver).
 
@@ -53,10 +57,12 @@ The clock, feed, match-id factory and log are injected; the feed defaults to
 
 ### MatchResult
 
-<!-- describes: Assets/Scripts/Hullbreach.Match/MatchStateMachine.cs::MatchResult -->
+<!-- describes: Assets/Scripts/Hullbreach.Platform/MatchEndFeed.cs::MatchResult -->
 
 `None` (not ended), `CoreBreached`, `Forfeit` and `TimeLimit` (all have a winner and are
-reported), `Draw` (unreported).
+reported), `Draw` (raised on the feed, never reported). The enum lives in the
+Platform assembly (so `MatchEndedArgs` can carry it) but keeps the
+`Hullbreach.Match` namespace.
 
 ### MatchParticipant
 
@@ -94,8 +100,8 @@ read once when the match ends.
 
 S46-3. The post-match results screen. `ResultsScreenModel` (engine-free,
 tested in `ResultsScreenModelTests`) is built from the ended match
-(`FromEnded(result, MatchEndedArgs, localPeer, nameOf)`; a draw has no feed
-event, so use the constructor with `winnerPeer = -1`) and exposes:
+(`FromEnded(result, MatchEndedArgs, localPeer, nameOf)`; a draw arrives on the
+feed with `WinnerPeer = -1`) and exposes:
 
 - `Headline`: `VICTORY` / `DEFEAT` for the local peer, `<name> WINS` for a
   spectator or server view, `DRAW` when nobody won.
@@ -129,16 +135,17 @@ prefab or scene wiring exists yet; add `HullbreachResultsHost` next to it.
 
 Wiring for the results screen (engine-free, tested in `ResultsFlowTests`).
 `ResultsFlow.Attach(feed)` subscribes to a `MatchEndFeed`; on `Ended` it builds
-the model with `FromEnded` and calls `IResultsPresenter.Show`. The feed args do
-not carry the `MatchResult`, so pass a `resultOf` function (for example
-`_ => machine.Result`); without one a `WinnerPeer` that is neither peer
-(`-1`, a draw) shows as `Draw` and anything else as `CoreBreached`. A rematch or
+the model with `FromEnded` and calls `IResultsPresenter.Show`. The args carry
+the `MatchResult`, which wins; only for `None` does `resultOf` (or, without
+one, the winner inference: `-1` is `Draw`, anything else `CoreBreached`) apply.
+A repeat of the last shown `MatchId` is ignored, because a listen server raises
+both its own and the replicated end on `MatchEndFeed.Shared`. A rematch or
 lobby pick hides the presenter and invokes the matching callback.
 
 `HullbreachResultsHost` (`Hullbreach.NetCode.Entities`) is the Unity glue: it
 attaches a flow to `MatchEndFeed.Shared`, sends rematch to
 `HullbreachLobbyService.StartGameAsync` (lobby host only; a guest waits) and
-lobby to `LeaveAndReturnToLobbyAsync`. Limit: `MatchEndFeed.Shared` is raised
-in the server process, and the state machine does not raise it for a draw
-today, so a remote client sees the screen only once a replicated end event
-exists. The Unity code here was not compiled in the editor.
+lobby to `LeaveAndReturnToLobbyAsync`. A remote client gets the end through the
+replicated `MatchEnded` message (`hullbreach-net.md#matchended`), which
+`ClientReplica.MatchFeed` raises on `MatchEndFeed.Shared`. The Unity code here
+was not compiled in the editor.

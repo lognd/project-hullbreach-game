@@ -13,17 +13,6 @@ namespace Hullbreach.Match
         Ended,
     }
 
-    // Why an Ended match ended; CoreBreached, Forfeit and TimeLimit have a winner and are reported to the platform.
-    // frob:doc docs/reference/hullbreach-match.md#matchresult
-    public enum MatchResult
-    {
-        None,
-        CoreBreached,
-        Draw,
-        Forfeit,
-        TimeLimit,
-    }
-
     // One side of the match: its network peer, its ship's grid, and a stats snapshot source.
     // frob:doc docs/reference/hullbreach-match.md#matchparticipant
     public sealed class MatchParticipant
@@ -51,6 +40,7 @@ namespace Hullbreach.Match
     // frob:ticket 01M3DG5Y35GWWAHRPBN3Y92T1Z
     // frob:ticket 01M5V8S9HK53WMKF29MXJYM8Z5
     // frob:ticket 01M3DG5Y36WE3D2224D54MR2S6
+    // frob:ticket 01M5VGS9DWNF85ZAQ0GD5X8A1J
     // frob:doc docs/reference/hullbreach-match.md#matchstatemachine
     public sealed class MatchStateMachine
     {
@@ -75,6 +65,11 @@ namespace Hullbreach.Match
         // The winning peer, or -1 when there is none (not ended, draw, abandoned).
         // frob:doc docs/reference/hullbreach-match.md#matchstatemachine
         public int WinnerPeer { get; private set; } = -1;
+
+        // What the feed was told when the match ended (draws included); null until then.
+        // frob:ticket 01M5VGS9DWNF85ZAQ0GD5X8A1J
+        // frob:doc docs/reference/hullbreach-match.md#matchstatemachine
+        public MatchEndedArgs? EndedArgs { get; private set; }
 
         // Empty until the match starts; a fresh uuid per match.
         // frob:doc docs/reference/hullbreach-match.md#matchstatemachine
@@ -173,13 +168,12 @@ namespace Hullbreach.Match
             WinnerPeer = winnerPeer;
             int duration = (int)Math.Round(Math.Max(0.0, _clock() - _startedAt));
             if (winnerPeer < 0)
-            {
-                _log.Warning($"Hullbreach match {MatchId}: ended {result} after {duration}s; not reported "
-                    + "because the platform report requires a winner.");
-                return;
-            }
-            _log.Info($"Hullbreach match {MatchId}: peer {winnerPeer} won by {result} after {duration}s.");
-            _feed.Raise(new MatchEndedArgs(MatchId, winnerPeer, _a.Peer, _a.Stats(), _b.Peer, _b.Stats(), duration));
+                _log.Warning($"Hullbreach match {MatchId}: ended {result} after {duration}s; the feed carries it "
+                    + "but the platform reporter skips it because the report requires a winner.");
+            else
+                _log.Info($"Hullbreach match {MatchId}: peer {winnerPeer} won by {result} after {duration}s.");
+            EndedArgs = new MatchEndedArgs(MatchId, winnerPeer, _a.Peer, _a.Stats(), _b.Peer, _b.Stats(), duration, result);
+            _feed.Raise(EndedArgs.Value);
         }
     }
 }

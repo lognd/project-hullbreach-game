@@ -1,4 +1,7 @@
 using System;
+using System.Text;
+using Hullbreach.Match;
+using Hullbreach.Platform;
 
 namespace Hullbreach.Net
 {
@@ -23,6 +26,7 @@ namespace Hullbreach.Net
         PowerupApplied = 8,
         GravityWellSpawned = 9,
         ShipRemoved = 10,
+        MatchEnded = 11,
     }
 
     // Client -> server, unreliable: this tick's intent. Latest-wins on drop.
@@ -292,6 +296,96 @@ namespace Hullbreach.Net
             uint seq = r.ReadU32();
             ushort netId = r.ReadU16();
             return new ShipRemoved(seq, netId);
+        }
+    }
+
+    // Server -> client, reliable ordered: the match ended (win, forfeit, time limit or draw), with
+    // the stats the results screen shows. Clients raise their local MatchEndFeed from it.
+    // frob:ticket 01M5VGS9DWNF85ZAQ0GD5X8A1J
+    // frob:doc docs/reference/hullbreach-net.md#matchended
+    public readonly struct MatchEnded
+    {
+        // Longest match id carried; longer ids are cut (ids are uuids, 36 chars).
+        // frob:doc docs/reference/hullbreach-net.md#matchended
+        public const int MaxIdLength = 64;
+
+        // Upper bound of the encoded size, for buffer allocation.
+        // frob:doc docs/reference/hullbreach-net.md#matchended
+        public const int MaxByteSize = 1 + 4 + 1 + 4 * 4 + 2 * 4 * 4 + 1 + MaxIdLength;
+
+        // frob:doc docs/reference/hullbreach-net.md#matchended
+        public readonly uint Sequence;
+
+        // The same args the server's feed carried; stats user ids are not sent (empty on the client).
+        // frob:doc docs/reference/hullbreach-net.md#matchended
+        public readonly MatchEndedArgs Args;
+
+        // frob:doc docs/reference/hullbreach-net.md#matchended
+        public MatchEnded(uint sequence, MatchEndedArgs args)
+        {
+            Sequence = sequence;
+            Args = args;
+        }
+
+        // frob:doc docs/reference/hullbreach-net.md#matchended
+        public void Write(ref ByteWriter w)
+        {
+            w.WriteU8((byte)MessageKind.MatchEnded);
+            w.WriteU32(Sequence);
+            w.WriteU8((byte)Args.Result);
+            w.WriteI32(Args.WinnerPeer);
+            w.WriteI32(Args.PeerA);
+            w.WriteI32(Args.PeerB);
+            w.WriteI32(Args.DurationSeconds);
+            WriteStats(ref w, Args.StatsA);
+            WriteStats(ref w, Args.StatsB);
+            string id = Args.MatchId ?? string.Empty;
+            byte[] idBytes = Encoding.ASCII.GetBytes(id.Length > MaxIdLength ? id.Substring(0, MaxIdLength) : id);
+            w.WriteU8((byte)idBytes.Length);
+            foreach (byte b in idBytes) w.WriteU8(b);
+        }
+
+        // Reads the MessageKind byte too, mirroring Write; check r.Failed afterwards.
+        // frob:doc docs/reference/hullbreach-net.md#matchended
+        public static MatchEnded Read(ref ByteReader r)
+        {
+            r.ReadU8(); // MessageKind
+            uint seq = r.ReadU32();
+            byte result = r.ReadU8();
+            int winner = r.ReadI32();
+            int peerA = r.ReadI32();
+            int peerB = r.ReadI32();
+            int duration = r.ReadI32();
+            PlayerMatchStats statsA = ReadStats(ref r);
+            PlayerMatchStats statsB = ReadStats(ref r);
+            int idLength = r.ReadU8();
+            if (r.Failed || idLength > MaxIdLength || idLength > r.Remaining || result > (byte)MatchResult.TimeLimit)
+            {
+                r.Fail();
+                return default;
+            }
+            var idBytes = new byte[idLength];
+            for (int i = 0; i < idLength; i++) idBytes[i] = r.ReadU8();
+            var args = new MatchEndedArgs(Encoding.ASCII.GetString(idBytes), winner, peerA, statsA, peerB, statsB,
+                duration, (MatchResult)result);
+            return new MatchEnded(seq, args);
+        }
+
+        static void WriteStats(ref ByteWriter w, PlayerMatchStats s)
+        {
+            w.WriteI32(s.DamageDealt);
+            w.WriteI32(s.BlocksDestroyed);
+            w.WriteI32(s.BlocksPlaced);
+            w.WriteI32(s.TimeAliveSeconds);
+        }
+
+        static PlayerMatchStats ReadStats(ref ByteReader r)
+        {
+            int damage = r.ReadI32();
+            int destroyed = r.ReadI32();
+            int placed = r.ReadI32();
+            int alive = r.ReadI32();
+            return new PlayerMatchStats(string.Empty, damage, destroyed, placed, alive);
         }
     }
 

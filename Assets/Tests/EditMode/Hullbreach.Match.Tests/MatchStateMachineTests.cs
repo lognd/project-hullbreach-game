@@ -129,8 +129,10 @@ namespace Hullbreach.Match.Tests
             Assert.AreEqual(2, _machine.WinnerPeer, "the first ending stands");
         }
 
+        // frob:ticket 01M5VGS9DWNF85ZAQ0GD5X8A1J
+        // frob:tests Hullbreach.Match.MatchStateMachine
         [Test]
-        public void BothCoresDestroyedTogether_IsADraw_AndNotReported()
+        public void BothCoresDestroyedTogether_IsADraw_RaisesTheFeedWithDrawResult()
         {
             _machine.Start();
             DestroyCore(_gridA);
@@ -139,7 +141,9 @@ namespace Hullbreach.Match.Tests
             Assert.AreEqual(MatchPhase.Ended, _machine.Phase);
             Assert.AreEqual(MatchResult.Draw, _machine.Result);
             Assert.AreEqual(-1, _machine.WinnerPeer);
-            Assert.AreEqual(0, _raised.Count, "the platform report needs a winner");
+            Assert.AreEqual(1, _raised.Count, "draws reach the feed; the reporter skips them");
+            Assert.AreEqual(MatchResult.Draw, _raised[0].Result);
+            Assert.AreEqual(MatchResult.Draw, _machine.EndedArgs.Value.Result);
         }
 
         [Test]
@@ -210,8 +214,10 @@ namespace Hullbreach.Match.Tests
             Assert.AreEqual(2, _raised[0].WinnerPeer);
         }
 
+        // frob:ticket 01M5VGS9DWNF85ZAQ0GD5X8A1J
+        // frob:tests Hullbreach.Match.MatchStateMachine
         [Test]
-        public void TimeLimit_EqualHealth_IsUnreportedDraw()
+        public void TimeLimit_EqualHealth_RaisesADraw()
         {
             var m = Limited(60);
             m.Start();
@@ -221,7 +227,8 @@ namespace Hullbreach.Match.Tests
             m.Tick();
             Assert.AreEqual(MatchResult.Draw, m.Result);
             Assert.AreEqual(-1, m.WinnerPeer);
-            Assert.AreEqual(0, _raised.Count);
+            Assert.AreEqual(1, _raised.Count);
+            Assert.AreEqual(MatchResult.Draw, _raised[0].Result);
         }
 
         [Test]

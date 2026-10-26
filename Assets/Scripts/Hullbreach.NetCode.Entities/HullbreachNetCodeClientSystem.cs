@@ -64,6 +64,8 @@ namespace Hullbreach.NetCode.Entities
                 ComponentType.ReadOnly<ReceiveRpcCommandRequest>());
             _ghostQuery = GetEntityQuery(ComponentType.ReadOnly<HullbreachGhostPose>());
             _replica = new ClientReplica();
+            // Remote clients never see the server's feed, so the replicated match end feeds the results screen.
+            if (!World.IsThinClient()) _replica.MatchFeed = Hullbreach.Platform.MatchEndFeed.Shared;
             if (!World.IsThinClient())
             {
                 HullbreachNetCodeClient.Replica = _replica;

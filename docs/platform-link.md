@@ -238,8 +238,11 @@ that feed in `OnCreate` (and detaches in `OnDestroy`), so a raised match end
 becomes `POST /api/v1/matches`; the system ticks the reporter every update.
 `HullbreachPlatformAuthServerSystem.ReportFinishedMatch` stays as a direct
 entry point. `Hullbreach.Match.MatchStateMachine` (roadmap S46-1) raises the feed once, with a
-fresh uuid `match_id`, when a core is breached; draws and disconnects raise nothing.
-It is not yet constructed by the server (follow-up ticket).
+fresh uuid `match_id`, when a core is breached, a peer forfeits or the time limit
+expires, and also for a draw. `MatchEndedArgs.Result` carries the `MatchResult`;
+`MatchResultReporter.Attach` skips a `Draw` (no winner to report) with an info log.
+The server replicates the end to clients as `MatchEnded`
+(`reference/hullbreach-net.md#matchended`).
 
 <!-- describes: Assets/Scripts/Hullbreach.Platform/PlatformClient.cs::PlatformClient.PostMatchResult -->
 <!-- describes: Assets/Scripts/Hullbreach.Platform/PlatformClient.cs::PlatformClient.MapMatchReport -->
