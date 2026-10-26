@@ -2,7 +2,8 @@
 id = "01M3DG5Y2022F51ERN95H9XBHX"
 title = "S33-1: BlockPalette with mass and cost per block type"
 type = "task"
-category = "todo"
+category = "done"
+outcome = "done"
 priority = "high"
 points = 2
 parent = "01M3DG5Y0PKYGBXMHTC9BQE40M"
