@@ -7,21 +7,25 @@ priority = "critical"
 points = 3
 reporter = "human"
 created = "2026-09-26T00:00:00Z"
-updated = "2026-10-09T04:03:27Z"
+updated = "2026-10-26T05:09:49Z"
 aliases = ["T-0014"]
 labels = ["jira:SCRUM-37", "owner:lognd", "game", "platform", "milestone:0.2.0"]
 
+[[links]]
+kind = "blocked-by"
+target = "01M5V8S9HK53WMKF29MXJYM8Z5"
+
 [[acceptance]]
 text = "An authenticated game server can submit a match result once; a duplicate submission is recognized and not double-counted."
-bound = false
+bound = true
 
 [[acceptance]]
 text = "A result submitted by an unauthenticated caller is rejected."
-bound = false
+bound = true
 
 [[acceptance]]
 text = "Both players' histories show the match within seconds of the report."
-bound = false
+bound = true
 +++
 
 https://aliens-against-humanity.atlassian.net/browse/SCRUM-37
