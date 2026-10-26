@@ -8,9 +8,10 @@ namespace Hullbreach.NetCode.Entities
     // Inspector-wired uGUI results screen shown when a match ends (S46-3); all logic is in
     // ResultsScreenModel. Call Show with the finished match; the buttons forward to the model.
     // frob:ticket 01M3DG5Y37VGGE65ERV1QQDH8X
+    // frob:ticket 01M5VF1PBQZ9D0Y25J0PQB6Q8N
     // frob:doc docs/reference/hullbreach-match.md#resultsscreenmodel
     [AddComponentMenu("Hullbreach/Match/Results View")]
-    public sealed class HullbreachResultsView : MonoBehaviour
+    public sealed class HullbreachResultsView : MonoBehaviour, IResultsPresenter
     {
         [SerializeField] GameObject root;
         [SerializeField] TMP_Text headlineText;
