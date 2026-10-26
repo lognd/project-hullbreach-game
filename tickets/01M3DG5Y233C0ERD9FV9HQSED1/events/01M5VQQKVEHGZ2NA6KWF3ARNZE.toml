@@ -1,0 +1,6 @@
+kind = "comment"
+subtype = "note"
+body = "Reconciliation 2026-10-26: not implemented. DemoMode treats Build and Fly as mutually exclusive (Tab toggles; ShipController.SimulationEnabled is false in Build mode), so BuilderController and ShipController never run together. Needs the Unity editor/scene wiring plus a design decision on whether the ship is frozen or drifting while building (listed as an open question on S34). Left open."
+at = "2026-10-26T09:12:45Z"
+actor = "mcnairrobotics"
+rev = 1
