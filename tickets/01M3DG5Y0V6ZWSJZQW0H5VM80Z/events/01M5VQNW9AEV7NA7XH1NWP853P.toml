@@ -1,0 +1,6 @@
+kind = "comment"
+subtype = "note"
+body = "Reconciliation 2026-10-26: S38-1 and S38-2 closed with evidence (StressCriteriaTests, DamageModelTests, BucklingTests, server split test). AC1 (block past threshold detaches) and AC2 (disconnected group detaches as one piece, ConnectivityTests plus server split) are engine-free evidenced; AC3 holds by construction (components are removed from the grid and RebuildDerivedViews runs) but has no end-to-end test of mass/thrust/weapons dropping. Debris-with-own-physics is S38-3 ~AVRCXBK. Story left open."
+at = "2026-10-26T09:11:48Z"
+actor = "mcnairrobotics"
+rev = 1
