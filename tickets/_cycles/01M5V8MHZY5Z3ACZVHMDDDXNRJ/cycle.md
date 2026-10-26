@@ -4,7 +4,7 @@ start = "2026-10-24"
 end = "2026-10-30"
 goal = "Sprint 3: wire match end to platform reporting, finish demo runbook"
 state = "planned"
-tickets = ["01M3DG5Y0ET03V3C636YJ6MQYD"]
+tickets = ["01M3DG5Y0ET03V3C636YJ6MQYD", "01M3DG5Y0TRQYC578FES1WY409"]
 created = "2026-10-26T04:48:56Z"
 updated = "2026-10-26T04:48:56Z"
 +++
