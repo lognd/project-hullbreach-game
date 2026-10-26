@@ -64,3 +64,49 @@ reported), `Draw` (unreported).
 
 One side: network peer id, its ship's `BlockGrid`, and a `Func<PlayerMatchStats>`
 read once when the match ends.
+
+### ResultsScreenModel
+
+<!-- describes: Assets/Scripts/Hullbreach.Match/ResultsScreenModel.cs::ResultsPlayerRow -->
+<!-- describes: Assets/Scripts/Hullbreach.Match/ResultsScreenModel.cs::ResultsPlayerRow.ResultsPlayerRow -->
+<!-- describes: Assets/Scripts/Hullbreach.Match/ResultsScreenModel.cs::ResultsScreenModel -->
+<!-- describes: Assets/Scripts/Hullbreach.Match/ResultsScreenModel.cs::ResultsScreenModel.Headline -->
+<!-- describes: Assets/Scripts/Hullbreach.Match/ResultsScreenModel.cs::ResultsScreenModel.Reason -->
+<!-- describes: Assets/Scripts/Hullbreach.Match/ResultsScreenModel.cs::ResultsScreenModel.Duration -->
+<!-- describes: Assets/Scripts/Hullbreach.Match/ResultsScreenModel.cs::ResultsScreenModel.HasWinner -->
+<!-- describes: Assets/Scripts/Hullbreach.Match/ResultsScreenModel.cs::ResultsScreenModel.PlayerA -->
+<!-- describes: Assets/Scripts/Hullbreach.Match/ResultsScreenModel.cs::ResultsScreenModel.PlayerB -->
+<!-- describes: Assets/Scripts/Hullbreach.Match/ResultsScreenModel.cs::ResultsScreenModel.CanChoose -->
+<!-- describes: Assets/Scripts/Hullbreach.Match/ResultsScreenModel.cs::ResultsScreenModel.RematchRequested -->
+<!-- describes: Assets/Scripts/Hullbreach.Match/ResultsScreenModel.cs::ResultsScreenModel.ReturnToLobbyRequested -->
+<!-- describes: Assets/Scripts/Hullbreach.Match/ResultsScreenModel.cs::ResultsScreenModel.ResultsScreenModel -->
+<!-- describes: Assets/Scripts/Hullbreach.Match/ResultsScreenModel.cs::ResultsScreenModel.FromEnded -->
+<!-- describes: Assets/Scripts/Hullbreach.Match/ResultsScreenModel.cs::ResultsScreenModel.Rematch -->
+<!-- describes: Assets/Scripts/Hullbreach.Match/ResultsScreenModel.cs::ResultsScreenModel.ReturnToLobby -->
+<!-- describes: Assets/Scripts/Hullbreach.Match/ResultsScreenModel.cs::ResultsScreenModel.FormatClock -->
+<!-- describes: Assets/Scripts/Hullbreach.NetCode.Entities/HullbreachResultsView.cs::HullbreachResultsView -->
+<!-- describes: Assets/Scripts/Hullbreach.NetCode.Entities/HullbreachResultsView.cs::HullbreachResultsView.Show -->
+<!-- describes: Assets/Scripts/Hullbreach.NetCode.Entities/HullbreachResultsView.cs::HullbreachResultsView.Hide -->
+
+S46-3. The post-match results screen. `ResultsScreenModel` (engine-free,
+tested in `ResultsScreenModelTests`) is built from the ended match
+(`FromEnded(result, MatchEndedArgs, localPeer, nameOf)`; a draw has no feed
+event, so use the constructor with `winnerPeer = -1`) and exposes:
+
+- `Headline`: `VICTORY` / `DEFEAT` for the local peer, `<name> WINS` for a
+  spectator or server view, `DRAW` when nobody won.
+- `Reason`: `Core breached`, `Opponent left the match (forfeit)`,
+  `Both cores breached`. A `MatchResult` without wording (a time limit
+  from S46-2, say) is shown as its spaced-out enum name and logged, never
+  thrown on, so adding a reason needs no change here beyond nicer text.
+- `Duration` (`m:ss`, `h:mm:ss` from an hour) and one `ResultsPlayerRow`
+  per side: name (display name from `nameOf`, else `Player 1` / `Player 2`),
+  winner flag, damage dealt, blocks destroyed, blocks placed, time alive.
+- `Rematch()` / `ReturnToLobby()`: raise `RematchRequested` /
+  `ReturnToLobbyRequested` once; the first pick wins and later ones are
+  ignored (`CanChoose` goes false). The owner decides what each means.
+
+`HullbreachResultsView` (`Hullbreach.NetCode.Entities`, inspector-wired
+like `HullbreachSignInView`) mirrors the model onto TMP texts and two
+buttons: `Show(model)` / `Hide()`. No prefab or scene wiring exists yet,
+and nothing calls `Show` until the server/client flow is connected.
