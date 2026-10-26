@@ -2,7 +2,8 @@
 id = "01M3DG5Y2AQGV267Y3STQSWFF3"
 title = "S36-3: Material properties per block type (hull, armor, thruster)"
 type = "task"
-category = "todo"
+category = "done"
+outcome = "fixed"
 priority = "critical"
 points = 2
 parent = "01M3DG5Y0SP70ASKR1VP80X976"
