@@ -2,7 +2,8 @@
 id = "01M3DG5Y2Q79RWM7G8XE2PWJT5"
 title = "S40-2: Projectiles follow gravity"
 type = "task"
-category = "todo"
+category = "done"
+outcome = "done"
 priority = "high"
 points = 1
 parent = "01M3DG5Y0X02V7SGJ0Y3J7550F"
