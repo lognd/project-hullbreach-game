@@ -7,7 +7,7 @@ priority = "critical"
 parent = "01M3DG5Y03DJ72WRTEGD6EBC3C"
 reporter = "human"
 created = "2026-09-26T00:00:00Z"
-updated = "2026-10-26T08:19:27Z"
+updated = "2026-10-26T08:19:34Z"
 aliases = ["T-0019"]
 labels = ["jira:SCRUM-51", "owner:stevendangkhoi", "game", "milestone:0.1.0"]
 
@@ -21,7 +21,7 @@ bound = true
 
 [[acceptance]]
 text = "The placed block is attached to the hull and moves with the ship."
-bound = false
+bound = true
 +++
 
 https://aliens-against-humanity.atlassian.net/browse/SCRUM-51
