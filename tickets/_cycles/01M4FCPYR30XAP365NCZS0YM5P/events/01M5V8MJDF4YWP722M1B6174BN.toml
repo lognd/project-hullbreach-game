@@ -1,0 +1,6 @@
+kind = "cycle"
+op = "retro"
+text = "Sprint 2 closed: platform demo stack, server console, match POST with ELO, blueprint UI, sign-in screen, direct-mode scene and post-match reporter merged and tagged v0.1.0-demo. Carry: match-end flow wiring, Unity evidence provider."
+at = "2026-10-26T04:48:56Z"
+actor = "lognd"
+rev = 1
