@@ -463,6 +463,8 @@ and to which ship, without re-parsing wire bytes.
 <!-- describes: Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ClientReplica.ApplySnapshot -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ClientReplica.ApplyState -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ClientReplica.TryInterpolate -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ClientReplica.TryInterpolateAt -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ClientReplica.InterpolationDelayTicks -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ClientReplica.ApplyReceived -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ClientReplica.ApplyReliable -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ClientReplica.MaxReliableWindow -->
@@ -480,6 +482,17 @@ run is contiguous from the last applied sequence (see `ApplyReliable`).
 This is what makes `ClientReplica` correct even against a transport that
 reorders reliable messages (see `LoopbackTransport`'s jitter and
 `ITransport`'s ordering contract, docs/netcode.md#ordering...).
+
+Remote-ship smoothing (S48-2): `ApplyState` keeps the last two poses,
+stamped with the client tick they arrived on. A view calls
+`TryInterpolateAt(netId, renderTick, ...)` with `renderTick` =
+current tick - `InterpolationDelayTicks` + the fraction of the current
+tick elapsed, so it always draws between two real server poses. Rotation
+takes the shortest arc across the 0/2pi wrap, and a stale pair holds its
+newest pose rather than extrapolating. `NetDemo` draws this way.
+Projectiles are not part of `ClientReplica`; on the Netcode for Entities
+path the ghost pose already declares `Smoothing` on position and rotation
+(`HullbreachGhostPose`).
 
 Baselines are per ship. `ApplySnapshot` installs a ship only if no newer
 snapshot or removal already covers its `NetId` (it returns false
