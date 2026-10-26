@@ -1,0 +1,6 @@
+kind = "comment"
+subtype = "note"
+body = "Reconciled against code. Not implemented: no per-map config loader exists (same gap as S40-3). Config format is undecided. Left open."
+at = "2026-10-26T09:16:52Z"
+actor = "mcnairrobotics"
+rev = 1
