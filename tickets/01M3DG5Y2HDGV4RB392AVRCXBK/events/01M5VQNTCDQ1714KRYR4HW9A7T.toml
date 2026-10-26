@@ -1,0 +1,6 @@
+kind = "comment"
+subtype = "note"
+body = "Reconciliation 2026-10-26: partial. Server removes each disconnected component from the ship grid (so it stops contributing mass/thrust/weapons) and broadcasts FragmentSpawned, but the spawned fragment body carries NO blocks (ClientReplica.ApplyFragmentSpawned makes an empty ShipBody; pose and velocity only) and has no debris physics of its own. The doc (netcode.md) says the block list is derived on both sides, but no code assigns the removed components' blocks to the fragment. Missing: fragment body adopting the component's blocks on server and client plus debris physics, and a design decision (debris vs vanish after a delay) that docs list as open. Left open."
+at = "2026-10-26T09:11:46Z"
+actor = "mcnairrobotics"
+rev = 1
