@@ -6,7 +6,11 @@ category = "todo"
 priority = "medium"
 reporter = "lognd"
 created = "2026-10-26T05:11:25Z"
-updated = "2026-10-26T05:42:36Z"
+updated = "2026-10-26T05:42:52Z"
+
+[[acceptance]]
+text = "Given a peer disconnects mid-match, then the remaining peer is reported as winner; a draw is unreported with a logged warning"
+bound = false
 +++
 
 found while working ~3Y92T1Z: disconnect and same-tick double-core-loss end with no winner and no platform report; decide forfeit and tiebreak policy (with S46-2).

@@ -1,0 +1,7 @@
+kind = "field"
+field = "acceptance"
+new = ["Given a peer disconnects mid-match, then the remaining peer is reported as winner; a draw is unreported with a logged warning"]
+moved = []
+at = "2026-10-26T05:42:52Z"
+actor = "lognd"
+rev = 1
