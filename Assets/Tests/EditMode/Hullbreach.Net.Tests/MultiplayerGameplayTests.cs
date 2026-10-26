@@ -100,6 +100,26 @@ namespace Hullbreach.Net.Tests
         }
 
         [Test]
+        public void CannonProjectile_HitPushesTargetShip()
+        {
+            var server = new ServerSimulation(new ServerOutbox()) { TickRate = 50f };
+            server.Join(1, Ship(
+                Core(),
+                new SnapshotBlock(0, 1, BlockTypes.Cannon, 0, 0)));
+            server.Join(2, Ship(Core()));
+
+            server.Ships[1].Position = float2.zero;
+            server.Ships[2].Position = new float2(0f, 4f);
+            server.SetInput(1, InputMessage.FromFloats(1, 1, 0f, 0f, true));
+            server.SetInput(2, InputMessage.FromFloats(2, 1, 0f, 0f, false));
+
+            for (int i = 0; i < 12; i++) server.Tick();
+
+            // The target has no thrusters, so any velocity came from the hit impulse.
+            Assert.Greater(math.length(server.Ships[2].Velocity), 0f, "a hit must transfer the shot impulse to the ship");
+        }
+
+        [Test]
         public void CannonProjectile_NearPlanetoid_CurvesTowardIt()
         {
             var server = new ServerSimulation(new ServerOutbox()) { TickRate = 50f };

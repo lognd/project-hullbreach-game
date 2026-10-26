@@ -1,0 +1,6 @@
+kind = "comment"
+subtype = "note"
+body = "Left open by catch-up audit: ShipController and LegacyDemoInput are UnityEngine MonoBehaviours. They are not in the plain-C# build, and the PlayMode DemoPlayabilityTests cannot run outside the Unity editor. Needs a Unity editor run to verify keyboard-to-thruster mapping."
+at = "2026-10-26T09:11:32Z"
+actor = "mcnairrobotics"
+rev = 1
