@@ -5,7 +5,6 @@ namespace Hullbreach.Match.Tests
 {
     // Feed event -> model -> presenter, and rematch / lobby routing.
     // frob:ticket 01M5VF1PBQZ9D0Y25J0PQB6Q8N
-    // frob:tests Assets/Scripts/Hullbreach.Match/ResultsFlow.cs::ResultsFlow
     public sealed class ResultsFlowTests
     {
         sealed class FakePresenter : IResultsPresenter
