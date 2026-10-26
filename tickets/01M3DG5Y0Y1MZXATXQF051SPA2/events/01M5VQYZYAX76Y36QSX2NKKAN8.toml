@@ -1,0 +1,6 @@
+kind = "comment"
+subtype = "note"
+body = "Reconciled against code. Nothing for this story exists (docs/roadmap.md lists it Not started). Criteria unbound. Blocked on bounds design decision, see S41-1 and S41-2."
+at = "2026-10-26T09:16:46Z"
+actor = "mcnairrobotics"
+rev = 1

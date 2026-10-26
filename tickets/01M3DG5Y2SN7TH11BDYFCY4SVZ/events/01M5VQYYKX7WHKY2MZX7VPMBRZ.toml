@@ -1,0 +1,6 @@
+kind = "comment"
+subtype = "note"
+body = "Reconciled against code. Not implemented: no arena bounds or soft push-back exists in Hullbreach.World, ShipBody or ServerSimulation (only a comment in Hullbreach.Net/Quantization.cs). Open design: bounds shape and size, push-back force curve, whether it applies to projectiles. Left open."
+at = "2026-10-26T09:16:45Z"
+actor = "mcnairrobotics"
+rev = 1
