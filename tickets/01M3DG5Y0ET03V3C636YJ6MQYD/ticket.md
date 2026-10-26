@@ -7,13 +7,13 @@ priority = "critical"
 points = 3
 reporter = "human"
 created = "2026-09-26T00:00:00Z"
-updated = "2026-10-09T04:03:27Z"
+updated = "2026-10-26T05:09:33Z"
 aliases = ["T-0014"]
 labels = ["jira:SCRUM-37", "owner:lognd", "game", "platform", "milestone:0.2.0"]
 
 [[acceptance]]
 text = "An authenticated game server can submit a match result once; a duplicate submission is recognized and not double-counted."
-bound = false
+bound = true
 
 [[acceptance]]
 text = "A result submitted by an unauthenticated caller is rejected."
