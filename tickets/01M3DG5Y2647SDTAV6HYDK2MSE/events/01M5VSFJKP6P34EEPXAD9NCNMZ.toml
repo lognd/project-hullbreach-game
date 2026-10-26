@@ -1,0 +1,7 @@
+kind = "transition"
+from = "todo"
+to = "in-progress"
+reason = "lease: mcnairrobotics in game/.claude/worktrees/agent-a5f69b15d7a7fdf36; scope: ; ttl 7200s"
+at = "2026-10-26T09:43:18Z"
+actor = "mcnairrobotics"
+rev = 1

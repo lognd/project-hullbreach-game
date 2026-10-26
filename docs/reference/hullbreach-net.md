@@ -933,6 +933,50 @@ not positive, `restitution` outside [0, 1], unreadable file) returns a
 `ConfigResult` with `IsOk == false` and an `Error` sentence; nothing throws.
 `ConfigureDemoArena(ArenaConfig)` applies a loaded config.
 
+### BlockGridDesign
+
+<!-- describes: Assets/Scripts/Hullbreach.Net/BlockGridDesign.cs::BlockGridDesign -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/BlockGridDesign.cs::BlockGridDesign.FormatVersion -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/BlockGridDesign.cs::BlockGridDesign.MaxBlocks -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/BlockGridDesign.cs::BlockGridDesign.MaxJsonChars -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/BlockGridDesign.cs::BlockGridDesign.Serialize -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/BlockGridDesign.cs::BlockGridDesign.Parse -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/BlockGridDesign.cs::BlockGridDesign.LoadFile -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/BlockGridDesign.cs::BlockGridDesign.SaveFile -->
+
+Saved ship designs (S35-1), engine-free. `BlockGridDesign.Serialize(grid)`
+writes a `BlockGrid` as JSON; `Parse(json)` / `LoadFile(path)` read it back
+into a new `BlockGrid`, and `SaveFile(path, grid)` writes one. The format:
+
+```json
+{"version":1,"blocks":[
+  {"x":0,"y":0,"type":"Core","mods":0},
+  {"x":1,"y":0,"type":"Hull"}]}
+```
+
+- `version` (required): must be `1` (`FormatVersion`); any other value is
+  refused so a newer file is never half-read.
+- `blocks` (required): 1 to 4096 (`MaxBlocks`, the same cap as
+  `ShipSnapshot`) objects, written sorted by cell key so output is stable.
+- `x`, `y` (required): whole numbers in -128..127 (`BlockKey` range).
+- `type` (required): the exact, case-sensitive `BlockType.Name`: `Core`,
+  `Hull`, `Armor`, `Thruster`, `Cannon`, `Fin`, `Retro`. Names, not ids, so
+  reordering the table cannot silently change a saved design.
+- `mods` (optional, default 0): whole number 0..255, the facing and upgrade
+  bits of `Block.Modifiers`.
+
+Damage is not saved: a loaded design starts intact.
+
+Loading validates before returning: text over 1 MiB (`MaxJsonChars`) or
+nested deeper than 6 levels is refused unparsed; then version, block count,
+cell range, known type, `mods` range, no two blocks in one cell, exactly
+one `Core`, and every block 4-connected to the core (diagonal contact does
+not count). Any failure returns a `ConfigResult` with `IsOk == false` and
+an `Error` sentence naming the offending `blocks[i]` where there is one;
+nothing throws, including for an unreadable or unwritable file (`SaveFile`
+returns the error text, or null on success). Unknown extra keys are ignored.
+Builder UI for saving and loading is S35-3.
+
 ### OnlineSmoke
 
 <!-- describes: Assets/Scripts/Hullbreach.Net/OnlineSmoke.cs::OnlineSmoke -->
