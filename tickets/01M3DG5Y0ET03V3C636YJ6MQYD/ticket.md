@@ -7,7 +7,7 @@ priority = "critical"
 points = 3
 reporter = "human"
 created = "2026-09-26T00:00:00Z"
-updated = "2026-10-26T05:09:38Z"
+updated = "2026-10-26T05:09:39Z"
 aliases = ["T-0014"]
 labels = ["jira:SCRUM-37", "owner:lognd", "game", "platform", "milestone:0.2.0"]
 
@@ -21,7 +21,7 @@ bound = true
 
 [[acceptance]]
 text = "Both players' histories show the match within seconds of the report."
-bound = false
+bound = true
 +++
 
 https://aliens-against-humanity.atlassian.net/browse/SCRUM-37
