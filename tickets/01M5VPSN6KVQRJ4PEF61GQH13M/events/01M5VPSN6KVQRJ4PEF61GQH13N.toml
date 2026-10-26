@@ -1,0 +1,12 @@
+kind = "create"
+title = "ClientReplica accepts older-server-tick poses as the newer interpolation sample"
+type = "bug"
+category = "todo"
+priority = "medium"
+labels = ["game", "creates:changelog.d/*.fixed.md"]
+scope = ["Assets/Scripts/Hullbreach.Net/ClientReplica.cs", "Assets/Tests/EditMode/Hullbreach.Net.Tests/ClientInterpolationTests.cs", "docs/reference/hullbreach-net.md", "changelog.d/*.fixed.md"]
+acceptance = ["A pose with a server tick older than the newest is dropped, so Older.Tick <= Newer.Tick always holds and interpolation stays monotonic; ApplyGhostPose shares the guard; run_tests.sh passes"]
+body = "Follow-up to PR #81. ApplyState/ApplyGhostPose unconditionally shift Newer to Older, so an out-of-order unreliable pose gives a negative span and snaps."
+at = "2026-10-26T08:56:23Z"
+actor = "mcnairrobotics"
+rev = 1
