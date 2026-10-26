@@ -531,7 +531,11 @@ reorders reliable messages (see `LoopbackTransport`'s jitter and
 
 Remote-ship smoothing (S48-2): `ApplyState` keeps the last two poses,
 stamped with the `ServerTick` each carries (not their arrival tick, so
-poses arriving together still span their true interval). A view calls
+poses arriving together still span their true interval). A pose whose
+`ServerTick` is older than the newest is dropped (unreliable delivery can
+reorder), and one with an equal tick replaces the newest in place, so the
+span is never zero or negative. `ApplyGhostPose` shares this rule; ghosts
+carry no server tick, so the adapter stamps the (monotonic) client tick. A view calls
 `TryInterpolateAt(netId, renderTick, ...)` with `renderTick` =
 `LatestServerTick` - `InterpolationDelayTicks` + the fraction of the
 current tick elapsed, so it always draws between two real server poses. Rotation

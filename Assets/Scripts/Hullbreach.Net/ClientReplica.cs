@@ -247,10 +247,7 @@ namespace Hullbreach.Net
                 AngularVelocity = Quantization.UnpackAngle(state.Av),
             };
 
-            // The first pose after a snapshot has no real predecessor (its sample is tick 0).
-            bool first = replica.Newer == null || replica.Newer.Value.Tick == 0;
-            replica.Older = first ? sample : replica.Newer;
-            replica.Newer = sample;
+            if (!PushSample(replica, sample)) return;
             if (state.ServerTick > LatestServerTick) LatestServerTick = state.ServerTick;
 
             replica.Body.Position = sample.Position;
@@ -259,6 +256,20 @@ namespace Hullbreach.Net
             replica.Body.AngularVelocity = sample.AngularVelocity;
 
             if (_hasLocal && state.NetId == _localNetId) Reconcile(replica, state.AckedInputTick);
+        }
+
+        // Shifts the newest sample to Older unless the pose is older than the newest; a
+        // same-tick pose replaces Newer in place so the span never goes zero or negative.
+        // frob:ticket 01M5VPSN6KVQRJ4PEF61GQH13M
+        static bool PushSample(ReplicaShip replica, in PoseSample sample)
+        {
+            // The first pose after a snapshot has no real predecessor (its sample is tick 0).
+            bool first = replica.Newer == null || replica.Newer.Value.Tick == 0;
+            if (!first && sample.Tick < replica.Newer.Value.Tick) return false;
+            if (first) replica.Older = sample;
+            else if (sample.Tick > replica.Newer.Value.Tick) replica.Older = replica.Newer;
+            replica.Newer = sample;
+            return true;
         }
 
         // Server ticks per second the predicted body is stepped at; must match the server.
@@ -406,10 +417,10 @@ namespace Hullbreach.Net
             rotation = a.Rotation + delta * t;
         }
 
-        // Netcode for Entities ghosts own the high-frequency pose stream in
-        // the Unity adapter. Reliable topology still arrives through the
-        // existing ordered protocol, so a pose is ignored until its snapshot
-        // has established the ship.
+        // Ghosts own the high-frequency pose stream; they carry no server tick, so callers
+        // stamp the client tick. A pose is ignored until its snapshot has established the ship.
+        // frob:ticket 01M5VPSN6KVQRJ4PEF61GQH13M
+        // frob:doc docs/reference/hullbreach-net.md#clientreplica
         public bool ApplyGhostPose(ushort netId, float2 position, float rotation,
             float2 velocity, float angularVelocity, uint tick)
         {
@@ -423,8 +434,7 @@ namespace Hullbreach.Net
                 Velocity = velocity,
                 AngularVelocity = angularVelocity,
             };
-            replica.Older = replica.Newer;
-            replica.Newer = sample;
+            if (!PushSample(replica, sample)) return true;
             replica.Body.Position = position;
             replica.Body.Rotation = rotation;
             replica.Body.Velocity = velocity;
