@@ -118,6 +118,35 @@ namespace Hullbreach.Net.Tests
             Assert.Greater(math.length(server.Ships[2].Velocity), 0f, "a hit must transfer the shot impulse to the ship");
         }
 
+        [Test]
+        public void ProjectileHit_LeavesBothPlayersReplicasAgreeingWithServer()
+        {
+            var outbox = new ServerOutbox();
+            var server = new ServerSimulation(outbox) { TickRate = 50f };
+            var replicaOne = new ClientReplica();
+            var replicaTwo = new ClientReplica();
+            server.Join(1, Ship(
+                Core(),
+                new SnapshotBlock(0, 1, BlockTypes.Cannon, 0, 0)));
+            server.Join(2, Ship(Core()));
+            server.Ships[1].Position = float2.zero;
+            server.Ships[2].Position = new float2(0f, 4f);
+            server.SetInput(1, InputMessage.FromFloats(1, 1, 0f, 0f, true));
+            server.SetInput(2, InputMessage.FromFloats(2, 1, 0f, 0f, false));
+
+            for (int i = 0; i < 12; i++) server.Tick();
+            ApplyOutbox(outbox, replicaOne);
+            ApplyOutbox(outbox, replicaTwo);
+
+            int key = BlockKey.Pack(0, 0);
+            Assert.IsTrue(server.Ships[2].Grid.TryGet(key, out var authoritative));
+            Assert.Greater(authoritative.Damage, 0, "the shot must have landed");
+            Assert.IsTrue(replicaOne.Ships[2].Grid.TryGet(key, out var seenByOne));
+            Assert.IsTrue(replicaTwo.Ships[2].Grid.TryGet(key, out var seenByTwo));
+            Assert.AreEqual(authoritative.Damage, seenByOne.Damage, "player one must see the server's damage");
+            Assert.AreEqual(authoritative.Damage, seenByTwo.Damage, "player two must see the server's damage");
+        }
+
         static void ApplyOutbox(ServerOutbox outbox, ClientReplica replica)
         {
             foreach (var entry in outbox.Entries)
