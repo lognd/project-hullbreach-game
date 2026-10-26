@@ -8,21 +8,21 @@ points = 3
 parent = "01M3DG5Y157XVFXF2844EP0ZKH"
 reporter = "human"
 created = "2026-09-26T00:00:00Z"
-updated = "2026-10-26T08:23:01Z"
+updated = "2026-10-26T08:23:04Z"
 aliases = ["T-0109"]
 labels = ["jira:SCRUM-165", "owner:mcnairrobotics", "game", "netcode", "milestone:0.2.0"]
 
 [[acceptance]]
 text = "ClientReplica.TryInterpolateAt blends the last two server poses by client tick, clamps without extrapolating, and takes the shortest rotation arc"
-bound = false
+bound = true
 
 [[acceptance]]
 text = "On the 100 ms / 2 percent loss throttled link the interpolated view has a smaller largest frame-to-frame jump than raw snapping"
-bound = false
+bound = true
 
 [[acceptance]]
 text = "NetDemo draws replica ships through TryInterpolateAt"
-bound = false
+bound = true
 +++
 
 Interpolation for the opponent ship and projectiles
