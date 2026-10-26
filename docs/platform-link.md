@@ -231,10 +231,16 @@ Guests: the reporter is a no-op when the server key is not configured, when
 either player is a guest (no verified account id), or when the winner is not
 one of the two players. Account ids come from `PlatformAdmissionGate.TryGetUserId`.
 
-Hook: the match-end flow calls
-`HullbreachPlatformAuthServerSystem.ReportFinishedMatch`. No caller exists
-yet because the server has no match state machine (roadmap S46-1); wiring it
-in is the follow-up. The system ticks the reporter every update.
+Hook: the match-end flow raises `MatchEndFeed.Shared` with a `MatchEndedArgs`
+(match id, winner peer, both peers with their stats, duration). The
+`HullbreachPlatformAuthServerSystem` attaches `MatchResultReporter.Attach` to
+that feed in `OnCreate` (and detaches in `OnDestroy`), so a raised match end
+becomes `POST /api/v1/matches`; the system ticks the reporter every update.
+`HullbreachPlatformAuthServerSystem.ReportFinishedMatch` stays as a direct
+entry point. Nothing raises the feed yet because the server has no match state
+machine (roadmap S46-1): that state machine must build the `MatchEndedArgs`
+(a fresh uuid `match_id` per match) and call `MatchEndFeed.Shared.Raise` once
+when a core is breached.
 
 <!-- describes: Assets/Scripts/Hullbreach.Platform/PlatformClient.cs::PlatformClient.PostMatchResult -->
 <!-- describes: Assets/Scripts/Hullbreach.Platform/PlatformClient.cs::PlatformClient.MapMatchReport -->
@@ -246,6 +252,9 @@ in is the follow-up. The system ticks the reporter every update.
 <!-- describes: Assets/Scripts/Hullbreach.Platform/MatchResultReport.cs::PlayerMatchStats -->
 <!-- describes: Assets/Scripts/Hullbreach.Platform/MatchResultReport.cs::MatchResultReport -->
 <!-- describes: Assets/Scripts/Hullbreach.Platform/MatchResultReporter.cs::MatchResultReporter -->
+<!-- describes: Assets/Scripts/Hullbreach.Platform/MatchEndFeed.cs::MatchEndFeed -->
+<!-- describes: Assets/Scripts/Hullbreach.Platform/MatchEndFeed.cs::MatchEndedArgs -->
+<!-- describes: Assets/Scripts/Hullbreach.Platform/MatchResultReporter.cs::MatchResultReporter.Attach -->
 <!-- describes: Assets/Scripts/Hullbreach.Platform/PlatformAdmissionGate.cs::PlatformAdmissionGate.TryGetUserId -->
 <!-- describes: Assets/Scripts/Hullbreach.NetCode.Entities/HullbreachPlatformAuthServerSystem.cs::HullbreachPlatformAuthServerSystem.ReportFinishedMatch -->
 
