@@ -1,0 +1,5 @@
+kind = "changelog-exempt"
+reason = "ledger-catch-up-code-already-shipped, verified by plain-C# run of Hullbreach.Ship.Tests.ShipBodyTests, not Unity-compiled"
+at = "2026-10-26T09:11:26Z"
+actor = "mcnairrobotics"
+rev = 1
