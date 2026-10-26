@@ -8,14 +8,14 @@ points = 3
 parent = "01M3DG5Y0CBB0T10VK6X8FPXBY"
 reporter = "human"
 created = "2026-09-26T00:00:00Z"
-updated = "2026-10-15T15:17:20Z"
+updated = "2026-10-26T05:11:26Z"
 aliases = ["T-0041"]
 labels = ["jira:SCRUM-100", "owner:stevendangkhoi", "game", "platform", "milestone:0.1.0", "creates:Assets/Scripts/Hullbreach.Platform/SignInModel.cs", "creates:Assets/Scripts/Hullbreach.NetCode.Entities/HullbreachSignInView.cs"]
 scope = ["Assets/Scripts/Hullbreach.Platform/SignInModel.cs", "Assets/Scripts/Hullbreach.Platform/PlatformSession.cs", "Assets/Tests/EditMode/Hullbreach.Platform.Tests/**", "Assets/Scripts/Hullbreach.NetCode.Entities/HullbreachSignInView.cs", "Assets/Editor/Hullbreach.Editor/LobbySceneBuilder.cs", "docs/platform-link.md", "docs/netcode.md"]
 
 [[acceptance]]
 text = "The sign-in screen posts username and password to POST /api/v1/auth/login and shows a distinct message for wrong credentials, rate limiting, unreachable platform and other failures."
-bound = false
+bound = true
 
 [[acceptance]]
 text = "A play offline option dismisses the screen without an account; the client then connects as a guest."
