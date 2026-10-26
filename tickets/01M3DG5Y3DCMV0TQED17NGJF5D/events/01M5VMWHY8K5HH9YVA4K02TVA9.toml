@@ -1,0 +1,7 @@
+kind = "field"
+field = "acceptance"
+new = ["ClientReplica.TryInterpolateAt blends the last two server poses by client tick, clamps without extrapolating, and takes the shortest rotation arc", "On the 100 ms / 2 percent loss throttled link the interpolated view has a smaller largest frame-to-frame jump than raw snapping", "NetDemo draws replica ships through TryInterpolateAt"]
+moved = []
+at = "2026-10-26T08:23:01Z"
+actor = "mcnairrobotics"
+rev = 1

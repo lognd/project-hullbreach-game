@@ -145,10 +145,15 @@ namespace Hullbreach.Game
         void RefreshVisuals(ClientReplica replica, int replicaIndex)
         {
             if (replica == null) return;
+            // Draw slightly in the past, blended between the last two server poses (S48-2).
+            float renderTick = _clientTick - ClientReplica.InterpolationDelayTicks + _tickAccumulator * tickRate;
             foreach (var kv in replica.Ships)
             {
                 ushort netId = kv.Key;
                 var ship = kv.Value;
+                float2 drawPos = ship.Position;
+                float drawRot = ship.Rotation;
+                if (replica.TryInterpolateAt(netId, renderTick, out var ip, out var ir)) { drawPos = ip; drawRot = ir; }
                 foreach (var block in ship.Grid.All)
                 {
                     var visKey = (replicaIndex, netId, block.Key);
@@ -162,11 +167,19 @@ namespace Hullbreach.Game
                         _visuals[visKey] = go;
                     }
                     float2 local = BlockGrid.CenterOf(block.Key);
-                    float2 world = ship.LocalToWorld(local);
+                    float2 world = drawPos + RotateBy(local, drawRot);
                     go.transform.position = new Vector3(world.x, world.y, 0f);
-                    go.transform.rotation = Quaternion.Euler(0f, 0f, ship.Rotation * Mathf.Rad2Deg);
+                    go.transform.rotation = Quaternion.Euler(0f, 0f, drawRot * Mathf.Rad2Deg);
                 }
             }
+        }
+
+        // Same rotation convention as ShipBody.LocalToWorld, minus the position.
+        static float2 RotateBy(float2 v, float angle)
+        {
+            float s = math.sin(angle);
+            float c = math.cos(angle);
+            return new float2(v.x * c - v.y * s, v.x * s + v.y * c);
         }
 
         // Destroys quads whose block or ship left the replica this refresh.

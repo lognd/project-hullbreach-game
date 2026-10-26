@@ -233,6 +233,10 @@ namespace Hullbreach.Net
             replica.Body.AngularVelocity = sample.AngularVelocity;
         }
 
+        // How many ticks behind the newest state a view should render so it always
+        // has two real samples to blend (S48-2). frob:doc docs/reference/hullbreach-net.md#clientreplica
+        public const float InterpolationDelayTicks = 1f;
+
         // 0 <= t <= 1 (0 = older, 1 = newer). False if the ship is unknown.
         // frob:doc docs/reference/hullbreach-net.md#clientreplica
         public bool TryInterpolate(ushort netId, float t, out float2 position, out float rotation)
@@ -241,11 +245,37 @@ namespace Hullbreach.Net
             rotation = 0f;
             if (!_ships.TryGetValue(netId, out var replica) || replica.Older == null || replica.Newer == null) return false;
 
+            Blend(replica.Older.Value, replica.Newer.Value, math.clamp(t, 0f, 1f), out position, out rotation);
+            return true;
+        }
+
+        // Blends by client tick: renderTick may be fractional and is clamped to the
+        // last two samples (no extrapolation). False if the ship has no pose pair.
+        // frob:ticket 01M3DG5Y3DCMV0TQED17NGJF5D
+        // frob:doc docs/reference/hullbreach-net.md#clientreplica
+        public bool TryInterpolateAt(ushort netId, float renderTick, out float2 position, out float rotation)
+        {
+            position = float2.zero;
+            rotation = 0f;
+            if (!_ships.TryGetValue(netId, out var replica) || replica.Older == null || replica.Newer == null) return false;
+
             var a = replica.Older.Value;
             var b = replica.Newer.Value;
-            position = math.lerp(a.Position, b.Position, math.clamp(t, 0f, 1f));
-            rotation = math.lerp(a.Rotation, b.Rotation, math.clamp(t, 0f, 1f));
+            float span = (float)(b.Tick - a.Tick);
+            float t = span <= 0f ? 1f : math.clamp((renderTick - a.Tick) / span, 0f, 1f);
+            Blend(a, b, t, out position, out rotation);
             return true;
+        }
+
+        // Linear position, shortest-arc rotation (angles live in [0, 2pi), so a
+        // plain lerp would spin the long way across the wrap).
+        static void Blend(in PoseSample a, in PoseSample b, float t, out float2 position, out float rotation)
+        {
+            const float Tau = 6.28318530718f;
+            position = math.lerp(a.Position, b.Position, t);
+            float delta = b.Rotation - a.Rotation;
+            delta -= Tau * math.round(delta / Tau);
+            rotation = a.Rotation + delta * t;
         }
 
         // Netcode for Entities ghosts own the high-frequency pose stream in
