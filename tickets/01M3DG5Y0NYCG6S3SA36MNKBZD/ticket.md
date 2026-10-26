@@ -7,13 +7,13 @@ priority = "critical"
 parent = "01M3DG5Y03DJ72WRTEGD6EBC3C"
 reporter = "human"
 created = "2026-09-26T00:00:00Z"
-updated = "2026-10-26T08:18:56Z"
+updated = "2026-10-26T08:19:55Z"
 aliases = ["T-0021"]
 labels = ["jira:SCRUM-53", "owner:GingerVHS", "game", "milestone:0.1.0"]
 
 [[acceptance]]
 text = "A new ship consists of exactly one core block; it cannot be removed."
-bound = false
+bound = true
 
 [[acceptance]]
 text = "Destroying the core ends the match with the other player as winner."
