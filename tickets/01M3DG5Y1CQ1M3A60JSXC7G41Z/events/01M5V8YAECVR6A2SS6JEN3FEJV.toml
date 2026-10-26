@@ -1,0 +1,20 @@
+kind = "evidence"
+captured_at = "2026-10-26T04:54:11Z"
+digest = "4b2d882915ae4a80a8cf3c566605d902f59e7b707b268d9260e4cc035f5b92ef"
+exit_code = 0
+inline = """
+Test run for \\\\wsl.localhost\\Ubuntu-22.04\\home\\logan\\projects\\project-hullbreach\\wt-unity-evidence\\tools\\plaincs\\Hullbreach.Plain.Tests\\bin\\Release\\net8.0\\Hullbreach.Plain.Tests.dll (.NETCoreApp,Version=v8.0)\r
+A total of 1 test files matched the specified pattern.\r
+\r
+Passed!  - Failed:     0, Passed:    22, Skipped:     0, Total:    22, Duration: 30 ms - Hullbreach.Plain.Tests.dll (net8.0)\r
+\r
+Workload updates are available. Run `dotnet workload list` for more information.\r
+"""
+passed = true
+provider = "command"
+ref = "run_tests.sh --filter FullyQualifiedName~MatchResultReport"
+size = 478
+status = "measured"
+at = "2026-10-26T04:54:11Z"
+actor = "lognd"
+rev = 1
