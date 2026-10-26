@@ -2,7 +2,8 @@
 id = "01M3DG5Y1SRY76PKDKD58NRYHH"
 title = "S30-2: Hover preview showing whether a location is valid before the first click"
 type = "task"
-category = "todo"
+category = "done"
+outcome = "done"
 priority = "critical"
 points = 2
 parent = "01M3DG5Y0KYH80B8DZANENR2DM"
