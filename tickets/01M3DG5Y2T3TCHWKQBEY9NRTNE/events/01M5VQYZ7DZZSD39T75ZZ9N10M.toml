@@ -1,0 +1,6 @@
+kind = "comment"
+subtype = "note"
+body = "Reconciled against code. Not implemented: no boundary rendering or radar indication. Needs the Unity editor (rendering) and depends on S41-1 defining the bounds. Left open."
+at = "2026-10-26T09:16:46Z"
+actor = "mcnairrobotics"
+rev = 1
