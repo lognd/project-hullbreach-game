@@ -131,6 +131,45 @@ namespace Hullbreach.Structure.Tests
         }
 
         [Test]
+        public void AddingABrace_LowersStressInTheBracedArms()
+        {
+            // U-shaped ship, arm tips pulled apart: a bridge block across the
+            // tips (the brace) carries part of the load and relieves the roots.
+            var open = UShip(withBrace: false);
+            var braced = UShip(withBrace: true);
+
+            var forces = new List<(float2, float2)>
+            {
+                (new float2(0.05f, 2.95f), new float2(-5f, 0f)),
+                (new float2(2.95f, 2.95f), new float2(5f, 0f)),
+            };
+
+            var solverOpen = new StructuralSolver();
+            solverOpen.Tick(open, forces, 1f / 60f);
+            var solverBraced = new StructuralSolver();
+            solverBraced.Tick(braced, forces, 1f / 60f);
+
+            foreach (var key in new[] { BlockKey.Pack(0, 1), BlockKey.Pack(2, 1) })
+            {
+                var before = solverOpen.BlockStresses[key].VonMises;
+                var after = solverBraced.BlockStresses[key].VonMises;
+                Assert.Less(after, before * 0.8f, "brace must measurably lower arm-root stress");
+            }
+        }
+
+        // U ship: base row y=0 with core at x=1, arms at x=0 and x=2 up to y=2, optional brace row y=2 at x=1.
+        private static BlockGrid UShip(bool withBrace)
+        {
+            var grid = new BlockGrid();
+            grid.TryAdd(BlockKey.Pack(1, 0), new Block(BlockTypes.Core));
+            foreach (var (x, y) in new[] { (0, 0), (2, 0), (0, 1), (2, 1), (0, 2), (2, 2) })
+                grid.TryAdd(BlockKey.Pack(x, y), new Block(BlockTypes.Hull));
+            if (withBrace)
+                grid.TryAdd(BlockKey.Pack(1, 2), new Block(BlockTypes.Hull));
+            return grid;
+        }
+
+        [Test]
         public void Cg_ConvergesOnASmallShip()
         {
             var grid = TwoByThreeShip();
