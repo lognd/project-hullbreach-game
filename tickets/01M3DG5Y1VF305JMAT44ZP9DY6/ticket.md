@@ -2,7 +2,8 @@
 id = "01M3DG5Y1VF305JMAT44ZP9DY6"
 title = "S31-1: Detach rule that also removes blocks stranded by a removal"
 type = "task"
-category = "todo"
+category = "done"
+outcome = "done"
 priority = "high"
 points = 2
 parent = "01M3DG5Y0MFJ6RPX9B9VVEG7XQ"
