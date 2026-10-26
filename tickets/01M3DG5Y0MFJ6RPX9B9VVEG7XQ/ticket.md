@@ -2,12 +2,13 @@
 id = "01M3DG5Y0MFJ6RPX9B9VVEG7XQ"
 title = "S31: Remove and undo blocks"
 type = "story"
-category = "todo"
+category = "done"
+outcome = "done"
 priority = "high"
 parent = "01M3DG5Y03DJ72WRTEGD6EBC3C"
 reporter = "human"
 created = "2026-09-26T00:00:00Z"
-updated = "2026-10-26T08:19:48Z"
+updated = "2026-10-26T08:20:26Z"
 aliases = ["T-0020"]
 labels = ["jira:SCRUM-52", "owner:stevendangkhoi", "game", "milestone:0.1.0"]
 
