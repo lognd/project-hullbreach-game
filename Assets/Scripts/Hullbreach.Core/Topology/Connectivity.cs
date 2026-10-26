@@ -3,11 +3,38 @@ using System.Collections.Generic;
 
 namespace Hullbreach.Core
 {
+    // What state a ship's core is in (S32-2); Destroyed wins over Isolated.
+    // frob:doc docs/reference/hullbreach-core.md#connectivity
+    public enum CoreState
+    {
+        Intact,
+        Destroyed,
+        Isolated,
+    }
+
     // Which blocks are still attached to the core (S38); plain flood fill.
     // See docs/reference/hullbreach-core.md#connectivity.
     // frob:doc docs/reference/hullbreach-core.md#connectivity
     public static class Connectivity
     {
+        // A core block this damaged counts as destroyed (the server caps damage at 255).
+        // frob:doc docs/reference/hullbreach-core.md#connectivity
+        public const int DestroyedDamage = 255;
+
+        // Destroyed: no core or fully damaged. Isolated: alive but cut off from every other block.
+        // frob:ticket 01M3DG5Y1Z912W21FF70NBN22Q
+        // frob:doc docs/reference/hullbreach-core.md#connectivity
+        public static CoreState ClassifyCore(BlockGrid grid)
+        {
+            if (!grid.CoreKey.HasValue) return CoreState.Destroyed;
+            if (!grid.TryGet(grid.CoreKey.Value, out Block core) || core.Damage >= DestroyedDamage)
+                return CoreState.Destroyed;
+
+            var reachable = new HashSet<int>();
+            ReachableFromCore(grid, reachable);
+            return reachable.Count == 1 && grid.Count > 1 ? CoreState.Isolated : CoreState.Intact;
+        }
+
         // Left empty when the grid has no core (a fragment is debris).
         // frob:doc docs/reference/hullbreach-core.md#connectivity
         public static void ReachableFromCore(BlockGrid grid, HashSet<int> reachable)

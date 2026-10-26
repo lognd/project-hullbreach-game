@@ -323,3 +323,14 @@ bounded to the given keys instead of the whole grid.
 <!-- describes: Assets/Scripts/Hullbreach.Core/Topology/Connectivity.cs::Connectivity.ReachableFromCore -->
 <!-- describes: Assets/Scripts/Hullbreach.Core/Topology/Connectivity.cs::Connectivity.FindDetached -->
 <!-- describes: Assets/Scripts/Hullbreach.Core/Topology/Connectivity.cs::Connectivity.SplitIntoComponents -->
+
+`ClassifyCore` (S32-2) names the core's state as a `CoreState`: `Destroyed`
+when the grid has no core or the core block's damage reached
+`DestroyedDamage` (255), `Isolated` when the core is alive but no block
+touches it while other blocks exist (the flood fill reached only the core),
+else `Intact`. `Destroyed` wins over `Isolated`. `MatchStateMachine` ends
+a match only on `Destroyed`; an isolated core is reported, not fatal.
+
+<!-- describes: Assets/Scripts/Hullbreach.Core/Topology/Connectivity.cs::CoreState -->
+<!-- describes: Assets/Scripts/Hullbreach.Core/Topology/Connectivity.cs::Connectivity.ClassifyCore -->
+<!-- describes: Assets/Scripts/Hullbreach.Core/Topology/Connectivity.cs::Connectivity.DestroyedDamage -->
