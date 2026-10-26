@@ -1006,3 +1006,95 @@ both be in one lobby. `-hullbreachProfile <name>` (letters, digits, `-`
 and `_`, at most 30) starts Unity Services under that profile; anything
 else is ignored and the default profile is used. `play online --profile
 <name>` passes it.
+
+### Matchmaking
+
+<!-- describes: Assets/Scripts/Hullbreach.Net/MatchHandoff.cs::MatchHandoff -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/MatchHandoff.cs::MatchHandoff.MatchHandoff -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/MatchHandoff.cs::MatchHandoff.MatchId -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/MatchHandoff.cs::MatchHandoff.Host -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/MatchHandoff.cs::MatchHandoff.Port -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/MatchHandoff.cs::MatchHandoff.OpponentId -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/MatchHandoff.cs::MatchHandoff.ToString -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/MatchHandoff.cs::MatchHandoff.Parse -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/MatchmakingMachine.cs::MatchmakingState -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/MatchmakingMachine.cs::MatchmakingOptions -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/MatchmakingMachine.cs::MatchmakingOptions.MatchmakingOptions -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/MatchmakingMachine.cs::MatchmakingOptions.PollIntervalSeconds -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/MatchmakingMachine.cs::MatchmakingOptions.TimeoutSeconds -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/MatchmakingMachine.cs::MatchmakingOptions.MaxConsecutiveErrors -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/MatchmakingMachine.cs::MatchmakingOptions.Defaults -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/MatchmakingMachine.cs::MatchmakingMachine -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/MatchmakingMachine.cs::MatchmakingMachine.MatchmakingMachine -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/MatchmakingMachine.cs::MatchmakingMachine.State -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/MatchmakingMachine.cs::MatchmakingMachine.Handoff -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/MatchmakingMachine.cs::MatchmakingMachine.FailureMessage -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/MatchmakingMachine.cs::MatchmakingMachine.Rating -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/MatchmakingMachine.cs::MatchmakingMachine.ElapsedSeconds -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/MatchmakingMachine.cs::MatchmakingMachine.IsFinished -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/MatchmakingMachine.cs::MatchmakingMachine.Start -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/MatchmakingMachine.cs::MatchmakingMachine.IsPollDue -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/MatchmakingMachine.cs::MatchmakingMachine.MarkRequestSent -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/MatchmakingMachine.cs::MatchmakingMachine.CheckTimeout -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/MatchmakingMachine.cs::MatchmakingMachine.Cancel -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/MatchmakingMachine.cs::MatchmakingMachine.OnQueued -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/MatchmakingMachine.cs::MatchmakingMachine.OnMatched -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/MatchmakingMachine.cs::MatchmakingMachine.OnIdle -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/MatchmakingMachine.cs::MatchmakingMachine.OnError -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/MatchmakingClient.cs::QueueWireState -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/MatchmakingClient.cs::QueueStatus -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/MatchmakingClient.cs::QueueStatus.State -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/MatchmakingClient.cs::QueueStatus.Rating -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/MatchmakingClient.cs::QueueStatus.WaitedSeconds -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/MatchmakingClient.cs::QueueStatus.Window -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/MatchmakingClient.cs::QueueStatus.Match -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/MatchmakingClient.cs::QueueCallStatus -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/MatchmakingClient.cs::QueueOutcome -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/MatchmakingClient.cs::QueueOutcome.QueueOutcome -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/MatchmakingClient.cs::QueueOutcome.Status -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/MatchmakingClient.cs::QueueOutcome.Queue -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/MatchmakingClient.cs::QueueOutcome.Message -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/MatchmakingClient.cs::QueueOutcome.IsOk -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/MatchmakingClient.cs::QueueOutcome.IsRetryable -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/MatchmakingClient.cs::QueueOutcome.ToString -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/MatchmakingClient.cs::MatchmakingClient -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/MatchmakingClient.cs::MatchmakingClient.QueuePath -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/MatchmakingClient.cs::MatchmakingClient.MatchmakingClient -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/MatchmakingClient.cs::MatchmakingClient.Join -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/MatchmakingClient.cs::MatchmakingClient.Poll -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/MatchmakingClient.cs::MatchmakingClient.Cancel -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/MatchmakingClient.cs::MatchmakingClient.Map -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/MatchmakingSession.cs::MatchmakingSession -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/MatchmakingSession.cs::MatchmakingSession.MatchmakingSession -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/MatchmakingSession.cs::MatchmakingSession.Machine -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/MatchmakingSession.cs::MatchmakingSession.Start -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/MatchmakingSession.cs::MatchmakingSession.Tick -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/MatchmakingSession.cs::MatchmakingSession.Cancel -->
+
+Engine-free online matchmaking: the client side of the platform's
+`/api/v1/queue` (S29-2 queue screen, S29-3 handoff). Nothing here uses
+UnityEngine and nothing throws on server input; failures are values.
+
+- `MatchmakingClient` sends `POST` (join; a repeat join keeps the place),
+  `GET` (status; the platform pairs players on each poll) and `DELETE`
+  (leave, which also acknowledges a made match) with the player's bearer
+  token, over `IPlatformHttp`. Every answer becomes a `QueueOutcome`
+  (`QueueCallStatus`): 401 is `Unauthorized`, 409 `already_matched` is
+  `AlreadyMatched`, no answer is `Unreachable`, 5xx is `ServerError`.
+  Messages never contain the token.
+- `MatchmakingMachine` is the pure state machine (`Idle`, `Queued`,
+  `Matched`, `Cancelled`, `Failed`). Time comes from an injected clock in
+  seconds. It polls every `PollIntervalSeconds` (default 1), fails after
+  `TimeoutSeconds` (default 300; zero waits forever), and tolerates
+  `MaxConsecutiveErrors` (default 5) transient failures in a row.
+- `MatchmakingSession` joins the two: `Start(token)`, `Tick()` once a
+  frame, `Cancel()`. After a matched status it sends the `DELETE`
+  acknowledgement, because the platform refuses a new join until then. If
+  a join gets `already_matched` it acknowledges once and joins again.
+  Answers from a cancelled or earlier search are ignored.
+- `MatchHandoff` is the result: `MatchId` (shared by both players),
+  `Host` and `Port` parsed from `server_address` (`host:port`, port
+  1-65535). A bad address makes the search `Failed`, not an exception.
+
+Not covered here: the Unity queue screen itself and feeding `MatchHandoff`
+into the connect flow, which need the editor.

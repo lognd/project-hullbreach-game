@@ -15,8 +15,10 @@ namespace Hullbreach.NetCode.Entities
         // frob:doc docs/platform-link.md#http-transport
         public void Send(PlatformHttpRequest request, Action<PlatformHttpResponse> onComplete)
         {
-            var web = new UnityWebRequest(request.Url,
-                request.Method == PlatformHttpMethod.Post ? UnityWebRequest.kHttpVerbPOST : UnityWebRequest.kHttpVerbGET)
+            string verb = request.Method == PlatformHttpMethod.Post ? UnityWebRequest.kHttpVerbPOST
+                : request.Method == PlatformHttpMethod.Delete ? UnityWebRequest.kHttpVerbDELETE
+                : UnityWebRequest.kHttpVerbGET;
+            var web = new UnityWebRequest(request.Url, verb)
             {
                 downloadHandler = new DownloadHandlerBuffer(),
                 timeout = Math.Max(1, (int)Math.Ceiling(request.TimeoutSeconds)),

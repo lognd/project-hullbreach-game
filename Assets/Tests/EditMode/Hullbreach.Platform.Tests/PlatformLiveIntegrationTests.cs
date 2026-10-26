@@ -25,7 +25,8 @@ namespace Hullbreach.Platform.Tests
             public void Send(PlatformHttpRequest request, Action<PlatformHttpResponse> onComplete)
             {
                 var message = new HttpRequestMessage(
-                    request.Method == PlatformHttpMethod.Post ? HttpMethod.Post : HttpMethod.Get, request.Url);
+                    request.Method == PlatformHttpMethod.Post ? HttpMethod.Post
+                    : request.Method == PlatformHttpMethod.Delete ? HttpMethod.Delete : HttpMethod.Get, request.Url);
                 if (request.Body != null)
                     message.Content = new StringContent(request.Body, Encoding.UTF8, "application/json");
                 foreach (var header in request.Headers)
