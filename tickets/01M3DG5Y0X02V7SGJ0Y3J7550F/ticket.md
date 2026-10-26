@@ -8,7 +8,7 @@ points = 5
 parent = "01M3DG5Y05HP0YSRB6819FBK2S"
 reporter = "human"
 created = "2026-09-26T00:00:00Z"
-updated = "2026-10-26T09:12:57Z"
+updated = "2026-10-26T09:13:05Z"
 aliases = ["T-0029"]
 labels = ["jira:SCRUM-61", "owner:GingerVHS", "game", "physics", "milestone:0.2.0"]
 
@@ -18,7 +18,7 @@ bound = true
 
 [[acceptance]]
 text = "Projectiles follow curved paths near planetoids."
-bound = false
+bound = true
 
 [[acceptance]]
 text = "Gravity constants are tunable from configuration without a code change."
