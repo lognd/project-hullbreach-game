@@ -2,7 +2,8 @@
 id = "01M3DG5Y293S5VM0216K88DXGH"
 title = "S36-2: Conjugate-gradient solver with preconditioning and a per-tick iteration budget"
 type = "task"
-category = "todo"
+category = "done"
+outcome = "fixed"
 priority = "critical"
 points = 5
 parent = "01M3DG5Y0SP70ASKR1VP80X976"
