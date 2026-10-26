@@ -44,7 +44,6 @@ namespace Hullbreach.Platform.Tests
             return result;
         }
 
-        // frob:tests Hullbreach.Platform.MatchResultReport.ToJson
         [Test]
         public void ToJson_MatchesThePlatformContract()
         {
@@ -56,7 +55,6 @@ namespace Hullbreach.Platform.Tests
                 Report().ToJson());
         }
 
-        // frob:tests Hullbreach.Platform.MatchResultReport.Validate
         [Test]
         public void Validate_UppercaseIdsAreSentLowercase()
         {
@@ -69,7 +67,6 @@ namespace Hullbreach.Platform.Tests
             StringAssert.Contains("\"match_id\":\"" + Match + "\"", report.ToJson());
         }
 
-        // frob:tests Hullbreach.Platform.MatchResultReport.Validate
         [Test]
         public void Validate_RejectsWhatThePlatformWould422()
         {
@@ -86,7 +83,6 @@ namespace Hullbreach.Platform.Tests
             Assert.IsNotNull(negative.Validate());
         }
 
-        // frob:tests Hullbreach.Platform.PlatformClient.PostMatchResult
         [Test]
         public void Post_SendsJsonWithServerKeyToMatchesPath()
         {
@@ -102,7 +98,6 @@ namespace Hullbreach.Platform.Tests
             Assert.AreEqual(Match, outcome.MatchId);
         }
 
-        // frob:tests Hullbreach.Platform.PlatformClient.MapMatchReport
         [TestCase(201, MatchReportStatus.Recorded, true, false)]
         [TestCase(200, MatchReportStatus.AlreadyRecorded, true, false)]
         [TestCase(404, MatchReportStatus.UnknownPlayer, false, false)]
@@ -120,7 +115,6 @@ namespace Hullbreach.Platform.Tests
             Assert.AreEqual(retryable, outcome.IsRetryable);
         }
 
-        // frob:tests Hullbreach.Platform.PlatformClient.MapMatchReport
         [Test]
         public void Post_TransportFailureIsRetryableUnreachable()
         {
@@ -129,7 +123,6 @@ namespace Hullbreach.Platform.Tests
             Assert.IsTrue(outcome.IsRetryable);
         }
 
-        // frob:tests Hullbreach.Platform.PlatformClient.PostMatchResult
         [Test]
         public void Post_InvalidReportOrMissingKeyNeverHitsTheNetwork()
         {
@@ -161,7 +154,6 @@ namespace Hullbreach.Platform.Tests
             reporter.ReportFinished(Match, winner, 1, new PlayerMatchStats(null, 900, 14, 30, 240), 2,
                 new PlayerMatchStats(null, 400, 12, 28, 200), 240, now);
 
-        // frob:tests Hullbreach.Platform.PlatformAdmissionGate.TryGetUserId
         [Test]
         public void Gate_ExposesUserIdOnlyForVerifiedPeers()
         {
@@ -172,7 +164,6 @@ namespace Hullbreach.Platform.Tests
             Assert.IsFalse(gate.TryGetUserId(9, out _));
         }
 
-        // frob:tests Hullbreach.Platform.MatchResultReporter.ReportFinished
         [Test]
         public void Reporter_SendsOnceWithTheWinnersAccountId()
         {
@@ -188,7 +179,6 @@ namespace Hullbreach.Platform.Tests
             Assert.AreEqual(MatchReportStatus.Recorded, outcome.Status);
         }
 
-        // frob:tests Hullbreach.Platform.MatchResultReporter.ReportFinished
         [Test]
         public void Reporter_IsANoOpForGuestsAndUnconfiguredServers()
         {
@@ -205,7 +195,6 @@ namespace Hullbreach.Platform.Tests
             Assert.AreEqual(0, _http.Requests.FindAll(r => r.Url.EndsWith("/matches")).Count, "no report was sent");
         }
 
-        // frob:tests Hullbreach.Platform.MatchResultReporter.Tick
         [Test]
         public void Reporter_ResendsTheIdenticalBodyAfterBackoffThenStops()
         {
@@ -232,7 +221,6 @@ namespace Hullbreach.Platform.Tests
             Assert.AreEqual(MatchReportStatus.AlreadyRecorded, outcome.Status);
         }
 
-        // frob:tests Hullbreach.Platform.MatchResultReporter.Tick
         [Test]
         public void Reporter_GivesUpAfterTheLastDelayAndNeverRetriesAPermanentError()
         {
