@@ -7,13 +7,13 @@ priority = "critical"
 parent = "01M3DG5Y03DJ72WRTEGD6EBC3C"
 reporter = "human"
 created = "2026-09-26T00:00:00Z"
-updated = "2026-10-26T08:18:41Z"
+updated = "2026-10-26T08:19:19Z"
 aliases = ["T-0019"]
 labels = ["jira:SCRUM-51", "owner:stevendangkhoi", "game", "milestone:0.1.0"]
 
 [[acceptance]]
 text = "Hovering shows whether a location is valid before the first click; an invalid location cannot be selected."
-bound = false
+bound = true
 
 [[acceptance]]
 text = "After the first click, moving the cursor previews the orientation and the second click commits it."
