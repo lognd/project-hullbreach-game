@@ -128,6 +128,13 @@ namespace Hullbreach.Editor
             TMP_InputField joinPassword = AddInput(actions.transform, "JoinPasswordInput", "Password if required", true);
             Button joinButton = AddButton(actions.transform, "JoinCodeButton", "JOIN CODE", 44f);
 
+            // LAN play needs no Unity Services; see docs/netcode.md#lan-host-and-join-from-the-lobby.
+            AddSpacer(actions.transform, 10f);
+            AddSectionTitle(actions.transform, "PLAY ON LAN");
+            Button lanHostButton = AddButton(actions.transform, "LanHostButton", "HOST LAN", 44f);
+            TMP_InputField lanAddress = AddInput(actions.transform, "LanAddressInput", "Host IP, e.g. 192.168.1.23", false);
+            Button lanJoinButton = AddButton(actions.transform, "LanJoinButton", "JOIN ADDRESS", 44f);
+
             GameObject publicPanel = AddPanel(browser.transform, "PublicLobbies", Vector2.zero, new Color(0.09f, 0.13f, 0.2f, 1f));
             VerticalLayoutGroup publicLayout = publicPanel.AddComponent<VerticalLayoutGroup>();
             publicLayout.padding = new RectOffset(22, 22, 20, 20);
@@ -175,6 +182,9 @@ namespace Hullbreach.Editor
             Set(serialized, "joinCodeInput", joinCode);
             Set(serialized, "joinPasswordInput", joinPassword);
             Set(serialized, "joinCodeButton", joinButton);
+            Set(serialized, "lanAddressInput", lanAddress);
+            Set(serialized, "lanHostButton", lanHostButton);
+            Set(serialized, "lanJoinButton", lanJoinButton);
             Set(serialized, "refreshButton", refreshButton);
             Set(serialized, "publicLobbyList", listContent);
             Set(serialized, "publicLobbyRowTemplate", rowTemplate);

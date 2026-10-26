@@ -714,6 +714,25 @@ normal Relay lobby flow), `Host` (server plus local client), `Client`
 (client world only, dials an address) or `Server` (server world only, no
 player). Chosen by `DirectLaunchPlan.Parse`.
 
+### LanEndpoint
+
+<!-- describes: Assets/Scripts/Hullbreach.Net/LanEndpoint.cs::LanEndpoint -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/LanEndpoint.cs::LanEndpoint.#ctor -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/LanEndpoint.cs::LanEndpoint.Address -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/LanEndpoint.cs::LanEndpoint.Port -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/LanEndpoint.cs::LanEndpoint.ToString -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/LanEndpoint.cs::LanEndpoint.TryParseAddress -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/LanEndpoint.cs::LanEndpoint.TryParse -->
+
+Engine-free reading of the address a player types into the lobby's PLAY ON
+LAN section (S28-2). Accepted forms: `192.168.1.23`, `192.168.1.23:7979` and
+`localhost[:port]` (mapped to 127.0.0.1). Only numeric IPv4 is accepted, with
+no DNS lookup, so parsing never blocks the UI. A missing port uses the
+default (7979); a port must be 1-65535. On failure `TryParse` returns false
+and `error` is a sentence meant to be shown to the player. The command line
+(`-hullbreachConnect`) uses `TryParseAddress`, so both entry points accept
+exactly the same addresses.
+
 ### DirectLaunchPlan
 
 <!-- describes: Assets/Scripts/Hullbreach.Net/DirectLaunchPlan.cs::DirectLaunchPlan -->

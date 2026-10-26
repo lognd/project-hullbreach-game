@@ -127,6 +127,27 @@ Log lines to look for in `Player.log`: `Hullbreach direct: role=...`,
 `Hullbreach server: peer #N joined the match (K in match).` and, on each
 client, `Hullbreach match: connected as #N; replicated ships: K`.
 
+### LAN host and join from the lobby
+
+<!-- describes: Assets/Scripts/Hullbreach.NetCode.Entities/HullbreachLanLobby.cs::HullbreachLanLobby -->
+<!-- describes: Assets/Scripts/Hullbreach.NetCode.Entities/HullbreachLanLobby.cs::HullbreachLanLobby.TryHost -->
+<!-- describes: Assets/Scripts/Hullbreach.NetCode.Entities/HullbreachLanLobby.cs::HullbreachLanLobby.TryJoin -->
+<!-- describes: Assets/Scripts/Hullbreach.NetCode.Entities/HullbreachLobbyView.cs::HullbreachLobbyView.HostLan -->
+<!-- describes: Assets/Scripts/Hullbreach.NetCode.Entities/HullbreachLobbyView.cs::HullbreachLobbyView.JoinLan -->
+
+The lobby has a PLAY ON LAN section that needs no Unity Services account.
+HOST LAN asks the idle server world to listen on 0.0.0.0:7979 and the idle
+client world to dial loopback, then loads `MultiplayerGame`. JOIN ADDRESS
+reads the typed text with [`LanEndpoint`](reference/hullbreach-net.md#lanendpoint),
+dials it from the client world and loads the same scene. A bad address is
+shown in the lobby's error line and nothing is started. Log lines:
+`Hullbreach LAN: hosting on ...`, `Hullbreach LAN: joining ...` and
+`Hullbreach LAN: ... refused: ...`.
+
+The three controls are optional serialized fields on `HullbreachLobbyView`,
+so an old `LobbyCanvas.prefab` keeps working; rebuild it with
+`Hullbreach > Online > Rebuild lobby and multiplayer scenes` to get them.
+
 ### Unity Services setup
 
 The project already contains `com.unity.services.multiplayer` and its
