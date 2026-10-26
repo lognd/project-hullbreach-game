@@ -1,0 +1,6 @@
+kind = "comment"
+subtype = "note"
+body = "Reconciliation 2026-10-26: not implemented. ShipRenderer.StressColor is green-yellow-red only; there is no alternative palette, no settings toggle and no HudColor-based palette code. Needs a palette design (colors) and a settings toggle UI in the Unity project (docs/design/ui-port.md assigns it to Angie, SCRUM-156). Left open."
+at = "2026-10-26T09:12:39Z"
+actor = "mcnairrobotics"
+rev = 1
