@@ -6,7 +6,7 @@ category = "todo"
 priority = "medium"
 reporter = "lognd"
 created = "2026-10-26T05:15:34Z"
-updated = "2026-10-26T05:15:34Z"
+updated = "2026-10-26T05:42:31Z"
 +++
 
 found while working ~ZTVN11E: ServerSimulation.ParticipantFor reports zeros
