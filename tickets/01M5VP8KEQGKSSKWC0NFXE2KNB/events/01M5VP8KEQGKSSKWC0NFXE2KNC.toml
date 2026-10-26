@@ -1,0 +1,10 @@
+kind = "create"
+title = "ClientReplica stamps poses with arrival tick; same-tick arrivals snap instead of interpolate"
+type = "bug"
+category = "todo"
+priority = "medium"
+labels = ["game"]
+body = "found while working ~YG974Y5: with LoopbackTransport delivering same-tick messages in send order, ThrottledLink_InterpolatedViewJumpsLessThanRawSnapping needed a 1.25x tolerance. Poses carry no server tick, so two arriving on one tick get span 0 and snap. Fix: stamp with a server tick, then restore the strict assertion."
+at = "2026-10-26T08:47:04Z"
+actor = "mcnairrobotics"
+rev = 1
