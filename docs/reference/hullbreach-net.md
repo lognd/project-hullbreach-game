@@ -152,6 +152,7 @@ loop) reads `Entries` and forwards each one to
 <!-- describes: Assets/Scripts/Hullbreach.Net/LoopbackTransport.cs::LoopbackTransport.JitterTicks -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/LoopbackTransport.cs::LoopbackTransport.UnreliableDropRate -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/LoopbackTransport.cs::LoopbackTransport.LoopbackTransport -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/LoopbackTransport.cs::LoopbackTransport.Throttled -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/LoopbackTransport.cs::LoopbackTransport.CreateEndpoint -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/LoopbackTransport.cs::LoopbackTransport.Connect -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/LoopbackTransport.cs::LoopbackTransport.Disconnect -->
@@ -172,6 +173,16 @@ trusting arrival order.
 
 Advance time by calling `Tick` once per simulation tick; nothing is
 delivered until enough ticks have passed.
+
+`Throttled(tickRate, roundTripMs, lossRate, seed)` builds a hub for a
+throttled internet link (S48-3). One-way delay is half the round trip in
+ticks: the whole part goes to `DelayTicks` and a fractional remainder adds
+one tick of `JitterTicks`, so 100 ms at 50 Hz is 2 ticks plus 0..1 (mean
+2.5 ticks, 5 ticks round trip). `lossRate` is the unreliable drop rate;
+reliable sends still arrive, because the real transport retransmits them.
+`ThrottledLinkTests` runs the full server and client pipeline at 100 ms and
+2 percent loss; S48-1 and S48-2 use the same profile to prove prediction
+and interpolation.
 
 ### NetMessages
 
