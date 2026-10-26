@@ -20,6 +20,36 @@ namespace Hullbreach.Match.Tests
 
         static MatchEndedArgs Ended(int winner) => new MatchEndedArgs("m", winner, 1, A, 2, B, 60);
 
+        // frob:ticket 01M5VGS9DWNF85ZAQ0GD5X8A1J
+        [Test]
+        public void ArgsResult_IsUsed_InsteadOfInference()
+        {
+            var feed = new MatchEndFeed();
+            var view = new FakePresenter();
+            using (var flow = new ResultsFlow(view, null, null, localPeer: () => 1))
+            {
+                flow.Attach(feed);
+                feed.Raise(new MatchEndedArgs("m", 1, 1, A, 2, B, 60, MatchResult.Forfeit));
+            }
+            Assert.That(view.Shown.Reason, Does.Contain("forfeit"));
+        }
+
+        // frob:ticket 01M5VGS9DWNF85ZAQ0GD5X8A1J
+        [Test]
+        public void SameMatchIdTwice_IsShownOnce()
+        {
+            var feed = new MatchEndFeed();
+            var view = new FakePresenter();
+            using (var flow = new ResultsFlow(view, null, null, localPeer: () => 1))
+            {
+                flow.Attach(feed);
+                feed.Raise(Ended(1));
+                view.Shown = null;
+                feed.Raise(Ended(1));
+            }
+            Assert.That(view.Shown, Is.Null);
+        }
+
         [Test]
         public void FeedEvent_ShowsModelOnPresenter()
         {

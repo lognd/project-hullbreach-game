@@ -53,6 +53,9 @@ namespace Hullbreach.Net
         // frob:doc docs/reference/hullbreach-net.md#serversimulation
         public MatchEndFeed MatchFeed = MatchEndFeed.Shared;
 
+        // The match whose end was already sent to the clients, so each end is announced once.
+        MatchStateMachine _announcedMatch;
+
         // Sink for match lifecycle lines; null means silent.
         // frob:doc docs/reference/hullbreach-net.md#serversimulation
         public IPlatformLog MatchLog;
@@ -364,6 +367,7 @@ namespace Hullbreach.Net
         {
             _peers.Remove(peer);
             Match?.Disconnect(peer);
+            AnnounceMatchEnd();
             foreach (var p in _projectiles)
                 if (p.OwnerPeer == peer) p.OwnerPeer = -1;
             BroadcastReliable(new ShipRemoved(NextSequence(), state.NetId));
@@ -438,6 +442,23 @@ namespace Hullbreach.Net
 
             // Last, so impacts and structural damage from this tick are already on the grids.
             Match?.Tick();
+            AnnounceMatchEnd();
+        }
+
+        // Sends the finished match (draws included) to every connected peer, once per match.
+        // frob:ticket 01M5VGS9DWNF85ZAQ0GD5X8A1J
+        void AnnounceMatchEnd()
+        {
+            if (Match == null || ReferenceEquals(Match, _announcedMatch) || !Match.EndedArgs.HasValue) return;
+            _announcedMatch = Match;
+            var message = new MatchEnded(NextSequence(), Match.EndedArgs.Value);
+            foreach (int peer in _peers.Keys)
+            {
+                var buffer = new byte[MatchEnded.MaxByteSize];
+                var w = new ByteWriter(buffer);
+                message.Write(ref w);
+                _outbox.Send(peer, reliable: true, buffer, w.Position);
+            }
         }
 
         void ResolveShipContacts(List<int> peerIds, float dt)

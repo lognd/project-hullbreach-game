@@ -266,6 +266,28 @@ actually received, so a remote count never sizes an allocation, and
 Server -> client, reliable ordered: the ship left (an explicit `Leave` or
 an input timeout). Without it every replica kept a ghost ship forever.
 
+### MatchEnded
+
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::MatchEnded -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::MatchEnded.MaxIdLength -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::MatchEnded.MaxByteSize -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::MatchEnded.Sequence -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::MatchEnded.Args -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::MatchEnded.MatchEnded -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::MatchEnded.Write -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::MatchEnded.Read -->
+
+Server -> client, reliable ordered (`MessageKind.MatchEnded` = 11): the match
+ended, carrying the same `MatchEndedArgs` the server's `MatchEndFeed` got.
+Layout: kind u8, sequence u32, `MatchResult` u8, winner peer i32 (-1 for a
+draw), peer A i32, peer B i32, duration seconds i32, then each side's
+`PlayerMatchStats` (damage, blocks destroyed, blocks placed, time alive; 4 x
+i32), then the match id as a u8 length plus ASCII bytes (cut at
+`MaxIdLength` = 64). Stats user ids are not sent; the client side has them
+empty. `Read` consumes the kind byte, and fails the reader on a truncated
+body, an id longer than `MaxIdLength` or an unknown result byte. Draws are
+sent too; only the platform reporter skips them.
+
 ### ShipState
 
 <!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::ShipState -->
@@ -457,7 +479,11 @@ sees also sets the stream cursor; after that a snapshot reserves its own
 slot in the ordered stream so the cursor can pass it. An event for a ship
 whose snapshot has not arrived yet is held (bounded) and replayed when it
 does. `ShipRemoved` drops the ship, raises `ReplicaEventKind.ShipRemoved`
-and keeps the baseline so a late duplicate cannot resurrect it.
+and keeps the baseline so a late duplicate cannot resurrect it. `MatchEnded`
+is applied in order like the other reliable events and raises `MatchFeed`
+(settable, default null, which drops it) with the decoded args, so a remote
+client's `ResultsFlow` sees the end; the Unity client system sets it to
+`MatchEndFeed.Shared` for non-thin clients.
 
 Wire data never throws. `ApplyReceived` and `ApplyReliable` return a
 `ReplicaApplyResult`: `Applied`, `Buffered` (waiting for a gap),
@@ -539,10 +565,15 @@ machine counts as breached, so `MatchFeed` (default `MatchEndFeed.Shared`)
 is raised once with the other peer as winner. `Leave`/timeout of a peer
 calls `MatchStateMachine.Disconnect`. The machine's clock is simulated
 time (ticks * dt). A peer leaving mid-match is a forfeit win for the
-other peer, which is reported; a same-tick double core loss is a draw and
-is not reported (the platform needs a winner), with a logged warning. `MatchTimeLimitSeconds` (default 600, 0 disables) is passed
+other peer, which is reported; a same-tick double core loss is a draw that
+also raises the feed (with `Result = Draw`, winner -1) but is skipped by the
+platform reporter (it needs a winner), with a logged warning.
+`MatchTimeLimitSeconds` (default 600, 0 disables) is passed
 to the machine: at expiry the higher core health wins (reported as `TimeLimit`),
-equal health is an unreported draw.
+equal health is a draw (raised, not reported).
+Whenever the machine has ended (after `Tick` or after a `Leave`/timeout
+disconnect) the server sends a reliable `MatchEnded` to every connected peer,
+once per match. A forfeit therefore reaches only the remaining peer.
 Per-player stats come from a tally the server keeps for the live match:
 `DamageDealt` (damage applied by the peer's projectiles), `BlocksDestroyed`
 (blocks those projectiles destroyed outright), `BlocksPlaced` (placements

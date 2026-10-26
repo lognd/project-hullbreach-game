@@ -115,7 +115,7 @@ namespace Hullbreach.Net.Tests
 
         // frob:ticket 01M3DG5Y36WE3D2224D54MR2S6
         [Test]
-        public void TimeLimit_ExpiryWithEqualCores_EndsAsUnreportedDraw()
+        public void TimeLimit_ExpiryWithEqualCores_EndsAsDrawOnTheFeed()
         {
             var (server, raised) = Arena();
             server.MatchTimeLimitSeconds = 1.0;
@@ -124,7 +124,57 @@ namespace Hullbreach.Net.Tests
             for (int i = 0; i < 60; i++) server.Tick();
             Assert.AreEqual(MatchPhase.Ended, server.Match.Phase);
             Assert.AreEqual(MatchResult.Draw, server.Match.Result);
-            Assert.AreEqual(0, raised.Count);
+            Assert.AreEqual(1, raised.Count);
+            Assert.AreEqual(MatchResult.Draw, raised[0].Result);
+        }
+
+        static int CountMatchEnded(ServerOutbox outbox, int peer)
+        {
+            int n = 0;
+            foreach (var e in outbox.Entries)
+                if (e.Peer == peer && e.Reliable && e.Bytes[0] == (byte)MessageKind.MatchEnded) n++;
+            return n;
+        }
+
+        // frob:ticket 01M5VGS9DWNF85ZAQ0GD5X8A1J
+        [Test]
+        public void Forfeit_SendsMatchEndedToTheRemainingPeer_WithTheResult()
+        {
+            var outbox = new ServerOutbox();
+            var server = new ServerSimulation(outbox) { TickRate = 50f, MatchFeed = new MatchEndFeed() };
+            server.Join(1, Ship(Core()));
+            server.Join(2, Ship(Core()));
+            server.Leave(2);
+            Assert.AreEqual(1, CountMatchEnded(outbox, 1));
+            Assert.AreEqual(0, CountMatchEnded(outbox, 2), "the leaver is gone");
+            foreach (var e in outbox.Entries)
+            {
+                if (e.Bytes[0] != (byte)MessageKind.MatchEnded) continue;
+                var r = new ByteReader(e.Bytes);
+                var m = MatchEnded.Read(ref r);
+                Assert.IsFalse(r.Failed);
+                Assert.AreEqual(MatchResult.Forfeit, m.Args.Result);
+                Assert.AreEqual(1, m.Args.WinnerPeer);
+            }
+        }
+
+        // frob:ticket 01M5VGS9DWNF85ZAQ0GD5X8A1J
+        [Test]
+        public void Draw_SendsMatchEndedToBothPeers_ExactlyOnce()
+        {
+            var outbox = new ServerOutbox();
+            var server = new ServerSimulation(outbox) { TickRate = 50f, MatchFeed = new MatchEndFeed(), MatchTimeLimitSeconds = 1.0 };
+            server.Join(1, Ship(Core()));
+            server.Join(2, Ship(Core()));
+            for (int i = 0; i < 120; i++) server.Tick();
+            Assert.AreEqual(1, CountMatchEnded(outbox, 1));
+            Assert.AreEqual(1, CountMatchEnded(outbox, 2));
+            foreach (var e in outbox.Entries)
+            {
+                if (e.Bytes[0] != (byte)MessageKind.MatchEnded) continue;
+                var r = new ByteReader(e.Bytes);
+                Assert.AreEqual(MatchResult.Draw, MatchEnded.Read(ref r).Args.Result);
+            }
         }
     }
 }

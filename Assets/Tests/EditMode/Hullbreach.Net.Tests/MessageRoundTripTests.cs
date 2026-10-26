@@ -1,3 +1,5 @@
+using Hullbreach.Platform;
+using Hullbreach.Match;
 using NUnit.Framework;
 using Hullbreach.Net;
 
@@ -227,6 +229,85 @@ namespace Hullbreach.Net.Tests
             var w = new ByteWriter(buf);
             new ShipState(1, 0, 0, 0, 0, 0, 0).Write(ref w);
             Assert.AreEqual((byte)MessageKind.ShipState, buf[0]);
+        }
+
+        static MatchEnded MatchEndedSample(string id = "match-1", MatchResult result = MatchResult.CoreBreached)
+            => new MatchEnded(7, new MatchEndedArgs(id, 2, 1,
+                new PlayerMatchStats("a", 10, 2, 3, 40), 2,
+                new PlayerMatchStats("b", 5, 6, 7, 8), 61, result));
+
+        static byte[] EncodeMatchEnded(MatchEnded m)
+        {
+            var buf = new byte[MatchEnded.MaxByteSize];
+            var w = new ByteWriter(buf);
+            m.Write(ref w);
+            var t = new byte[w.Position];
+            System.Array.Copy(buf, t, t.Length);
+            return t;
+        }
+
+        // frob:ticket 01M5VGS9DWNF85ZAQ0GD5X8A1J
+        [Test]
+        public void MatchEnded_RoundTrips_ResultWinnerStatsAndId()
+        {
+            var bytes = EncodeMatchEnded(MatchEndedSample());
+            var r = new ByteReader(bytes);
+            var m = MatchEnded.Read(ref r);
+            Assert.IsFalse(r.Failed);
+            Assert.AreEqual(7u, m.Sequence);
+            Assert.AreEqual("match-1", m.Args.MatchId);
+            Assert.AreEqual(MatchResult.CoreBreached, m.Args.Result);
+            Assert.AreEqual(2, m.Args.WinnerPeer);
+            Assert.AreEqual(61, m.Args.DurationSeconds);
+            Assert.AreEqual(10, m.Args.StatsA.DamageDealt);
+            Assert.AreEqual(8, m.Args.StatsB.TimeAliveSeconds);
+        }
+
+        // frob:ticket 01M5VGS9DWNF85ZAQ0GD5X8A1J
+        [Test]
+        public void MatchEnded_Draw_KeepsNoWinner()
+        {
+            var m0 = new MatchEnded(1, new MatchEndedArgs("d", -1, 1, default, 2, default, 5, MatchResult.Draw));
+            var bytes = EncodeMatchEnded(m0);
+            var r = new ByteReader(bytes);
+            var m = MatchEnded.Read(ref r);
+            Assert.IsFalse(r.Failed);
+            Assert.AreEqual(MatchResult.Draw, m.Args.Result);
+            Assert.AreEqual(-1, m.Args.WinnerPeer);
+        }
+
+        // frob:ticket 01M5VGS9DWNF85ZAQ0GD5X8A1J
+        [Test]
+        public void MatchEnded_Truncated_FailsTheReader()
+        {
+            var bytes = EncodeMatchEnded(MatchEndedSample());
+            var cut = new byte[bytes.Length - 3];
+            System.Array.Copy(bytes, cut, cut.Length);
+            var r = new ByteReader(cut);
+            MatchEnded.Read(ref r);
+            Assert.IsTrue(r.Failed);
+        }
+
+        // frob:ticket 01M5VGS9DWNF85ZAQ0GD5X8A1J
+        [Test]
+        public void MatchEnded_UnknownResultByte_FailsTheReader()
+        {
+            var bytes = EncodeMatchEnded(MatchEndedSample());
+            bytes[5] = 200; // kind u8 + seq u32, then the result byte
+            var r = new ByteReader(bytes);
+            MatchEnded.Read(ref r);
+            Assert.IsTrue(r.Failed);
+        }
+
+        // frob:ticket 01M5VGS9DWNF85ZAQ0GD5X8A1J
+        [Test]
+        public void MatchEnded_LongId_IsCutToMaxIdLength()
+        {
+            var bytes = EncodeMatchEnded(MatchEndedSample(new string('x', 200)));
+            var r = new ByteReader(bytes);
+            var m = MatchEnded.Read(ref r);
+            Assert.IsFalse(r.Failed);
+            Assert.AreEqual(MatchEnded.MaxIdLength, m.Args.MatchId.Length);
         }
     }
 }

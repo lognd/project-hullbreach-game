@@ -1,7 +1,24 @@
 using System;
 
+namespace Hullbreach.Match
+{
+    // Why an Ended match ended; CoreBreached, Forfeit and TimeLimit have a winner and are reported to the platform.
+    // Lives in the Platform assembly (namespace Hullbreach.Match) so the feed args can carry it.
+    // frob:doc docs/reference/hullbreach-match.md#matchresult
+    public enum MatchResult
+    {
+        None,
+        CoreBreached,
+        Draw,
+        Forfeit,
+        TimeLimit,
+    }
+}
+
 namespace Hullbreach.Platform
 {
+    using Hullbreach.Match;
+
     // Everything the platform needs to know about a match that just ended.
     // frob:doc docs/platform-link.md#reporting-a-finished-match
     public readonly struct MatchEndedArgs
@@ -14,9 +31,13 @@ namespace Hullbreach.Platform
         public readonly PlayerMatchStats StatsB;
         public readonly int DurationSeconds;
 
+        // Why the match ended; None for senders that do not know (the results flow then infers it).
+        // frob:doc docs/reference/hullbreach-match.md#matchresult
+        public readonly MatchResult Result;
+
         // frob:doc docs/platform-link.md#reporting-a-finished-match
         public MatchEndedArgs(string matchId, int winnerPeer, int peerA, PlayerMatchStats statsA, int peerB,
-            PlayerMatchStats statsB, int durationSeconds)
+            PlayerMatchStats statsB, int durationSeconds, MatchResult result = MatchResult.None)
         {
             MatchId = matchId;
             WinnerPeer = winnerPeer;
@@ -25,6 +46,7 @@ namespace Hullbreach.Platform
             PeerB = peerB;
             StatsB = statsB;
             DurationSeconds = durationSeconds;
+            Result = result;
         }
     }
 

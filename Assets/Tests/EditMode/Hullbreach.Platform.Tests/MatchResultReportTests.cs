@@ -203,6 +203,24 @@ namespace Hullbreach.Platform.Tests
             }
         }
 
+        // frob:ticket 01M5VGS9DWNF85ZAQ0GD5X8A1J
+        [Test]
+        public void Feed_DrawIsNeverReported()
+        {
+            PlatformClient client = Client();
+            var reporter = new MatchResultReporter(client, Gate(client), _log);
+            var feed = new MatchEndFeed();
+            using (reporter.Attach(feed, () => 0))
+            {
+                int baseline = _http.Requests.Count;
+                var draw = new MatchEndedArgs(Match, -1, 1, new PlayerMatchStats(null, 1, 1, 1, 1), 2,
+                    new PlayerMatchStats(null, 1, 1, 1, 1), 60, Hullbreach.Match.MatchResult.Draw);
+                Assert.AreEqual(1, feed.Raise(draw));
+                Assert.AreEqual(baseline, _http.Requests.Count);
+                Assert.AreEqual(0, reporter.PendingCount);
+            }
+        }
+
         [Test]
         public void Feed_DisposedSubscriptionAndGuestsSendNothing()
         {

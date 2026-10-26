@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Hullbreach.Match;
 
 namespace Hullbreach.Platform
 {
@@ -78,6 +79,11 @@ namespace Hullbreach.Platform
             if (clock == null) throw new ArgumentNullException(nameof(clock));
             Action<MatchEndedArgs> handler = args =>
             {
+                if (args.Result == MatchResult.Draw)
+                {
+                    _log.Info($"Hullbreach platform: match {args.MatchId} was a draw; not reported (no winner).");
+                    return;
+                }
                 _log.Info($"Hullbreach platform: match {args.MatchId} ended; reporting it.");
                 ReportFinished(args.MatchId, args.WinnerPeer, args.PeerA, args.StatsA, args.PeerB, args.StatsB,
                     args.DurationSeconds, clock());

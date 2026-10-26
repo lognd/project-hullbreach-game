@@ -29,8 +29,9 @@ namespace Hullbreach.Match
         readonly Func<int> _localPeer;
         readonly IPlatformLog _log;
         MatchEndFeed _feed;
+        string _lastMatchId;
 
-        // resultOf supplies the real MatchResult (the feed args do not carry it); null infers it.
+        // resultOf overrides the result; null uses the args' Result, inferring it when the sender left it None.
         // frob:doc docs/reference/hullbreach-match.md#resultsflow
         public ResultsFlow(IResultsPresenter presenter, Action onRematch, Action onReturnToLobby,
             Func<MatchEndedArgs, MatchResult> resultOf = null, Func<int> localPeer = null,
@@ -71,11 +72,24 @@ namespace Hullbreach.Match
         // frob:doc docs/reference/hullbreach-match.md#resultsflow
         public void Dispose() => Detach();
 
-        // A winnerPeer outside the two peers (-1) is a draw; anything else defaults to a core breach.
+        // The args' own Result wins; without one, a winnerPeer outside the two peers (-1) is a draw, else a core breach.
+        // frob:ticket 01M5VGS9DWNF85ZAQ0GD5X8A1J
         static MatchResult InferResult(MatchEndedArgs e) =>
+            e.Result != MatchResult.None ? e.Result :
             e.WinnerPeer == e.PeerA || e.WinnerPeer == e.PeerB ? MatchResult.CoreBreached : MatchResult.Draw;
 
-        void Handle(MatchEndedArgs e) => OnEnded(e);
+        // A listen server sees both the server's raise and the replicated one; show each match once.
+        // frob:ticket 01M5VGS9DWNF85ZAQ0GD5X8A1J
+        void Handle(MatchEndedArgs e)
+        {
+            if (!string.IsNullOrEmpty(e.MatchId) && e.MatchId == _lastMatchId)
+            {
+                _log.Info($"Hullbreach results: match {e.MatchId} already shown; ignoring the repeat.");
+                return;
+            }
+            _lastMatchId = e.MatchId;
+            OnEnded(e);
+        }
 
         void Route(string what, Action target)
         {
