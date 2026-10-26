@@ -624,6 +624,11 @@ namespace Hullbreach.Net
             var grid = state.Ship.Grid;
             if (!grid.TryGet(key, out var block)) return;
 
+            // Same shove the Unity-side Projectile applies, so both paths agree.
+            float speed = math.length(p.Velocity);
+            if (speed > 1e-6f)
+                state.Ship.ApplyImpulseAtWorldPoint(p.Position, p.Velocity / speed * p.Spec.Impulse);
+
             int newDamage = math.min(255, block.Damage + p.Spec.Damage);
             bool destroyed = newDamage >= 255 && key != grid.CoreKeyOrDefault();
             Tally(p.OwnerPeer, newDamage - block.Damage, destroyed ? 1 : 0, 0);

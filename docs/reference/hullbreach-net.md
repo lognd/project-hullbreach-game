@@ -651,6 +651,10 @@ forwards it. That separation is deliverable 4's whole point: this class,
 and therefore the entire server simulation, compiles and tests without
 knowing sockets exist.
 
+Projectile hits: a hit damages the struck block and also applies the
+shot's `Spec.Impulse` to the victim ship at the hit point, along the shot's
+direction of travel (same as the Unity-side `Projectile`).
+
 Match end: when the second peer joins (and no match is live) the server
 builds a `Hullbreach.Match.MatchStateMachine` over the two ships' grids,
 starts it, and ticks it at the end of every `Tick`, after impacts and
