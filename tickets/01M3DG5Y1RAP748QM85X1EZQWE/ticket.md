@@ -2,7 +2,8 @@
 id = "01M3DG5Y1RAP748QM85X1EZQWE"
 title = "S30-1: PlacementRules and BuilderSession implementing the two-click place-then-orient flow"
 type = "task"
-category = "todo"
+category = "done"
+outcome = "done"
 priority = "critical"
 points = 5
 parent = "01M3DG5Y0KYH80B8DZANENR2DM"
