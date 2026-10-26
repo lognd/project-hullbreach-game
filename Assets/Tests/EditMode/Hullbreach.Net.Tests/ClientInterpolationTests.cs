@@ -70,6 +70,39 @@ namespace Hullbreach.Net.Tests
             Assert.AreEqual(15f, mid.x, 0.05f, "a zero arrival span must not snap to the newer pose");
         }
 
+        // An unreliable pose can arrive after a newer one; it must not become the newest sample.
+        // frob:ticket 01M5VPSN6KVQRJ4PEF61GQH13M
+        [Test]
+        public void OlderServerTickPose_IsDropped_AndInterpolationStaysMonotonic()
+        {
+            var replica = ReplicaWithShip();
+            Receive(replica, StateAt(10f, 0f, 10));
+            Receive(replica, StateAt(20f, 0f, 12));
+            Receive(replica, StateAt(15f, 0f, 11));
+
+            Assert.AreEqual(12u, replica.LatestServerTick);
+            Assert.IsTrue(replica.TryInterpolateAt(Id, 11f, out var mid, out _));
+            Assert.AreEqual(15f, mid.x, 0.05f, "the stale pose must not replace the 10 -> 20 pair");
+            replica.TryInterpolateAt(Id, 99f, out var late, out _);
+            Assert.AreEqual(20f, late.x, 0.05f, "newest pose stays the clamp target");
+        }
+
+        // The ghost path shares the guard: a lower tick never becomes the newer sample.
+        // frob:ticket 01M5VPSN6KVQRJ4PEF61GQH13M
+        [Test]
+        public void GhostPose_WithOlderTick_IsDropped()
+        {
+            var replica = ReplicaWithShip();
+            Assert.IsTrue(replica.ApplyGhostPose(Id, new float2(10f, 0f), 0f, float2.zero, 0f, 10));
+            Assert.IsTrue(replica.ApplyGhostPose(Id, new float2(20f, 0f), 0f, float2.zero, 0f, 12));
+            Assert.IsTrue(replica.ApplyGhostPose(Id, new float2(15f, 0f), 0f, float2.zero, 0f, 11));
+
+            replica.TryInterpolateAt(Id, 11f, out var mid, out _);
+            Assert.AreEqual(15f, mid.x, 0.05f);
+            replica.TryInterpolateAt(Id, 99f, out var late, out _);
+            Assert.AreEqual(20f, late.x, 0.05f);
+        }
+
         static void Receive(ClientReplica replica, ShipState state)
         {
             var buf = new byte[ShipState.ByteSize];

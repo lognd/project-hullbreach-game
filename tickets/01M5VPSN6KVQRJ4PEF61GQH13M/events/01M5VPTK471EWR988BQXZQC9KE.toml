@@ -1,0 +1,7 @@
+kind = "transition"
+from = "todo"
+to = "in-progress"
+reason = "lease: mcnairrobotics in game/.claude/worktrees/agent-a60126d00ff50f826; scope: Assets/Scripts/Hullbreach.Net/ClientReplica.cs, Assets/Tests/EditMode/Hullbreach.Net.Tests/ClientInterpolationTests.cs, docs/reference/hullbreach-net.md, changelog.d/*.fixed.md; ttl 7200s"
+at = "2026-10-26T08:56:53Z"
+actor = "mcnairrobotics"
+rev = 1
