@@ -1,0 +1,6 @@
+kind = "comment"
+subtype = "note"
+body = "Criteria 1 and 2 are evidenced by plain-C# tests (bound). Criterion 3 (gravity constants tunable from configuration) is unmet, see S40-3 note. Story stays open until S40-3 closes."
+at = "2026-10-26T09:13:38Z"
+actor = "mcnairrobotics"
+rev = 1
