@@ -1,0 +1,7 @@
+kind = "field"
+field = "acceptance"
+new = ["A player can type a LAN address (ip, ip:port, localhost) and the lobby accepts or rejects it with a player-facing message", "HOST LAN and JOIN ADDRESS buttons exist in the lobby and start a no-Unity-Services LAN match"]
+moved = []
+at = "2026-10-26T08:19:23Z"
+actor = "mcnairrobotics"
+rev = 1
