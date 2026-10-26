@@ -1,0 +1,5 @@
+kind = "changelog-exempt"
+reason = "criteria evidenced by plain-C# tests, server-side only, not Unity-compiled"
+at = "2026-10-26T09:16:11Z"
+actor = "mcnairrobotics"
+rev = 1
