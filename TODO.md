@@ -84,9 +84,10 @@ S46 (win by breaching the core), S48, and the E14 stretch goals.
       for alias resolution in directives (frob ~KP5659Y). Make the CI job
       required (add it to `gate`'s needs) once it exits 0. See
       [docs/frob.md](docs/frob.md).
-- [ ] frob: `design/hullbreach_game.strata` (the v1 architecture model) is
-      not read by v2, which models with grimble (`design/model.grmb`).
-      Port it, or delete it, once grimble can express the flows.
+- [x] frob: `design/hullbreach_game.strata` ported to
+      `design/hullbreach_game.grmb`. Open grimble gaps (no env/eval atoms,
+      `because=` on `may` unparseable, no planned-flow waive) are listed in
+      [docs/frob.md](docs/frob.md#grimble-gaps).
 - [ ] frob: 11 Sprint 2 stories (S16, S29, S34-S38, S40, S41, S43, S48) have
       no story points, so `frob cycle assign` refuses them; size them and
       assign them to the Sprint 2 cycle.

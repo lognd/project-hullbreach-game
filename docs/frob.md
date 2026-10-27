@@ -126,59 +126,61 @@ has no such verb and reported every line as DSL001, so it is a plain
 comment convention until frob adds one. The intent is that frob's graph checks both ends agree, so a heading that gets renamed or a symbol
 that gets moved shows up as drift instead of a silently stale link.
 
-## Design notes for `design/hullbreach_game.strata`
+## Design notes for `design/hullbreach_game.grmb`
 
-`design/hullbreach_game.strata` is the v1 architecture model (strata).
-frob v2 does not read `.strata` files (its model language is grimble,
-`design/model.grmb`), so the file is kept as documentation only and the
-v1 `frob graph build` / `frob sys audit` steps no longer exist. The notes
-below explain what it encodes; porting it to grimble is future work.
+`design/hullbreach_game.grmb` is the architecture model in grimble (frob
+v2's model language; registered in `grimble.toml`). It was ported from
+the v1 `design/hullbreach_game.strata`, which is deleted. The notes below
+explain what it encodes and what grmb could not carry over.
 
 - **The hand-merge.** `frob scaffold unity-project .` writes one
   `design/unity_*.strata` fragment per `.asmdef`; none of them parse on
-  their own (frob T-5198: no root module). The frob maintainers
-  confirmed on 2026-09-26 that hand-merging them into one file with a
-  single `module hullbreach_game` line stays compatible with their
-  eventual fix, so that is what `design/hullbreach_game.strata` is:
-  every fragment's node and flow, renamed to short, per-asmdef names
-  (`core`, `world`, `hud`, ...) instead of the generator's
-  `unity_hullbreach_*` prefix, under one module.
+  their own (frob T-5198: no root module). The model is those fragments
+  hand-merged into one file with a single `module hullbreach_game;`,
+  every node and flow renamed to short per-asmdef names (`core`,
+  `world`, `hud`, ...). Each local flow now binds `producer`/`consumer`
+  to the two `.asmdef` files so SYS004 (flow without code) is satisfied;
+  the `Assembly references` rationale sits in a `///` doc comment.
 - **The one rule, encoded.** `docs/architecture.md`'s "one rule"
   (engine-free simulation, `Hullbreach.Game` is the only assembly that
-  touches `UnityEngine`) is enforced in the model by absence: every
-  `local` flow in the file points AWAY from `game`, never into it. A
-  new reference from an engine-free assembly to `Hullbreach.Game` would
-  show up as an unmodeled flow targeting `game`.
+  touches `UnityEngine`) used to be enforced by absence of flows into
+  `game`. It is now also stated as checked claims `one_rule_<node>`
+  (`noflow <node> -> game; proof L1;`) for core, world, structure, ship,
+  builder, hud and net.
 - **`net`'s planned platform flows.** `f_login_game`/`f_session_check`
-  mirror the platform's own `f_login_game`/`f_session_check` in
-  `platform/design/hullbreach.strata` (sourced there from `game_client`/
-  `game_server`). Neither call site exists in this repo yet -- Jira
-  SCRUM-100 (S07-2, the sign-in screen) is the tracked work -- so both
-  are sourced from `net` (the assembly that already owns client/server
-  networking) and their `REL200` findings are `waive`d as planned,
-  using the same idiom the platform model uses for its own
-  planned-vs-landed gaps. The waive has to sit on the flow's SOURCE
-  node (`net`), not its destination (`hullbreach_platform_api`) --
-  waiving on the destination silently fails to match the finding.
+  mirror the platform's flows of the same names. Neither call site
+  exists yet (Jira SCRUM-100, S07-2), so the flows carry
+  `accept SYS004` and a `planned` attr; `rate 1 req/s` is a placeholder
+  needed so a foreign-source flow passes FLOW003. The v1 `REL200` and
+  `SYS114` waives (ticket T-0041) have no equivalent: those rules are
+  gone in v2.
 - **`editor`'s capabilities.** `HudPrefabBuilder` (D6,
-  `ui-port.md#2-decisions`) writes the generated `.prefab` assets to
-  disk, hence the two `may "fs.write"` grants. Its public entry points
-  are also run headlessly via Unity's own `-executeMethod`, an
-  out-of-process invocation with no single call-site line to `via`,
-  hence the blanket `may "eval"`. That capability drags in a CWE-78
-  obligation under the `owasp-top-10` audit view; there is no inbound
-  flow into `editor` in this model at all, so the `assume ... noflow`
-  claim (the same idiom frob's own `design/frob.strata` uses for its
-  `eval` grants) discharges it honestly.
+  `ui-port.md#2-decisions`) writes generated `.prefab` assets, hence the
+  two `may fs.write` grants. Its entry points are also run headlessly
+  via Unity's `-executeMethod`; v1 modelled that as `may "eval"`, which
+  has no atom in v2 (see gaps). The CWE-78 discharge is now the claim
+  `cwe_78_editor` (`noflow hullbreach_platform_api -> editor`), assumed
+  by logan.
 - **`demo_tests`'s capabilities.** `DemoScreenshots` reads the
-  `HULLBREACH_SHOTS` env var to find its output directory, then writes
-  screenshots into it -- hence its `may "env.read"`/`may "fs.write"`.
-- **Known frob-side gap.** `frob sys audit` still reports `SYS114` (no
-  proven config-bound host constraint) on both planned platform flows.
-  Unlike `REL200`, there is no `waive`/planned-discharge idiom for
-  `SYS114` yet, so a flow to a foreign node with no code behind it
-  cannot pass that check today -- reported to the frob maintainers, not
-  worked around here.
+  `HULLBREACH_SHOTS` env var and writes screenshots there; only the
+  `fs.write` grant survives (the env read has no atom).
+
+### Grimble gaps
+
+- `because="..."` and `ticket="..."` after `may ATOM at SELECTOR` fail
+  to parse (MDL009), contradicting the spec; grant reasons live in `//`
+  comments instead.
+- No atom for environment reads (`env.read`, `process.env`, ... all
+  MDL016) or `eval`; v1's `may "env.read"` and `may "eval"` were
+  dropped and are recorded as comments in the file.
+- All gaps are as of grimble 0.532.0.
+- No per-flow waive for the v1 REL200/SYS114 planned-flow findings;
+  only `accept SYS004` remains.
+- The CWE-78 claim's `review` date was moved from 2026-10-15 (already
+  expired) to 2027-01-15 so it is not instantly stale.
+- SYS001 warnings remain for files outside any `owns` glob
+  (Hullbreach.Match, Platform, NetCode.Entities, docs, tools). Those
+  assemblies were never modeled in v1; modelling them is separate work.
 
 ## Known gaps in frob 0.532.0 on this repo
 
