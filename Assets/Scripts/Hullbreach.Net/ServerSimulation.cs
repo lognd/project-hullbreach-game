@@ -542,7 +542,7 @@ namespace Hullbreach.Net
 
         // Nudges a ship back toward the arena; a velocity change only, so no force reaches the
         // structural solver and no block takes damage (S41-1).
-        // frob:ticket T-0089
+        // frob:ticket 01M3DG5Y2SN7TH11BDYFCY4SVZ
         void ApplyArenaPush(int peer, PeerState state, float dt)
         {
             ShipBody ship = state.Ship;
