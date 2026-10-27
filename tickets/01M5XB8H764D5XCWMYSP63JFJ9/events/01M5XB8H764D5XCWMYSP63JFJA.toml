@@ -1,0 +1,12 @@
+kind = "create"
+title = "S41-1b: Unity-side wiring for arena bounds (Log adapter, scene gizmo, play-mode check)"
+type = "task"
+category = "todo"
+priority = "medium"
+parent = "01M3DG5Y2T3TCHWKQBEY9NRTNE"
+labels = ["owner:GingerVHS"]
+scope = ["Assets/Scripts/Hullbreach.Game/**"]
+body = "found while working S41-1: ServerSimulation.Log needs a Debug.Log IPlatformLog adapter in NetDemo, arena bounds gizmo, and a play-mode check; needs the Unity editor."
+at = "2026-10-27T00:13:16Z"
+actor = "mcnairrobotics"
+rev = 1
