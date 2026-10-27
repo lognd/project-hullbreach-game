@@ -118,6 +118,7 @@ namespace Hullbreach.Net
             public bool IsBuilding;
             public bool HasInput;
             public bool PendingFire;
+            public bool InPushZone;
             public readonly Dictionary<int, bool> Failing = new Dictionary<int, bool>();
         }
 
@@ -216,6 +217,14 @@ namespace Hullbreach.Net
             }
         }
 
+        // Soft arena edge applied each tick; replaced by ConfigureDemoArena (S41-1).
+        // frob:doc docs/reference/hullbreach-net.md#serversimulation
+        public ArenaBounds Bounds { get; private set; } = ArenaConfig.DefaultBounds;
+
+        // Diagnostics sink for arena edge events; defaults to a no-op.
+        // frob:doc docs/reference/hullbreach-net.md#serversimulation
+        public IPlatformLog Log { get; set; } = NullPlatformLog.Instance;
+
         // Sets up the built-in arena; same as ConfigureDemoArena(ArenaConfig.Defaults()).
         // frob:doc docs/reference/hullbreach-net.md#serversimulation
         public void ConfigureDemoArena() => ConfigureDemoArena(ArenaConfig.Defaults());
@@ -225,6 +234,9 @@ namespace Hullbreach.Net
         public void ConfigureDemoArena(ArenaConfig config)
         {
             _gravity.Clear();
+            Bounds = config.Bounds;
+            Log.Info("arena bounds radius=" + Bounds.Radius + " margin=" + Bounds.Margin
+                + " strength=" + Bounds.Strength);
             foreach (ArenaBodyConfig body in config.Bodies) _gravity.Add(body.ToGravityBody());
 
             ArenaBodyConfig primary = config.Bodies[0];
@@ -498,6 +510,7 @@ namespace Hullbreach.Net
                 if (state.IsBuilding) continue;
 
                 state.Ship.Step(input, dt);
+                ApplyArenaPush(peer, state, dt);
                 DrainShots(peer, state.Ship);
             }
 
@@ -525,6 +538,21 @@ namespace Hullbreach.Net
             // Last, so impacts and structural damage from this tick are already on the grids.
             Match?.Tick();
             AnnounceMatchEnd();
+        }
+
+        // Nudges a ship back toward the arena; a velocity change only, so no force reaches the
+        // structural solver and no block takes damage (S41-1).
+        // frob:ticket T-0089
+        void ApplyArenaPush(int peer, PeerState state, float dt)
+        {
+            ShipBody ship = state.Ship;
+            bool inZone = Bounds.InPushZone(ship.Position);
+            if (inZone != state.InPushZone)
+            {
+                state.InPushZone = inZone;
+                Log.Info("peer " + peer + (inZone ? " entered" : " left") + " arena edge zone");
+            }
+            if (inZone) ship.Velocity += Bounds.PushAcceleration(ship.Position) * dt;
         }
 
         // Sends the finished match (draws included) to every connected peer, once per match.
