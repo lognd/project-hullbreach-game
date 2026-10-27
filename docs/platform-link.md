@@ -26,6 +26,11 @@ argument, then environment variable, then default. A malformed URL or
 timeout is logged as a warning and replaced by the default rather than
 aborting startup.
 
+A committed `.env.example` lists these variables with placeholder values.
+Nothing in the repo loads a `.env` file (the game, `play.sh` and `play.cmd`
+read the process environment only), so export the values in your shell
+yourself; a real `.env` is gitignored and never read.
+
 | Argument | Environment variable | Default | Meaning |
 | --- | --- | --- | --- |
 | `-hullbreachPlatformUrl <url>` | `HULLBREACH_PLATFORM_URL` | `http://127.0.0.1:8000` | Base URL of the platform API (http or https; a trailing `/` is dropped). Used by the client to sign in and by the server to validate sessions. |

@@ -768,6 +768,10 @@ owner; never commit it or paste it in chat):
 - **Windows cmd**: `set HULLBREACH_PLATFORM_SERVER_KEY=<dev server key>`
 - **macOS / Linux**: `export HULLBREACH_PLATFORM_SERVER_KEY='<dev server key>'`
 
+`.env.example` at the repo root lists every Hullbreach environment variable
+with placeholder values. Nothing loads a `.env` file, so it is a reference:
+export the values in your shell as above.
+
 The doctor's `platform.serverkey.set` and `platform.serverkey.accepted`
 checks test it (the second one signs in with `--login` and asks the
 platform with the key). If the key is wrong, every player gets `Could not
