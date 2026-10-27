@@ -15,7 +15,6 @@ namespace Hullbreach.Net.Tests
 
         static MatchHandoff Handoff(string id = Id) => MatchHandoff.Parse(id, "game.example:7777", "u2").Value;
 
-        // frob:tests Assets/Scripts/Hullbreach.Net/ConnectRequest.cs::ConnectRequest.FromHandoff
         [Test]
         public void FromHandoff_CarriesAddressMatchIdAndSkins()
         {
@@ -28,21 +27,18 @@ namespace Hullbreach.Net.Tests
             StringAssert.Contains("match_id=" + Canonical, r.Value.Describe());
         }
 
-        // frob:tests Assets/Scripts/Hullbreach.Net/ConnectRequest.cs::ConnectRequest.FromHandoff
         [Test]
         public void FromHandoff_NoSkins_IsEmptyList()
         {
             Assert.AreEqual(0, ConnectRequest.FromHandoff(Handoff(), null).Value.EquippedSkins.Count);
         }
 
-        // frob:tests Assets/Scripts/Hullbreach.Net/ConnectRequest.cs::ConnectRequest.FromHandoff
         [Test]
         public void FromHandoff_DefaultHandoff_IsError()
         {
             Assert.IsFalse(ConnectRequest.FromHandoff(default, null).IsOk);
         }
 
-        // frob:tests Assets/Scripts/Hullbreach.Net/ConnectRequest.cs::ConnectRequest.FromHandoff
         [TestCase("not-a-uuid")]
         [TestCase("00000000-0000-0000-0000-000000000000")]
         public void FromHandoff_BadMatchId_IsError(string id)
@@ -50,7 +46,6 @@ namespace Hullbreach.Net.Tests
             Assert.IsFalse(ConnectRequest.FromHandoff(Handoff(id), null).IsOk);
         }
 
-        // frob:tests Assets/Scripts/Hullbreach.Net/ConnectRequest.cs::ConnectRequest.FromHandoff
         [TestCase("")]
         [TestCase("  ")]
         [TestCase("has space")]
@@ -60,7 +55,6 @@ namespace Hullbreach.Net.Tests
             Assert.IsFalse(ConnectRequest.FromHandoff(Handoff(), new[] { skin }).IsOk);
         }
 
-        // frob:tests Assets/Scripts/Hullbreach.Net/ConnectRequest.cs::ConnectRequest.FromHandoff
         [Test]
         public void FromHandoff_TooManyOrTooLongSkins_IsError()
         {
@@ -70,7 +64,6 @@ namespace Hullbreach.Net.Tests
             Assert.IsFalse(ConnectRequest.FromHandoff(Handoff(), new[] { new string('a', ConnectRequest.MaxSkinIdLength + 1) }).IsOk);
         }
 
-        // frob:tests Assets/Scripts/Hullbreach.Net/ConnectRequest.cs::QueueMatchId.Normalize
         [Test]
         public void Normalize_TrimsAndLowercases()
         {
@@ -80,7 +73,6 @@ namespace Hullbreach.Net.Tests
 
         static ShipSnapshot Ship() => new ShipSnapshot(0, 0, new[] { new SnapshotBlock(0, 0, BlockTypes.Core, 0, 0) }, 0, 0, 0, 0, 0, 0);
 
-        // frob:tests Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.AssignQueueMatch
         [Test]
         public void ServerMatch_UsesAssignedQueueIdOnce()
         {
@@ -92,7 +84,6 @@ namespace Hullbreach.Net.Tests
             Assert.AreEqual(Canonical, server.Match.MatchId);
         }
 
-        // frob:tests Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.AssignQueueMatch
         [Test]
         public void ServerAssign_BadIdOrLiveMatch_IsRefused()
         {
