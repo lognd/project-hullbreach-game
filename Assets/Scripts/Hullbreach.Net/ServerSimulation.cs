@@ -654,6 +654,16 @@ namespace Hullbreach.Net
 
                 if (p.LifeRemaining <= 0f) { _projectiles.RemoveAt(i); continue; }
 
+                // Planets are solid to shots: despawn on contact and log it.
+                // frob:doc docs/reference/hullbreach-net.md#serversimulation
+                if (_gravity.TryContact(p.Position, p.Spec.Radius, out int bodyIndex, out _, out _))
+                {
+                    Log.Info("projectile " + p.Id + " owner=" + p.OwnerPeer + " hit planet " + bodyIndex
+                        + " at (" + p.Position.x + ", " + p.Position.y + ")");
+                    _projectiles.RemoveAt(i);
+                    continue;
+                }
+
                 if (TryHitAnyShip(p, out int hitPeer, out int key))
                 {
                     ApplyProjectileImpact(hitPeer, key, p);
