@@ -1,11 +1,11 @@
 # Design: wire frob in, sweep the comments, import the Jira backlog
 
 Status: W, C and B are done: frob is wired in (`frob.toml`,
-`design/hullbreach_game.strata`, 116 tickets under `tickets/`), the
+`design/hullbreach_game.grmb`, 116 tickets under `tickets/`), the
 comment sweep landed (D9 below), and the Jira backlog is imported
 (`docs/backlog.md`). The repo has since moved from frob v1 to frob v2 (0.532.0): tickets are
 ULID ledger entries (v1 ids kept as aliases), `frob.toml` follows the v2
-schema and the strata model is no longer read. What is still open is on
+schema and the model was ported from strata to grimble (`design/hullbreach_game.grmb`). What is still open is on
 the frob side, not ours: C# is fidelity F1 in v2 and the other
 frob-tracked gaps listed in the "frob" section of [TODO.md](../../TODO.md)
 and [docs/frob.md](../frob.md#known-gaps-in-frob-0.532.0-on-this-repo).
@@ -41,15 +41,15 @@ merged back into every open branch.
 - `frob scaffold unity-project .` produces `frob.toml` and one
   `design/unity_*.strata` fragment per asmdef. The fragments do not parse
   yet (frob T-5198: no root module), so W hand-merges them into one
-  `design/hullbreach_game.strata` with `module hullbreach_game` and
+  `design/hullbreach_game.strata` (since ported to `.grmb`) with `module hullbreach_game` and
   deletes the fragments.
-- The strata model encodes [the one rule](../architecture.md#the-one-rule-engine-free-simulation-unity-only-adapters):
+- The model (strata in v1, grmb now) encodes [the one rule](../architecture.md#the-one-rule-engine-free-simulation-unity-only-adapters):
   one node per asmdef, `local` flows only along the asmdef references, so
   a new reference from an engine-free assembly to `Hullbreach.Game` is a
   model violation. The platform is a `foreign` node
   (`hullbreach_platform_api`) with the two flows the platform's own model
   already declares from its side (`f_login_game`, `f_session_check`, see
-  the platform's `design/hullbreach.strata`); both are marked planned
+  the platform's model); both are marked planned
   until S07-2 lands.
 - `[[test.runner]]` for csharp runs `tools/plaincs/run_tests.sh`, not the
   scaffold's `dotnet test .` (a Unity repo has no project file at the
@@ -65,7 +65,7 @@ merged back into every open branch.
   2026-09-26 and are adding "unity" and "csharp" project types (frob
   0.534.0) with the test step read only from `[[test.runner]]`. W lands everything else; CI gets a `frob check` job once
   a frob release dispatches C#. Until then, `frob graph build` must
-  complete with zero strata parse failures, and `frob ticket` must work.
+  complete with zero model parse failures, and `frob ticket` must work.
 
 ## 3. C: comment sweep
 

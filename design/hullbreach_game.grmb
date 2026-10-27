@@ -1,0 +1,605 @@
+grimble = "2";
+// Ported from the v1 strata model (hullbreach_game.strata, itself
+// hand-merged from `frob scaffold unity-project .` fragments).
+// Rationale and the list of things grmb cannot express: docs/frob.md.
+// frob:doc docs/architecture.md#the-one-rule-engine-free-simulation-unity-only-adapters
+module hullbreach_game;
+
+/// Ship-builder placement/validation logic.
+node builder : trusted {
+  clearance Internal;
+  owns "Assets/Scripts/Hullbreach.Builder/**";
+}
+
+node builder_tests : trusted {
+  clearance Internal;
+  owns "Assets/Tests/EditMode/Hullbreach.Builder.Tests/**";
+  attr editor;
+}
+
+// frob:doc docs/architecture.md#the-one-rule-engine-free-simulation-unity-only-adapters
+/// Engine-free assemblies: no UnityEngine reference, compiled/tested by
+/// tools/plaincs with the stock .NET SDK.
+node core : trusted {
+  clearance Internal;
+  owns "Assets/Scripts/Hullbreach.Core/**";
+}
+
+/// Test assemblies: one node per *.Tests.asmdef, edges to what that
+/// asmdef references.
+node core_tests : trusted {
+  clearance Internal;
+  owns "Assets/Tests/EditMode/Hullbreach.Core.Tests/**";
+  attr editor;
+}
+
+// v1 `may "env.read"` (DemoScreenshots reads HULLBREACH_SHOTS) has no grmb
+// atom: dropped, see docs/frob.md "Grimble gaps".
+/// The one PlayMode suite; unlike other test nodes it flows INTO `game`,
+/// which is fine (tests may depend on the adapters they exercise).
+node demo_tests : trusted {
+  clearance Internal;
+  owns "Assets/Tests/PlayMode/Hullbreach.Demo.Tests/**";
+  // writes screenshots into that directory.
+  may fs.write at "Assets/Tests/PlayMode/Hullbreach.Demo.Tests/DemoScreenshots.cs::Hullbreach.Demo.Tests.DemoScreenshots.CaptureDemoStates";
+}
+
+// v1 `may "eval"` (Unity's own -executeMethod, not a call site) has no
+// grmb atom: dropped, see docs/frob.md "Grimble gaps".
+/// Editor-only tooling (HudPrefabBuilder, D6 in ui-port.md), never
+/// shipped in a player build.
+node editor : trusted {
+  clearance Internal;
+  owns "Assets/Editor/Hullbreach.Editor/**";
+  // D6 writes the generated channel-bar prefab to disk.
+  may fs.write at "Assets/Editor/Hullbreach.Editor/HudPrefabBuilder.cs::Hullbreach.Editor.HudPrefabBuilder.BuildChannelBarPrefab";
+  // D6 writes the generated HUD canvas prefab to disk.
+  may fs.write at "Assets/Editor/Hullbreach.Editor/HudPrefabBuilder.cs::Hullbreach.Editor.HudPrefabBuilder.BuildHudCanvasPrefab";
+  attr editor;
+}
+
+// frob:doc docs/architecture.md#the-one-rule-engine-free-simulation-unity-only-adapters
+/// The one Unity-engine node; the one rule is enforced by ABSENCE of any
+/// flow targeting `game` above (see docs/frob.md).
+node game : trusted {
+  clearance Internal;
+  owns "Assets/Scripts/Hullbreach.Game/**";
+}
+
+/// Engine-free HUD models (D3, ui-port.md#2-decisions).
+node hud : trusted {
+  clearance Internal;
+  owns "Assets/Scripts/Hullbreach.Hud/**";
+}
+
+node hud_tests : trusted {
+  clearance Internal;
+  owns "Assets/Tests/EditMode/Hullbreach.Hud.Tests/**";
+  attr editor;
+}
+
+/// The platform's auth API: no code of ours to scan, `managed` like the
+/// platform side models it. Planned flows/rationale: docs/frob.md.
+node hullbreach_platform_api : foreign {
+  kind external;
+  attr managed;
+}
+
+/// Authoritative server loop plus the client's non-authoritative twin.
+/// See docs/frob.md for the planned auth flows below.
+node net : trusted {
+  clearance Internal;
+  owns "Assets/Scripts/Hullbreach.Net/**";
+}
+
+node net_tests : trusted {
+  clearance Internal;
+  owns "Assets/Tests/EditMode/Hullbreach.Net.Tests/**";
+  attr editor;
+}
+
+/// ShipBody and its authoritative step, shared by client prediction and
+/// server authority.
+node ship : trusted {
+  clearance Internal;
+  owns "Assets/Scripts/Hullbreach.Ship/**";
+}
+
+node ship_tests : trusted {
+  clearance Internal;
+  owns "Assets/Tests/EditMode/Hullbreach.Ship.Tests/**";
+  attr editor;
+}
+
+/// The Q8 FE solver, buckling, damage.
+node structure : trusted {
+  clearance Internal;
+  owns "Assets/Scripts/Hullbreach.Structure/**";
+}
+
+node structure_tests : trusted {
+  clearance Internal;
+  owns "Assets/Tests/EditMode/Hullbreach.Structure.Tests/**";
+  attr editor;
+}
+
+/// Gravity fields and orbit math; knows about blocks only through Core.
+node world : trusted {
+  clearance Internal;
+  owns "Assets/Scripts/Hullbreach.World/**";
+}
+
+node world_tests : trusted {
+  clearance Internal;
+  owns "Assets/Tests/EditMode/Hullbreach.World.Tests/**";
+  attr editor;
+}
+
+/// Hullbreach.Builder.asmdef references Hullbreach.Core.
+flow f_builder_core : builder -> core {
+  producer "Assets/Scripts/Hullbreach.Builder/Hullbreach.Builder.asmdef";
+  consumer "Assets/Scripts/Hullbreach.Core/Hullbreach.Core.asmdef";
+  label Internal;
+  attr local;
+}
+
+/// Hullbreach.Builder.Tests.asmdef references Hullbreach.Builder.
+flow f_builder_tests_builder : builder_tests -> builder {
+  producer "Assets/Tests/EditMode/Hullbreach.Builder.Tests/Hullbreach.Builder.Tests.asmdef";
+  consumer "Assets/Scripts/Hullbreach.Builder/Hullbreach.Builder.asmdef";
+  label Internal;
+  attr local;
+}
+
+/// Hullbreach.Builder.Tests.asmdef references Hullbreach.Core.
+flow f_builder_tests_core : builder_tests -> core {
+  producer "Assets/Tests/EditMode/Hullbreach.Builder.Tests/Hullbreach.Builder.Tests.asmdef";
+  consumer "Assets/Scripts/Hullbreach.Core/Hullbreach.Core.asmdef";
+  label Internal;
+  attr local;
+}
+
+/// Hullbreach.Core.Tests.asmdef references Hullbreach.Core.
+flow f_core_tests_core : core_tests -> core {
+  producer "Assets/Tests/EditMode/Hullbreach.Core.Tests/Hullbreach.Core.Tests.asmdef";
+  consumer "Assets/Scripts/Hullbreach.Core/Hullbreach.Core.asmdef";
+  label Internal;
+  attr local;
+}
+
+/// Hullbreach.Demo.Tests.asmdef references Hullbreach.Builder.
+flow f_demo_tests_builder : demo_tests -> builder {
+  producer "Assets/Tests/PlayMode/Hullbreach.Demo.Tests/Hullbreach.Demo.Tests.asmdef";
+  consumer "Assets/Scripts/Hullbreach.Builder/Hullbreach.Builder.asmdef";
+  label Internal;
+  attr local;
+}
+
+/// Hullbreach.Demo.Tests.asmdef references Hullbreach.Core.
+flow f_demo_tests_core : demo_tests -> core {
+  producer "Assets/Tests/PlayMode/Hullbreach.Demo.Tests/Hullbreach.Demo.Tests.asmdef";
+  consumer "Assets/Scripts/Hullbreach.Core/Hullbreach.Core.asmdef";
+  label Internal;
+  attr local;
+}
+
+/// Hullbreach.Demo.Tests.asmdef references Hullbreach.Game.
+flow f_demo_tests_game : demo_tests -> game {
+  producer "Assets/Tests/PlayMode/Hullbreach.Demo.Tests/Hullbreach.Demo.Tests.asmdef";
+  consumer "Assets/Scripts/Hullbreach.Game/Hullbreach.Game.asmdef";
+  label Internal;
+  attr local;
+}
+
+/// Hullbreach.Demo.Tests.asmdef references Hullbreach.Hud.
+flow f_demo_tests_hud : demo_tests -> hud {
+  producer "Assets/Tests/PlayMode/Hullbreach.Demo.Tests/Hullbreach.Demo.Tests.asmdef";
+  consumer "Assets/Scripts/Hullbreach.Hud/Hullbreach.Hud.asmdef";
+  label Internal;
+  attr local;
+}
+
+/// Hullbreach.Demo.Tests.asmdef references Hullbreach.Net.
+flow f_demo_tests_net : demo_tests -> net {
+  producer "Assets/Tests/PlayMode/Hullbreach.Demo.Tests/Hullbreach.Demo.Tests.asmdef";
+  consumer "Assets/Scripts/Hullbreach.Net/Hullbreach.Net.asmdef";
+  label Internal;
+  attr local;
+}
+
+/// Hullbreach.Demo.Tests.asmdef references Hullbreach.Ship.
+flow f_demo_tests_ship : demo_tests -> ship {
+  producer "Assets/Tests/PlayMode/Hullbreach.Demo.Tests/Hullbreach.Demo.Tests.asmdef";
+  consumer "Assets/Scripts/Hullbreach.Ship/Hullbreach.Ship.asmdef";
+  label Internal;
+  attr local;
+}
+
+/// Hullbreach.Demo.Tests.asmdef references Hullbreach.Structure.
+flow f_demo_tests_structure : demo_tests -> structure {
+  producer "Assets/Tests/PlayMode/Hullbreach.Demo.Tests/Hullbreach.Demo.Tests.asmdef";
+  consumer "Assets/Scripts/Hullbreach.Structure/Hullbreach.Structure.asmdef";
+  label Internal;
+  attr local;
+}
+
+/// Hullbreach.Demo.Tests.asmdef references Hullbreach.World.
+flow f_demo_tests_world : demo_tests -> world {
+  producer "Assets/Tests/PlayMode/Hullbreach.Demo.Tests/Hullbreach.Demo.Tests.asmdef";
+  consumer "Assets/Scripts/Hullbreach.World/Hullbreach.World.asmdef";
+  label Internal;
+  attr local;
+}
+
+/// Hullbreach.Editor.asmdef references Hullbreach.Builder.
+flow f_editor_builder : editor -> builder {
+  producer "Assets/Editor/Hullbreach.Editor/Hullbreach.Editor.asmdef";
+  consumer "Assets/Scripts/Hullbreach.Builder/Hullbreach.Builder.asmdef";
+  label Internal;
+  attr local;
+}
+
+/// Hullbreach.Editor.asmdef references Hullbreach.Core.
+flow f_editor_core : editor -> core {
+  producer "Assets/Editor/Hullbreach.Editor/Hullbreach.Editor.asmdef";
+  consumer "Assets/Scripts/Hullbreach.Core/Hullbreach.Core.asmdef";
+  label Internal;
+  attr local;
+}
+
+/// Hullbreach.Editor.asmdef references Hullbreach.Game.
+flow f_editor_game : editor -> game {
+  producer "Assets/Editor/Hullbreach.Editor/Hullbreach.Editor.asmdef";
+  consumer "Assets/Scripts/Hullbreach.Game/Hullbreach.Game.asmdef";
+  label Internal;
+  attr local;
+}
+
+/// Hullbreach.Editor.asmdef references Hullbreach.Hud.
+flow f_editor_hud : editor -> hud {
+  producer "Assets/Editor/Hullbreach.Editor/Hullbreach.Editor.asmdef";
+  consumer "Assets/Scripts/Hullbreach.Hud/Hullbreach.Hud.asmdef";
+  label Internal;
+  attr local;
+}
+
+/// Hullbreach.Game.asmdef references Hullbreach.Builder.
+flow f_game_builder : game -> builder {
+  producer "Assets/Scripts/Hullbreach.Game/Hullbreach.Game.asmdef";
+  consumer "Assets/Scripts/Hullbreach.Builder/Hullbreach.Builder.asmdef";
+  label Internal;
+  attr local;
+}
+
+/// Hullbreach.Game.asmdef references Hullbreach.Core.
+flow f_game_core : game -> core {
+  producer "Assets/Scripts/Hullbreach.Game/Hullbreach.Game.asmdef";
+  consumer "Assets/Scripts/Hullbreach.Core/Hullbreach.Core.asmdef";
+  label Internal;
+  attr local;
+}
+
+/// Hullbreach.Game.asmdef references Hullbreach.Hud.
+flow f_game_hud : game -> hud {
+  producer "Assets/Scripts/Hullbreach.Game/Hullbreach.Game.asmdef";
+  consumer "Assets/Scripts/Hullbreach.Hud/Hullbreach.Hud.asmdef";
+  label Internal;
+  attr local;
+}
+
+/// Hullbreach.Game.asmdef references Hullbreach.Net.
+flow f_game_net : game -> net {
+  producer "Assets/Scripts/Hullbreach.Game/Hullbreach.Game.asmdef";
+  consumer "Assets/Scripts/Hullbreach.Net/Hullbreach.Net.asmdef";
+  label Internal;
+  attr local;
+}
+
+/// Hullbreach.Game.asmdef references Hullbreach.Ship.
+flow f_game_ship : game -> ship {
+  producer "Assets/Scripts/Hullbreach.Game/Hullbreach.Game.asmdef";
+  consumer "Assets/Scripts/Hullbreach.Ship/Hullbreach.Ship.asmdef";
+  label Internal;
+  attr local;
+}
+
+/// Hullbreach.Game.asmdef references Hullbreach.Structure.
+flow f_game_structure : game -> structure {
+  producer "Assets/Scripts/Hullbreach.Game/Hullbreach.Game.asmdef";
+  consumer "Assets/Scripts/Hullbreach.Structure/Hullbreach.Structure.asmdef";
+  label Internal;
+  attr local;
+}
+
+/// Hullbreach.Game.asmdef references Hullbreach.World.
+flow f_game_world : game -> world {
+  producer "Assets/Scripts/Hullbreach.Game/Hullbreach.Game.asmdef";
+  consumer "Assets/Scripts/Hullbreach.World/Hullbreach.World.asmdef";
+  label Internal;
+  attr local;
+}
+
+/// Hullbreach.Hud.asmdef references Hullbreach.Builder.
+flow f_hud_builder : hud -> builder {
+  producer "Assets/Scripts/Hullbreach.Hud/Hullbreach.Hud.asmdef";
+  consumer "Assets/Scripts/Hullbreach.Builder/Hullbreach.Builder.asmdef";
+  label Internal;
+  attr local;
+}
+
+/// Hullbreach.Hud.asmdef references Hullbreach.Core.
+flow f_hud_core : hud -> core {
+  producer "Assets/Scripts/Hullbreach.Hud/Hullbreach.Hud.asmdef";
+  consumer "Assets/Scripts/Hullbreach.Core/Hullbreach.Core.asmdef";
+  label Internal;
+  attr local;
+}
+
+/// Hullbreach.Hud.Tests.asmdef references Hullbreach.Builder.
+flow f_hud_tests_builder : hud_tests -> builder {
+  producer "Assets/Tests/EditMode/Hullbreach.Hud.Tests/Hullbreach.Hud.Tests.asmdef";
+  consumer "Assets/Scripts/Hullbreach.Builder/Hullbreach.Builder.asmdef";
+  label Internal;
+  attr local;
+}
+
+/// Hullbreach.Hud.Tests.asmdef references Hullbreach.Core.
+flow f_hud_tests_core : hud_tests -> core {
+  producer "Assets/Tests/EditMode/Hullbreach.Hud.Tests/Hullbreach.Hud.Tests.asmdef";
+  consumer "Assets/Scripts/Hullbreach.Core/Hullbreach.Core.asmdef";
+  label Internal;
+  attr local;
+}
+
+/// Hullbreach.Hud.Tests.asmdef references Hullbreach.Hud.
+flow f_hud_tests_hud : hud_tests -> hud {
+  producer "Assets/Tests/EditMode/Hullbreach.Hud.Tests/Hullbreach.Hud.Tests.asmdef";
+  consumer "Assets/Scripts/Hullbreach.Hud/Hullbreach.Hud.asmdef";
+  label Internal;
+  attr local;
+}
+
+/// Mirrors the platform's f_login_game; sourced from `net`, planned only.
+flow f_login_game : net -> hullbreach_platform_api {
+  label Pii;
+  rate 1 req/s;
+  attr planned = "POST /auth/login (Jira SCRUM-100, S07-2)";
+  accept SYS004 because="planned (Jira SCRUM-100, S07-2); no call site exists yet";
+}
+
+/// Hullbreach.Net.asmdef references Hullbreach.Core.
+flow f_net_core : net -> core {
+  producer "Assets/Scripts/Hullbreach.Net/Hullbreach.Net.asmdef";
+  consumer "Assets/Scripts/Hullbreach.Core/Hullbreach.Core.asmdef";
+  label Internal;
+  attr local;
+}
+
+/// Hullbreach.Net.asmdef references Hullbreach.Ship.
+flow f_net_ship : net -> ship {
+  producer "Assets/Scripts/Hullbreach.Net/Hullbreach.Net.asmdef";
+  consumer "Assets/Scripts/Hullbreach.Ship/Hullbreach.Ship.asmdef";
+  label Internal;
+  attr local;
+}
+
+/// Hullbreach.Net.asmdef references Hullbreach.Structure.
+flow f_net_structure : net -> structure {
+  producer "Assets/Scripts/Hullbreach.Net/Hullbreach.Net.asmdef";
+  consumer "Assets/Scripts/Hullbreach.Structure/Hullbreach.Structure.asmdef";
+  label Internal;
+  attr local;
+}
+
+/// Hullbreach.Net.Tests.asmdef references Hullbreach.Core.
+flow f_net_tests_core : net_tests -> core {
+  producer "Assets/Tests/EditMode/Hullbreach.Net.Tests/Hullbreach.Net.Tests.asmdef";
+  consumer "Assets/Scripts/Hullbreach.Core/Hullbreach.Core.asmdef";
+  label Internal;
+  attr local;
+}
+
+/// Hullbreach.Net.Tests.asmdef references Hullbreach.Net.
+flow f_net_tests_net : net_tests -> net {
+  producer "Assets/Tests/EditMode/Hullbreach.Net.Tests/Hullbreach.Net.Tests.asmdef";
+  consumer "Assets/Scripts/Hullbreach.Net/Hullbreach.Net.asmdef";
+  label Internal;
+  attr local;
+}
+
+/// Hullbreach.Net.Tests.asmdef references Hullbreach.Ship.
+flow f_net_tests_ship : net_tests -> ship {
+  producer "Assets/Tests/EditMode/Hullbreach.Net.Tests/Hullbreach.Net.Tests.asmdef";
+  consumer "Assets/Scripts/Hullbreach.Ship/Hullbreach.Ship.asmdef";
+  label Internal;
+  attr local;
+}
+
+/// Hullbreach.Net.Tests.asmdef references Hullbreach.Structure.
+flow f_net_tests_structure : net_tests -> structure {
+  producer "Assets/Tests/EditMode/Hullbreach.Net.Tests/Hullbreach.Net.Tests.asmdef";
+  consumer "Assets/Scripts/Hullbreach.Structure/Hullbreach.Structure.asmdef";
+  label Internal;
+  attr local;
+}
+
+/// Hullbreach.Net.Tests.asmdef references Hullbreach.World.
+flow f_net_tests_world : net_tests -> world {
+  producer "Assets/Tests/EditMode/Hullbreach.Net.Tests/Hullbreach.Net.Tests.asmdef";
+  consumer "Assets/Scripts/Hullbreach.World/Hullbreach.World.asmdef";
+  label Internal;
+  attr local;
+}
+
+/// Hullbreach.Net.asmdef references Hullbreach.World.
+flow f_net_world : net -> world {
+  producer "Assets/Scripts/Hullbreach.Net/Hullbreach.Net.asmdef";
+  consumer "Assets/Scripts/Hullbreach.World/Hullbreach.World.asmdef";
+  label Internal;
+  attr local;
+}
+
+/// Mirrors the platform's f_session_check; planned alongside f_login_game.
+flow f_session_check : net -> hullbreach_platform_api {
+  label Internal;
+  rate 1 req/s;
+  attr planned = "GET /auth/session (Jira SCRUM-100, S07-2)";
+  accept SYS004 because="planned alongside f_login_game (Jira SCRUM-100, S07-2); no call site exists yet";
+}
+
+/// Hullbreach.Ship.asmdef references Hullbreach.Core.
+flow f_ship_core : ship -> core {
+  producer "Assets/Scripts/Hullbreach.Ship/Hullbreach.Ship.asmdef";
+  consumer "Assets/Scripts/Hullbreach.Core/Hullbreach.Core.asmdef";
+  label Internal;
+  attr local;
+}
+
+/// Hullbreach.Ship.asmdef references Hullbreach.Structure.
+flow f_ship_structure : ship -> structure {
+  producer "Assets/Scripts/Hullbreach.Ship/Hullbreach.Ship.asmdef";
+  consumer "Assets/Scripts/Hullbreach.Structure/Hullbreach.Structure.asmdef";
+  label Internal;
+  attr local;
+}
+
+/// Hullbreach.Ship.Tests.asmdef references Hullbreach.Core.
+flow f_ship_tests_core : ship_tests -> core {
+  producer "Assets/Tests/EditMode/Hullbreach.Ship.Tests/Hullbreach.Ship.Tests.asmdef";
+  consumer "Assets/Scripts/Hullbreach.Core/Hullbreach.Core.asmdef";
+  label Internal;
+  attr local;
+}
+
+/// Hullbreach.Ship.Tests.asmdef references Hullbreach.Ship.
+flow f_ship_tests_ship : ship_tests -> ship {
+  producer "Assets/Tests/EditMode/Hullbreach.Ship.Tests/Hullbreach.Ship.Tests.asmdef";
+  consumer "Assets/Scripts/Hullbreach.Ship/Hullbreach.Ship.asmdef";
+  label Internal;
+  attr local;
+}
+
+/// Hullbreach.Ship.Tests.asmdef references Hullbreach.World.
+flow f_ship_tests_world : ship_tests -> world {
+  producer "Assets/Tests/EditMode/Hullbreach.Ship.Tests/Hullbreach.Ship.Tests.asmdef";
+  consumer "Assets/Scripts/Hullbreach.World/Hullbreach.World.asmdef";
+  label Internal;
+  attr local;
+}
+
+/// Hullbreach.Ship.asmdef references Hullbreach.World.
+flow f_ship_world : ship -> world {
+  producer "Assets/Scripts/Hullbreach.Ship/Hullbreach.Ship.asmdef";
+  consumer "Assets/Scripts/Hullbreach.World/Hullbreach.World.asmdef";
+  label Internal;
+  attr local;
+}
+
+/// Hullbreach.Structure.asmdef references Hullbreach.Core.
+flow f_structure_core : structure -> core {
+  producer "Assets/Scripts/Hullbreach.Structure/Hullbreach.Structure.asmdef";
+  consumer "Assets/Scripts/Hullbreach.Core/Hullbreach.Core.asmdef";
+  label Internal;
+  attr local;
+}
+
+/// Hullbreach.Structure.Tests.asmdef references Hullbreach.Core.
+flow f_structure_tests_core : structure_tests -> core {
+  producer "Assets/Tests/EditMode/Hullbreach.Structure.Tests/Hullbreach.Structure.Tests.asmdef";
+  consumer "Assets/Scripts/Hullbreach.Core/Hullbreach.Core.asmdef";
+  label Internal;
+  attr local;
+}
+
+/// Hullbreach.Structure.Tests.asmdef references Hullbreach.Structure.
+flow f_structure_tests_structure : structure_tests -> structure {
+  producer "Assets/Tests/EditMode/Hullbreach.Structure.Tests/Hullbreach.Structure.Tests.asmdef";
+  consumer "Assets/Scripts/Hullbreach.Structure/Hullbreach.Structure.asmdef";
+  label Internal;
+  attr local;
+}
+
+/// Hullbreach.World.asmdef references Hullbreach.Core.
+flow f_world_core : world -> core {
+  producer "Assets/Scripts/Hullbreach.World/Hullbreach.World.asmdef";
+  consumer "Assets/Scripts/Hullbreach.Core/Hullbreach.Core.asmdef";
+  label Internal;
+  attr local;
+}
+
+/// Hullbreach.World.Tests.asmdef references Hullbreach.Core.
+flow f_world_tests_core : world_tests -> core {
+  producer "Assets/Tests/EditMode/Hullbreach.World.Tests/Hullbreach.World.Tests.asmdef";
+  consumer "Assets/Scripts/Hullbreach.Core/Hullbreach.Core.asmdef";
+  label Internal;
+  attr local;
+}
+
+/// Hullbreach.World.Tests.asmdef references Hullbreach.Ship.
+flow f_world_tests_ship : world_tests -> ship {
+  producer "Assets/Tests/EditMode/Hullbreach.World.Tests/Hullbreach.World.Tests.asmdef";
+  consumer "Assets/Scripts/Hullbreach.Ship/Hullbreach.Ship.asmdef";
+  label Internal;
+  attr local;
+}
+
+/// Hullbreach.World.Tests.asmdef references Hullbreach.World.
+flow f_world_tests_world : world_tests -> world {
+  producer "Assets/Tests/EditMode/Hullbreach.World.Tests/Hullbreach.World.Tests.asmdef";
+  consumer "Assets/Scripts/Hullbreach.World/Hullbreach.World.asmdef";
+  label Internal;
+  attr local;
+}
+
+/// CWE-78 discharge for the editor's v1 `may "eval"`: no flow enters editor.
+claim cwe_78_editor {
+  noflow hullbreach_platform_api -> editor;
+  proof L1;
+  assumed owner=logan review=2027-01-15 because="no inbound flow into editor; the headless -executeMethod entry is Unity's own";
+  attr id = "weakness:CWE-78:editor";
+}
+
+/// builder stays engine-free: no flow into game.
+claim one_rule_builder {
+  noflow builder -> game;
+  proof L1;
+}
+
+// The one rule (docs/architecture.md): engine-free assemblies never
+// reference Hullbreach.Game. v1 enforced this by ABSENCE of any flow into
+// `game`; grmb states it as a checked claim per engine-free node.
+/// core stays engine-free: no flow into game.
+claim one_rule_core {
+  noflow core -> game;
+  proof L1;
+}
+
+/// hud stays engine-free: no flow into game.
+claim one_rule_hud {
+  noflow hud -> game;
+  proof L1;
+}
+
+/// net stays engine-free: no flow into game.
+claim one_rule_net {
+  noflow net -> game;
+  proof L1;
+}
+
+/// ship stays engine-free: no flow into game.
+claim one_rule_ship {
+  noflow ship -> game;
+  proof L1;
+}
+
+/// structure stays engine-free: no flow into game.
+claim one_rule_structure {
+  noflow structure -> game;
+  proof L1;
+}
+
+/// world stays engine-free: no flow into game.
+claim one_rule_world {
+  noflow world -> game;
+  proof L1;
+}
