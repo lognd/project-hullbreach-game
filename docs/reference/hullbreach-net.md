@@ -630,6 +630,7 @@ next expected sequence and then drains whatever the gap closing unblocks.
 <!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.Match -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.RequireReady -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.SetReady -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.AssignQueueMatch -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.ServerSimulation -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.Ships -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.MaxPeerId -->
@@ -1096,5 +1097,37 @@ UnityEngine and nothing throws on server input; failures are values.
   `Host` and `Port` parsed from `server_address` (`host:port`, port
   1-65535). A bad address makes the search `Failed`, not an exception.
 
-Not covered here: the Unity queue screen itself and feeding `MatchHandoff`
-into the connect flow, which need the editor.
+### ConnectRequest
+
+<!-- describes: Assets/Scripts/Hullbreach.Net/ConnectRequest.cs::ConnectRequest -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ConnectRequest.cs::ConnectRequest.MaxSkins -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ConnectRequest.cs::ConnectRequest.MaxSkinIdLength -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ConnectRequest.cs::ConnectRequest.Host -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ConnectRequest.cs::ConnectRequest.Port -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ConnectRequest.cs::ConnectRequest.MatchId -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ConnectRequest.cs::ConnectRequest.EquippedSkins -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ConnectRequest.cs::ConnectRequest.Describe -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ConnectRequest.cs::ConnectRequest.FromHandoff -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ConnectRequest.cs::QueueMatchId -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ConnectRequest.cs::QueueMatchId.Normalize -->
+
+Engine-free adapter from a `MatchHandoff` to what the connect flow consumes
+(S29-3): `Host`, `Port`, the canonical `MatchId` and `EquippedSkins`.
+`ConnectRequest.FromHandoff(handoff, skins)` returns a `ConfigResult`; it
+fails on an empty address, a `match_id` that is not a non-nil UUID, more than
+`MaxSkins` (16) skins, or a skin id that is empty, longer than
+`MaxSkinIdLength` (64) or not printable ASCII. Skin ids are trimmed and
+de-duplicated. `Describe()` is the one log line for the connect.
+`QueueMatchId.Normalize` is the shared UUID check (lowercase, hyphenated).
+
+Server side, `ServerSimulation.AssignQueueMatch(matchId)` validates the queue
+id with the same check and names the next match with it, so the result is
+reported to the platform under the id both players were given. It is used
+once, and returns false for a bad id or while a match is live. Without a
+call the match keeps a random uuid, as before.
+
+Not covered here, and left to follow-up tickets: the Unity queue screen,
+the code that calls `AssignQueueMatch` when the server learns its match
+(the allocation channel from the platform), a wire field so a client can
+present its `MatchId` on join, and sourcing equipped skins (the repo has no
+skin data yet, so the caller passes the ids).
