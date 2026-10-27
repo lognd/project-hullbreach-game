@@ -29,6 +29,19 @@ namespace Hullbreach.NetCode.Entities
 
         SignInModel _model;
 
+        // Tab / Shift+Tab / arrows walk username, password, sign in, play offline.
+        // frob:ticket 01M5XZJRNREX0M9DF1M6PE7G7V
+        void WireTabOrder()
+        {
+            HullbreachTabNavigation tabs = GetComponent<HullbreachTabNavigation>();
+            if (tabs == null)
+            {
+                tabs = gameObject.AddComponent<HullbreachTabNavigation>();
+            }
+
+            tabs.SetOrder(HullbreachPlatformRuntime.Log, usernameInput, passwordInput, signInButton, playOfflineButton);
+        }
+
         void OnEnable()
         {
             _model = new SignInModel(HullbreachPlatformRuntime.Client, HullbreachPlatformRuntime.Log,
@@ -38,6 +51,7 @@ namespace Hullbreach.NetCode.Entities
             passwordInput.onSubmit.AddListener(SubmitFromField);
             playOfflineButton.onClick.AddListener(_model.PlayOffline);
             signOutButton.onClick.AddListener(_model.SignOut);
+            WireTabOrder();
             Refresh();
             _model.TryRestore();
         }
