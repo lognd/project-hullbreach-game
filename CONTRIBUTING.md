@@ -71,8 +71,8 @@ inside the editor.
 
 ## Tickets (frob v2)
 
-The backlog is a frob v2 ledger under `tickets/` (install with
-`uv tool install frob==0.532.0`, then `frob init` once per clone).
+The backlog is a frob v2 ledger under `tickets/` (CI installs the dev build via
+`scripts/install_frob_dev.sh`; then `frob init` once per clone).
 Take work with `frob work <ticket>` (v1 ids like `T-0041` still resolve),
 close it with `frob ticket close --outcome fixed <ticket>`, and land the
 branch with `frob land`. Ledger commits go on your working branch and

@@ -18,6 +18,8 @@ namespace Hullbreach.Net.Tests
         [Test]
         public void FromHandoff_CarriesAddressMatchIdAndSkins()
         {
+            // frob:tests Assets/Scripts/Hullbreach.Net/ConnectRequest.cs::Hullbreach.Net.ConnectRequest.FromHandoff kind="unit"
+            // frob:tests Assets/Scripts/Hullbreach.Net/ConnectRequest.cs::Hullbreach.Net.ConnectRequest.Describe kind="unit"
             var r = ConnectRequest.FromHandoff(Handoff(), new[] { "gold", "stripe", "gold" });
             Assert.IsTrue(r.IsOk, r.Error);
             Assert.AreEqual("game.example", r.Value.Host);
@@ -30,12 +32,14 @@ namespace Hullbreach.Net.Tests
         [Test]
         public void FromHandoff_NoSkins_IsEmptyList()
         {
+            // frob:tests Assets/Scripts/Hullbreach.Net/ConnectRequest.cs::Hullbreach.Net.ConnectRequest.FromHandoff kind="unit"
             Assert.AreEqual(0, ConnectRequest.FromHandoff(Handoff(), null).Value.EquippedSkins.Count);
         }
 
         [Test]
         public void FromHandoff_DefaultHandoff_IsError()
         {
+            // frob:tests Assets/Scripts/Hullbreach.Net/ConnectRequest.cs::Hullbreach.Net.ConnectRequest.FromHandoff kind="unit"
             Assert.IsFalse(ConnectRequest.FromHandoff(default, null).IsOk);
         }
 
@@ -43,6 +47,7 @@ namespace Hullbreach.Net.Tests
         [TestCase("00000000-0000-0000-0000-000000000000")]
         public void FromHandoff_BadMatchId_IsError(string id)
         {
+            // frob:tests Assets/Scripts/Hullbreach.Net/ConnectRequest.cs::Hullbreach.Net.ConnectRequest.FromHandoff kind="unit"
             Assert.IsFalse(ConnectRequest.FromHandoff(Handoff(id), null).IsOk);
         }
 
@@ -52,12 +57,14 @@ namespace Hullbreach.Net.Tests
         [TestCase("caf\x00e9")]
         public void FromHandoff_BadSkinId_IsError(string skin)
         {
+            // frob:tests Assets/Scripts/Hullbreach.Net/ConnectRequest.cs::Hullbreach.Net.ConnectRequest.FromHandoff kind="unit"
             Assert.IsFalse(ConnectRequest.FromHandoff(Handoff(), new[] { skin }).IsOk);
         }
 
         [Test]
         public void FromHandoff_TooManyOrTooLongSkins_IsError()
         {
+            // frob:tests Assets/Scripts/Hullbreach.Net/ConnectRequest.cs::Hullbreach.Net.ConnectRequest.FromHandoff kind="unit"
             var many = new List<string>();
             for (int i = 0; i <= ConnectRequest.MaxSkins; i++) many.Add("s" + i);
             Assert.IsFalse(ConnectRequest.FromHandoff(Handoff(), many).IsOk);
@@ -67,6 +74,7 @@ namespace Hullbreach.Net.Tests
         [Test]
         public void Normalize_TrimsAndLowercases()
         {
+            // frob:tests Assets/Scripts/Hullbreach.Net/ConnectRequest.cs::Hullbreach.Net.QueueMatchId.Normalize kind="unit"
             Assert.AreEqual(Canonical, QueueMatchId.Normalize("  " + Id + " ").Value);
             Assert.IsFalse(QueueMatchId.Normalize(null).IsOk);
         }
