@@ -38,7 +38,7 @@ jobs:
       - name: build and test
         run: tools/plaincs/run_tests.sh
 
-  # frob v2 (pinned): ledger health and the rule gate. `frob check` exits 0
+  # frob v2 (dev pre-release): ledger health and the rule gate. `frob check` exits 0
   # (errors only fail it; COV001 stays a warning because frob cannot yet see
   # C# tests, F1 fidelity), so the job is required via `gate`. v1-only verbs
   # (`frob coverage`, `frob ticket sweep`) are gone: COV001 inside `frob check`
@@ -53,9 +53,16 @@ jobs:
       # what a pull_request checkout is. Put HEAD on a named branch.
       - name: attach HEAD to a branch
         run: git switch -C frob-ci
-      - uses: astral-sh/setup-uv@v6
-      - name: install frob
-        run: uv tool install frob==0.532.0
+      # The dev pre-release binds C# NUnit tests (frob:tests inside the [Test]
+      # body), which the PyPI 0.532.0 pin could not (TEST001/COV001).
+      - name: install frob (dev pre-release, sha256-verified)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: scripts/install_frob_dev.sh "$HOME/.local/bin"
+      - name: frob version
+        run: |
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          "$HOME/.local/bin/frob" --version
       - name: ledger health
         run: frob ticket doctor --text
       - name: rule gate

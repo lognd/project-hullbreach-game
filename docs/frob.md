@@ -18,8 +18,10 @@ C# repo yet:
    0.532.0 (see "Known gaps" below), so several rules cannot see this code
    yet.
 
-Install the pinned version the same way CI does:
-`uv tool install frob==0.532.0`. Run `frob init` once per clone: it
+CI installs the frob dev pre-release (x86_64 linux `frob-cli`, sha256
+checked) with `scripts/install_frob_dev.sh`; locally use any build that
+reports a `0.532.0-dev` version (or `uv tool install frob==0.532.0`, which
+cannot bind C# tests). Run `frob init` once per clone: it
 installs the `frob-ledger` merge driver into your local git config (the
 `.gitattributes` rules are committed).
 
@@ -185,10 +187,16 @@ below explain what it encodes; porting it to grimble is future work.
   Remaining are warnings only: COV001 (public methods "reached by no
   test" because C# test detection is a Gap) and opaque-file Unresolved
   notes (none required).
-- C# is fidelity F1: `resolve_ref` and `test_items` are Gaps, so a
-  `frob:tests` binding on a C# test is reported TEST001 ("names no test
-  function in the graph"). This repo carries no such bindings now; do not
-  add them until frob resolves C# tests.
+- C# tests bind with the dev build (not PyPI 0.532.0, which reports TEST001
+  "names no test function in the graph"). Put
+  `// frob:tests <path>.cs::<Namespace.Class.Method> kind="unit"` as a
+  line INSIDE the `[Test]` method body (see ConnectRequestTests and
+  ArenaBoundsTests). A receiver of unknown type (for example two classes
+  with a `Describe` method) can still leave COV001 as Unresolved.
+- `frob test --base` now selects the EditMode tests but runs them through
+  the `unity` provider, which needs the Unity editor named in
+  ProjectSettings/ProjectVersion.txt (E-EVIDENCE-UNITY-EDITOR without it);
+  record evidence with the `command` provider and `run_tests.sh` as above.
 - `frob:todo`/`frob:ticket` in code need a full 26-char ULID; alias
   resolution for v1 ids in directives is pending upstream.
 - `frob test` and `frob coverage` do not run C#; there is no `frob
