@@ -636,6 +636,8 @@ next expected sequence and then drains whatever the gap closing unblocks.
 <!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.MaxPeerId -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.FirstFragmentId -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.ConfigureDemoArena -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.Bounds -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.Log -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.Join -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.Leave -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.TryDequeueDroppedPeer -->
@@ -906,6 +908,8 @@ Launch scripts and log checks grep for both.
 <!-- describes: Assets/Scripts/Hullbreach.Net/ArenaConfig.cs::ArenaConfig.SpawnAltitude -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ArenaConfig.cs::ArenaConfig.SpawnVertical -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ArenaConfig.cs::ArenaConfig.SpawnAngleStep -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ArenaConfig.cs::ArenaConfig.Bounds -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ArenaConfig.cs::ArenaConfig.DefaultBounds -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ArenaConfig.cs::ArenaConfig.ArenaConfig -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ArenaConfig.cs::ArenaConfig.Defaults -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ArenaConfig.cs::ConfigResult -->
@@ -933,6 +937,15 @@ list; each body needs `mu` and `radius`). Bad input (not an object, empty
 not positive, `restitution` outside [0, 1], unreadable file) returns a
 `ConfigResult` with `IsOk == false` and an `Error` sentence; nothing throws.
 `ConfigureDemoArena(ArenaConfig)` applies a loaded config.
+
+`Bounds` (S41-1) is the soft arena edge, an `ArenaBounds` from
+Hullbreach.World; `DefaultBounds` is radius 100, margin 20, strength 8,
+centred on the origin so it fits inside `Quantization.PositionLimit`. The
+optional JSON key `bounds` takes `x`, `y`, `radius` (> 0), `margin` (>= 0)
+and `strength` (>= 0); omitted keys keep the defaults.
+`ServerSimulation.Bounds` holds the active edge and `ServerSimulation.Log`
+receives its enter/leave events; each tick a ship in the push zone gets an
+inward velocity change after its step, never a solver force.
 
 ### BlockGridDesign
 

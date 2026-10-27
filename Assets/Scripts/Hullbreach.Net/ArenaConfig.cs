@@ -51,17 +51,25 @@ namespace Hullbreach.Net
         // Angle between consecutive spawns, as a multiple of pi.
         // frob:doc docs/reference/hullbreach-net.md#arenaconfig
         public float SpawnAngleStep { get; }
+        // Soft edge of the arena (S41-1); defaults sit inside Quantization.PositionLimit.
+        // frob:doc docs/reference/hullbreach-net.md#arenaconfig
+        public ArenaBounds Bounds { get; }
 
         // frob:doc docs/reference/hullbreach-net.md#arenaconfig
         public ArenaConfig(IReadOnlyList<ArenaBodyConfig> bodies, float lateral, float altitude,
-            float vertical, float angleStep)
+            float vertical, float angleStep, ArenaBounds? bounds = null)
         {
+            Bounds = bounds ?? DefaultBounds;
             Bodies = bodies;
             SpawnLateral = lateral;
             SpawnAltitude = altitude;
             SpawnVertical = vertical;
             SpawnAngleStep = angleStep;
         }
+
+        // Radius 100 keeps the whole arena inside the +-128 wire range.
+        // frob:doc docs/reference/hullbreach-net.md#arenaconfig
+        public static readonly ArenaBounds DefaultBounds = new ArenaBounds(float2.zero, 100f, 20f, 8f);
 
         // The constants ConfigureDemoArena used before they became configurable.
         // frob:doc docs/reference/hullbreach-net.md#arenaconfig
@@ -134,7 +142,24 @@ namespace Hullbreach.Net
                 if (err != null) return ConfigResult<ArenaConfig>.Fail(err);
                 if (altitude <= 0f) return ConfigResult<ArenaConfig>.Fail("spawn.altitude must be > 0");
             }
-            return ConfigResult<ArenaConfig>.Ok(new ArenaConfig(bodies, lateral, altitude, vertical, step));
+
+            ArenaBounds bounds = d.Bounds;
+            if (root.TryGetValue("bounds", out object rawBounds))
+            {
+                var b = rawBounds as Dictionary<string, object>;
+                if (b == null) return ConfigResult<ArenaConfig>.Fail("bounds must be an object");
+                float bx = bounds.Center.x, by = bounds.Center.y, br = bounds.Radius;
+                float bm = bounds.Margin, bs = bounds.Strength;
+                string err = Read(b, "bounds", "x", ref bx) ?? Read(b, "bounds", "y", ref by)
+                    ?? Read(b, "bounds", "radius", ref br) ?? Read(b, "bounds", "margin", ref bm)
+                    ?? Read(b, "bounds", "strength", ref bs);
+                if (err == null && br <= 0f) err = "bounds.radius must be > 0";
+                if (err == null && bm < 0f) err = "bounds.margin must be >= 0";
+                if (err == null && bs < 0f) err = "bounds.strength must be >= 0";
+                if (err != null) return ConfigResult<ArenaConfig>.Fail(err);
+                bounds = new ArenaBounds(new float2(bx, by), br, bm, bs);
+            }
+            return ConfigResult<ArenaConfig>.Ok(new ArenaConfig(bodies, lateral, altitude, vertical, step, bounds));
         }
 
         // Reads a file and parses it; an unreadable file is an error, not an exception.

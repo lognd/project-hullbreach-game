@@ -6,6 +6,26 @@ public type; each heading carries the `describes:` lines for that
 type and its public members. Architecture-level context lives in
 [architecture.md](../architecture.md).
 
+### ArenaBounds
+
+<!-- describes: Assets/Scripts/Hullbreach.World/ArenaBounds.cs::ArenaBounds -->
+<!-- describes: Assets/Scripts/Hullbreach.World/ArenaBounds.cs::ArenaBounds.Center -->
+<!-- describes: Assets/Scripts/Hullbreach.World/ArenaBounds.cs::ArenaBounds.Radius -->
+<!-- describes: Assets/Scripts/Hullbreach.World/ArenaBounds.cs::ArenaBounds.Margin -->
+<!-- describes: Assets/Scripts/Hullbreach.World/ArenaBounds.cs::ArenaBounds.Strength -->
+<!-- describes: Assets/Scripts/Hullbreach.World/ArenaBounds.cs::ArenaBounds.ArenaBounds -->
+<!-- describes: Assets/Scripts/Hullbreach.World/ArenaBounds.cs::ArenaBounds.Depth -->
+<!-- describes: Assets/Scripts/Hullbreach.World/ArenaBounds.cs::ArenaBounds.InPushZone -->
+<!-- describes: Assets/Scripts/Hullbreach.World/ArenaBounds.cs::ArenaBounds.PushAcceleration -->
+
+Circular arena edge (S41-1). Inside `Radius - Margin` nothing happens; across
+the `Margin` ramp the inward acceleration grows linearly to `Strength`, and
+beyond `Radius` it stays at `Strength`. `Depth` is that 0..1 ramp value,
+`InPushZone` is `Depth > 0`, and `PushAcceleration` points at `Center`.
+A `Margin` of 0 is a hard switch at `Radius`. The server applies it as a
+velocity change only, so the structural solver never sees it and no block
+is damaged.
+
 ### GravityBody
 
 <!-- describes: Assets/Scripts/Hullbreach.World/GravityBody.cs::GravityBody -->
