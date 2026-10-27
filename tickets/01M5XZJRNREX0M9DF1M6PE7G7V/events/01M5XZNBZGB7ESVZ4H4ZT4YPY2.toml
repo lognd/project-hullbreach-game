@@ -1,0 +1,6 @@
+kind = "field"
+field = "labels"
+new = ["creates:Assets/**/*.meta"]
+at = "2026-10-27T06:09:49Z"
+actor = "mcnairrobotics"
+rev = 1
