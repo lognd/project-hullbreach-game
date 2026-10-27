@@ -659,6 +659,12 @@ Projectile hits: a hit damages the struck block and also applies the
 shot's `Spec.Impulse` to the victim ship at the hit point, along the shot's
 direction of travel (same as the Unity-side `Projectile`).
 
+Planet contact: a projectile whose circle (`ProjectileSpec.Radius`) touches
+a permanent `GravityField` body (a planet) is despawned that tick, before
+any ship hit test, and `Log` records `projectile <id> owner=<peer> hit planet
+<index> at (x, y)`. Temporary gravity wells have no surface and never stop
+shots.
+
 Match end: when the second peer joins (and no match is live) the server
 builds a `Hullbreach.Match.MatchStateMachine` over the two ships' grids,
 starts it, and ticks it at the end of every `Tick`, after impacts and
