@@ -52,6 +52,8 @@
 ExportedObj/
 .consulo/
 *.csproj
+# Analysis-only project for SonarQube Cloud (see tools/sonar/).
+!tools/sonar/Hullbreach.Analysis.csproj
 *.unityproj
 *.sln
 *.slnx
