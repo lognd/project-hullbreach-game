@@ -6,7 +6,7 @@ category = "todo"
 priority = "medium"
 reporter = "mcnairrobotics"
 created = "2026-10-09T04:02:25Z"
-updated = "2026-10-09T04:02:25Z"
+updated = "2026-11-08T07:12:41Z"
 labels = ["owner:GingerVHS", "game", "physics"]
 scope = ["Assets/Tests/EditMode/Hullbreach.Structure.Tests/Q8ElementTests.cs"]
 
