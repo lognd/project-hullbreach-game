@@ -2,13 +2,14 @@
 id = "01M4GRDNTKY5Q9603W26Q4GPPH"
 title = "S12-4: Cosmetic loadout model (per-block-type skins plus trail, banner and projectile-effect slots)"
 type = "task"
-category = "todo"
+category = "done"
+outcome = "wont-fix"
 priority = "medium"
 points = 2
 parent = "01M3DG5Y0DCWYQ5H93E6DQMXG2"
 reporter = "lognd"
 created = "2026-10-09T16:37:27Z"
-updated = "2026-11-08T07:17:23Z"
+updated = "2026-11-08T07:49:33Z"
 labels = ["owner:a-carten", "game", "milestone:0.3.0"]
 
 [[acceptance]]
