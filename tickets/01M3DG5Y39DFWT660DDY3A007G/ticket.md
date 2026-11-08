@@ -2,7 +2,8 @@
 id = "01M3DG5Y39DFWT660DDY3A007G"
 title = "S47-2: Input and snapshot message serialization (ShipSnapshot, BlockPlaced, BlockDestroyed, FragmentSpawned)"
 type = "task"
-category = "todo"
+category = "done"
+outcome = "done"
 priority = "critical"
 points = 3
 parent = "01M3DG5Y14KAMJ8NTGHC8BW9YV"
