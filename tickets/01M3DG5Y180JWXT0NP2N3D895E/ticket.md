@@ -2,12 +2,13 @@
 id = "01M3DG5Y180JWXT0NP2N3D895E"
 title = "S51: Salvage parts mid-match"
 type = "story"
-category = "todo"
+category = "done"
+outcome = "wont-fix"
 priority = "low"
 parent = "01M3DG5Y08PENAP8DJ0J1MHHTS"
 reporter = "human"
 created = "2026-09-26T00:00:00Z"
-updated = "2026-09-26T00:00:00Z"
+updated = "2026-11-08T07:49:52Z"
 aliases = ["T-0040"]
 labels = ["jira:SCRUM-72", "owner:GingerVHS", "game", "stretch"]
 
