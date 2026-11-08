@@ -6,6 +6,7 @@
         "Hullbreach.Core",
         "Hullbreach.Builder",
         "Hullbreach.Hud",
+        "Hullbreach.Platform",
         "Hullbreach.NetCode.Entities",
         "Unity.Collections",
         "Unity.Entities",
