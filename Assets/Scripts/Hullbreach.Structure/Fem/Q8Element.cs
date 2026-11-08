@@ -107,7 +107,7 @@ namespace Hullbreach.Structure
         }
 
         // frob:doc docs/reference/hullbreach-structure.md#q8element
-        public static void StrainDisplacement(float xi, float eta, float h, float[,] b)
+        internal static void StrainDisplacement(float xi, float eta, float h, float[,] b)
         {
             var dNdXi = new float[NodeCount];
             var dNdEta = new float[NodeCount];
@@ -133,7 +133,7 @@ namespace Hullbreach.Structure
 
         // D = E * ConstitutiveUnit(nu).
         // frob:doc docs/reference/hullbreach-structure.md#q8element
-        public static void ConstitutiveUnit(float nu, float[,] dHat)
+        internal static void ConstitutiveUnit(float nu, float[,] dHat)
         {
             float factor = 1f / (1f - nu * nu);
             dHat[0, 0] = factor; dHat[0, 1] = factor * nu; dHat[0, 2] = 0f;
@@ -143,7 +143,7 @@ namespace Hullbreach.Structure
 
         // KHat = integral of B^T DHat B over the element, by 3x3 Gauss.
         // frob:doc docs/reference/hullbreach-structure.md#q8element
-        public static void UnitStiffness(float nu, float h, float[,] kHat)
+        internal static void UnitStiffness(float nu, float h, float[,] kHat)
         {
             for (int i = 0; i < DofCount; i++)
             for (int j = 0; j < DofCount; j++)

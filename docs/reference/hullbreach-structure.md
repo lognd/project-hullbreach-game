@@ -6,6 +6,11 @@ public type; each heading carries the `describes:` lines for that
 type and its public members. Architecture-level context lives in
 [architecture.md](../architecture.md).
 
+The FEM kernels that take matrix or jagged-array parameters (`Q8Element.StrainDisplacement`,
+`ConstitutiveUnit`, `UnitStiffness`, `LoadVector.RigidBodyModes`, `GeometricStiffness.ElementMatrix`,
+`CgSolver.Solve`, `BucklingAnalysis.Reset`/`Step`) are `internal`; `Hullbreach.Structure.Tests`
+sees them through `InternalsVisibleTo` in `AssemblyInfo.cs`.
+
 ### DamageModel
 
 <!-- describes: Assets/Scripts/Hullbreach.Structure/Failure/DamageModel.cs::DamageModel -->

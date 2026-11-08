@@ -145,7 +145,7 @@ namespace Hullbreach.Structure
         // The three rigid-body modes as DOF vectors (translate x, translate
         // y, rotate); `modes` needs three preallocated length-2n arrays.
         // frob:doc docs/reference/hullbreach-structure.md#loadvector
-        public static void RigidBodyModes(float2[] nodeRest, float[][] modes)
+        internal static void RigidBodyModes(float2[] nodeRest, float[][] modes)
         {
             var tx = modes[0];
             var ty = modes[1];

@@ -26,7 +26,7 @@ namespace Hullbreach.Platform.Tests
         public void CommandLineBeatsEnvironment_AndTrailingSlashIsTrimmed()
         {
             var config = Build(new[] { "game", "-hullbreachPlatformUrl", "https://api.example.test/" },
-                new Dictionary<string, string> { ["HULLBREACH_PLATFORM_URL"] = "http://env.example.test" });
+                new Dictionary<string, string> { ["HULLBREACH_PLATFORM_URL"] = "https://env.example.test" });
             Assert.AreEqual("https://api.example.test", config.BaseUrl);
         }
 
@@ -35,10 +35,10 @@ namespace Hullbreach.Platform.Tests
         {
             var config = Build(new string[0], new Dictionary<string, string>
             {
-                ["HULLBREACH_PLATFORM_URL"] = "http://env.example.test:8002",
+                ["HULLBREACH_PLATFORM_URL"] = "https://env.example.test:8002",
                 ["HULLBREACH_REQUIRE_PLATFORM_AUTH"] = "true",
             });
-            Assert.AreEqual("http://env.example.test:8002", config.BaseUrl);
+            Assert.AreEqual("https://env.example.test:8002", config.BaseUrl);
             Assert.IsTrue(config.RequireAuth);
         }
 

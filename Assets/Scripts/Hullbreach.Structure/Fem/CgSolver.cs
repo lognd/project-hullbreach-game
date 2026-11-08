@@ -109,7 +109,7 @@ namespace Hullbreach.Structure
         // Standard PCG with M = diag(K), optionally deflated via `coarse`.
         // Pass a caller-owned CgState to continue a prior run (read its doc first).
         // frob:doc docs/reference/hullbreach-structure.md#cgsolver
-        public void Solve(StiffnessAssembly k, float[] f, float[] u, float[][] rigidModes, CoarsePreconditioner coarse = null, CgState state = null)
+        internal void Solve(StiffnessAssembly k, float[] f, float[] u, float[][] rigidModes, CoarsePreconditioner coarse = null, CgState state = null)
         {
             int n = k.DofCount;
             EnsureScratch(n, rigidModes.Length);

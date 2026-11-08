@@ -42,7 +42,7 @@ namespace Hullbreach.Structure.Tests
             var diag = new float[n];
             asm.Diagonal(diag);
 
-            var rnd = new System.Random(7);
+            var rnd = new System.Random(7); // NOSONAR S2245: seeded PRNG for reproducible test data, not security
             var v = new float[n];
             var w = new float[n];
             for (int i = 0; i < n; i++) { v[i] = (float)(rnd.NextDouble() * 2 - 1); w[i] = (float)(rnd.NextDouble() * 2 - 1); }

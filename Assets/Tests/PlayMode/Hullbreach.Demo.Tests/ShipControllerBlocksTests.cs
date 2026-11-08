@@ -16,11 +16,16 @@ namespace Hullbreach.Demo.Tests
         {
             yield return LoadDemoScene();
             int? coreKey = Player.Ship.Grid.CoreKey;
-            Assert.IsTrue(coreKey.HasValue);
+            if (!coreKey.HasValue)
+            {
+                Assert.Fail("the demo ship has no core");
+                yield break;
+            }
+
             BlockKey.Unpack(coreKey.Value, out int cx, out int cy);
 
             // An out-of-range block is dropped, warned about, and reflected in the result.
-            LogAssert.Expect(LogType.Warning, new System.Text.RegularExpressions.Regex("outside the grid"));
+            LogAssert.Expect(LogType.Warning, new System.Text.RegularExpressions.Regex("outside the grid", System.Text.RegularExpressions.RegexOptions.None, System.TimeSpan.FromSeconds(1)));
             var withBadBlock = new List<AuthoredBlock>
             {
                 new AuthoredBlock(cx, cy, BlockTypes.Core),

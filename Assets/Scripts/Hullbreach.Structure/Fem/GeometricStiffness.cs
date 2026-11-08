@@ -122,7 +122,7 @@ namespace Hullbreach.Structure
         // The 16x16 element geometric stiffness for a constant element
         // stress, mirroring Q8Element.UnitStiffness's structure.
         // frob:doc docs/reference/hullbreach-structure.md#geometricstiffness
-        public void ElementMatrix(float sxx, float syy, float txy, float h, float[,] kg)
+        internal void ElementMatrix(float sxx, float syy, float txy, float h, float[,] kg)
         {
             for (int i = 0; i < Q8Element.DofCount; i++)
             for (int j = 0; j < Q8Element.DofCount; j++)

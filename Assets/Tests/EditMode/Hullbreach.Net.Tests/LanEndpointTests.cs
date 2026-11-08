@@ -13,9 +13,9 @@ namespace Hullbreach.Net.Tests
         [Test]
         public void BareAddress_UsesTheDefaultPort()
         {
-            Assert.IsTrue(Try("192.168.1.23", out var e, out var error));
+            Assert.IsTrue(Try(TestAddresses.LanHost, out var e, out var error));
             Assert.IsNull(error);
-            Assert.AreEqual("192.168.1.23", e.Address);
+            Assert.AreEqual(TestAddresses.LanHost, e.Address);
             Assert.AreEqual(DirectLaunchPlan.DefaultPort, e.Port);
         }
 

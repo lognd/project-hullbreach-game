@@ -158,14 +158,14 @@ namespace Hullbreach.NetCode.Entities
             _localError = LobbyForm.PasswordProblem(hostPasswordInput.text);
             if (_localError != null) { Refresh(); return; }
             int maxPlayers = LobbyForm.ParsePlayers(maxPlayersInput.text);
-            Run(_service.HostAsync(lobbyNameInput.text, maxPlayers, privateToggle.isOn, hostPasswordInput.text));
+            _ = Run(_service.HostAsync(lobbyNameInput.text, maxPlayers, privateToggle.isOn, hostPasswordInput.text));
         }
 
         void JoinCode()
         {
             _localError = LobbyForm.CodeProblem(joinCodeInput.text) ?? LobbyForm.PasswordProblem(joinPasswordInput.text);
             if (_localError != null) { Refresh(); return; }
-            Run(_service.JoinByCodeAsync(joinCodeInput.text, joinPasswordInput.text));
+            _ = Run(_service.JoinByCodeAsync(joinCodeInput.text, joinPasswordInput.text));
         }
 
         // LAN host/join bypass Unity Services; a bad address shows as the local error.
@@ -186,9 +186,9 @@ namespace Hullbreach.NetCode.Entities
             Refresh();
         }
 
-        void RefreshPublic() => Run(_service.RefreshPublicSessionsAsync());
-        void StartGame() => Run(_service.StartGameAsync(gameplaySceneName));
-        void Leave() => Run(_service.LeaveAsync());
+        void RefreshPublic() => _ = Run(_service.RefreshPublicSessionsAsync());
+        void StartGame() => _ = Run(_service.StartGameAsync(gameplaySceneName));
+        void Leave() => _ = Run(_service.LeaveAsync());
 
         void Refresh()
         {
@@ -249,7 +249,7 @@ namespace Hullbreach.NetCode.Entities
                     (session.HasPassword ? "  -  Password" : "  -  Open");
                 string sessionId = session.Id;
                 row.transform.Find("JoinButton").GetComponent<Button>().onClick.AddListener(
-                    () => Run(_service.JoinPublicSessionAsync(sessionId, joinPasswordInput.text)));
+                    () => _ = Run(_service.JoinPublicSessionAsync(sessionId, joinPasswordInput.text)));
             }
         }
 
@@ -273,7 +273,7 @@ namespace Hullbreach.NetCode.Entities
             if (lanJoinButton != null) lanJoinButton.interactable = value;
         }
 
-        async void Run(Task operation)
+        async Task Run(Task operation)
         {
             _localError = null;
             try

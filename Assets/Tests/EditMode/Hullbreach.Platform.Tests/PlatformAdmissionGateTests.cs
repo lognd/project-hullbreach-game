@@ -17,7 +17,7 @@ namespace Hullbreach.Platform.Tests
         {
             _http = new FakePlatformHttp();
             _log = new RecordingPlatformLog();
-            var client = new PlatformClient(new PlatformConfig("http://platform.test", 5, requireAuth, "key"), _http, _log);
+            var client = new PlatformClient(new PlatformConfig("https://platform.test", 5, requireAuth, "key"), _http, _log);
             return new PlatformAdmissionGate(client, requireAuth, helloTimeout, _log);
         }
 

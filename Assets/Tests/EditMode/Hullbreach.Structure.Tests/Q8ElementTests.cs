@@ -85,7 +85,7 @@ namespace Hullbreach.Structure.Tests
         public void UnitStiffness_IsPositiveSemiDefinite()
         {
             var k = KHat();
-            var rng = new Random(12345);
+            var rng = new Random(12345); // NOSONAR S2245: seeded PRNG for reproducible test data, not security
             var v = new float[Q8Element.DofCount];
 
             for (int trial = 0; trial < 200; trial++)
