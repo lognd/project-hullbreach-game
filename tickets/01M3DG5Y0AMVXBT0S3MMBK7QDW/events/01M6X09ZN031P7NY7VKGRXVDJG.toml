@@ -1,0 +1,7 @@
+kind = "field"
+field = "acceptance"
+new = ["Customer requirements for the central mechanics are written."]
+moved = []
+at = "2026-11-08T07:17:31Z"
+actor = "mcnairrobotics"
+rev = 1
