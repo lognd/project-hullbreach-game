@@ -12,5 +12,5 @@ scope = ["Assets/Scripts/Hullbreach.Platform/TabOrder.cs", "Assets/Scripts/Hullb
 
 [[acceptance]]
 text = "Given a sign-in form, Tab and Shift+Tab move focus forward and backward through the fields."
-bound = false
+bound = true
 +++
