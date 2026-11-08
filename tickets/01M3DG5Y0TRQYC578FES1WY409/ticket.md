@@ -2,7 +2,8 @@
 id = "01M3DG5Y0TRQYC578FES1WY409"
 title = "S37: See where my ship is about to fail"
 type = "story"
-category = "todo"
+category = "done"
+outcome = "done"
 priority = "critical"
 points = 5
 parent = "01M3DG5Y04X6WZ1G61CVD7TX9S"
