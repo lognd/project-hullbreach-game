@@ -2,11 +2,12 @@
 id = "01M6WVRTC724W6RQYAA9WCEK5F"
 title = "Client: projectile replication and interpolation; prediction-correction smoothing"
 type = "task"
-category = "todo"
+category = "done"
+outcome = "done"
 priority = "medium"
 reporter = "mcnairrobotics"
 created = "2026-11-08T05:58:15Z"
-updated = "2026-11-08T07:30:26Z"
+updated = "2026-11-08T07:30:43Z"
 
 [[acceptance]]
 text = "Projectile state replicates to clients and renders interpolated, with a test"
