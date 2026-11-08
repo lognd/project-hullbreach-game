@@ -195,6 +195,7 @@ in a restitution impulse is not worth an OBB test.
 <!-- describes: Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.AddForceAtPoint -->
 <!-- describes: Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.ApplyImpulseAtWorldPoint -->
 <!-- describes: Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.ApplyDamageAtWorldPoint -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.CopyThrottlesFrom -->
 
 The ship simulation. PLAIN C# ON PURPOSE: no UnityEngine anywhere in this
 assembly. That constraint buys three things: edit-mode tests that run in
@@ -339,6 +340,8 @@ holding lifecycle and Inspector wiring, and nothing else.
   from the world-space center of mass. Used for cannon recoil, which
   should feel like a kick right now rather than a force integrated over
   the next dt.
+- `CopyThrottlesFrom`: copy another body's per-block throttle ramps for
+  the keys this grid still has; used when prediction rebuilds its body.
 - `ApplyDamageAtWorldPoint`: apply `damage` (saturating) to whatever
   block occupies the grid cell under a world-space point, e.g. a
   projectile hit. Returns whether a block was actually there; `key` is
@@ -360,6 +363,20 @@ for the netcode and trivially constructible in tests.
   negative fires retro thrusters, zero fires neither.
 - `Steer`: steering axis, -1..+1.
 - `FirePressed`: fire was PRESSED this tick (edge, not level).
+
+### ShipInputShaper
+
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ShipInputShaper.cs::ShipInputShaper -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ShipInputShaper.cs::ShipInputShaper.DeadZone -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ShipInputShaper.cs::ShipInputShaper.ResponseExponent -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ShipInputShaper.cs::ShipInputShaper.Shape -->
+
+The one dead zone and response curve for raw axes, used by offline, online
+and `NetDemo` alike. `Shape(raw)` clamps to -1..1, returns exactly 0 at or
+below `DeadZone` (0.15), rescales the rest so there is no jump at the edge,
+then raises it to `ResponseExponent` (1.5): gentle near the dead zone, full
+at full deflection. NaN shapes to 0. `Shape(thrust, steer, fire)` returns a
+`ShipInput` and passes fire through.
 
 ### BlockContext
 

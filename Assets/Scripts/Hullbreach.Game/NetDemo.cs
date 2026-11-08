@@ -3,6 +3,7 @@ using UnityEngine;
 using Unity.Mathematics;
 using Hullbreach.Core;
 using Hullbreach.Net;
+using Hullbreach.Ship;
 
 namespace Hullbreach.Game
 {
@@ -70,11 +71,15 @@ namespace Hullbreach.Game
         static ShipSnapshot Design(SnapshotBlock[] blocks, float2 position)
             => new ShipSnapshot(0, 0, blocks, Quantization.PackPosition(position.x), Quantization.PackPosition(position.y), 0, 0, 0, 0);
 
-        void FixedUpdate()
+        // Per-frame (not FixedUpdate) so the drawn ships move every rendered frame, not at 50 Hz.
+        // frob:ticket 01M6WV815GYEJ58MTM4HSS4Z6K
+        void Update()
         {
             if (_server == null) return; // never true after Awake, but keeps this null-safe if reused elsewhere
 
-            _tickAccumulator += Time.fixedDeltaTime;
+            // Cap the catch-up after a hitch so the sim does not spiral.
+            float frame = Mathf.Min(Time.deltaTime, 0.25f);
+            _tickAccumulator += frame;
             float dt = 1f / tickRate;
             while (_tickAccumulator >= dt)
             {
@@ -82,6 +87,7 @@ namespace Hullbreach.Game
                 RunOneTick();
             }
 
+            _replica1.AdvanceVisualSmoothing(frame);
             _seen.Clear();
             RefreshVisuals(_replica1, 1);
             RefreshVisuals(_replica2, 2);
@@ -100,9 +106,12 @@ namespace Hullbreach.Game
             _clientTick++;
             _fireTimer -= 1f / tickRate;
 
-            float thrust = Input.GetAxisRaw("Vertical");
-            float steer = Input.GetAxisRaw("Horizontal");
-            var localInput = InputMessage.FromFloats((ushort)_peerThruster, _clientTick, thrust, steer, false);
+            // Same dead zone and curve as offline and online; neutral while unfocused.
+            // frob:ticket 01M6WV815GYEJ58MTM4HSS4Z6K
+            ShipInput shaped = Application.isFocused
+                ? ShipInputShaper.Shape(Input.GetAxisRaw("Vertical"), Input.GetAxisRaw("Horizontal"), false)
+                : new ShipInput(0f, 0f, false);
+            var localInput = InputMessage.FromFloats((ushort)_peerThruster, _clientTick, shaped.ThrustAxis, shaped.Steer, false);
             SendInput(_client1Transport, localInput);
             _replica1.Predict(localInput);
 
@@ -159,7 +168,7 @@ namespace Hullbreach.Game
                 float2 drawPos = ship.Position;
                 float drawRot = ship.Rotation;
                 if (replica.TryInterpolateAt(netId, renderTick, out var ip, out var ir)) { drawPos = ip; drawRot = ir; }
-                if (netId == (ushort)_peerThruster && replicaIndex == 1 && replica.TryGetPredicted(out var pp, out var pr)) { drawPos = pp; drawRot = pr; }
+                if (netId == (ushort)_peerThruster && replicaIndex == 1 && replica.TryGetSmoothedPredicted(out var pp, out var pr)) { drawPos = pp; drawRot = pr; }
                 foreach (var block in ship.Grid.All)
                 {
                     var visKey = (replicaIndex, netId, block.Key);

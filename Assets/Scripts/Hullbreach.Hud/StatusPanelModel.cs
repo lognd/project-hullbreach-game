@@ -92,7 +92,7 @@ namespace Hullbreach.Hud
             {
                 controls = new List<string>
                 {
-                    "W/S or Up/Down: thrust/reverse   A/D or Left/Right: steer",
+                    ShipControls.ThrustSteerLine, // frob:ticket 01M6WV815GYEJ58MTM4HSS4Z6K
                     "Space: fire   O: cycle overlay   R: reset to start",
                 };
                 overlayLine = $"Overlay: {overlayName}";

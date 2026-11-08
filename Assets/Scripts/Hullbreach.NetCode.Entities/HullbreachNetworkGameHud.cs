@@ -1,4 +1,5 @@
 using System;
+using Hullbreach.Core;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -22,7 +23,7 @@ namespace Hullbreach.NetCode.Entities
             string mode = HullbreachNetworkGameplayController.IsBuildMode ? "BUILD" : "FLIGHT";
             string controls = HullbreachNetworkGameplayController.IsBuildMode
                 ? $"1-7 select • click place • right-click remove • Tab fly\n{HullbreachNetworkGameplayController.BuildStatus}"
-                : "W/S thrust • A/D steer • Space/click fire • Tab build";
+                : $"{ShipControls.ThrustSteerLine}\n{ShipControls.OnlineFireBuildLine}"; // frob:ticket 01M6WV815GYEJ58MTM4HSS4Z6K
             statusText.text = HullbreachNetCodeClient.IsConnected
                 ? $"Connected as #{HullbreachNetCodeClient.LocalNetworkId}  •  Replicated ships: {shipCount}  •  {mode}\n{HullbreachPlatformAdmission.StatusLine}\n{controls}"
                 : "Waiting for Netcode connection...";

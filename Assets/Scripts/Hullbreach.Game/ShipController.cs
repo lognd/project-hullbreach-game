@@ -127,15 +127,34 @@ namespace Hullbreach.Game
             if (WorldSink.Instance != null) ship.World = WorldSink.Instance;
         }
 
+        // Drop latched input when the window loses focus or the app pauses, so no key stays stuck.
+        // frob:ticket 01M6WV815GYEJ58MTM4HSS4Z6K
+        // frob:doc docs/reference/hullbreach-game.md#shipcontroller
+        void OnApplicationFocus(bool hasFocus)
+        {
+            if (!hasFocus) ClearLatchedInput();
+        }
+
+        // frob:ticket 01M6WV815GYEJ58MTM4HSS4Z6K
+        void OnApplicationPause(bool paused)
+        {
+            if (paused) ClearLatchedInput();
+        }
+
+        void ClearLatchedInput()
+        {
+            thrustAxis = 0f;
+            steerAxis = 0f;
+            fireLatched = false;
+        }
+
         void Update()
         {
             if (!InputEnabled)
             {
                 // Do not let a stale latched fire from before the ship was
                 // frozen carry over into the next time it flies.
-                thrustAxis = 0f;
-                steerAxis = 0f;
-                fireLatched = false;
+                ClearLatchedInput();
                 return;
             }
 
@@ -154,7 +173,7 @@ namespace Hullbreach.Game
             {
                 // Paused (Build mode): do not integrate and do not touch the
                 // Rigidbody2D, so resuming is exactly where we left off.
-                fireLatched = false;
+                ClearLatchedInput();
                 return;
             }
 

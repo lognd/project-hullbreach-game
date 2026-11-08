@@ -1,4 +1,5 @@
 using UnityEngine;
+using Hullbreach.Ship;
 
 namespace Hullbreach.Game
 {
@@ -36,12 +37,13 @@ namespace Hullbreach.Game
 
         // frob:todo 01M3DG5Y1H348G5W2FW9KPWZ9J migrate to the new Input System (A5, S27-2).
 
-        // Raw (unsmoothed): ShipBody does its own throttle ramping.
+        // Raw axis through the shared dead zone and curve; ShipBody does its own throttle ramping.
+        // frob:ticket 01M6WV815GYEJ58MTM4HSS4Z6K
         // frob:doc docs/reference/hullbreach-game.md#legacydemoinput
-        public float ThrustAxis => Input.GetAxisRaw("Vertical");
+        public float ThrustAxis => ShipInputShaper.Shape(Input.GetAxisRaw("Vertical"));
 
         // frob:doc docs/reference/hullbreach-game.md#legacydemoinput
-        public float Steer => Input.GetAxisRaw("Horizontal");
+        public float Steer => ShipInputShaper.Shape(Input.GetAxisRaw("Horizontal"));
 
         // frob:doc docs/reference/hullbreach-game.md#legacydemoinput
         public bool FirePressed => Input.GetKeyDown(KeyCode.Space) || Input.GetButtonDown("Fire1");

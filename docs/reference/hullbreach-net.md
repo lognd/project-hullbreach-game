@@ -555,8 +555,12 @@ server's values so both integrate alike. Each input is also kept (at most
 ship arrives, inputs at or before its `AckedInputTick` are dropped, the
 predicted body is reset to the server pose and the remaining inputs are
 replayed on top; `LastCorrection` is how far that moved the predicted
-position (0 when the guess was right). The correction snaps rather than
-blends. Fire is not predicted (the server owns projectiles), and a block
+position (0 when the guess was right). Rebuilding the predicted body
+carries the thruster throttle ramps over (`ShipBody.CopyThrottlesFrom`),
+so sustained thrust does not restart from zero on every server state.
+The sim pose is exact; the drawn pose is eased by a `CorrectionSmoother`:
+draw with `TryGetSmoothedPredicted` and call `AdvanceVisualSmoothing(dt)`
+once per rendered frame. `TryGetPredicted` stays the raw pose. Fire is not predicted (the server owns projectiles), and a block
 change rebuilds the predicted body from the replica grid. `NetDemo`
 predicts its thruster ship.
 
@@ -618,11 +622,31 @@ sequence number), and routes every other reliable event through
 `ApplyReliable`, which applies a message immediately if it is exactly the
 next expected sequence and then drains whatever the gap closing unblocks.
 
+### CorrectionSmoother
+
+<!-- describes: Assets/Scripts/Hullbreach.Net/CorrectionSmoother.cs::CorrectionSmoother -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/CorrectionSmoother.cs::CorrectionSmoother.SnapDistance -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/CorrectionSmoother.cs::CorrectionSmoother.SnapAngle -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/CorrectionSmoother.cs::CorrectionSmoother.DecaySeconds -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/CorrectionSmoother.cs::CorrectionSmoother.PositionOffset -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/CorrectionSmoother.cs::CorrectionSmoother.RotationOffset -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/CorrectionSmoother.cs::CorrectionSmoother.Add -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/CorrectionSmoother.cs::CorrectionSmoother.Advance -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/CorrectionSmoother.cs::CorrectionSmoother.Clear -->
+
+A visual-only offset that hides reconcile snaps. `Add(old - new)` keeps
+the drawn pose continuous; `Advance(dt)` decays it exponentially
+(`DecaySeconds` = 0.1, frame-rate independent) and drops it to exactly zero
+once tiny. A correction past `SnapDistance` (2 units) or `SnapAngle`
+(0.5 rad) is a real teleport and clears the offset instead. Simulation
+state never reads it.
+
 ### ServerSimulation
 
 <!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.TickRate -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.TimeoutSeconds -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.InputHoldSeconds -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.Gravity -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.MatchFeed -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.MatchLog -->

@@ -107,13 +107,17 @@ namespace Hullbreach.Net
         // frob:doc docs/reference/hullbreach-net.md#serversimulation
         public GravityField Gravity => _gravity;
 
+        // How long the last axes keep applying when no newer input arrives (late or dropped packets).
+        // frob:ticket 01M6WV815GYEJ58MTM4HSS4Z6K
+        // frob:doc docs/reference/hullbreach-net.md#serversimulation
+        public const float InputHoldSeconds = 0.25f;
+
         sealed class PeerState
         {
             public ushort NetId;
             public ShipBody Ship;
             public StructuralSolver Solver;
             public InputMessage LatestInput;
-            public bool HasFreshInput;
             public float SecondsSinceInput;
             public bool IsBuilding;
             public bool HasInput;
@@ -479,7 +483,6 @@ namespace Hullbreach.Net
             state.LatestInput = input;
             state.HasInput = true;
             state.IsBuilding = input.BuildMode;
-            state.HasFreshInput = true;
             state.PendingFire |= input.FirePressed;
             state.SecondsSinceInput = 0f;
         }
@@ -501,10 +504,12 @@ namespace Hullbreach.Net
             foreach (int peer in peerIds)
             {
                 var state = _peers[peer];
-                var input = state.HasFreshInput
+                // A late packet keeps the last axes for InputHoldSeconds instead of cutting thrust.
+                // frob:ticket 01M6WV815GYEJ58MTM4HSS4Z6K
+                bool held = state.HasInput && state.SecondsSinceInput <= InputHoldSeconds;
+                var input = held
                     ? new ShipInput(state.LatestInput.ThrustAxisFloat, state.LatestInput.SteerFloat, state.PendingFire)
                     : new ShipInput(0f, 0f, false);
-                state.HasFreshInput = false;
                 state.PendingFire = false;
 
                 if (state.IsBuilding) continue;
