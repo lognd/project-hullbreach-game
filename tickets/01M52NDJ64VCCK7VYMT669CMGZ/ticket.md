@@ -2,7 +2,8 @@
 id = "01M52NDJ64VCCK7VYMT669CMGZ"
 title = "S47-6: Headless build entry point for the client and dedicated server"
 type = "task"
-category = "todo"
+category = "done"
+outcome = "done"
 priority = "high"
 points = 3
 parent = "01M3DG5Y14KAMJ8NTGHC8BW9YV"
