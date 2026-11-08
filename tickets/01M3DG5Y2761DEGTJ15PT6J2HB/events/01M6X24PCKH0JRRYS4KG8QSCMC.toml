@@ -1,0 +1,8 @@
+kind = "transition"
+from = "todo"
+to = "done"
+outcome = "wont-fix"
+reason = "post-demo scope: builder save/load UI is not started; storage decision and file format are also undecided"
+at = "2026-11-08T07:49:35Z"
+actor = "mcnairrobotics"
+rev = 1
