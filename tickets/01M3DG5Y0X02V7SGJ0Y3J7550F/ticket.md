@@ -2,7 +2,8 @@
 id = "01M3DG5Y0X02V7SGJ0Y3J7550F"
 title = "S40: Fight inside a gravity field"
 type = "story"
-category = "todo"
+category = "done"
+outcome = "done"
 priority = "high"
 points = 5
 parent = "01M3DG5Y05HP0YSRB6819FBK2S"
