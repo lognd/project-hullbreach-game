@@ -1,0 +1,8 @@
+kind = "transition"
+from = "todo"
+to = "done"
+outcome = "wont-fix"
+reason = "post-demo scope: hazards (asteroids, solar flares, radar warning) are not built; no spawner, warning phase or per-map config exists"
+at = "2026-11-08T07:49:28Z"
+actor = "mcnairrobotics"
+rev = 1
