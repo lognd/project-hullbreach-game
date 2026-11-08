@@ -1,0 +1,5 @@
+kind = "changelog-exempt"
+reason = "Implemented: PlatformAdmissionGate and PlatformClient (session validation outcomes) plus the NetCode auth RPC systems."
+at = "2026-11-08T07:14:22Z"
+actor = "mcnairrobotics"
+rev = 1
