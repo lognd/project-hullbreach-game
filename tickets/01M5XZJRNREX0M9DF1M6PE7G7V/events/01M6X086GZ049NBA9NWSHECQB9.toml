@@ -1,0 +1,7 @@
+kind = "field"
+field = "acceptance"
+new = ["Given a sign-in form, Tab and Shift+Tab move focus forward and backward through the fields."]
+moved = []
+at = "2026-11-08T07:16:33Z"
+actor = "mcnairrobotics"
+rev = 1

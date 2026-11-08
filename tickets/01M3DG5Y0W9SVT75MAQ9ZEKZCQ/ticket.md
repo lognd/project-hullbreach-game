@@ -2,12 +2,13 @@
 id = "01M3DG5Y0W9SVT75MAQ9ZEKZCQ"
 title = "S39: Fly a ship that handles like it was built"
 type = "story"
-category = "todo"
+category = "done"
+outcome = "done"
 priority = "critical"
 parent = "01M3DG5Y05HP0YSRB6819FBK2S"
 reporter = "human"
 created = "2026-09-26T00:00:00Z"
-updated = "2026-10-26T09:11:32Z"
+updated = "2026-11-08T07:17:36Z"
 aliases = ["T-0028"]
 labels = ["jira:SCRUM-60", "owner:GingerVHS", "game", "physics", "milestone:0.1.0"]
 

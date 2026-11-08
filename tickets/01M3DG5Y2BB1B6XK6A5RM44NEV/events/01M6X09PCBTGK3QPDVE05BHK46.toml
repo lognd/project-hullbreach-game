@@ -1,0 +1,6 @@
+kind = "comment"
+subtype = "note"
+body = "Triage: only allocation-budget benchmarks exist; no frame-budget or reference-laptop assertion yet. Remaining: timed 100-block solve benchmark with a budget."
+at = "2026-11-08T07:17:22Z"
+actor = "mcnairrobotics"
+rev = 1

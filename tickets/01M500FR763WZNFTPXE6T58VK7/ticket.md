@@ -8,7 +8,7 @@ points = 3
 parent = "01M500EVPWWECD3A2C08TJ1K5Q"
 reporter = "a-carten"
 created = "2026-10-15T14:47:00Z"
-updated = "2026-10-15T14:47:00Z"
+updated = "2026-11-08T07:17:24Z"
 labels = ["owner:a-carten", "game", "milestone:0.3.0", "creates:Assets/Scripts/Hullbreach.Game/Hud/MinimapView.cs", "creates:Assets/Scripts/Hullbreach.Game/Hud/MinimapView.cs.meta"]
 scope = ["Assets/Editor/Hullbreach.Editor/HudPrefabBuilder.cs", "Assets/Scripts/Hullbreach.Game/DemoMode.cs", "Assets/Scripts/Hullbreach.Game/GravityWorld.cs", "Assets/Scenes/DemoScene.unity", "docs/design/ui-port.md", "Assets/Scripts/Hullbreach.Game/Hud/MinimapView.cs", "Assets/Scripts/Hullbreach.Game/Hud/MinimapView.cs.meta"]
 

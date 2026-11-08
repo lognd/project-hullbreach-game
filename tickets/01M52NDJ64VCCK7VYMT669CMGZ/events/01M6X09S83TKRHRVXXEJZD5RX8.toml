@@ -1,0 +1,5 @@
+kind = "evidence-bypass"
+reason = "HullbreachBuild.BuildFromCommandLine implemented with module-missing message and Mono fallback; Unity-only, not headless-testable."
+at = "2026-11-08T07:17:25Z"
+actor = "mcnairrobotics"
+rev = 1

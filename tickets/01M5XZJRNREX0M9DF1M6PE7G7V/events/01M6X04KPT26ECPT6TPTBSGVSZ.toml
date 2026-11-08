@@ -1,0 +1,5 @@
+kind = "changelog-exempt"
+reason = "Implemented: TabOrder and HullbreachTabNavigation move forward/backward through sign-in fields."
+at = "2026-11-08T07:14:35Z"
+actor = "mcnairrobotics"
+rev = 1

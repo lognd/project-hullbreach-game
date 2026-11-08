@@ -1,0 +1,21 @@
+kind = "evidence"
+captured_at = "2026-11-08T07:14:48Z"
+digest = "51286e29548850f29c616d34266fa452c7e8b1079aae73a5cd1112daa7effd8a"
+exit_code = 0
+head = "5c0343dcec62f7ab6f2ee56ce4fcc8fc73f3e526"
+inline = """
+Test run for \\\\wsl.localhost\\Ubuntu-22.04\\home\\logan\\projects\\project-hullbreach\\game\\tools\\plaincs\\Hullbreach.Plain.Tests\\bin\\Release\\net8.0\\Hullbreach.Plain.Tests.dll (.NETCoreApp,Version=v8.0)\r
+A total of 1 test files matched the specified pattern.\r
+\r
+Passed!  - Failed:     0, Passed:    11, Skipped:     0, Total:    11, Duration: 125 ms - Hullbreach.Plain.Tests.dll (net8.0)\r
+\r
+Workload updates are available. Run `dotnet workload list` for more information.\r
+"""
+passed = true
+provider = "command"
+ref = "run_tests.sh --filter FullyQualifiedName~ShipInputShaperTests|FullyQualifiedName~ServerInputHoldTests"
+size = 466
+status = "measured"
+at = "2026-11-08T07:14:48Z"
+actor = "mcnairrobotics"
+rev = 1

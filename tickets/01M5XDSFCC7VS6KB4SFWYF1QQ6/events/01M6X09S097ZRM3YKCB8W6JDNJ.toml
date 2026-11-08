@@ -1,0 +1,8 @@
+kind = "transition"
+from = "todo"
+to = "done"
+outcome = "done"
+reason = "design/hullbreach_game.grmb exists and no .strata file is tracked; port complete."
+at = "2026-11-08T07:17:25Z"
+actor = "mcnairrobotics"
+rev = 1

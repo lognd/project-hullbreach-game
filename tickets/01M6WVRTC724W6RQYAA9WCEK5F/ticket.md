@@ -6,7 +6,7 @@ category = "todo"
 priority = "medium"
 reporter = "mcnairrobotics"
 created = "2026-11-08T05:58:15Z"
-updated = "2026-11-08T05:58:15Z"
+updated = "2026-11-08T07:17:22Z"
 
 [[acceptance]]
 text = "Projectile state replicates to clients and renders interpolated, with a test"

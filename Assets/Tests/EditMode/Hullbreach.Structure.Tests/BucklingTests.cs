@@ -306,5 +306,24 @@ namespace Hullbreach.Structure.Tests
 
             CollectionAssert.AreEqual(solverA.BuckledBlocks, solverB.BuckledBlocks);
         }
+
+        // frob:ticket 01M4GTPTANABV9JDBKR0C72YDC
+        [Test]
+        public void BucklingRatio_SurvivesTicksBetweenBucklingPasses()
+        {
+            var grid = Column(12);
+            var solver = new StructuralSolver { BucklingEveryNTicks = 1, BucklingMaxSweepsPerTick = 8, BucklingModeCount = 2 };
+            var forces = ColumnEndForces(12, ColumnEndForce);
+            RunUntilConverged(solver, grid, forces);
+            Assert.Greater(solver.BucklingModes.Count, 0, "precondition: modes published");
+
+            // A huge interval makes the next ticks skip RunBuckling entirely.
+            solver.BucklingEveryNTicks = 100000;
+            solver.Tick(grid, forces, 1f / 60f);
+
+            float max = 0f;
+            foreach (var kv in solver.BlockStresses) max = Math.Max(max, kv.Value.BucklingRatio);
+            Assert.Greater(max, 0f, "ratio must not drop to 0 on a tick that skips the buckling pass");
+        }
     }
 }

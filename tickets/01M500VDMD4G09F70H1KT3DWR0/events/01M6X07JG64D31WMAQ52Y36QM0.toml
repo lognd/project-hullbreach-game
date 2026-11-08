@@ -1,0 +1,8 @@
+kind = "transition"
+from = "todo"
+to = "done"
+outcome = "done"
+reason = "Implemented: PlatformClient/PlatformAdmissionGate covered by PlatformClientTests and PlatformAdmissionGateTests (pass via run_tests.sh); RPC handshake lives in Unity-only NetCode.Entities and the live harness needs a running platform API, neither runnable headless."
+at = "2026-11-08T07:16:12Z"
+actor = "mcnairrobotics"
+rev = 1

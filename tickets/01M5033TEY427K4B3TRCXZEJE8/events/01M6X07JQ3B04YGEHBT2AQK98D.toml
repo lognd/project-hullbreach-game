@@ -1,0 +1,8 @@
+kind = "transition"
+from = "todo"
+to = "done"
+outcome = "done"
+reason = "Implemented: DirectLaunchPlan (DirectLaunchPlanTests pass via run_tests.sh); bootstrap scene loading is Unity-only."
+at = "2026-11-08T07:16:13Z"
+actor = "mcnairrobotics"
+rev = 1

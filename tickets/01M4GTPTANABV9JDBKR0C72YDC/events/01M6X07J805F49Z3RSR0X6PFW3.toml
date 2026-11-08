@@ -1,0 +1,5 @@
+kind = "changelog-exempt"
+reason = "Fixed in StructuralSolver.Tick (re-applies published buckling modes); BucklingTests.BucklingRatio_SurvivesTicksBetweenBucklingPasses passes via run_tests.sh; no per-criterion binding possible."
+at = "2026-11-08T07:16:12Z"
+actor = "mcnairrobotics"
+rev = 1

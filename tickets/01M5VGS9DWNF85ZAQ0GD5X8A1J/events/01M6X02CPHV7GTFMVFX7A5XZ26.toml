@@ -1,0 +1,5 @@
+kind = "changelog-exempt"
+reason = "Implemented: MatchEnded carries the real MatchResult from MatchStateMachine; ServerMatchEndTests and MessageRoundTripTests."
+at = "2026-11-08T07:13:23Z"
+actor = "mcnairrobotics"
+rev = 1
