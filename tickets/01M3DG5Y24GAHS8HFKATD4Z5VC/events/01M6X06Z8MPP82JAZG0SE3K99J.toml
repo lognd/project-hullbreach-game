@@ -1,0 +1,8 @@
+kind = "transition"
+from = "todo"
+to = "done"
+outcome = "done"
+reason = "Implemented: ServerSimulation.TryPlaceBlock validates and broadcasts BlockPlaced, and ClientReplica applies it."
+at = "2026-11-08T07:15:53Z"
+actor = "mcnairrobotics"
+rev = 1

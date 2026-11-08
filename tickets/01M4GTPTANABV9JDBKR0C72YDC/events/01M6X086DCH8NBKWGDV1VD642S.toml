@@ -1,0 +1,5 @@
+kind = "changelog-exempt"
+reason = "Fixed in StructuralSolver.Tick; covered by BucklingTests."
+at = "2026-11-08T07:16:33Z"
+actor = "mcnairrobotics"
+rev = 1

@@ -1,0 +1,6 @@
+kind = "comment"
+subtype = "note"
+body = "Triage: only a pull-toward-enemy thruster exists. Remaining: homing shot that welds a thruster onto the target."
+at = "2026-11-08T07:17:22Z"
+actor = "mcnairrobotics"
+rev = 1

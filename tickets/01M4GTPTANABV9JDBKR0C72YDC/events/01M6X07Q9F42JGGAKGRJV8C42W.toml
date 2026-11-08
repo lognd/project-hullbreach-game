@@ -1,0 +1,7 @@
+kind = "field"
+field = "acceptance"
+new = ["Given a converged column and a tick between buckling passes, BucklingRatio stays above zero."]
+moved = []
+at = "2026-11-08T07:16:17Z"
+actor = "mcnairrobotics"
+rev = 1

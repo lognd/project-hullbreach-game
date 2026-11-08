@@ -8,7 +8,7 @@ points = 3
 parent = "01M500EVPWWECD3A2C08TJ1K5Q"
 reporter = "a-carten"
 created = "2026-10-15T14:47:15Z"
-updated = "2026-10-15T14:47:15Z"
+updated = "2026-11-08T07:17:24Z"
 labels = ["owner:mcnairrobotics", "game", "netcode", "milestone:0.3.0", "creates:Assets/Scripts/Hullbreach.NetCode.Entities/HullbreachNetworkRadarFeed.cs", "creates:Assets/Scripts/Hullbreach.NetCode.Entities/HullbreachNetworkRadarFeed.cs.meta"]
 scope = ["Assets/Scripts/Hullbreach.NetCode.Entities/HullbreachNetworkGameHud.cs", "Assets/Scripts/Hullbreach.Net/ClientReplica.cs", "Assets/Scenes/MultiplayerGame.unity", "docs/design/ui-port.md", "Assets/Scripts/Hullbreach.NetCode.Entities/HullbreachNetworkRadarFeed.cs", "Assets/Scripts/Hullbreach.NetCode.Entities/HullbreachNetworkRadarFeed.cs.meta"]
 

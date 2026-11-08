@@ -2,11 +2,12 @@
 id = "01M6WV5HP3KVSZNJT6H99MFS3Z"
 title = "UI polish pass: brand palette, friendly lobby errors, lobby keyboard flow, quit path"
 type = "task"
-category = "todo"
+category = "done"
+outcome = "done"
 priority = "medium"
 reporter = "mcnairrobotics"
 created = "2026-11-08T05:47:43Z"
-updated = "2026-11-08T05:47:43Z"
+updated = "2026-11-08T07:14:48Z"
 scope = ["Assets/Scripts/Hullbreach.Platform/**", "Assets/Scripts/Hullbreach.NetCode.Entities/**", "Assets/Editor/Hullbreach.Editor/**", "Assets/Tests/EditMode/Hullbreach.Platform.Tests/**", "docs/**", "changelog.d/**"]
 +++
 

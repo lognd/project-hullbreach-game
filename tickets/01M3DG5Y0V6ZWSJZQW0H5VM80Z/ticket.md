@@ -2,12 +2,13 @@
 id = "01M3DG5Y0V6ZWSJZQW0H5VM80Z"
 title = "S38: Break apart under load"
 type = "story"
-category = "todo"
+category = "done"
+outcome = "done"
 priority = "critical"
 parent = "01M3DG5Y04X6WZ1G61CVD7TX9S"
 reporter = "human"
 created = "2026-09-26T00:00:00Z"
-updated = "2026-10-26T09:11:48Z"
+updated = "2026-11-08T07:17:36Z"
 aliases = ["T-0027"]
 labels = ["jira:SCRUM-59", "owner:GingerVHS", "game", "physics", "milestone:0.2.0"]
 

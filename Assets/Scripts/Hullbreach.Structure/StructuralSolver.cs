@@ -219,6 +219,11 @@ namespace Hullbreach.Structure
             // available, converged or not (see the reference page on lag).
             ComputeBlockStress(grid);
 
+            // BlockStresses was just rebuilt with BucklingRatio = 0; re-apply the
+            // published modes so ticks between buckling passes keep the ratio.
+            // frob:ticket 01M4GTPTANABV9JDBKR0C72YDC
+            RecomputeBucklingRatios();
+
             // Buckling's K_G is built FROM this tick's element stresses;
             // skip on an under-converged solve, let old modes stand.
             if (Converged) RunBuckling(grid);

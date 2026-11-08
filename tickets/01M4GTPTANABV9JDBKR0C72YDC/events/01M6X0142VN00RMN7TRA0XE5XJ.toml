@@ -1,0 +1,5 @@
+kind = "changelog-exempt"
+reason = "Fixed in StructuralSolver.Tick: published modes are re-applied after each stress pass; BucklingRatio_SurvivesTicksBetweenBucklingPasses."
+at = "2026-11-08T07:12:41Z"
+actor = "mcnairrobotics"
+rev = 1

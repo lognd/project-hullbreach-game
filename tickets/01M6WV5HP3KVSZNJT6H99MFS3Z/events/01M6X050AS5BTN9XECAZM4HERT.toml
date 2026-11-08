@@ -1,0 +1,5 @@
+kind = "changelog-exempt"
+reason = "Implemented: brand palette, friendly lobby errors, lobby form keyboard flow and tab order, each with engine-free tests."
+at = "2026-11-08T07:14:48Z"
+actor = "mcnairrobotics"
+rev = 1
