@@ -6,7 +6,7 @@ category = "todo"
 priority = "medium"
 reporter = "mcnairrobotics"
 created = "2026-11-08T05:47:43Z"
-updated = "2026-11-08T07:14:35Z"
+updated = "2026-11-08T07:14:48Z"
 scope = ["Assets/Scripts/Hullbreach.Platform/**", "Assets/Scripts/Hullbreach.NetCode.Entities/**", "Assets/Editor/Hullbreach.Editor/**", "Assets/Tests/EditMode/Hullbreach.Platform.Tests/**", "docs/**", "changelog.d/**"]
 +++
 
