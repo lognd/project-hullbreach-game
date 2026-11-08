@@ -1,0 +1,5 @@
+kind = "changelog-exempt"
+reason = "Implemented: engine-free ServerSimulation ticks ShipBody and StructuralSolver headless, exercised by the end-to-end and hardening tests."
+at = "2026-11-08T07:13:36Z"
+actor = "mcnairrobotics"
+rev = 1

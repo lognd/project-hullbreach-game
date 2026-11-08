@@ -6,7 +6,7 @@ category = "todo"
 priority = "low"
 reporter = "GingerVHS"
 created = "2026-10-09T17:24:35Z"
-updated = "2026-10-09T17:24:35Z"
+updated = "2026-11-08T07:17:23Z"
 labels = ["owner:GingerVHS", "game"]
 
 [[acceptance]]

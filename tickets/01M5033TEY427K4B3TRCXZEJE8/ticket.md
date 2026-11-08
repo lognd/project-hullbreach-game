@@ -2,12 +2,13 @@
 id = "01M5033TEY427K4B3TRCXZEJE8"
 title = "S47-5: Load MultiplayerGame in direct mode and on a dedicated server"
 type = "task"
-category = "todo"
+category = "done"
+outcome = "done"
 priority = "high"
 parent = "01M3DG5Y14KAMJ8NTGHC8BW9YV"
 reporter = "mcnairrobotics"
 created = "2026-10-15T15:32:55Z"
-updated = "2026-10-15T16:50:00Z"
+updated = "2026-11-08T07:16:13Z"
 labels = ["owner:mcnairrobotics", "game", "netcode", "milestone:0.3.0"]
 scope = ["Assets/Scripts/Hullbreach.NetCode.Entities/**"]
 

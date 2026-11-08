@@ -1,0 +1,8 @@
+kind = "transition"
+from = "todo"
+to = "done"
+outcome = "done"
+reason = "Pre-frob course deliverable completed before the ledger; see design/ and repo history."
+at = "2026-11-08T07:17:31Z"
+actor = "mcnairrobotics"
+rev = 1

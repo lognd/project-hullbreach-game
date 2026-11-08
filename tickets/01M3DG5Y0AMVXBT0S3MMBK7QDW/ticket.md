@@ -2,13 +2,18 @@
 id = "01M3DG5Y0AMVXBT0S3MMBK7QDW"
 title = 'S0-2: Create the "customer requirements" for what the central game mechanics will be.'
 type = "story"
-category = "todo"
+category = "done"
+outcome = "done"
 priority = "medium"
 reporter = "human"
 created = "2026-09-26T00:00:00Z"
-updated = "2026-09-26T00:00:01Z"
+updated = "2026-11-08T07:17:31Z"
 aliases = ["T-0010"]
 labels = ["jira:SCRUM-6", "owner:lognd", "jira-status:done"]
+
+[[acceptance]]
+text = "Customer requirements for the central mechanics are written."
+bound = false
 +++
 
 https://aliens-against-humanity.atlassian.net/browse/SCRUM-6

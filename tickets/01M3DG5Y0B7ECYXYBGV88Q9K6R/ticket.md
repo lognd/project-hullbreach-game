@@ -2,13 +2,18 @@
 id = "01M3DG5Y0B7ECYXYBGV88Q9K6R"
 title = "S0-3: Get the initial repository set up."
 type = "story"
-category = "todo"
+category = "done"
+outcome = "done"
 priority = "medium"
 reporter = "human"
 created = "2026-09-26T00:00:00Z"
-updated = "2026-09-26T00:00:01Z"
+updated = "2026-11-08T07:17:32Z"
 aliases = ["T-0011"]
 labels = ["jira:SCRUM-7", "owner:mcnairrobotics", "jira-status:done"]
+
+[[acceptance]]
+text = "The initial repository is set up."
+bound = false
 +++
 
 https://aliens-against-humanity.atlassian.net/browse/SCRUM-7

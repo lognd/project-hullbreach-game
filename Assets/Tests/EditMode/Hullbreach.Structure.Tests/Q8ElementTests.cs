@@ -111,8 +111,22 @@ namespace Hullbreach.Structure.Tests
             Assert.Greater(Quadratic(k, v), Tol);
         }
 
-        // frob:todo 01M4FD75N08RY9PKE236S86NAC replace the two tests above with a symmetric
-        // eigensolver and assert EXACTLY three eigenvalues are zero (C2, optional).
+        // frob:ticket 01M4FD75N08RY9PKE236S86NAC
+        [Test]
+        public void UnitStiffness_HasExactlyThreeZeroEigenvalues()
+        {
+            // Symmetric eigensolve: the null space is the 2 translations plus 1 rotation, no more.
+            var k = KHat();
+            var values = new float[Q8Element.DofCount];
+            var vectors = new float[Q8Element.DofCount, Q8Element.DofCount];
+            DenseJacobiEigen.Solve(k, Q8Element.DofCount, values, vectors);
+
+            float max = 0f;
+            foreach (var v in values) max = Math.Max(max, Math.Abs(v));
+            int zeros = 0;
+            foreach (var v in values) if (Math.Abs(v) < 1e-4f * max) zeros++;
+            Assert.AreEqual(3, zeros, "rigid-body modes only; any more is a spurious zero-energy mode");
+        }
 
         static float[][] RigidModes()
         {

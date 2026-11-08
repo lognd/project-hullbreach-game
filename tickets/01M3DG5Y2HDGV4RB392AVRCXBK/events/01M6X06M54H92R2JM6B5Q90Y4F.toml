@@ -1,0 +1,5 @@
+kind = "changelog-exempt"
+reason = "Implemented: disconnected groups are found by Connectivity and the server splits them into fragment ShipBodies announced by FragmentSpawned."
+at = "2026-11-08T07:15:41Z"
+actor = "mcnairrobotics"
+rev = 1

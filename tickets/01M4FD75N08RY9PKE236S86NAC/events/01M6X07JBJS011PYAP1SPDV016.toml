@@ -1,0 +1,8 @@
+kind = "transition"
+from = "todo"
+to = "done"
+outcome = "done"
+reason = "Added Q8ElementTests.UnitStiffness_HasExactlyThreeZeroEigenvalues (passes via run_tests.sh); older rigid-mode tests kept as cross-checks rather than replaced."
+at = "2026-11-08T07:16:12Z"
+actor = "mcnairrobotics"
+rev = 1

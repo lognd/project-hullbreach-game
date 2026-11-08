@@ -1,0 +1,6 @@
+kind = "comment"
+subtype = "note"
+body = "Triage: no Unity consumer of FromHandoff; sits in queue screen UI area, out of scope for this pass."
+at = "2026-11-08T07:17:22Z"
+actor = "mcnairrobotics"
+rev = 1

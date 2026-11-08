@@ -2,11 +2,12 @@
 id = "01M5V8YJX05XCAYW7PGVPQPZJ0"
 title = "Upstream frob: implement the unity test provider (E-TESTS-UNITY-PROVIDER in 0.532.0)"
 type = "bug"
-category = "todo"
+category = "done"
+outcome = "wont-fix"
 priority = "medium"
 reporter = "lognd"
 created = "2026-10-26T04:54:24Z"
-updated = "2026-10-26T04:54:24Z"
+updated = "2026-11-08T07:17:08Z"
 labels = ["upstream-frob"]
 
 [[acceptance]]

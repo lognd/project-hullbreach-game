@@ -6,7 +6,7 @@ category = "todo"
 priority = "medium"
 reporter = "mcnairrobotics"
 created = "2026-10-09T17:14:20Z"
-updated = "2026-10-09T17:14:20Z"
+updated = "2026-11-08T07:17:22Z"
 labels = ["owner:mcnairrobotics"]
 scope = ["Assets/Scripts/Hullbreach.NetCode.Entities/HullbreachNetCodeServerSystem.cs"]
 

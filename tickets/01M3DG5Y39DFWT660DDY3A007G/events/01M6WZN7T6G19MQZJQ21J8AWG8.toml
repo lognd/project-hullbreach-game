@@ -1,0 +1,5 @@
+kind = "changelog-exempt"
+reason = "Wire.cs/NetMessages.cs serialize inputs and snapshots; MessageRoundTripTests"
+at = "2026-11-08T07:06:12Z"
+actor = "mcnairrobotics"
+rev = 1
