@@ -149,5 +149,76 @@ namespace Hullbreach.Net.Tests
             Assert.Less(predictedErr, replicaErr * 0.5f,
                 $"prediction ({predictedErr / samples}) must be far closer than the lagging replica ({replicaErr / samples})");
         }
+
+        // A reconcile must not reset the ramped thruster throttle, or sustained
+        // thrust snaps back on every server state.
+        [Test]
+        public void Reconcile_UnderSustainedThrust_KeepsTheThrottleAndStaysCloseToTheServer()
+        {
+            var replica = LocalReplica();
+            replica.PredictionTickRate = 50f;
+
+            var truth = new Hullbreach.Ship.ShipBody();
+            foreach (var b in ShipBlocks()) truth.Grid.TryAdd(BlockKey.Pack(b.X, b.Y), new Block(b.TypeId));
+            truth.RebuildDerivedViews();
+
+            var input = new Hullbreach.Ship.ShipInput(1f, 0f, false);
+            const int total = 100, lag = 10;
+            float2 truthAtAck = float2.zero, truthVelAtAck = float2.zero;
+            for (uint t = 1; t <= total; t++)
+            {
+                truth.Step(input, 1f / 50f);
+                if (t == total - lag) { truthAtAck = truth.Position; truthVelAtAck = truth.Velocity; }
+                replica.Predict(InputMessage.FromFloats(Id, t, 1f, 0f, false));
+            }
+
+            replica.ApplyState(new ShipState(Id,
+                Quantization.PackPosition(truthAtAck.x), Quantization.PackPosition(truthAtAck.y), 0,
+                Quantization.PackPosition(truthVelAtAck.x), Quantization.PackPosition(truthVelAtAck.y), 0,
+                ackedInputTick: total - lag, serverTick: total - lag));
+
+            Assert.AreEqual(lag, replica.PendingInputCount);
+            Assert.Less(replica.LastCorrection, 0.05f, "the replay must start with the throttle the ship already had");
+            replica.TryGetPredicted(out var predicted, out _);
+            Assert.Less(math.length(predicted - truth.Position), 0.05f);
+        }
+
+        [Test]
+        public void Reconcile_SmoothsTheVisual_SoItDoesNotJumpByTheCorrection()
+        {
+            var replica = LocalReplica();
+            for (uint t = 1; t <= 10; t++)
+                replica.Predict(InputMessage.FromFloats(Id, t, 1f, 0f, false));
+
+            replica.TryGetPredicted(out var rawBefore, out _);
+            replica.TryGetSmoothedPredicted(out var visualBefore, out _);
+            Assert.AreEqual(rawBefore.y, visualBefore.y, 1e-5f);
+
+            replica.ApplyState(new ShipState(Id, 0, 0, 0, 0, 0, 0, 4));
+            replica.TryGetPredicted(out var rawAfter, out _);
+            replica.TryGetSmoothedPredicted(out var visualAfter, out _);
+
+            Assert.Greater(replica.LastCorrection, 0f);
+            Assert.Less(math.length(visualAfter - visualBefore), math.length(rawAfter - rawBefore),
+                "the shown pose moves less than the raw snap on the reconcile frame");
+
+            for (int i = 0; i < 100; i++) replica.AdvanceVisualSmoothing(0.02f);
+            replica.TryGetSmoothedPredicted(out var visualLater, out _);
+            Assert.AreEqual(rawAfter.y, visualLater.y, 1e-4f, "the offset fully settles onto the real prediction");
+        }
+
+        [Test]
+        public void SetLocalShip_ClearsAnyVisualOffset()
+        {
+            var replica = LocalReplica();
+            for (uint t = 1; t <= 10; t++)
+                replica.Predict(InputMessage.FromFloats(Id, t, 1f, 0f, false));
+            replica.ApplyState(new ShipState(Id, 0, 0, 0, 0, 0, 0, 4));
+
+            replica.SetLocalShip(Id);
+            replica.TryGetPredicted(out var raw, out _);
+            replica.TryGetSmoothedPredicted(out var shown, out _);
+            Assert.AreEqual(raw.y, shown.y, 1e-6f);
+        }
     }
 }

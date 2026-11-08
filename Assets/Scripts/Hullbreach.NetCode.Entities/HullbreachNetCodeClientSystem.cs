@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Hullbreach.Net;
+using Hullbreach.Ship;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.NetCode;
@@ -118,12 +119,21 @@ namespace Hullbreach.NetCode.Entities
 
             _clientTick++;
             bool building = HullbreachNetworkGameplayController.IsBuildMode;
+            // Unfocused windows send neutral input so no key is stuck; fire is an edge, as offline.
+            // frob:ticket 01M6WV815GYEJ58MTM4HSS4Z6K
+            bool live = !building && Application.isFocused;
+            ShipInput shaped = live
+                ? ShipInputShaper.Shape(
+                    Input.GetAxisRaw("Vertical"),
+                    Input.GetAxisRaw("Horizontal"),
+                    Input.GetKeyDown(KeyCode.Space) || Input.GetMouseButtonDown(0))
+                : new ShipInput(0f, 0f, false);
             InputMessage basicInput = ClientReplica.BuildInput(
                 (ushort)networkId.Value,
                 _clientTick,
-                !building ? Input.GetAxisRaw("Vertical") : 0f,
-                !building ? Input.GetAxisRaw("Horizontal") : 0f,
-                !building && (Input.GetKey(KeyCode.Space) || Input.GetMouseButton(0)));
+                shaped.ThrustAxis,
+                shaped.Steer,
+                shaped.FirePressed);
             byte flags = basicInput.Flags;
             if (building) flags |= InputMessage.BuildModeBit;
             InputMessage input = new InputMessage(basicInput.NetId, basicInput.Tick,

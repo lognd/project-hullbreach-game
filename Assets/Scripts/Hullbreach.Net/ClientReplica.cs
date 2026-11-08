@@ -292,6 +292,8 @@ namespace Hullbreach.Net
         // frob:doc docs/reference/hullbreach-net.md#clientreplica
         public int PendingInputCount => _pendingInputs.Count;
 
+        readonly CorrectionSmoother _smoother = new CorrectionSmoother();
+
         // Marks which ship this client drives; clears any prediction state for a previous one.
         // frob:ticket 01M3DG5Y3C3EJ8YSKH8A4XH0S3
         // frob:doc docs/reference/hullbreach-net.md#clientreplica
@@ -301,6 +303,7 @@ namespace Hullbreach.Net
             _hasLocal = true;
             _pendingInputs.Clear();
             LastCorrection = 0f;
+            _smoother.Clear();
         }
 
         // Applies an input to the predicted local ship now, without waiting for the server.
@@ -335,6 +338,30 @@ namespace Hullbreach.Net
             return true;
         }
 
+        // Like TryGetPredicted but with the reconcile correction eased out, so the shown ship glides
+        // instead of snapping. Call AdvanceVisualSmoothing once per rendered frame.
+        // frob:ticket 01M6WV815GYEJ58MTM4HSS4Z6K
+        // frob:doc docs/reference/hullbreach-net.md#clientreplica
+        public bool TryGetSmoothedPredicted(out float2 position, out float rotation)
+        {
+            if (!TryGetPredicted(out position, out rotation)) return false;
+            position += _smoother.PositionOffset;
+            rotation += _smoother.RotationOffset;
+            return true;
+        }
+
+        // Decays the visual correction offset by dt seconds of real time.
+        // frob:ticket 01M6WV815GYEJ58MTM4HSS4Z6K
+        // frob:doc docs/reference/hullbreach-net.md#clientreplica
+        public void AdvanceVisualSmoothing(float dt) => _smoother.Advance(dt);
+
+        // Wraps an angle difference into [-pi, pi] so a wrap across 2pi is a small correction.
+        static float ShortestArc(float delta)
+        {
+            const float Tau = 6.28318530718f;
+            return delta - Tau * math.round(delta / Tau);
+        }
+
         // Builds (or rebuilds after a block change) the private predicted body from the replica's blocks.
         void EnsurePredicted(ReplicaShip replica)
         {
@@ -347,6 +374,8 @@ namespace Hullbreach.Net
             body.Rotation = replica.Body.Rotation;
             body.Velocity = replica.Body.Velocity;
             body.AngularVelocity = replica.Body.AngularVelocity;
+            // The server replica body is never stepped, so the old prediction holds the live throttles.
+            if (replica.Predicted != null) body.CopyThrottlesFrom(replica.Predicted);
             replica.Predicted = body;
             replica.PredictionStale = false;
         }
@@ -358,6 +387,7 @@ namespace Hullbreach.Net
 
             bool hadPrediction = replica.Predicted != null && !replica.PredictionStale;
             float2 before = hadPrediction ? replica.Predicted.Position : replica.Body.Position;
+            float rotationBefore = hadPrediction ? replica.Predicted.Rotation : replica.Body.Rotation;
 
             replica.PredictionStale = true;
             EnsurePredicted(replica);
@@ -365,6 +395,8 @@ namespace Hullbreach.Net
             foreach (var p in _pendingInputs) replica.Predicted.Step(p.Input, dt);
 
             LastCorrection = hadPrediction ? math.length(replica.Predicted.Position - before) : 0f;
+            if (hadPrediction)
+                _smoother.Add(before - replica.Predicted.Position, ShortestArc(rotationBefore - replica.Predicted.Rotation));
         }
 
         // Newest server tick any pose has carried; the clock TryInterpolateAt renders against.

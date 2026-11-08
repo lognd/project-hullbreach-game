@@ -13,6 +13,8 @@
   weapon/thruster variant, or a whole new block type, in code.
 - `demo-scene.md`: read this if you need the exact object layout of
   `DemoScene.unity`, including every wired-up Inspector reference.
+- `controls.md`: read this if you want the flight key map and how input is
+  shaped, smoothed and kept in sync offline and online.
 - `testing.md`: read this if you are writing or running the automated
   tests.
 - `netcode.md`: read this if you are working on `Hullbreach.Net` or the

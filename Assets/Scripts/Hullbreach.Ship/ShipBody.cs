@@ -177,6 +177,16 @@ namespace Hullbreach.Ship
             foreach (int key in stale) dict.Remove(key);
         }
 
+        // Carries ramped throttles over from another body (for blocks still here), so a rebuilt
+        // prediction body does not restart every thruster from zero.
+        // frob:ticket 01M6WV815GYEJ58MTM4HSS4Z6K
+        // frob:doc docs/reference/hullbreach-ship.md#shipbody
+        public void CopyThrottlesFrom(ShipBody other)
+        {
+            foreach (var kv in other._throttleByKey)
+                if (Grid.Contains(kv.Key)) _throttleByKey[kv.Key] = kv.Value;
+        }
+
         // frob:doc docs/reference/hullbreach-ship.md#shipbody
         public float Throttle(int key) => _throttleByKey.TryGetValue(key, out var t) ? t : 0f;
 

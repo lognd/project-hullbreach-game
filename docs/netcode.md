@@ -336,8 +336,8 @@ buffer (not arrival order) is what the client trusts.
    tests), which is this class's own minimal `IWorldSink`.
 3. For each connected peer in flight mode, in ascending peer-id order
    (deterministic):
-   apply its latest buffered input (or a neutral input if none arrived this
-   tick), `ShipBody.Step`, drain `PendingShots` into the projectile sim,
+   apply its latest buffered input (held for up to
+   `ServerSimulation.InputHoldSeconds`, then neutral), `ShipBody.Step`, drain `PendingShots` into the projectile sim,
    and resolve authoritative ship-to-ship block contacts.
 4. Run `StructuralSolver.Tick` and resolve any resulting damage/detach/buckling
    while broadcasting every topology and damage event. Build-mode ships remain
