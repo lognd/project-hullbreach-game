@@ -1,0 +1,8 @@
+kind = "transition"
+from = "todo"
+to = "done"
+outcome = "wont-fix"
+reason = "post-demo scope: ship display layers are not built; no layered compositing, wear stages, status layer or stress feedback exists in ShipRenderer"
+at = "2026-11-08T07:49:34Z"
+actor = "mcnairrobotics"
+rev = 1
