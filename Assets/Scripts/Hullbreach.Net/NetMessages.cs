@@ -29,6 +29,7 @@ namespace Hullbreach.Net
         MatchEnded = 11,
         ReadyUp = 12,
         MatchStarted = 13,
+        ProjectileState = 14,
     }
 
     // Client -> server, unreliable: this tick's intent. Latest-wins on drop.
@@ -936,6 +937,106 @@ namespace Hullbreach.Net
             byte radius = r.ReadU8();
             ushort seconds10 = r.ReadU16();
             return new GravityWellSpawned(px, py, mu, radius, seconds10);
+        }
+    }
+
+    // One in-flight projectile as carried by ProjectileState.
+    // frob:ticket 01M6WVRTC724W6RQYAA9WCEK5F
+    // frob:doc docs/reference/hullbreach-net.md#projectilestate
+    public readonly struct ProjectileEntry
+    {
+        // frob:doc docs/reference/hullbreach-net.md#projectilestate
+        public readonly uint Id;
+
+        // frob:doc docs/reference/hullbreach-net.md#projectilestate
+        public readonly short Px;
+
+        // frob:doc docs/reference/hullbreach-net.md#projectilestate
+        public readonly short Py;
+
+        // frob:doc docs/reference/hullbreach-net.md#projectilestate
+        public readonly short Vx;
+
+        // frob:doc docs/reference/hullbreach-net.md#projectilestate
+        public readonly short Vy;
+
+        // frob:doc docs/reference/hullbreach-net.md#projectilestate
+        public ProjectileEntry(uint id, short px, short py, short vx, short vy)
+        {
+            Id = id;
+            Px = px;
+            Py = py;
+            Vx = vx;
+            Vy = vy;
+        }
+    }
+
+    // Server -> client, unreliable, every tick: the full set of live projectiles.
+    // A projectile absent from the newest message has hit or expired.
+    // frob:ticket 01M6WVRTC724W6RQYAA9WCEK5F
+    // frob:doc docs/reference/hullbreach-net.md#projectilestate
+    public readonly struct ProjectileState
+    {
+        // Most entries one message carries; the server sends the first MaxEntries and skips the rest.
+        // frob:doc docs/reference/hullbreach-net.md#projectilestate
+        public const int MaxEntries = 40;
+
+        // Bytes per entry: u32 id plus four i16.
+        // frob:doc docs/reference/hullbreach-net.md#projectilestate
+        public const int EntryByteSize = 12;
+
+        // frob:doc docs/reference/hullbreach-net.md#projectilestate
+        public readonly uint ServerTick;
+
+        // frob:doc docs/reference/hullbreach-net.md#projectilestate
+        public readonly ProjectileEntry[] Entries;
+
+        // frob:doc docs/reference/hullbreach-net.md#projectilestate
+        public ProjectileState(uint serverTick, ProjectileEntry[] entries)
+        {
+            ServerTick = serverTick;
+            Entries = entries ?? Array.Empty<ProjectileEntry>();
+        }
+
+        // frob:doc docs/reference/hullbreach-net.md#projectilestate
+        public int ByteSize => 6 + Math.Min(Entries.Length, MaxEntries) * EntryByteSize;
+
+        // Writes at most MaxEntries entries so the count byte always matches the body.
+        // frob:doc docs/reference/hullbreach-net.md#projectilestate
+        public void Write(ref ByteWriter w)
+        {
+            int count = Math.Min(Entries.Length, MaxEntries);
+            w.WriteU8((byte)MessageKind.ProjectileState);
+            w.WriteU32(ServerTick);
+            w.WriteU8((byte)count);
+            for (int i = 0; i < count; i++)
+            {
+                var e = Entries[i];
+                w.WriteU32(e.Id);
+                w.WriteI16(e.Px);
+                w.WriteI16(e.Py);
+                w.WriteI16(e.Vx);
+                w.WriteI16(e.Vy);
+            }
+        }
+
+        // A count above MaxEntries or a short body fails the reader (INV-001).
+        // frob:doc docs/reference/hullbreach-net.md#projectilestate
+        public static ProjectileState Read(ref ByteReader r)
+        {
+            r.ReadU8();
+            uint tick = r.ReadU32();
+            int count = r.ReadU8();
+            if (count > MaxEntries || count * EntryByteSize > r.Remaining)
+            {
+                r.Fail();
+                return new ProjectileState(tick, Array.Empty<ProjectileEntry>());
+            }
+
+            var entries = new ProjectileEntry[count];
+            for (int i = 0; i < count; i++)
+                entries[i] = new ProjectileEntry(r.ReadU32(), r.ReadI16(), r.ReadI16(), r.ReadI16(), r.ReadI16());
+            return new ProjectileState(tick, entries);
         }
     }
 }

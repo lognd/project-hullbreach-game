@@ -264,6 +264,35 @@ root), then call it from `BuildHudCanvasPrefab` alongside the existing
 `AddBuilderPanel` call. If the view needs a `DemoMode` reference, wire
 it in `WireDemoScene` instead (see `AddStatusPanel`/`AddHullWarningBanner`).
 
+### Settings screen
+
+<!-- describes: Assets/Scripts/Hullbreach.Hud/SettingsScreenModel.cs::SettingsScreenModel -->
+<!-- describes: Assets/Scripts/Hullbreach.Hud/SettingsScreenModel.cs::SettingsScreenModel.SettingsScreenModel -->
+<!-- describes: Assets/Scripts/Hullbreach.Hud/SettingsScreenModel.cs::SettingsScreenModel.Resolutions -->
+<!-- describes: Assets/Scripts/Hullbreach.Hud/SettingsScreenModel.cs::SettingsScreenModel.Settings -->
+<!-- describes: Assets/Scripts/Hullbreach.Hud/SettingsScreenModel.cs::SettingsScreenModel.Message -->
+<!-- describes: Assets/Scripts/Hullbreach.Hud/SettingsScreenModel.cs::SettingsScreenModel.IsError -->
+<!-- describes: Assets/Scripts/Hullbreach.Hud/SettingsScreenModel.cs::SettingsScreenModel.Changed -->
+<!-- describes: Assets/Scripts/Hullbreach.Hud/SettingsScreenModel.cs::SettingsScreenModel.PercentLabel -->
+<!-- describes: Assets/Scripts/Hullbreach.Hud/SettingsScreenModel.cs::SettingsScreenModel.ResolutionLabel -->
+<!-- describes: Assets/Scripts/Hullbreach.Hud/SettingsScreenModel.cs::SettingsScreenModel.ResolutionIndex -->
+<!-- describes: Assets/Scripts/Hullbreach.Hud/SettingsScreenModel.cs::SettingsScreenModel.SetMaster -->
+<!-- describes: Assets/Scripts/Hullbreach.Hud/SettingsScreenModel.cs::SettingsScreenModel.SetMusic -->
+<!-- describes: Assets/Scripts/Hullbreach.Hud/SettingsScreenModel.cs::SettingsScreenModel.SetEffects -->
+<!-- describes: Assets/Scripts/Hullbreach.Hud/SettingsScreenModel.cs::SettingsScreenModel.SetFullscreen -->
+<!-- describes: Assets/Scripts/Hullbreach.Hud/SettingsScreenModel.cs::SettingsScreenModel.SetColorblind -->
+<!-- describes: Assets/Scripts/Hullbreach.Hud/SettingsScreenModel.cs::SettingsScreenModel.StepResolution -->
+<!-- describes: Assets/Scripts/Hullbreach.Hud/SettingsScreenModel.cs::SettingsScreenModel.Apply -->
+<!-- describes: Assets/Scripts/Hullbreach.NetCode.Entities/HullbreachSettingsView.cs::HullbreachSettingsView -->
+
+`SettingsScreenModel` is the engine-free logic behind the settings screen: it
+edits a `GameSettings` (master, music and effects volume, fullscreen,
+colorblind palette, resolution stepped through `Resolutions`) and `Apply`
+saves it through `GameSettingsStore`. `Message` and `IsError` carry the save
+result, and `Changed` tells the view to redraw. `HullbreachSettingsView` is
+the uGUI binding, built by `LobbySceneBuilder` as `SettingsCanvas` in the
+blueprint style (cyan sliders, orange only for the primary Apply button).
+
 ## 4. Work units and owners
 
 Owners follow the Jira areas in the team section of the export

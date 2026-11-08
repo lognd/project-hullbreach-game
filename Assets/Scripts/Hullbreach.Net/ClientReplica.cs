@@ -449,6 +449,80 @@ namespace Hullbreach.Net
             rotation = a.Rotation + delta * t;
         }
 
+        // Last two server samples of one in-flight projectile, for tick-based blending.
+        sealed class ReplicaProjectile
+        {
+            public PoseSample Older;
+            public PoseSample Newer;
+        }
+
+        readonly Dictionary<uint, ReplicaProjectile> _projectiles = new Dictionary<uint, ReplicaProjectile>();
+        uint _projectileTick;
+        bool _haveProjectileTick;
+
+        // Ids of the projectiles the newest ProjectileState listed.
+        // frob:ticket 01M6WVRTC724W6RQYAA9WCEK5F
+        // frob:doc docs/reference/hullbreach-net.md#clientreplica
+        public IEnumerable<uint> ProjectileIds => _projectiles.Keys;
+
+        // How many projectiles the client currently knows are in flight.
+        // frob:ticket 01M6WVRTC724W6RQYAA9WCEK5F
+        // frob:doc docs/reference/hullbreach-net.md#clientreplica
+        public int ProjectileCount => _projectiles.Count;
+
+        // Replaces the projectile set with the message's (absent ids are gone). An older tick
+        // than the newest seen is dropped, so a reordered datagram cannot resurrect a hit shot.
+        // frob:ticket 01M6WVRTC724W6RQYAA9WCEK5F
+        // frob:doc docs/reference/hullbreach-net.md#clientreplica
+        public bool ApplyProjectileState(ProjectileState state)
+        {
+            if (_haveProjectileTick && state.ServerTick < _projectileTick) return false;
+            _projectileTick = state.ServerTick;
+            _haveProjectileTick = true;
+            if (state.ServerTick > LatestServerTick) LatestServerTick = state.ServerTick;
+
+            var live = new HashSet<uint>();
+            foreach (var e in state.Entries)
+            {
+                live.Add(e.Id);
+                var sample = new PoseSample
+                {
+                    Tick = state.ServerTick,
+                    Position = new float2(Quantization.UnpackPosition(e.Px), Quantization.UnpackPosition(e.Py)),
+                    Velocity = new float2(Quantization.UnpackPosition(e.Vx), Quantization.UnpackPosition(e.Vy)),
+                };
+                if (_projectiles.TryGetValue(e.Id, out var existing))
+                {
+                    if (sample.Tick > existing.Newer.Tick) existing.Older = existing.Newer;
+                    existing.Newer = sample;
+                }
+                else
+                {
+                    _projectiles[e.Id] = new ReplicaProjectile { Older = sample, Newer = sample };
+                }
+            }
+
+            var gone = new List<uint>();
+            foreach (uint id in _projectiles.Keys) if (!live.Contains(id)) gone.Add(id);
+            foreach (uint id in gone) _projectiles.Remove(id);
+            return true;
+        }
+
+        // Blends the projectile's last two samples at a fractional server tick, clamped (no extrapolation).
+        // A projectile with a single sample returns that sample. False if the id is unknown.
+        // frob:ticket 01M6WVRTC724W6RQYAA9WCEK5F
+        // frob:doc docs/reference/hullbreach-net.md#clientreplica
+        public bool TryInterpolateProjectile(uint id, float renderTick, out float2 position)
+        {
+            position = float2.zero;
+            if (!_projectiles.TryGetValue(id, out var p)) return false;
+
+            float span = (float)(p.Newer.Tick - p.Older.Tick);
+            float t = span <= 0f ? 1f : math.clamp((renderTick - p.Older.Tick) / span, 0f, 1f);
+            position = math.lerp(p.Older.Position, p.Newer.Position, t);
+            return true;
+        }
+
         // Ghosts own the high-frequency pose stream; they carry no server tick, so callers
         // stamp the client tick. A pose is ignored until its snapshot has established the ship.
         // frob:ticket 01M5VPSN6KVQRJ4PEF61GQH13M
@@ -497,6 +571,12 @@ namespace Hullbreach.Net
                     if (r.Failed) return ReplicaApplyResult.Malformed;
                     ApplyState(state);
                     return ReplicaApplyResult.Applied;
+                }
+                case MessageKind.ProjectileState:
+                {
+                    var projectiles = ProjectileState.Read(ref r);
+                    if (r.Failed) return ReplicaApplyResult.Malformed;
+                    return ApplyProjectileState(projectiles) ? ReplicaApplyResult.Applied : ReplicaApplyResult.Stale;
                 }
                 case MessageKind.GravityWellSpawned:
                 {

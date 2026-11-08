@@ -1,0 +1,6 @@
+kind = "comment"
+subtype = "note"
+body = "Criterion 2: HOST LAN / JOIN ADDRESS buttons exist in LobbySceneBuilder and the lobby scene and are wired to DirectLaunchPlan, but no engine-free or PlayMode test clicks them, so it cannot be bound to measured evidence. Needs a PlayMode test or a person's attestation of the LAN flow."
+at = "2026-11-08T07:30:50Z"
+actor = "mcnairrobotics"
+rev = 1
