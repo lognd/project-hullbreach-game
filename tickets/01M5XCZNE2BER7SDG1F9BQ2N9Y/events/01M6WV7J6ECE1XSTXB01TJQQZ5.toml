@@ -1,0 +1,7 @@
+kind = "field"
+field = "acceptance"
+new = ["Given a server projectile on a path through a permanent gravity body, when the server steps, then the projectile is removed on planet contact before ship hit tests"]
+moved = []
+at = "2026-11-08T05:48:49Z"
+actor = "mcnairrobotics"
+rev = 1

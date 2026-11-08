@@ -6,5 +6,9 @@ category = "todo"
 priority = "medium"
 reporter = "mcnairrobotics"
 created = "2026-10-27T00:43:23Z"
-updated = "2026-11-08T05:48:24Z"
+updated = "2026-11-08T05:48:49Z"
+
+[[acceptance]]
+text = "Given a server projectile on a path through a permanent gravity body, when the server steps, then the projectile is removed on planet contact before ship hit tests"
+bound = false
 +++
