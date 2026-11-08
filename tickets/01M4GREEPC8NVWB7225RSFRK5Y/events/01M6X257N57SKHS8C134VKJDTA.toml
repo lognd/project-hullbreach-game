@@ -1,0 +1,8 @@
+kind = "transition"
+from = "todo"
+to = "done"
+outcome = "wont-fix"
+reason = "post-demo scope: thruster trails are unbuilt; no loadout model or rendering exists (S12-4 dropped)"
+at = "2026-11-08T07:49:53Z"
+actor = "mcnairrobotics"
+rev = 1

@@ -1,0 +1,8 @@
+kind = "transition"
+from = "todo"
+to = "done"
+outcome = "wont-fix"
+reason = "post-demo scope: rebindable keys (S27-2) are dropped so the story is not fully delivered; other children are done"
+at = "2026-11-08T07:49:54Z"
+actor = "mcnairrobotics"
+rev = 1

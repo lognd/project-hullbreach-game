@@ -1,0 +1,8 @@
+kind = "transition"
+from = "todo"
+to = "done"
+outcome = "wont-fix"
+reason = "post-demo scope: well visuals (S43-2) are dropped so criterion 3 stays unmet; server-side logic remains as built"
+at = "2026-11-08T07:49:54Z"
+actor = "mcnairrobotics"
+rev = 1

@@ -1,0 +1,8 @@
+kind = "transition"
+from = "todo"
+to = "done"
+outcome = "wont-fix"
+reason = "post-demo scope: ship display layers are unbuilt; all four children are dropped"
+at = "2026-11-08T07:49:53Z"
+actor = "mcnairrobotics"
+rev = 1

@@ -2,12 +2,13 @@
 id = "01M3DG5Y0Y1MZXATXQF051SPA2"
 title = "S41: Stay inside the arena"
 type = "story"
-category = "todo"
+category = "done"
+outcome = "wont-fix"
 priority = "medium"
 parent = "01M3DG5Y05HP0YSRB6819FBK2S"
 reporter = "human"
 created = "2026-09-26T00:00:00Z"
-updated = "2026-10-26T09:16:46Z"
+updated = "2026-11-08T07:49:54Z"
 aliases = ["T-0030"]
 labels = ["jira:SCRUM-62", "owner:GingerVHS", "game", "milestone:0.2.0"]
 

@@ -1,0 +1,6 @@
+kind = "comment"
+subtype = "note"
+body = "Triage 2026-11-08: left open, not small. The remaining work is Unity-only (HullbreachQueueView.Matched consumer that builds ConnectRequest, resolves Host (NetworkEndpoint.TryParse is numeric-only, so hostnames need a Dns step), issues NetworkStreamRequestConnect on the client world like HullbreachLanLobby.TryJoin, then loads the MultiplayerGame scene). It cannot be compiled or tested in this environment (no Unity editor), and a PlayMode test is needed for the evidence. Do it in the editor next to S28-2."
+at = "2026-11-08T07:50:20Z"
+actor = "mcnairrobotics"
+rev = 1

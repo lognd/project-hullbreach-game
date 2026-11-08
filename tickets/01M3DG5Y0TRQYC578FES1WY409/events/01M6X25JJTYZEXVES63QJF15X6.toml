@@ -1,0 +1,5 @@
+kind = "evidence-bypass"
+reason = "parent story: all child tickets are closed with their own evidence and changelog entries"
+at = "2026-11-08T07:50:04Z"
+actor = "mcnairrobotics"
+rev = 1

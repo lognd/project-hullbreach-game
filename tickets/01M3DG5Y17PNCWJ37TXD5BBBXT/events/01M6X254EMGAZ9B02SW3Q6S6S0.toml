@@ -1,0 +1,8 @@
+kind = "transition"
+from = "todo"
+to = "done"
+outcome = "wont-fix"
+reason = "post-demo scope: boss and co-op are unbuilt; both children are dropped"
+at = "2026-11-08T07:49:50Z"
+actor = "mcnairrobotics"
+rev = 1

@@ -2,12 +2,13 @@
 id = "01M5XB8H764D5XCWMYSP63JFJ9"
 title = "S41-1b: Unity-side wiring for arena bounds (Log adapter, scene gizmo, play-mode check)"
 type = "task"
-category = "todo"
+category = "done"
+outcome = "wont-fix"
 priority = "medium"
 parent = "01M3DG5Y2T3TCHWKQBEY9NRTNE"
 reporter = "mcnairrobotics"
 created = "2026-10-27T00:13:16Z"
-updated = "2026-11-08T07:17:22Z"
+updated = "2026-11-08T07:49:49Z"
 labels = ["owner:GingerVHS"]
 scope = ["Assets/Scripts/Hullbreach.Game/**"]
 +++

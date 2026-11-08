@@ -2,13 +2,14 @@
 id = "01M500FAJ4Z1WG0BNMAGTFBF99"
 title = "S57-1: Engine-free MinimapModel projecting ships, planets and arena bounds"
 type = "task"
-category = "todo"
+category = "done"
+outcome = "wont-fix"
 priority = "medium"
 points = 3
 parent = "01M500EVPWWECD3A2C08TJ1K5Q"
 reporter = "a-carten"
 created = "2026-10-15T14:46:46Z"
-updated = "2026-11-08T07:17:24Z"
+updated = "2026-11-08T07:49:34Z"
 labels = ["owner:a-carten", "game", "milestone:0.3.0", "creates:Assets/Scripts/Hullbreach.Hud/MinimapModel.cs", "creates:Assets/Scripts/Hullbreach.Hud/MinimapModel.cs.meta", "creates:Assets/Tests/EditMode/Hullbreach.Hud.Tests/MinimapModelTests.cs", "creates:Assets/Tests/EditMode/Hullbreach.Hud.Tests/MinimapModelTests.cs.meta"]
 scope = ["Assets/Scripts/Hullbreach.Hud/HudColor.cs", "docs/design/ui-port.md", "Assets/Scripts/Hullbreach.Hud/MinimapModel.cs", "Assets/Scripts/Hullbreach.Hud/MinimapModel.cs.meta", "Assets/Tests/EditMode/Hullbreach.Hud.Tests/MinimapModelTests.cs", "Assets/Tests/EditMode/Hullbreach.Hud.Tests/MinimapModelTests.cs.meta"]
 

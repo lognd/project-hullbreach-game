@@ -2,13 +2,14 @@
 id = "01M3DG5Y0TRQYC578FES1WY409"
 title = "S37: See where my ship is about to fail"
 type = "story"
-category = "todo"
+category = "done"
+outcome = "done"
 priority = "critical"
 points = 5
 parent = "01M3DG5Y04X6WZ1G61CVD7TX9S"
 reporter = "human"
 created = "2026-09-26T00:00:00Z"
-updated = "2026-10-26T09:12:41Z"
+updated = "2026-11-08T07:50:04Z"
 aliases = ["T-0026"]
 labels = ["jira:SCRUM-58", "owner:a-carten", "game", "physics", "milestone:0.2.0"]
 

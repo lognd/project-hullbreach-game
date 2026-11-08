@@ -1,0 +1,8 @@
+kind = "transition"
+from = "todo"
+to = "done"
+outcome = "wont-fix"
+reason = "post-demo scope: arena bounds rendering (S41-2) is dropped; only the engine-free model exists"
+at = "2026-11-08T07:49:54Z"
+actor = "mcnairrobotics"
+rev = 1

@@ -1,0 +1,8 @@
+kind = "transition"
+from = "todo"
+to = "done"
+outcome = "wont-fix"
+reason = "post-demo scope: gravity well area and lifetime visuals are not started; only server-side well logic exists"
+at = "2026-11-08T07:49:35Z"
+actor = "mcnairrobotics"
+rev = 1

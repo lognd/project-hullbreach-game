@@ -1,0 +1,8 @@
+kind = "transition"
+from = "todo"
+to = "done"
+outcome = "wont-fix"
+reason = "post-demo scope: cosmetics are not built; no cosmetic loadout model, replication or skin rendering exists"
+at = "2026-11-08T07:49:34Z"
+actor = "mcnairrobotics"
+rev = 1

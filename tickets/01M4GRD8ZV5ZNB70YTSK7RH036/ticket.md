@@ -2,11 +2,12 @@
 id = "01M4GRD8ZV5ZNB70YTSK7RH036"
 title = "E15: Cosmetics"
 type = "epic"
-category = "todo"
+category = "done"
+outcome = "wont-fix"
 priority = "medium"
 reporter = "lognd"
 created = "2026-10-09T16:37:14Z"
-updated = "2026-10-09T16:37:14Z"
+updated = "2026-11-08T07:49:56Z"
 labels = ["owner:a-carten", "game", "platform", "milestone:0.3.0"]
 +++
 
