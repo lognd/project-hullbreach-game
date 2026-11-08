@@ -113,6 +113,31 @@ namespace Hullbreach.Net.Tests
             Assert.AreEqual(0, raised[0].StatsB.BlocksPlaced);
         }
 
+        // frob:ticket 01M6WVK2JM5FA72DD850NKNZP7
+        // A destroyed connector strands the block behind it; the shooter is credited for both.
+        [Test]
+        public void DetachCascade_CountsStrandedBlocksAsDestroyed()
+        {
+            var (server, raised) = Arena();
+            server.Join(1, Ship(Core(), new SnapshotBlock(0, 1, BlockTypes.Cannon, 0, 0)));
+            server.Join(2, Ship(Core(), new SnapshotBlock(0, -1, BlockTypes.Hull, 0, 0), new SnapshotBlock(1, -1, BlockTypes.Hull, 0, 0)));
+            server.Ships[1].Position = float2.zero;
+            server.Ships[2].Position = new float2(0f, 4f);
+
+            int stranded = BlockKey.Pack(1, -1);
+            uint tick = 1;
+            for (int i = 0; i < 3000 && server.Ships[2].Grid.TryGet(stranded, out _); i++)
+            {
+                server.SetInput(1, InputMessage.FromFloats(1, tick, 0f, 0f, true));
+                server.SetInput(2, InputMessage.FromFloats(2, tick, 0f, 0f, false));
+                tick++;
+                server.Tick();
+            }
+            Assert.IsFalse(server.Ships[2].Grid.TryGet(stranded, out _), "the stranded hull must detach");
+            server.Leave(2);
+            Assert.AreEqual(2, raised[0].StatsA.BlocksDestroyed);
+        }
+
         // frob:ticket 01M3DG5Y36WE3D2224D54MR2S6
         [Test]
         public void TimeLimit_ExpiryWithEqualCores_EndsAsDrawOnTheFeed()

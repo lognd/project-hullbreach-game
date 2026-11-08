@@ -1,0 +1,10 @@
+kind = "create"
+title = "UI polish pass: brand palette, friendly lobby errors, lobby keyboard flow, quit path"
+type = "task"
+category = "todo"
+priority = "medium"
+scope = ["Assets/Scripts/Hullbreach.Platform/**", "Assets/Scripts/Hullbreach.NetCode.Entities/**", "Assets/Editor/Hullbreach.Editor/**", "Assets/Tests/EditMode/Hullbreach.Platform.Tests/**", "docs/**", "changelog.d/**"]
+body = "Final-sprint polish: raw exception text in lobby/HUD, no Tab/Enter/Esc flow in the lobby, no quit path, off-brand colors in builder-generated screens."
+at = "2026-11-08T05:47:43Z"
+actor = "mcnairrobotics"
+rev = 1

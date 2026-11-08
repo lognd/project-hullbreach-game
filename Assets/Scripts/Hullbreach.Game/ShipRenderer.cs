@@ -51,6 +51,10 @@ namespace Hullbreach.Game
         // frob:doc docs/reference/hullbreach-game.md#shiprenderer
         public float FlashRatioThreshold = 0.8f;
 
+        // S37-2: draws the Stress overlay with the colorblind-safe ramp (Hud.StressPalette).
+        // frob:doc docs/reference/hullbreach-game.md#shiprenderer
+        public bool ColorblindPalette;
+
         static Sprite _unitSprite;
         bool _dirty = true;
         int _builtCount = -1;
@@ -450,12 +454,10 @@ namespace Hullbreach.Game
             return Color.Lerp(baseColor, Color.white, 0.35f + 0.35f * pulse);
         }
 
-        static Color StressColor(float ratio)
+        Color StressColor(float ratio)
         {
-            ratio = Mathf.Clamp01(ratio);
-            return ratio < 0.5f
-                ? Color.Lerp(Color.green, Color.yellow, ratio * 2f)
-                : Color.Lerp(Color.yellow, Color.red, (ratio - 0.5f) * 2f);
+            var c = Hullbreach.Hud.StressPalette.Sample(ratio, ColorblindPalette);
+            return new Color(c.R, c.G, c.B, c.A);
         }
 
         // Blue (no buckling risk) to red (ratio >= 1, i.e. at or past the

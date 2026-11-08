@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Hullbreach.Net;
+using Hullbreach.Platform;
 using Unity.Services.Authentication;
 using Unity.Services.Core;
 using Unity.Services.Multiplayer;
@@ -365,7 +366,9 @@ namespace Hullbreach.NetCode.Entities
 
         void SetError(Exception exception)
         {
-            LastError = exception.Message;
+            // The raw text stays in the log; the player gets a sentence. frob:ticket 01M6WV5HP3KVSZNJT6H99MFS3Z
+            Debug.LogWarning($"Hullbreach online error: {exception.Message}");
+            LastError = FriendlyError.From(exception.Message, IsReady);
             Status = "Online service error";
             NotifyChanged();
         }

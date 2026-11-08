@@ -389,6 +389,7 @@ preset orbital pass respectively.
 <!-- describes: Assets/Scripts/Hullbreach.Game/ShipRenderer.cs::ShipRenderer.ExtraRatioSource -->
 <!-- describes: Assets/Scripts/Hullbreach.Game/ShipRenderer.cs::ShipRenderer.Solver -->
 <!-- describes: Assets/Scripts/Hullbreach.Game/ShipRenderer.cs::ShipRenderer.FlashRatioThreshold -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/ShipRenderer.cs::ShipRenderer.ColorblindPalette -->
 <!-- describes: Assets/Scripts/Hullbreach.Game/ShipRenderer.cs::ShipRenderer.MarkDirty -->
 <!-- describes: Assets/Scripts/Hullbreach.Game/ShipRenderer.cs::ShipRenderer.MakeSprite -->
 <!-- describes: Assets/Scripts/Hullbreach.Game/ShipRenderer.cs::ShipRenderer.ForwardFlameColor -->
@@ -430,6 +431,8 @@ a ship (Build and combat share the same component) uses the same colors.
 - `Stress`: ratio = max(`BlockStress.DuctileRatio`, `BlockStress.BrittleRatio`,
   `ExtraRatioSource(key)`), clamped to 0..1. 0 is green, 0.5 is yellow, 1
   (at or past the failure threshold) is red, linear in between.
+  With `ColorblindPalette` set the ramp is blue, yellow, vermillion
+  (`Hullbreach.Hud.StressPalette`, Okabe-Ito) instead.
 - Critical flash: any block whose ratio is at or above
   `FlashRatioThreshold` (default 0.8, `DemoMode.CriticalRatio` overrides)
   pulses toward alarm red on top of the active overlay.

@@ -148,6 +148,22 @@ The three controls are optional serialized fields on `HullbreachLobbyView`,
 so an old `LobbyCanvas.prefab` keeps working; rebuild it with
 `Hullbreach > Online > Rebuild lobby and multiplayer scenes` to get them.
 
+### Lobby keyboard flow
+
+<!-- describes: Assets/Scripts/Hullbreach.Platform/LobbyForm.cs::LobbyForm -->
+<!-- describes: Assets/Scripts/Hullbreach.NetCode.Entities/HullbreachKeys.cs::HullbreachKeys -->
+
+Tab and Shift+Tab walk the lobby fields top to bottom (name, max players,
+private, host password, HOST, code, password, JOIN, LAN host, address, LAN
+join, refresh, start, leave, quit) using `HullbreachTabNavigation`; it
+stays idle while the sign-in form is up. Enter in a field submits its
+section (host, join by code or LAN join). Esc leaves the current room, or
+does nothing while a request is running (`LobbyForm.EscapeLeavesRoom`).
+The QUIT GAME button closes the game (stops play mode in the editor).
+Host and join inputs are checked by `LobbyForm` before any request, and
+failures show as short sentences via `FriendlyError`. The quit button is an
+optional field, so rebuild the lobby prefab to get it.
+
 ### Unity Services setup
 
 The project already contains `com.unity.services.multiplayer` and its
