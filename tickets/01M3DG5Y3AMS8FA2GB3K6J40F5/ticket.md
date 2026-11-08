@@ -2,7 +2,8 @@
 id = "01M3DG5Y3AMS8FA2GB3K6J40F5"
 title = "S47-3: Client timeout, disconnect handling, and match resolution on drop"
 type = "task"
-category = "todo"
+category = "done"
+outcome = "done"
 priority = "critical"
 points = 2
 parent = "01M3DG5Y14KAMJ8NTGHC8BW9YV"
