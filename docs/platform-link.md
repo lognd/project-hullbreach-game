@@ -329,6 +329,26 @@ show up in process listings.
 <!-- describes: Assets/Scripts/Hullbreach.Platform/PlatformSession.cs::PlatformSession.UsernameEnv -->
 <!-- describes: Assets/Scripts/Hullbreach.Platform/PlatformSession.cs::PlatformSession.SignInFromEnvironment -->
 
+## Screen style
+
+<!-- describes: Assets/Scripts/Hullbreach.Platform/BrandPalette.cs::BrandPalette -->
+<!-- describes: Assets/Scripts/Hullbreach.NetCode.Entities/BrandColors.cs::BrandColors -->
+<!-- describes: Assets/Scripts/Hullbreach.Platform/FriendlyError.cs::FriendlyError -->
+
+Every menu screen uses the platform web palette: background `#0B1620`,
+panel `#0F1D2A`, raised `#172B3C`, ink `#D6E4EC`, muted `#7F96A6`, cyan
+`#5CC8E8` and signal orange `#FF6A1F`. Orange is for the primary button
+(dark label) and for alerts only; secondary buttons are raised with a cyan
+label. There is no purple and no gradient. The tagline is "Build. Breach.
+Claim the void." and shows on the sign-in panel.
+
+`BrandPalette` holds the values engine-free; `BrandColors` turns them into
+`Color` for the views and `LobbySceneBuilder`. Players never see raw
+exception text: `FriendlyError.From` maps it to a sentence (timeout, wrong
+password, lobby full or locked, not found, rate limited, no network) and
+adds a LAN hint when online services never started. The raw text goes to
+the log.
+
 ## Sign-in screen
 
 S07-2. The first thing `LobbyScene` shows is the sign-in form, an overlay

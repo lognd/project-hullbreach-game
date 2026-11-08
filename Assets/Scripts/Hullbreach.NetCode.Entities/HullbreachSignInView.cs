@@ -1,6 +1,7 @@
 using Hullbreach.Platform;
 using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace Hullbreach.NetCode.Entities
@@ -18,8 +19,6 @@ namespace Hullbreach.NetCode.Entities
         [SerializeField] Button signInButton;
         [SerializeField] Button playOfflineButton;
         [SerializeField] TMP_Text messageText;
-        [SerializeField] Color messageColor = new Color(0.9f, 0.95f, 1f);
-        [SerializeField] Color errorColor = new Color(1f, 0.42f, 0.4f);
 
         [Header("Account bar (shown over the lobby afterwards)")]
         [SerializeField] GameObject accountRoot;
@@ -28,6 +27,11 @@ namespace Hullbreach.NetCode.Entities
         [SerializeField] TMP_Text signOutLabel;
 
         SignInModel _model;
+        bool _wasEditable;
+
+        // True while the sign-in form covers the lobby; the lobby holds its keys until then.
+        // frob:ticket 01M6WV5HP3KVSZNJT6H99MFS3Z
+        public bool FormVisible => formRoot != null && formRoot.activeInHierarchy;
 
         // Tab / Shift+Tab / arrows walk username, password, sign in, play offline.
         // frob:ticket 01M5XZJRNREX0M9DF1M6PE7G7V
@@ -54,6 +58,17 @@ namespace Hullbreach.NetCode.Entities
             WireTabOrder();
             Refresh();
             _model.TryRestore();
+            FocusUsername();
+        }
+
+        // Cursor starts in the username box so the player can type straight away.
+        // frob:ticket 01M6WV5HP3KVSZNJT6H99MFS3Z
+        void FocusUsername()
+        {
+            if (FormVisible && usernameInput.interactable && EventSystem.current != null)
+            {
+                EventSystem.current.SetSelectedGameObject(usernameInput.gameObject);
+            }
         }
 
         void OnDisable()
@@ -83,7 +98,16 @@ namespace Hullbreach.NetCode.Entities
             passwordInput.interactable = editable;
             signInButton.interactable = editable;
             messageText.text = _model.Message;
-            messageText.color = _model.IsError ? errorColor : messageColor;
+            // Brand: ink for status, orange for alerts. frob:ticket 01M6WV5HP3KVSZNJT6H99MFS3Z
+            messageText.color = _model.IsError ? BrandColors.Orange : BrandColors.Ink;
+
+            // After a failed attempt the fields unlock again; put the cursor back in the password.
+            if (editable && !_wasEditable && _model.IsError && EventSystem.current != null)
+            {
+                EventSystem.current.SetSelectedGameObject(passwordInput.gameObject);
+            }
+
+            _wasEditable = editable;
 
             accountText.text = _model.AccountLine;
             signOutLabel.text = _model.State == SignInState.SignedIn ? "SIGN OUT" : "SIGN IN";

@@ -20,6 +20,10 @@ namespace Hullbreach.NetCode.Entities
         bool[] _usable = Array.Empty<bool>();
         IPlatformLog _log = NullPlatformLog.Instance;
 
+        // When set and false, Tab is ignored so two screens stacked in one scene do not both react.
+        // frob:ticket 01M6WV5HP3KVSZNJT6H99MFS3Z
+        public Func<bool> Gate { get; set; }
+
         // Sets the Tab order (first to last) and wires matching explicit up/down navigation.
         // frob:doc docs/platform-link.md#sign-in-screen
         public void SetOrder(IPlatformLog log, params Selectable[] order)
@@ -57,6 +61,12 @@ namespace Hullbreach.NetCode.Entities
         void Update()
         {
             if (_order.Length == 0 || EventSystem.current == null || !TabPressed(out bool backward))
+            {
+                return;
+            }
+
+            // frob:ticket 01M6WV5HP3KVSZNJT6H99MFS3Z
+            if (Gate != null && !Gate())
             {
                 return;
             }

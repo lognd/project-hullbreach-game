@@ -1,6 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using Hullbreach.Net;
+using Hullbreach.Platform;
 using TMPro;
 using Unity.Services.Multiplayer;
 using UnityEngine;
@@ -51,10 +52,72 @@ namespace Hullbreach.NetCode.Entities
         [SerializeField] TMP_Text playersText;
         [SerializeField] Button startGameButton;
         [SerializeField] Button leaveButton;
+
+        // Optional (older prefabs lack it): closes the game from the lobby.
+        [Header("Quit")]
+        [SerializeField] Button quitButton;
         [SerializeField] string gameplaySceneName = HullbreachLobbyService.DefaultGameScene;
 
         HullbreachLobbyService _service;
         string _localError;
+        HullbreachSignInView _signIn;
+
+        // Tab order, Enter-to-submit and Esc-to-leave.
+        // frob:ticket 01M6WV5HP3KVSZNJT6H99MFS3Z
+        void WireKeyboard()
+        {
+            HullbreachTabNavigation tabs = GetComponent<HullbreachTabNavigation>();
+            if (tabs == null) tabs = gameObject.AddComponent<HullbreachTabNavigation>();
+            tabs.Gate = SignInClosed;
+            tabs.SetOrder(HullbreachPlatformRuntime.Log, lobbyNameInput, maxPlayersInput, privateToggle,
+                hostPasswordInput, hostButton, joinCodeInput, joinPasswordInput, joinCodeButton,
+                lanHostButton, lanAddressInput, lanJoinButton, refreshButton, startGameButton, leaveButton, quitButton);
+
+            lobbyNameInput.onSubmit.AddListener(SubmitHost);
+            maxPlayersInput.onSubmit.AddListener(SubmitHost);
+            hostPasswordInput.onSubmit.AddListener(SubmitHost);
+            joinCodeInput.onSubmit.AddListener(SubmitJoin);
+            joinPasswordInput.onSubmit.AddListener(SubmitJoin);
+            if (lanAddressInput != null) lanAddressInput.onSubmit.AddListener(SubmitLan);
+        }
+
+        void UnwireKeyboard()
+        {
+            lobbyNameInput.onSubmit.RemoveListener(SubmitHost);
+            maxPlayersInput.onSubmit.RemoveListener(SubmitHost);
+            hostPasswordInput.onSubmit.RemoveListener(SubmitHost);
+            joinCodeInput.onSubmit.RemoveListener(SubmitJoin);
+            joinPasswordInput.onSubmit.RemoveListener(SubmitJoin);
+            if (lanAddressInput != null) lanAddressInput.onSubmit.RemoveListener(SubmitLan);
+        }
+
+        void SubmitHost(string _) { if (!_service.IsBusy) Host(); }
+        void SubmitJoin(string _) { if (!_service.IsBusy) JoinCode(); }
+        void SubmitLan(string _) => JoinLan();
+
+        // The sign-in form owns the keyboard until it is answered.
+        bool SignInClosed()
+        {
+            if (_signIn == null) _signIn = FindFirstObjectByType<HullbreachSignInView>();
+            return _signIn == null || !_signIn.FormVisible;
+        }
+
+        // Esc leaves the joined room (LobbyForm.EscapeLeavesRoom); it never quits the game.
+        void Update()
+        {
+            if (_service == null || !HullbreachKeys.EscapePressed() || !SignInClosed()) return;
+            if (LobbyForm.EscapeLeavesRoom(_service.Session != null, _service.IsBusy)) Leave();
+        }
+
+        // Closes the player; in the editor it stops play mode instead.
+        static void Quit()
+        {
+#if UNITY_EDITOR
+            UnityEditor.EditorApplication.isPlaying = false;
+#else
+            Application.Quit();
+#endif
+        }
 
         void OnEnable()
         {
@@ -70,6 +133,8 @@ namespace Hullbreach.NetCode.Entities
             leaveButton.onClick.AddListener(Leave);
             if (lanHostButton != null) lanHostButton.onClick.AddListener(HostLan);
             if (lanJoinButton != null) lanJoinButton.onClick.AddListener(JoinLan);
+            if (quitButton != null) quitButton.onClick.AddListener(Quit);
+            WireKeyboard();
             Refresh();
         }
 
@@ -83,17 +148,23 @@ namespace Hullbreach.NetCode.Entities
             leaveButton.onClick.RemoveListener(Leave);
             if (lanHostButton != null) lanHostButton.onClick.RemoveListener(HostLan);
             if (lanJoinButton != null) lanJoinButton.onClick.RemoveListener(JoinLan);
+            if (quitButton != null) quitButton.onClick.RemoveListener(Quit);
+            UnwireKeyboard();
             ClearPublicRows();
         }
 
         void Host()
         {
-            int maxPlayers = int.TryParse(maxPlayersInput.text, out int parsed) ? parsed : 8;
+            _localError = LobbyForm.PasswordProblem(hostPasswordInput.text);
+            if (_localError != null) { Refresh(); return; }
+            int maxPlayers = LobbyForm.ParsePlayers(maxPlayersInput.text);
             Run(_service.HostAsync(lobbyNameInput.text, maxPlayers, privateToggle.isOn, hostPasswordInput.text));
         }
 
         void JoinCode()
         {
+            _localError = LobbyForm.CodeProblem(joinCodeInput.text) ?? LobbyForm.PasswordProblem(joinPasswordInput.text);
+            if (_localError != null) { Refresh(); return; }
             Run(_service.JoinByCodeAsync(joinCodeInput.text, joinPasswordInput.text));
         }
 
@@ -141,9 +212,9 @@ namespace Hullbreach.NetCode.Entities
         {
             ISession session = _service.Session;
             roomTitleText.text = session.Name;
-            roomDetailsText.text = $"{session.PlayerCount}/{session.MaxPlayers} players  •  " +
+            roomDetailsText.text = $"{session.PlayerCount}/{session.MaxPlayers} players  -  " +
                                    (session.IsPrivate ? "Private" : "Public") +
-                                   (session.HasPassword ? "  •  Password protected" : string.Empty);
+                                   (session.HasPassword ? "  -  Password protected" : string.Empty);
             joinCodeText.text = session.Code ?? string.Empty;
             playersText.text = BuildPlayerList(session);
             startGameButton.gameObject.SetActive(session.IsHost);
@@ -175,7 +246,7 @@ namespace Hullbreach.NetCode.Entities
                 row.transform.Find("NameText").GetComponent<TMP_Text>().text = session.Name;
                 row.transform.Find("DetailsText").GetComponent<TMP_Text>().text =
                     $"{session.MaxPlayers - session.AvailableSlots}/{session.MaxPlayers}" +
-                    (session.HasPassword ? "  •  Password" : "  •  Open");
+                    (session.HasPassword ? "  -  Password" : "  -  Open");
                 string sessionId = session.Id;
                 row.transform.Find("JoinButton").GetComponent<Button>().onClick.AddListener(
                     () => Run(_service.JoinPublicSessionAsync(sessionId, joinPasswordInput.text)));
@@ -211,7 +282,7 @@ namespace Hullbreach.NetCode.Entities
             }
             catch (Exception exception)
             {
-                _localError = exception.Message;
+                _localError = FriendlyError.From(exception.Message, _service.IsReady);
                 Debug.LogWarning($"Hullbreach lobby operation failed: {exception.Message}");
                 Refresh();
             }
