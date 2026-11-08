@@ -1,6 +1,7 @@
 using System.IO;
 using System.Linq;
 using Hullbreach.NetCode.Entities;
+using Hullbreach.Platform;
 using Hullbreach.Game;
 using TMPro;
 using Unity.NetCode;
@@ -72,11 +73,11 @@ namespace Hullbreach.Editor
             scaler.matchWidthOrHeight = 0.5f;
             canvasRoot.AddComponent<GraphicRaycaster>();
 
-            Image background = AddImage(canvasRoot.transform, "Background", new Color(0.025f, 0.04f, 0.075f, 1f));
+            Image background = AddImage(canvasRoot.transform, "Background", BrandColors.Background);
             Stretch(background.rectTransform);
 
             GameObject panel = AddPanel(background.transform, "MainPanel", new Vector2(1180f, 760f),
-                new Color(0.06f, 0.09f, 0.15f, 0.97f));
+                BrandColors.Panel);
             VerticalLayoutGroup mainLayout = panel.AddComponent<VerticalLayoutGroup>();
             mainLayout.padding = new RectOffset(34, 34, 26, 26);
             mainLayout.spacing = 12f;
@@ -90,7 +91,7 @@ namespace Hullbreach.Editor
             TMP_Text status = AddText(panel.transform, "StatusText", "Connecting to Unity Services...", 18f,
                 TextAlignmentOptions.Center);
             TMP_Text error = AddText(panel.transform, "ErrorText", string.Empty, 17f, TextAlignmentOptions.Center);
-            error.color = new Color(1f, 0.42f, 0.4f);
+            error.color = BrandColors.Orange;
             error.gameObject.SetActive(false);
 
             GameObject browser = AddUiObject(panel.transform, "BrowserRoot");
@@ -102,7 +103,7 @@ namespace Hullbreach.Editor
             browserLayout.childForceExpandHeight = true;
             browserLayout.childForceExpandWidth = true;
 
-            GameObject actions = AddPanel(browser.transform, "HostAndJoin", Vector2.zero, new Color(0.09f, 0.13f, 0.2f, 1f));
+            GameObject actions = AddPanel(browser.transform, "HostAndJoin", Vector2.zero, BrandColors.Raised);
             VerticalLayoutGroup actionLayout = actions.AddComponent<VerticalLayoutGroup>();
             actionLayout.padding = new RectOffset(22, 22, 20, 20);
             actionLayout.spacing = 8f;
@@ -120,7 +121,7 @@ namespace Hullbreach.Editor
             Toggle privateToggle = AddToggle(actions.transform, "PrivateToggle", "Private (join code only)");
             AddText(actions.transform, "HostPasswordLabel", "Password (optional, 8-64 characters)", 16f);
             TMP_InputField hostPassword = AddInput(actions.transform, "HostPasswordInput", string.Empty, true);
-            Button hostButton = AddButton(actions.transform, "HostButton", "HOST WITH RELAY", 46f);
+            Button hostButton = AddButton(actions.transform, "HostButton", "HOST WITH RELAY", 46f, primary: true);
 
             AddSpacer(actions.transform, 10f);
             AddSectionTitle(actions.transform, "JOIN BY CODE");
@@ -135,7 +136,7 @@ namespace Hullbreach.Editor
             TMP_InputField lanAddress = AddInput(actions.transform, "LanAddressInput", "Host IP, e.g. 192.168.1.23", false);
             Button lanJoinButton = AddButton(actions.transform, "LanJoinButton", "JOIN ADDRESS", 44f);
 
-            GameObject publicPanel = AddPanel(browser.transform, "PublicLobbies", Vector2.zero, new Color(0.09f, 0.13f, 0.2f, 1f));
+            GameObject publicPanel = AddPanel(browser.transform, "PublicLobbies", Vector2.zero, BrandColors.Raised);
             VerticalLayoutGroup publicLayout = publicPanel.AddComponent<VerticalLayoutGroup>();
             publicLayout.padding = new RectOffset(22, 22, 20, 20);
             publicLayout.spacing = 10f;
@@ -147,7 +148,7 @@ namespace Hullbreach.Editor
             Button refreshButton = AddButton(publicPanel.transform, "RefreshButton", "REFRESH", 40f);
             Transform listContent = AddScrollList(publicPanel.transform, out GameObject rowTemplate);
 
-            GameObject room = AddPanel(panel.transform, "RoomRoot", Vector2.zero, new Color(0.09f, 0.13f, 0.2f, 1f));
+            GameObject room = AddPanel(panel.transform, "RoomRoot", Vector2.zero, BrandColors.Raised);
             room.AddComponent<LayoutElement>().flexibleHeight = 1f;
             VerticalLayoutGroup roomLayout = room.AddComponent<VerticalLayoutGroup>();
             roomLayout.padding = new RectOffset(40, 40, 30, 30);
@@ -164,9 +165,10 @@ namespace Hullbreach.Editor
             AddText(room.transform, "PlayersLabel", "PLAYERS", 16f, TextAlignmentOptions.Center);
             TMP_Text players = AddText(room.transform, "PlayersText", string.Empty, 20f, TextAlignmentOptions.Center);
             players.gameObject.AddComponent<LayoutElement>().flexibleHeight = 1f;
-            Button start = AddButton(room.transform, "StartGameButton", "START GAME", 52f);
+            Button start = AddButton(room.transform, "StartGameButton", "START GAME", 52f, primary: true);
             Button leave = AddButton(room.transform, "LeaveButton", "LEAVE LOBBY", 44f);
             room.SetActive(false);
+            Button quit = AddButton(panel.transform, "QuitButton", "QUIT GAME", 36f);
 
             HullbreachLobbyView view = canvasRoot.AddComponent<HullbreachLobbyView>();
             SerializedObject serialized = new SerializedObject(view);
@@ -194,6 +196,7 @@ namespace Hullbreach.Editor
             Set(serialized, "playersText", players);
             Set(serialized, "startGameButton", start);
             Set(serialized, "leaveButton", leave);
+            Set(serialized, "quitButton", quit);
             serialized.FindProperty("gameplaySceneName").stringValue = HullbreachLobbyService.DefaultGameScene;
             serialized.ApplyModifiedPropertiesWithoutUndo();
 
@@ -215,10 +218,10 @@ namespace Hullbreach.Editor
             scaler.matchWidthOrHeight = 0.5f;
             canvasRoot.AddComponent<GraphicRaycaster>();
 
-            Image blocker = AddImage(canvasRoot.transform, "SignInRoot", new Color(0.025f, 0.04f, 0.075f, 0.985f));
+            Image blocker = AddImage(canvasRoot.transform, "SignInRoot", BrandColors.Background);
             Stretch(blocker.rectTransform);
-            GameObject panel = AddPanel(blocker.transform, "SignInPanel", new Vector2(620f, 520f),
-                new Color(0.06f, 0.09f, 0.15f, 0.97f));
+            GameObject panel = AddPanel(blocker.transform, "SignInPanel", new Vector2(620f, 560f),
+                BrandColors.Panel);
             VerticalLayoutGroup layout = panel.AddComponent<VerticalLayoutGroup>();
             layout.padding = new RectOffset(40, 40, 32, 32);
             layout.spacing = 10f;
@@ -229,6 +232,8 @@ namespace Hullbreach.Editor
 
             TMP_Text title = AddText(panel.transform, "Title", "HULLBREACH", 34f, TextAlignmentOptions.Center);
             title.fontStyle = FontStyles.Bold;
+            TMP_Text tagline = AddText(panel.transform, "Tagline", BrandPalette.Tagline, 18f, TextAlignmentOptions.Center);
+            tagline.color = BrandColors.Cyan;
             AddText(panel.transform, "Subtitle", "Sign in with your Hullbreach account", 18f, TextAlignmentOptions.Center);
             AddSpacer(panel.transform, 6f);
             AddText(panel.transform, "UsernameLabel", "Username", 16f);
@@ -239,12 +244,11 @@ namespace Hullbreach.Editor
             TMP_Text message = AddText(panel.transform, "MessageText", string.Empty, 16f, TextAlignmentOptions.Center);
             message.textWrappingMode = TextWrappingModes.Normal;
             message.gameObject.GetComponent<LayoutElement>().preferredHeight = 48f;
-            Button signIn = AddButton(panel.transform, "SignInButton", "SIGN IN", 48f);
+            Button signIn = AddButton(panel.transform, "SignInButton", "SIGN IN", 48f, primary: true);
             Button offline = AddButton(panel.transform, "PlayOfflineButton", "PLAY OFFLINE", 42f);
-            offline.GetComponent<Image>().color = new Color(0.16f, 0.22f, 0.32f, 1f);
-
+    
             GameObject account = AddPanel(canvasRoot.transform, "AccountRoot", new Vector2(520f, 56f),
-                new Color(0.04f, 0.065f, 0.11f, 0.92f));
+                BrandColors.Panel);
             RectTransform accountRect = account.GetComponent<RectTransform>();
             accountRect.anchorMin = accountRect.anchorMax = accountRect.pivot = new Vector2(1f, 1f);
             accountRect.anchoredPosition = new Vector2(-18f, -18f);
@@ -283,7 +287,7 @@ namespace Hullbreach.Editor
         {
             Scene scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
             scene.name = HullbreachLobbyService.DefaultLobbyScene;
-            CreateCamera(new Color(0.025f, 0.04f, 0.075f));
+            CreateCamera(BrandColors.Background);
             CreateEventSystem();
             GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(LobbyPrefabPath);
             PrefabUtility.InstantiatePrefab(prefab);
@@ -303,7 +307,7 @@ namespace Hullbreach.Editor
             }
 
             Camera camera = Camera.main;
-            if (camera == null) camera = CreateCamera(new Color(0.015f, 0.02f, 0.035f));
+            if (camera == null) camera = CreateCamera(BrandColors.Background);
             CameraFollow oldFollow = camera.GetComponent<CameraFollow>();
             if (oldFollow != null) Object.DestroyImmediate(oldFollow);
             camera.orthographic = true;
@@ -332,7 +336,7 @@ namespace Hullbreach.Editor
             canvasGo.AddComponent<GraphicRaycaster>();
 
             GameObject statusPanel = AddPanel(canvasGo.transform, "NetworkStatusPanel", new Vector2(900f, 130f),
-                new Color(0.04f, 0.065f, 0.11f, 0.92f));
+                BrandColors.Panel);
             RectTransform statusRect = statusPanel.GetComponent<RectTransform>();
             statusRect.anchorMin = statusRect.anchorMax = statusRect.pivot = new Vector2(0f, 1f);
             statusRect.anchoredPosition = new Vector2(18f, -18f);
@@ -440,7 +444,7 @@ namespace Hullbreach.Editor
             label.text = text;
             label.fontSize = size;
             label.alignment = alignment;
-            label.color = new Color(0.9f, 0.95f, 1f);
+            label.color = BrandColors.Ink;
             label.textWrappingMode = TextWrappingModes.NoWrap;
             LayoutElement layout = go.AddComponent<LayoutElement>();
             layout.preferredHeight = Mathf.Max(26f, size + 8f);
@@ -451,14 +455,14 @@ namespace Hullbreach.Editor
         {
             TMP_Text label = AddText(parent, text.Replace(" ", string.Empty) + "Title", text, 22f);
             label.fontStyle = FontStyles.Bold;
-            label.color = new Color(0.32f, 0.82f, 1f);
+            label.color = BrandColors.Cyan;
         }
 
         static TMP_InputField AddInput(Transform parent, string name, string placeholderText, bool password)
         {
             GameObject root = AddUiObject(parent, name);
             Image image = root.AddComponent<Image>();
-            image.color = new Color(0.025f, 0.045f, 0.08f, 1f);
+            image.color = BrandColors.Background;
             LayoutElement layout = root.AddComponent<LayoutElement>();
             layout.preferredHeight = 42f;
 
@@ -468,7 +472,7 @@ namespace Hullbreach.Editor
             viewport.AddComponent<RectMask2D>();
 
             TMP_Text placeholder = AddText(viewport.transform, "Placeholder", placeholderText, 17f);
-            placeholder.color = new Color(0.55f, 0.63f, 0.72f);
+            placeholder.color = BrandColors.Muted;
             Stretch(placeholder.rectTransform);
             TMP_Text text = AddText(viewport.transform, "Text", string.Empty, 17f);
             Stretch(text.rectTransform);
@@ -489,12 +493,12 @@ namespace Hullbreach.Editor
             LayoutElement layout = root.AddComponent<LayoutElement>();
             layout.preferredHeight = 34f;
             Toggle toggle = root.AddComponent<Toggle>();
-            Image background = AddImage(root.transform, "Background", new Color(0.025f, 0.045f, 0.08f, 1f));
+            Image background = AddImage(root.transform, "Background", BrandColors.Background);
             RectTransform backgroundRect = background.rectTransform;
             backgroundRect.anchorMin = backgroundRect.anchorMax = new Vector2(0f, 0.5f);
             backgroundRect.sizeDelta = new Vector2(26f, 26f);
             backgroundRect.anchoredPosition = new Vector2(13f, 0f);
-            Image check = AddImage(background.transform, "Checkmark", new Color(0.25f, 0.82f, 1f, 1f));
+            Image check = AddImage(background.transform, "Checkmark", BrandColors.Cyan);
             Stretch(check.rectTransform, 5f, 5f);
             TMP_Text label = AddText(root.transform, "Label", text, 16f);
             label.rectTransform.anchorMin = Vector2.zero;
@@ -507,28 +511,34 @@ namespace Hullbreach.Editor
             return toggle;
         }
 
-        static Button AddButton(Transform parent, string name, string text, float height)
+        // Primary buttons are signal orange with dark text; every other button is raised with a cyan label.
+        // frob:ticket 01M6WV5HP3KVSZNJT6H99MFS3Z
+        static Button AddButton(Transform parent, string name, string text, float height, bool primary = false)
         {
             GameObject root = AddUiObject(parent, name);
             Image image = root.AddComponent<Image>();
-            image.color = new Color(0.1f, 0.52f, 0.75f, 1f);
+            image.color = primary ? BrandColors.Orange : BrandColors.Raised;
             Button button = root.AddComponent<Button>();
             button.targetGraphic = image;
             ColorBlock colors = button.colors;
-            colors.highlightedColor = new Color(0.18f, 0.68f, 0.92f, 1f);
-            colors.pressedColor = new Color(0.06f, 0.37f, 0.58f, 1f);
+            colors.normalColor = Color.white;
+            colors.highlightedColor = new Color(0.88f, 0.88f, 0.88f, 1f);
+            colors.selectedColor = new Color(0.88f, 0.88f, 0.88f, 1f);
+            colors.pressedColor = new Color(0.7f, 0.7f, 0.7f, 1f);
+            colors.disabledColor = new Color(0.45f, 0.45f, 0.45f, 0.7f);
             button.colors = colors;
             LayoutElement layout = root.AddComponent<LayoutElement>();
             layout.preferredHeight = height;
             TMP_Text label = AddText(root.transform, "Label", text, 17f, TextAlignmentOptions.Center);
             label.fontStyle = FontStyles.Bold;
+            label.color = primary ? BrandColors.Background : BrandColors.Cyan;
             Stretch(label.rectTransform);
             return button;
         }
 
         static Transform AddScrollList(Transform parent, out GameObject rowTemplate)
         {
-            GameObject scrollGo = AddPanel(parent, "LobbyScroll", Vector2.zero, new Color(0.025f, 0.045f, 0.08f, 1f));
+            GameObject scrollGo = AddPanel(parent, "LobbyScroll", Vector2.zero, BrandColors.Background);
             scrollGo.AddComponent<LayoutElement>().flexibleHeight = 1f;
             ScrollRect scroll = scrollGo.AddComponent<ScrollRect>();
             scroll.horizontal = false;
@@ -557,7 +567,7 @@ namespace Hullbreach.Editor
             scroll.viewport = viewport.GetComponent<RectTransform>();
             scroll.content = contentRect;
 
-            rowTemplate = AddPanel(content.transform, "LobbyRowTemplate", Vector2.zero, new Color(0.08f, 0.13f, 0.2f, 1f));
+            rowTemplate = AddPanel(content.transform, "LobbyRowTemplate", Vector2.zero, BrandColors.Panel);
             rowTemplate.AddComponent<LayoutElement>().preferredHeight = 76f;
             HorizontalLayoutGroup rowLayout = rowTemplate.AddComponent<HorizontalLayoutGroup>();
             rowLayout.padding = new RectOffset(14, 10, 8, 8);
@@ -568,7 +578,7 @@ namespace Hullbreach.Editor
             rowLayout.childForceExpandWidth = false;
             TMP_Text name = AddText(rowTemplate.transform, "NameText", "Lobby Name", 18f);
             name.gameObject.GetComponent<LayoutElement>().flexibleWidth = 1f;
-            TMP_Text details = AddText(rowTemplate.transform, "DetailsText", "1/8 • Open", 15f);
+            TMP_Text details = AddText(rowTemplate.transform, "DetailsText", "1/8 - Open", 15f);
             details.gameObject.GetComponent<LayoutElement>().preferredWidth = 150f;
             Button join = AddButton(rowTemplate.transform, "JoinButton", "JOIN", 44f);
             join.gameObject.GetComponent<LayoutElement>().preferredWidth = 90f;
