@@ -1,0 +1,8 @@
+kind = "transition"
+from = "todo"
+to = "done"
+outcome = "wont-fix"
+reason = "post-demo scope: save/load of designs is unbuilt past the model; the builder UI (S35-3) is dropped and the storage decision is open"
+at = "2026-11-08T07:49:53Z"
+actor = "mcnairrobotics"
+rev = 1
