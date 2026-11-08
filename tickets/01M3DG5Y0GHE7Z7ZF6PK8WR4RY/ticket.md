@@ -2,12 +2,13 @@
 id = "01M3DG5Y0GHE7Z7ZF6PK8WR4RY"
 title = "S27: Adjust settings"
 type = "story"
-category = "todo"
+category = "done"
+outcome = "wont-fix"
 priority = "medium"
 parent = "01M3DG5Y02BXW6QBAG8X1JFSW2"
 reporter = "human"
 created = "2026-09-26T00:00:00Z"
-updated = "2026-09-26T00:00:00Z"
+updated = "2026-11-08T07:49:54Z"
 aliases = ["T-0016"]
 labels = ["jira:SCRUM-48", "owner:stevendangkhoi", "game", "milestone:0.1.0"]
 
