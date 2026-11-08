@@ -82,7 +82,7 @@ namespace Hullbreach.Net
         // frob:doc docs/reference/hullbreach-net.md#loopbacktransport
         public LoopbackTransport(int? seed = null)
         {
-            _rng = seed.HasValue ? new Random(seed.Value) : new Random();
+            _rng = seed.HasValue ? new Random(seed.Value) : new Random(); // NOSONAR S2245: simulated packet loss and jitter, not security
         }
 
         // Hub tuned to a throttled link: one-way delay is half the round trip,

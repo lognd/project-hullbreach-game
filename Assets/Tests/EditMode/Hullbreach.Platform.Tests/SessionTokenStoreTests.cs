@@ -34,7 +34,7 @@ namespace Hullbreach.Platform.Tests
         SessionTokenStore NewStore() => new SessionTokenStore(_path, _log);
 
         SignInModel NewModel() =>
-            new SignInModel(new PlatformClient(new PlatformConfig("http://platform.test"), _http, _log), _log, NewStore());
+            new SignInModel(new PlatformClient(new PlatformConfig("https://platform.test"), _http, _log), _log, NewStore());
 
         [Test]
         public void SaveThenLoad_RoundTripsAcrossInstances()

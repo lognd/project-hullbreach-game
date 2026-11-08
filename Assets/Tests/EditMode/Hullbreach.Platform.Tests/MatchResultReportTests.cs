@@ -27,7 +27,7 @@ namespace Hullbreach.Platform.Tests
         public void NoSecretsLogged() => StringAssert.DoesNotContain("SECRET", _log.All);
 
         PlatformClient Client(string key = Key) =>
-            new PlatformClient(new PlatformConfig("http://platform.test:8002/", 3, false, key), _http, _log);
+            new PlatformClient(new PlatformConfig("https://platform.test:8002/", 3, false, key), _http, _log);
 
         static MatchResultReport Report(string winner = UserA, int duration = 240, string idB = UserB) =>
             new MatchResultReport(Match, winner, duration, new[]
@@ -89,7 +89,7 @@ namespace Hullbreach.Platform.Tests
             var outcome = Post(Report(), PlatformHttpResponse.Http(201, "{}"));
             var request = _http.Requests[0];
             Assert.AreEqual(PlatformHttpMethod.Post, request.Method);
-            Assert.AreEqual("http://platform.test:8002/api/v1/matches", request.Url);
+            Assert.AreEqual("https://platform.test:8002/api/v1/matches", request.Url);
             Assert.AreEqual(Key, request.Header("X-Server-Key"));
             Assert.IsNull(request.Header("Authorization"));
             Assert.AreEqual(Report().ToJson(), request.Body);

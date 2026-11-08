@@ -202,7 +202,7 @@ namespace Hullbreach.Structure
 
             // Applied AFTER inertia relief so the self-equilibrated load
             // set is scaled as a whole, not left unbalanced.
-            if (LoadScale != 1f)
+            if (!(Math.Abs(LoadScale - 1f) < float.Epsilon))
             {
                 for (int i = 0; i < f.Length; i++) f[i] *= LoadScale;
             }

@@ -74,7 +74,8 @@ namespace Hullbreach.Platform.Tests
                 var message = new HttpRequestMessage(HttpMethod.Get, url + "/api/v1/me");
                 message.Headers.TryAddWithoutValidation("Authorization", "Bearer " + token);
                 string body = http.SendAsync(message).GetAwaiter().GetResult().Content.ReadAsStringAsync().GetAwaiter().GetResult();
-                var match = System.Text.RegularExpressions.Regex.Match(body, "\"rating\"\\s*:\\s*(\\d+)");
+                var match = System.Text.RegularExpressions.Regex.Match(body, "\"rating\"\\s*:\\s*(\\d+)",
+                    System.Text.RegularExpressions.RegexOptions.None, System.TimeSpan.FromSeconds(1));
                 Assert.IsTrue(match.Success, "no rating in /me answer");
                 return int.Parse(match.Groups[1].Value);
             }

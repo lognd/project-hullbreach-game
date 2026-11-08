@@ -59,7 +59,9 @@ def _field(text: str, name: str) -> str:
 def enabled_scenes(build_settings: str) -> list[str]:
     """Enabled scene paths from EditorBuildSettings.asset, in build order."""
     found = re.findall(
-        r"-\s+enabled:\s*(\d)\s*\n\s*path:\s*(\S+)", build_settings, re.MULTILINE
+        r"-[ \t]+enabled:[ \t]*(\d)[ \t\r]*\n\s*path:[ \t]*(\S+)",
+        build_settings,
+        re.MULTILINE,
     )
     return [path for enabled, path in found if enabled == "1"]
 

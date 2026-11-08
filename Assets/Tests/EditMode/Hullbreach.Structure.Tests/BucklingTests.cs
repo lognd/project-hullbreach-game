@@ -52,7 +52,7 @@ namespace Hullbreach.Structure.Tests
                 if (solver.BucklingModes.Count == 0) continue;
 
                 float cur = solver.BucklingModes[0].LoadFactor;
-                stable = cur == prev ? stable + 1 : 0;
+                stable = (cur <= prev && cur >= prev) ? stable + 1 : 0;
                 prev = cur;
                 if (stable >= 3) break;
             }

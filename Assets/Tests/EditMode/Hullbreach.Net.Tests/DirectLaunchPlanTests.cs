@@ -42,11 +42,11 @@ namespace Hullbreach.Net.Tests
         [Test]
         public void Connect_IsClientOnly_SoItNeverOpensItsOwnServer()
         {
-            var plan = Parse(false, "-hullbreachConnect", "192.168.1.23", "-hullbreachPort", "7980");
+            var plan = Parse(false, "-hullbreachConnect", TestAddresses.LanHost, "-hullbreachPort", "7980");
             Assert.AreEqual(LaunchRole.Client, plan.Role);
             Assert.IsFalse(plan.CreatesServerWorld);
             Assert.IsTrue(plan.CreatesClientWorld);
-            Assert.AreEqual("192.168.1.23", plan.ConnectAddress);
+            Assert.AreEqual(TestAddresses.LanHost, plan.ConnectAddress);
             Assert.AreEqual(7980, plan.Port);
             Assert.IsTrue(plan.LoadsGameScene);
         }
@@ -54,7 +54,7 @@ namespace Hullbreach.Net.Tests
         [Test]
         public void ConnectWinsOverDirect()
         {
-            var plan = Parse(false, "-hullbreachDirect", "-hullbreachConnect", "10.0.0.5");
+            var plan = Parse(false, "-hullbreachDirect", "-hullbreachConnect", TestAddresses.PeerHost);
             Assert.AreEqual(LaunchRole.Client, plan.Role);
         }
 
@@ -80,7 +80,7 @@ namespace Hullbreach.Net.Tests
         [Test]
         public void ServerIgnoresConnect_WithAWarning()
         {
-            var plan = Parse(true, "-hullbreachConnect", "10.0.0.5");
+            var plan = Parse(true, "-hullbreachConnect", TestAddresses.PeerHost);
             Assert.AreEqual(LaunchRole.Server, plan.Role);
             Assert.AreEqual(1, plan.Warnings.Count);
         }
@@ -127,7 +127,7 @@ namespace Hullbreach.Net.Tests
         [Test]
         public void ArgumentsAreCaseInsensitive()
         {
-            var plan = Parse(false, "-HullbreachConnect", "10.0.0.5");
+            var plan = Parse(false, "-HullbreachConnect", TestAddresses.PeerHost);
             Assert.AreEqual(LaunchRole.Client, plan.Role);
         }
 
@@ -135,7 +135,7 @@ namespace Hullbreach.Net.Tests
         public void Describe_NamesRoleAndEndpoint()
         {
             Assert.AreEqual("Hullbreach direct: role=client connect=10.0.0.5:7979 scene=MultiplayerGame",
-                Parse(false, "-hullbreachConnect", "10.0.0.5").Describe());
+                Parse(false, "-hullbreachConnect", TestAddresses.PeerHost).Describe());
             Assert.AreEqual("Hullbreach direct: role=host listen=0.0.0.0:7979 scene=MultiplayerGame",
                 Parse(false, "-hullbreachDirect").Describe());
             Assert.AreEqual("Hullbreach direct: role=server listen=0.0.0.0:7979 scene=MultiplayerGame",

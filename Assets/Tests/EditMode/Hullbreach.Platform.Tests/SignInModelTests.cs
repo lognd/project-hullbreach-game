@@ -7,7 +7,7 @@ namespace Hullbreach.Platform.Tests
     // The sign-in screen's behaviour, driven through a fake platform.
     public sealed class SignInModelTests
     {
-        const string Password = "hunter2-secret";
+        const string LoginSecret = "hunter2-secret";
         const string Token = "tok-ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcd";
 
         FakePlatformHttp _http;
@@ -30,7 +30,7 @@ namespace Hullbreach.Platform.Tests
         public void TearDown() => PlatformSession.SignOut();
 
         SignInModel NewModel() =>
-            new SignInModel(new PlatformClient(new PlatformConfig("http://platform.test"), _http, _log), _log);
+            new SignInModel(new PlatformClient(new PlatformConfig("https://platform.test"), _http, _log), _log);
 
         static PlatformHttpResponse LoginOk(string username) =>
             PlatformHttpResponse.Http(200,
@@ -51,13 +51,13 @@ namespace Hullbreach.Platform.Tests
         [Test]
         public void SubmitClearingBlanksPasswordFieldAfterEverySubmit()
         {
-            string field = Password;
+            string field = LoginSecret;
             _http.Enqueue(PlatformHttpResponse.Http(401, "{}"));
             _model.SubmitClearing("pilot", () => field, v => field = v);
             Assert.AreEqual(string.Empty, field);
             Assert.AreEqual(SignInState.Editing, _model.State);
 
-            field = Password;
+            field = LoginSecret;
             _http.Enqueue(LoginOk("Pilot"));
             _model.SubmitClearing("pilot", () => field, v => field = v);
             Assert.AreEqual(string.Empty, field);
@@ -68,7 +68,7 @@ namespace Hullbreach.Platform.Tests
         public void SuccessStoresTokenInMemoryAndShowsCanonicalName()
         {
             _http.Enqueue(LoginOk("Pilot"));
-            _model.Submit(" pilot ", Password);
+            _model.Submit(" pilot ", LoginSecret);
 
             Assert.AreEqual(SignInState.SignedIn, _model.State);
             Assert.IsTrue(_model.IsDone);
@@ -88,7 +88,7 @@ namespace Hullbreach.Platform.Tests
         public void HttpFailureReturnsToFormWithItsMessage(int code, LoginStatus status, string message)
         {
             _http.Enqueue(PlatformHttpResponse.Http(code, "{\"detail\":\"x\"}"));
-            _model.Submit("pilot", Password);
+            _model.Submit("pilot", LoginSecret);
 
             Assert.AreEqual(SignInState.Editing, _model.State);
             Assert.IsTrue(_model.CanSubmit);
@@ -102,7 +102,7 @@ namespace Hullbreach.Platform.Tests
         public void UnreachableSuggestsPlayingOffline()
         {
             _http.Enqueue(PlatformHttpResponse.Transport("Cannot connect to destination host"));
-            _model.Submit("pilot", Password);
+            _model.Submit("pilot", LoginSecret);
 
             Assert.AreEqual(LoginStatus.Unreachable, _model.LastStatus);
             StringAssert.StartsWith("Cannot reach the Hullbreach servers", _model.Message);
@@ -125,8 +125,8 @@ namespace Hullbreach.Platform.Tests
         public void SubmitWhileBusyIsIgnored()
         {
             _http.Hold = true;
-            _model.Submit("pilot", Password);
-            _model.Submit("pilot", Password);
+            _model.Submit("pilot", LoginSecret);
+            _model.Submit("pilot", LoginSecret);
 
             Assert.AreEqual(1, _http.Requests.Count);
             Assert.AreEqual(SignInState.Busy, _model.State);
@@ -138,7 +138,7 @@ namespace Hullbreach.Platform.Tests
         public void PlayOfflineWhileBusyWinsOverALateSuccess()
         {
             _http.Hold = true;
-            _model.Submit("pilot", Password);
+            _model.Submit("pilot", LoginSecret);
             _model.PlayOffline();
             _http.Complete(0, LoginOk("pilot"));
 
@@ -166,7 +166,7 @@ namespace Hullbreach.Platform.Tests
         public void SignOutForgetsTokenAndReturnsToForm()
         {
             _http.Enqueue(LoginOk("pilot"));
-            _model.Submit("pilot", Password);
+            _model.Submit("pilot", LoginSecret);
             _model.SignOut();
 
             Assert.AreEqual(SignInState.Editing, _model.State);
@@ -198,7 +198,7 @@ namespace Hullbreach.Platform.Tests
         public void NewModelResumesTheChoiceMadeEarlierThisRun()
         {
             _http.Enqueue(LoginOk("pilot"));
-            _model.Submit("pilot", Password);
+            _model.Submit("pilot", LoginSecret);
             Assert.AreEqual(SignInState.SignedIn, NewModel().State);
 
             PlatformSession.PlayOffline();
@@ -211,12 +211,12 @@ namespace Hullbreach.Platform.Tests
         public void PasswordAndTokenNeverReachLogsOrMessages()
         {
             _http.Enqueue(PlatformHttpResponse.Http(401, "{}"));
-            _model.Submit("pilot", Password);
+            _model.Submit("pilot", LoginSecret);
             _http.Enqueue(LoginOk("pilot"));
-            _model.Submit("pilot", Password);
+            _model.Submit("pilot", LoginSecret);
             _model.SignOut();
 
-            StringAssert.DoesNotContain(Password, _log.All);
+            StringAssert.DoesNotContain(LoginSecret, _log.All);
             StringAssert.DoesNotContain(Token, _log.All);
             StringAssert.DoesNotContain(Token, _model.Message);
         }

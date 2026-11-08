@@ -10,7 +10,7 @@ namespace Hullbreach.Net.Tests
     {
         const int Iterations = 5000;
 
-        static Random NewRng(int salt) => new Random(unchecked(1000003 * salt + 7));
+        static Random NewRng(int salt) => new Random(unchecked(1000003 * salt + 7)); // NOSONAR S2245: seeded PRNG for reproducible test data, not security
 
         [Test]
         public void InputMessage_RandomizedRoundTrip()

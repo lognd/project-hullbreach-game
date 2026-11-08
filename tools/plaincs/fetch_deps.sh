@@ -16,12 +16,12 @@ um_commit=53b0c4756c3c0dff3746285a8b83e858c26cdb06
 mkdir -p .deps
 # Re-fetch when the directory is missing or sits on a different commit
 # (for example a stale tag clone from before the pin).
-if [ "$(git -C .deps/um rev-parse HEAD 2>/dev/null || true)" != "$um_commit" ]; then
+if [[ "$(git -C .deps/um rev-parse HEAD 2>/dev/null || true)" != "$um_commit" ]]; then
     rm -rf .deps/um
     git init -q .deps/um
     git -C .deps/um fetch -q --depth 1 "$um_url" "$um_commit"
     git -C .deps/um -c advice.detachedHead=false checkout -q FETCH_HEAD
     got=$(git -C .deps/um rev-parse HEAD)
-    [ "$got" = "$um_commit" ] || { echo "Unity.Mathematics pin mismatch: $got"; exit 1; }
+    [[ "$got" = "$um_commit" ]] || { echo "Unity.Mathematics pin mismatch: $got"; exit 1; }
 fi
 echo "deps ready: .deps/um @ $um_commit"

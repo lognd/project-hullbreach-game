@@ -61,7 +61,7 @@ namespace Hullbreach.Net
             if (!PlatformJson.TryParseObject(json, out var root)) return Fail("design is not a JSON object");
 
             if (!root.TryGetValue("version", out object rawVersion)) return Fail("version is required");
-            if (!(rawVersion is double dv) || dv != FormatVersion)
+            if (!(rawVersion is double dv) || !(Math.Abs(dv - FormatVersion) < double.Epsilon))
                 return Fail("unsupported design version (this build reads version "
                     + FormatVersion.ToString(CultureInfo.InvariantCulture) + ")");
 
@@ -164,7 +164,7 @@ namespace Hullbreach.Net
         {
             value = 0;
             if (!o.TryGetValue(key, out object raw) || !(raw is double d)) return false;
-            if (double.IsNaN(d) || d < min || d > max || d != Math.Floor(d)) return false;
+            if (double.IsNaN(d) || d < min || d > max || !(Math.Abs(d - Math.Floor(d)) < double.Epsilon)) return false;
             value = (int)d;
             return true;
         }

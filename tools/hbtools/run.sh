@@ -14,7 +14,7 @@ find_uv() {
         return 0
     fi
     for candidate in "$HOME/.local/bin/uv" "$HOME/.cargo/bin/uv"; do
-        if [ -x "$candidate" ]; then
+        if [[ -x "$candidate" ]]; then
             echo "$candidate"
             return 0
         fi
@@ -23,14 +23,14 @@ find_uv() {
 }
 
 uv_bin="$(find_uv)"
-if [ -z "$uv_bin" ]; then
+if [[ -z "$uv_bin" ]]; then
     echo "The Hullbreach tools need a small helper program called uv."
     echo "uv downloads the right Python for you; it does not change your system Python."
     echo "It is installed with the official installer from https://astral.sh/uv"
     echo "(the command is: curl -LsSf https://astral.sh/uv/install.sh | sh)."
     echo
     answer=""
-    if [ -r /dev/tty ]; then
+    if [[ -r /dev/tty ]]; then
         printf "Install uv now? Type y and press Enter for yes [y/N]: "
         read -r answer </dev/tty
     fi
@@ -47,20 +47,20 @@ if [ -z "$uv_bin" ]; then
         echo "then run this again."
         exit 1
     fi
-    curl -LsSf https://astral.sh/uv/install.sh | sh || {
+    curl --proto "=https" --tlsv1.2 -LsSf https://astral.sh/uv/install.sh | sh || {
         echo "The uv installer failed (see the messages above). Check your internet"
         echo "connection and run this again."
         exit 1
     }
     uv_bin="$(find_uv)"
-    if [ -z "$uv_bin" ]; then
+    if [[ -z "$uv_bin" ]]; then
         echo "uv was installed but this terminal cannot see it yet."
         echo "Close this terminal, open a new one, and run this again."
         exit 1
     fi
 fi
 
-if [ ! -d "$here/.venv" ]; then
+if [[ ! -d "$here/.venv" ]]; then
     echo "Preparing the Hullbreach tools (the first time takes a minute)..."
 fi
 exec "$uv_bin" run --quiet --project "$here" "$tool" "$@"

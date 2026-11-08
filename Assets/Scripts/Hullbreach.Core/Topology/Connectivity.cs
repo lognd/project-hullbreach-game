@@ -88,8 +88,10 @@ namespace Hullbreach.Core
 
             while (remaining.Count > 0)
             {
-                int seed = -1;
-                foreach (var k in remaining) { seed = k; break; }
+                // remaining is non-empty here, so the first element is the seed.
+                using var first = remaining.GetEnumerator();
+                first.MoveNext();
+                int seed = first.Current;
 
                 var component = new List<int>();
                 var stack = new Stack<int>();

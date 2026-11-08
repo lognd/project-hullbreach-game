@@ -7,11 +7,11 @@ namespace Hullbreach.Platform.Tests
     public sealed class PlatformClientTests
     {
         const string Token = "tok-SECRET-123";
-        const string Password = "pw-SECRET-456";
+        const string LoginSecret = "pw-SECRET-456";
         const string Key = "key-SECRET-789";
 
         static PlatformClient Client(FakePlatformHttp http, RecordingPlatformLog log, string serverKey = null) =>
-            new PlatformClient(new PlatformConfig("http://platform.test:8002/", 3, false, serverKey), http, log);
+            new PlatformClient(new PlatformConfig("https://platform.test:8002/", 3, false, serverKey), http, log);
 
         static LoginOutcome LoginWith(PlatformHttpResponse response, out FakePlatformHttp http, out RecordingPlatformLog log)
         {
@@ -19,7 +19,7 @@ namespace Hullbreach.Platform.Tests
             log = new RecordingPlatformLog();
             http.Enqueue(response);
             LoginOutcome result = default;
-            Client(http, log).Login(" pilot ", Password, outcome => result = outcome);
+            Client(http, log).Login(" pilot ", LoginSecret, outcome => result = outcome);
             return result;
         }
 
@@ -30,8 +30,8 @@ namespace Hullbreach.Platform.Tests
             Assert.AreEqual(1, http.Requests.Count);
             var request = http.Requests[0];
             Assert.AreEqual(PlatformHttpMethod.Post, request.Method);
-            Assert.AreEqual("http://platform.test:8002/api/v1/auth/login", request.Url);
-            Assert.AreEqual("{\"username\":\"pilot\",\"password\":\"" + Password + "\"}", request.Body);
+            Assert.AreEqual("https://platform.test:8002/api/v1/auth/login", request.Url);
+            Assert.AreEqual("{\"username\":\"pilot\",\"password\":\"" + LoginSecret + "\"}", request.Body);
             Assert.AreEqual(3.0, request.TimeoutSeconds);
             Assert.IsNull(request.Header("Authorization"));
         }
@@ -116,7 +116,7 @@ namespace Hullbreach.Platform.Tests
 
             var request = http.Requests[0];
             Assert.AreEqual(PlatformHttpMethod.Get, request.Method);
-            Assert.AreEqual("http://platform.test:8002/api/v1/auth/session", request.Url);
+            Assert.AreEqual("https://platform.test:8002/api/v1/auth/session", request.Url);
             Assert.IsNull(request.Body);
             Assert.AreEqual("Bearer " + Token, request.Header("authorization"));
             Assert.AreEqual(Key, request.Header(PlatformClient.ServerKeyHeader));

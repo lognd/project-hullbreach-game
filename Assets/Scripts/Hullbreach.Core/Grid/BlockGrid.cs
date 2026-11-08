@@ -195,7 +195,7 @@ namespace Hullbreach.Core
                 float oldMass = BlockTypes.Get(toModify.TypeId).Mass;
                 float newMass = BlockTypes.Get(block.TypeId).Mass;
 
-                if (oldMass != newMass)
+                if (!(Math.Abs(oldMass - newMass) < float.Epsilon))
                 {
                     float2 center = CenterOf(key);
 

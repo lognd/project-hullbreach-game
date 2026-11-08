@@ -26,7 +26,7 @@ dn=""
 for c in dotnet "/mnt/c/Program Files/dotnet/dotnet.exe"; do
     if command -v "$c" >/dev/null 2>&1; then dn="$c"; break; fi
 done
-[ -n "$dn" ] || { echo "dotnet SDK not found"; exit 2; }
+[[ -n "$dn" ]] || { echo "dotnet SDK not found"; exit 2; }
 proj=Hullbreach.Plain.Tests/Hullbreach.Plain.Tests.csproj
 if printf '%s\n' "$@" | grep -q -- '--filter'; then
     "$dn" test "$proj" --nologo -v q -c Release "$@"

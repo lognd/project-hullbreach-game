@@ -69,7 +69,7 @@ namespace Hullbreach.NetCode.Entities
             DontDestroyOnLoad(gameObject);
         }
 
-        async void Start()
+        async void Start() // NOSONAR S3168: Unity message must stay void; errors are caught inside
         {
             bool smoke = OnlineSmoke.Requested(Environment.GetEnvironmentVariable(OnlineSmoke.EnvVar));
             try
@@ -244,7 +244,7 @@ namespace Hullbreach.NetCode.Entities
                     new SessionProperty(sceneName.Trim(), VisibilityPropertyOptions.Member));
                 await host.SavePropertiesAsync();
                 Status = "Loading game...";
-                LoadGameSceneIfReady();
+                _ = LoadGameSceneIfReady();
             });
         }
 
@@ -302,10 +302,10 @@ namespace Hullbreach.NetCode.Entities
         void OnSessionChanged()
         {
             NotifyChanged();
-            LoadGameSceneIfReady();
+            _ = LoadGameSceneIfReady();
         }
 
-        async void LoadGameSceneIfReady()
+        async Task LoadGameSceneIfReady()
         {
             if (_loadingGameScene || _session == null ||
                 !_session.Properties.TryGetValue(GameSceneProperty, out SessionProperty property) ||

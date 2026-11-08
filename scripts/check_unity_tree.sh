@@ -14,10 +14,10 @@ fail() { echo "FAIL: $*"; problems=$((problems + 1)); }
 #    makes Unity regenerate GUIDs on the next import and silently breaks
 #    every reference to that asset for everyone else.
 while IFS= read -r -d '' f; do
-    [ -e "$f.meta" ] || fail "missing meta: $f"
+    [[ -e "$f.meta" ]] || fail "missing meta: $f"
 done < <(git ls-files -z Assets | grep -zv '\.meta$' | sed -z 's|/[^/]*$||' | sort -zu | grep -zv '^Assets$'; git ls-files -z Assets | grep -zv '\.meta$')
 while IFS= read -r -d '' m; do
-    [ -e "${m%.meta}" ] || fail "orphan meta: $m"
+    [[ -e "${m%.meta}" ]] || fail "orphan meta: $m"
 done < <(git ls-files -z Assets | grep -z '\.meta$')
 
 # 2. Generated folders must never be committed.
@@ -28,7 +28,7 @@ done
 # 3. The editor version is pinned and everyone uses the same one.
 want="6000.0.43f1"
 have=$(sed -n 's/^m_EditorVersion: //p' ProjectSettings/ProjectVersion.txt | tr -d '\r')
-[ "$have" = "$want" ] || fail "ProjectVersion.txt says $have, expected $want (update this script if the upgrade is deliberate)"
+[[ "$have" = "$want" ]] || fail "ProjectVersion.txt says $have, expected $want (update this script if the upgrade is deliberate)"
 
 # 4. The package manifest and every asmdef parse as JSON.
 #    Git Bash on Windows ships `python`, not `python3`, so resolve whichever
@@ -39,7 +39,7 @@ py=""
 for candidate in python3 python py; do
     if command -v "$candidate" >/dev/null 2>&1; then py="$candidate"; break; fi
 done
-if [ -z "$py" ]; then
+if [[ -z "$py" ]]; then
     fail "no python interpreter found (tried python3, python, py); cannot validate JSON"
 else
     for j in Packages/manifest.json $(git ls-files 'Assets/*.asmdef'); do
@@ -89,11 +89,11 @@ if ! grep -qE 'ValidateDesign|DesignValidator' "$net/ServerSimulation.cs"; then
 fi
 # POL-fetch-pinned-commit (INV-004): a cloned dependency must be pinned to a 40-hex commit.
 while IFS= read -r -d '' f; do
-    [ "$f" = scripts/check_unity_tree.sh ] && continue  # this rule's own text names `git clone`
+    [[ "$f" = scripts/check_unity_tree.sh ]] && continue  # this rule's own text names `git clone`
     if grep -q 'git clone' "$f" && ! grep -qE '\b[0-9a-f]{40}\b' "$f"; then
         fail "POL-fetch-pinned-commit: $f clones without a pinned commit hash (INV-004)"
     fi
 done < <(git ls-files -z 'tools/*.sh' 'scripts/*.sh')
 
-if [ "$problems" -eq 0 ]; then echo "unity tree: clean"; fi
+if [[ "$problems" -eq 0 ]]; then echo "unity tree: clean"; fi
 exit "$problems"

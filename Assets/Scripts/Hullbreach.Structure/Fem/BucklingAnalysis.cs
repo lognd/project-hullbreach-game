@@ -132,7 +132,7 @@ namespace Hullbreach.Structure
         // (Re)allocates every work array and reseeds with a fixed
         // deterministic pattern. Call on topology/mode-count change.
         // frob:doc docs/reference/hullbreach-structure.md#bucklinganalysis
-        public void Reset(int dof, int modeCount, float[][] rigidModes)
+        internal void Reset(int dof, int modeCount, float[][] rigidModes)
         {
             int m = modeCount + 2;
             _modeCount = modeCount;
@@ -216,7 +216,7 @@ namespace Hullbreach.Structure
         // Runs up to MaxSweepsPerTick sweeps, warm-started from the
         // previous call. Returns true once Ritz values stop moving.
         // frob:doc docs/reference/hullbreach-structure.md#bucklinganalysis
-        public bool Step(StiffnessAssembly k, GeometricStiffness kg, float[][] rigidModes, int tick)
+        internal bool Step(StiffnessAssembly k, GeometricStiffness kg, float[][] rigidModes, int tick)
         {
             int sweeps = 0;
             bool converged = false;
@@ -337,7 +337,7 @@ namespace Hullbreach.Structure
                     }
                     else if (float.IsInfinity(prev) || float.IsInfinity(cur))
                     {
-                        if (prev != cur) converged = false;
+                        if (prev.CompareTo(cur) != 0) converged = false;
                     }
                     else
                     {

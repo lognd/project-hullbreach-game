@@ -38,7 +38,7 @@ namespace Hullbreach.Net.Tests
             "{\"state\":\"matched\",\"rating\":null,\"waited_seconds\":null,\"window\":null,\"match\":{\"match_id\":\"" +
             MatchId + "\",\"server_address\":\"" + address + "\",\"opponent_id\":\"u2\"}}";
 
-        static PlatformConfig Config() => new PlatformConfig("http://platform.test:8002", 3, false, null);
+        static PlatformConfig Config() => new PlatformConfig("https://platform.test:8002", 3, false, null);
 
         // --- handoff ---
 
@@ -93,7 +93,7 @@ namespace Hullbreach.Net.Tests
             Assert.AreEqual(PlatformHttpMethod.Delete, http.Requests[2].Method);
             foreach (var request in http.Requests)
             {
-                Assert.AreEqual("http://platform.test:8002/api/v1/queue", request.Url);
+                Assert.AreEqual("https://platform.test:8002/api/v1/queue", request.Url);
                 Assert.AreEqual("Bearer " + Token, request.Header("Authorization"));
                 Assert.IsNull(request.Body);
             }
@@ -127,7 +127,7 @@ namespace Hullbreach.Net.Tests
             var o = MatchmakingClient.Map(PlatformHttpMethod.Get, PlatformHttpResponse.Http(200, Matched()));
             Assert.AreEqual(QueueWireState.Matched, o.Queue.State);
             Assert.IsTrue(o.Queue.Match.IsOk, o.Queue.Match.Error);
-            Assert.AreEqual("10.0.0.5", o.Queue.Match.Value.Host);
+            Assert.AreEqual(TestAddresses.PeerHost, o.Queue.Match.Value.Host);
             Assert.AreEqual(7777, o.Queue.Match.Value.Port);
         }
 
@@ -335,7 +335,7 @@ namespace Hullbreach.Net.Tests
             s.Tick();
 
             Assert.AreEqual(MatchmakingState.Matched, s.Machine.State);
-            Assert.AreEqual("10.0.0.5", s.Machine.Handoff.Host);
+            Assert.AreEqual(TestAddresses.PeerHost, s.Machine.Handoff.Host);
             Assert.AreEqual(new[] { PlatformHttpMethod.Post, PlatformHttpMethod.Get, PlatformHttpMethod.Get,
                 PlatformHttpMethod.Delete }, Methods(http).ToArray());
         }

@@ -10,7 +10,7 @@ namespace Hullbreach.Structure.Tests
     {
         // Smallest positive lambda solving K phi = -lambda*K_G phi by
         // dense reduction; +Infinity if none is positive.
-        public static float SmallestPositiveLambda(StiffnessAssembly k, GeometricStiffness kg, float[][] rigidModes)
+        internal static float SmallestPositiveLambda(StiffnessAssembly k, GeometricStiffness kg, float[][] rigidModes)
         {
             int n = k.DofCount;
 
