@@ -7,7 +7,7 @@ priority = "medium"
 parent = "01M3DG5Y134BJMWZH7S1QV7EY9"
 reporter = "mcnairrobotics"
 created = "2026-10-26T07:11:19Z"
-updated = "2026-11-08T07:13:09Z"
+updated = "2026-11-08T07:13:23Z"
 scope = ["Assets/Scripts/**", "Assets/Tests/**", "docs/**", "changelog.d/**"]
 +++
 
