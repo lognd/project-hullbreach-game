@@ -1,0 +1,5 @@
+kind = "changelog-exempt"
+reason = "Implemented in ServerSimulation (input timeout, Leave, TryDequeueDroppedPeer) and MatchStateMachine.Disconnect. The NetCode host side is tracked in CYPJRB7."
+at = "2026-11-08T07:13:54Z"
+actor = "mcnairrobotics"
+rev = 1
