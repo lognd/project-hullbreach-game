@@ -1,0 +1,8 @@
+kind = "transition"
+from = "todo"
+to = "done"
+outcome = "wont-fix"
+reason = "post-demo scope: rebindable keys and the Input System migration are not started; legacy Input class remains"
+at = "2026-11-08T07:49:35Z"
+actor = "mcnairrobotics"
+rev = 1
