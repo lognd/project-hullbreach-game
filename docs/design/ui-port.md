@@ -115,6 +115,8 @@ assets), but it has three costs that now matter:
 <!-- describes: Assets/Scripts/Hullbreach.Hud/BuilderHudModel.cs::BuilderHudModel -->
 <!-- describes: Assets/Scripts/Hullbreach.Hud/BuilderHudModel.cs::BuilderHudModel.Build -->
 <!-- describes: Assets/Scripts/Hullbreach.Hud/HudColor.cs::HudColor.CenterTickGrey -->
+<!-- describes: Assets/Scripts/Hullbreach.Hud/StressPalette.cs::StressPalette -->
+<!-- describes: Assets/Scripts/Hullbreach.Hud/StressPalette.cs::StressPalette.Sample -->
 <!-- describes: Assets/Scripts/Hullbreach.Hud/FlightTelemetryModel.cs::ChannelBarValue -->
 <!-- describes: Assets/Scripts/Hullbreach.Hud/FlightTelemetryModel.cs::ChannelBarValue.Label -->
 <!-- describes: Assets/Scripts/Hullbreach.Hud/FlightTelemetryModel.cs::ChannelBarValue.Fill -->
@@ -149,6 +151,8 @@ assets), but it has three costs that now matter:
 - `HudColor` -- readonly RGBA float struct; the palette constants used
   by the HUD today (thrust red, reverse green, steer white, track dark,
   OK green, STRAIN yellow, CRITICAL red, center-tick grey).
+- `StressPalette` -- `Sample(ratio, colorblind)`: green-yellow-red stress
+  ramp, or the Okabe-Ito blue-yellow-vermillion ramp when colorblind is on.
 - `BuilderHudModel` -- from a `BuilderSession`, the palette
   (`BlockPalette.All()`) and the hover verdict string: title line,
   palette rows (name, mass, cost, selected), total mass, block count,
