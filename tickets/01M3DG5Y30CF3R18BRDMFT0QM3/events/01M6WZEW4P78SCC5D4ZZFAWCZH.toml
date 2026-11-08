@@ -1,0 +1,7 @@
+kind = "field"
+field = "acceptance"
+new = ["Seeking thruster pushes toward the nearest enemy and falls back to ship-forward when none is known"]
+moved = []
+at = "2026-11-08T07:02:43Z"
+actor = "mcnairrobotics"
+rev = 1

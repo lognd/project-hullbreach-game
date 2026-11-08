@@ -8,9 +8,13 @@ points = 3
 parent = "01M3DG5Y114RNPPMJWHSPVHVQC"
 reporter = "human"
 created = "2026-09-26T00:00:00Z"
-updated = "2026-11-08T07:02:28Z"
+updated = "2026-11-08T07:02:43Z"
 aliases = ["T-0096"]
 labels = ["jira:SCRUM-205", "owner:GingerVHS", "game", "physics", "milestone:0.3.0"]
+
+[[acceptance]]
+text = "Seeking thruster pushes toward the nearest enemy and falls back to ship-forward when none is known"
+bound = false
 +++
 
 SeekingThrusterBehaviour: homing shot that welds a firing thruster onto the target
