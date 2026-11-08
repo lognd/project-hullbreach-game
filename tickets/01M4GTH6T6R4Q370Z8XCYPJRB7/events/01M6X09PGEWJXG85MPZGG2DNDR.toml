@@ -1,0 +1,6 @@
+kind = "comment"
+subtype = "note"
+body = "Triage: NetCode server system never calls TryDequeueDroppedPeer. Remaining: Unity-only wiring to despawn ghost and connection; cannot be tested in plaincs."
+at = "2026-11-08T07:17:22Z"
+actor = "mcnairrobotics"
+rev = 1
