@@ -2,13 +2,14 @@
 id = "01M4GREJAGKDXEFSY4Z6PT50AD"
 title = "S56-4: Continuous green-to-red stress and buckling feedback in normal play"
 type = "task"
-category = "todo"
+category = "done"
+outcome = "wont-fix"
 priority = "medium"
 points = 3
 parent = "01M4GREG1Z463PSEZHTRFXDEYB"
 reporter = "lognd"
 created = "2026-10-09T16:37:56Z"
-updated = "2026-11-08T07:17:24Z"
+updated = "2026-11-08T07:49:34Z"
 labels = ["owner:a-carten", "game", "physics", "milestone:0.3.0"]
 
 [[acceptance]]
