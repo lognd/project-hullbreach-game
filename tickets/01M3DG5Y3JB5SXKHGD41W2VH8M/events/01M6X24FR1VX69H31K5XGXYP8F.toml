@@ -1,0 +1,8 @@
+kind = "transition"
+from = "todo"
+to = "done"
+outcome = "wont-fix"
+reason = "post-demo scope: boss and co-op are not built; no segmented boss entity or co-op match mode exists"
+at = "2026-11-08T07:49:28Z"
+actor = "mcnairrobotics"
+rev = 1
