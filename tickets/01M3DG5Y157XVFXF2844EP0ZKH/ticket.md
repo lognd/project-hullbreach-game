@@ -2,7 +2,8 @@
 id = "01M3DG5Y157XVFXF2844EP0ZKH"
 title = "S48: Keep the game fluid over the internet"
 type = "story"
-category = "todo"
+category = "done"
+outcome = "done"
 priority = "critical"
 points = 13
 parent = "01M3DG5Y07Q4APXVF7R5P60T9Y"
