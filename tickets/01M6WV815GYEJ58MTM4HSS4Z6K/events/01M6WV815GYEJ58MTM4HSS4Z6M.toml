@@ -1,0 +1,8 @@
+kind = "create"
+title = "Polish ship controls: shaping, smoothing, input hold, focus clear"
+type = "task"
+category = "todo"
+priority = "medium"
+at = "2026-11-08T05:49:02Z"
+actor = "mcnairrobotics"
+rev = 1
