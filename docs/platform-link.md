@@ -416,6 +416,25 @@ the player is simply offline.
 <!-- describes: Assets/Scripts/Hullbreach.NetCode.Entities/HullbreachTabNavigation.cs::HullbreachTabNavigation -->
 <!-- describes: Assets/Scripts/Hullbreach.NetCode.Entities/HullbreachTabNavigation.cs::HullbreachTabNavigation.SetOrder -->
 
+## Title screen
+
+<!-- describes: Assets/Scripts/Hullbreach.Platform/TitleMenuModel.cs::TitleAction -->
+<!-- describes: Assets/Scripts/Hullbreach.Platform/TitleMenuModel.cs::TitleItem -->
+<!-- describes: Assets/Scripts/Hullbreach.Platform/TitleMenuModel.cs::TitleItem.TitleItem -->
+<!-- describes: Assets/Scripts/Hullbreach.Platform/TitleMenuModel.cs::TitleItem.Action -->
+<!-- describes: Assets/Scripts/Hullbreach.Platform/TitleMenuModel.cs::TitleItem.Label -->
+<!-- describes: Assets/Scripts/Hullbreach.Platform/TitleMenuModel.cs::TitleItem.Primary -->
+<!-- describes: Assets/Scripts/Hullbreach.Platform/TitleMenuModel.cs::TitleMenuModel -->
+<!-- describes: Assets/Scripts/Hullbreach.Platform/TitleMenuModel.cs::TitleMenuModel.Items -->
+<!-- describes: Assets/Scripts/Hullbreach.Platform/TitleMenuModel.cs::TitleMenuModel.AccountLine -->
+<!-- describes: Assets/Scripts/Hullbreach.NetCode.Entities/HullbreachTitleView.cs::HullbreachTitleView -->
+
+`TitleMenuModel.Items` lists the title buttons: Play (the primary, orange
+button), Build, Settings, Sign in (Sign out when signed in) and Quit.
+`AccountLine` gives the signed-in username, or an offline or signed-out
+note. `HullbreachTitleView` binds them to `TitleCanvas` in `TitleScene`, the
+first scene in the build, and opens the sign-in, settings and lobby screens.
+
 ## Remembered session
 
 S07-3. After a successful sign-in `SessionTokenStore` writes the username

@@ -1098,6 +1098,13 @@ else is ignored and the default profile is used. `play online --profile
 <!-- describes: Assets/Scripts/Hullbreach.Net/MatchmakingMachine.cs::MatchmakingOptions.MatchmakingOptions -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/MatchmakingMachine.cs::MatchmakingOptions.PollIntervalSeconds -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/MatchmakingMachine.cs::MatchmakingOptions.TimeoutSeconds -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/QueueScreenModel.cs::QueueScreenModel -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/QueueScreenModel.cs::QueueScreenModel.Status -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/QueueScreenModel.cs::QueueScreenModel.Elapsed -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/QueueScreenModel.cs::QueueScreenModel.CanCancel -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/QueueScreenModel.cs::QueueScreenModel.CanSearch -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/QueueScreenModel.cs::QueueScreenModel.IsAlert -->
+<!-- describes: Assets/Scripts/Hullbreach.NetCode.Entities/HullbreachQueueView.cs::HullbreachQueueView -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/MatchmakingMachine.cs::MatchmakingOptions.MaxConsecutiveErrors -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/MatchmakingMachine.cs::MatchmakingOptions.Defaults -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/MatchmakingMachine.cs::MatchmakingMachine -->
@@ -1171,6 +1178,17 @@ UnityEngine and nothing throws on server input; failures are values.
 - `MatchHandoff` is the result: `MatchId` (shared by both players),
   `Host` and `Port` parsed from `server_address` (`host:port`, port
   1-65535). A bad address makes the search `Failed`, not an exception.
+
+#### Queue screen
+
+`QueueScreenModel` turns a `MatchmakingMachine` into text and button state:
+`Status` (searching with `Elapsed` time, match found, cancelled or the failure
+reason), `CanCancel` (only while `Queued`), `CanSearch` (idle, cancelled or
+failed) and `IsAlert` (failed; the only state drawn in orange).
+`HullbreachQueueView` binds it to the queue canvas: a Cancel button, a Search
+again button and a status line, ticking the session once a frame. On a match
+it raises `Matched(MatchHandoff)`; connecting the handoff to the game join is
+not wired yet.
 
 ### ConnectRequest
 

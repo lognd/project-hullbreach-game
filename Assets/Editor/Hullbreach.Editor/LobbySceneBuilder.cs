@@ -20,6 +20,10 @@ namespace Hullbreach.Editor
     {
         public const string LobbyPrefabPath = "Assets/Prefabs/UI/LobbyCanvas.prefab";
         public const string SignInPrefabPath = "Assets/Prefabs/UI/SignInCanvas.prefab";
+        public const string TitlePrefabPath = "Assets/Prefabs/UI/TitleCanvas.prefab";
+        public const string SettingsPrefabPath = "Assets/Prefabs/UI/SettingsCanvas.prefab";
+        public const string QueuePrefabPath = "Assets/Prefabs/UI/QueueCanvas.prefab";
+        public const string TitleScenePath = "Assets/Scenes/TitleScene.unity";
         public const string LobbyScenePath = "Assets/Scenes/LobbyScene.unity";
         public const string GameScenePath = "Assets/Scenes/MultiplayerGame.unity";
         public const string GhostPrefabPath = "Assets/Prefabs/NetCode/HullbreachGameplayGhost.prefab";
@@ -52,7 +56,11 @@ namespace Hullbreach.Editor
 
             if (force || !File.Exists(LobbyPrefabPath)) BuildLobbyPrefab();
             if (force || !File.Exists(SignInPrefabPath)) BuildSignInPrefab();
+            if (force || !File.Exists(SettingsPrefabPath)) BuildSettingsPrefab();
+            if (force || !File.Exists(TitlePrefabPath)) BuildTitlePrefab();
+            if (force || !File.Exists(QueuePrefabPath)) BuildQueuePrefab();
             if (force || !File.Exists(LobbyScenePath)) BuildLobbyScene();
+            if (force || !File.Exists(TitleScenePath)) BuildTitleScene();
             if (force || !File.Exists(GhostPrefabPath)) BuildGhostPrefab();
             if (force || !File.Exists(GhostSubScenePath)) BuildGhostSubScene();
             if (force || !File.Exists(GameScenePath)) BuildGameScene();
@@ -292,7 +300,235 @@ namespace Hullbreach.Editor
             GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(LobbyPrefabPath);
             PrefabUtility.InstantiatePrefab(prefab);
             PrefabUtility.InstantiatePrefab(AssetDatabase.LoadAssetAtPath<GameObject>(SignInPrefabPath));
+            PrefabUtility.InstantiatePrefab(AssetDatabase.LoadAssetAtPath<GameObject>(QueuePrefabPath));
             EditorSceneManager.SaveScene(scene, LobbyScenePath);
+        }
+
+        // The title scene is the first build scene: title menu plus the settings panel it opens.
+        // frob:ticket 01M3DG5Y1D78FFHNKW4AB7YB9B
+        static void BuildTitleScene()
+        {
+            Scene scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+            CreateCamera(BrandColors.Background);
+            CreateEventSystem();
+            PrefabUtility.InstantiatePrefab(AssetDatabase.LoadAssetAtPath<GameObject>(TitlePrefabPath));
+            GameObject settings = (GameObject)PrefabUtility.InstantiatePrefab(
+                AssetDatabase.LoadAssetAtPath<GameObject>(SettingsPrefabPath));
+            HullbreachTitleView title = Object.FindFirstObjectByType<HullbreachTitleView>();
+            SerializedObject serialized = new SerializedObject(title);
+            Set(serialized, "settings", settings.GetComponent<HullbreachSettingsView>());
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            EditorSceneManager.SaveScene(scene, TitleScenePath);
+        }
+
+        static Canvas AddOverlayCanvas(string name, int sortingOrder, out GameObject canvasRoot)
+        {
+            canvasRoot = new GameObject(name, typeof(RectTransform));
+            Canvas canvas = canvasRoot.AddComponent<Canvas>();
+            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            canvas.sortingOrder = sortingOrder;
+            CanvasScaler scaler = canvasRoot.AddComponent<CanvasScaler>();
+            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+            scaler.referenceResolution = new Vector2(1920f, 1080f);
+            scaler.matchWidthOrHeight = 0.5f;
+            canvasRoot.AddComponent<GraphicRaycaster>();
+            return canvas;
+        }
+
+        static VerticalLayoutGroup AddVerticalLayout(GameObject panel, int padding, float spacing)
+        {
+            VerticalLayoutGroup layout = panel.AddComponent<VerticalLayoutGroup>();
+            layout.padding = new RectOffset(padding, padding, padding - 8, padding - 8);
+            layout.spacing = spacing;
+            layout.childControlHeight = true;
+            layout.childControlWidth = true;
+            layout.childForceExpandHeight = false;
+            layout.childForceExpandWidth = true;
+            return layout;
+        }
+
+        // Title: wordmark, tagline, the five buttons (Play is the one orange), account line at top right.
+        // frob:ticket 01M3DG5Y1ECEZ8A5Y7AJT2NM7X
+        static void BuildTitlePrefab()
+        {
+            AddOverlayCanvas("TitleCanvas", 0, out GameObject canvasRoot);
+            Image backdrop = AddImage(canvasRoot.transform, "TitleRoot", BrandColors.Background);
+            Stretch(backdrop.rectTransform);
+            GameObject panel = AddPanel(backdrop.transform, "TitlePanel", new Vector2(520f, 640f), BrandColors.Panel);
+            AddVerticalLayout(panel, 48, 12f);
+            TMP_Text title = AddText(panel.transform, "Title", "HULLBREACH", 52f, TextAlignmentOptions.Center);
+            title.fontStyle = FontStyles.Bold;
+            TMP_Text tagline = AddText(panel.transform, "Tagline", BrandPalette.Tagline, 18f, TextAlignmentOptions.Center);
+            tagline.color = BrandColors.Cyan;
+            AddSpacer(panel.transform, 20f);
+            Button play = AddButton(panel.transform, "PlayButton", "PLAY", 60f, primary: true);
+            Button build = AddButton(panel.transform, "BuildButton", "BUILD", 52f);
+            Button settings = AddButton(panel.transform, "SettingsButton", "SETTINGS", 52f);
+            Button signIn = AddButton(panel.transform, "SignInButton", "SIGN IN", 52f);
+            Button quit = AddButton(panel.transform, "QuitButton", "QUIT", 52f);
+
+            TMP_Text account = AddText(backdrop.transform, "AccountText", string.Empty, 18f, TextAlignmentOptions.Right);
+            account.color = BrandColors.Muted;
+            RectTransform accountRect = account.rectTransform;
+            accountRect.anchorMin = accountRect.anchorMax = accountRect.pivot = new Vector2(1f, 1f);
+            accountRect.sizeDelta = new Vector2(520f, 30f);
+            accountRect.anchoredPosition = new Vector2(-24f, -20f);
+
+            HullbreachTitleView view = canvasRoot.AddComponent<HullbreachTitleView>();
+            SerializedObject serialized = new SerializedObject(view);
+            Set(serialized, "playButton", play);
+            Set(serialized, "buildButton", build);
+            Set(serialized, "settingsButton", settings);
+            Set(serialized, "signInButton", signIn);
+            Set(serialized, "quitButton", quit);
+            Set(serialized, "accountText", account);
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            PrefabUtility.SaveAsPrefabAsset(canvasRoot, TitlePrefabPath);
+            Object.DestroyImmediate(canvasRoot);
+        }
+
+        // One row: label, slider, percent text.
+        static Slider AddSliderRow(Transform parent, string name, string label, out TMP_Text value)
+        {
+            GameObject row = AddUiObject(parent, name + "Row");
+            row.AddComponent<LayoutElement>().preferredHeight = 38f;
+            HorizontalLayoutGroup layout = row.AddComponent<HorizontalLayoutGroup>();
+            layout.spacing = 12f;
+            layout.childControlHeight = true;
+            layout.childControlWidth = true;
+            layout.childForceExpandHeight = true;
+            layout.childForceExpandWidth = false;
+            TMP_Text text = AddText(row.transform, name + "Label", label, 18f);
+            text.gameObject.GetComponent<LayoutElement>().preferredWidth = 150f;
+
+            GameObject sliderRoot = AddUiObject(row.transform, name + "Slider");
+            sliderRoot.AddComponent<LayoutElement>().flexibleWidth = 1f;
+            Image track = AddImage(sliderRoot.transform, "Track", BrandColors.Background);
+            RectTransform trackRect = track.rectTransform;
+            trackRect.anchorMin = new Vector2(0f, 0.5f);
+            trackRect.anchorMax = new Vector2(1f, 0.5f);
+            trackRect.sizeDelta = new Vector2(0f, 8f);
+            GameObject fillArea = AddUiObject(sliderRoot.transform, "Fill Area");
+            Stretch(fillArea.GetComponent<RectTransform>(), 0f, 0f);
+            Image fill = AddImage(fillArea.transform, "Fill", BrandColors.Cyan);
+            fill.rectTransform.anchorMin = new Vector2(0f, 0.5f);
+            fill.rectTransform.anchorMax = new Vector2(1f, 0.5f);
+            fill.rectTransform.sizeDelta = new Vector2(0f, 8f);
+            GameObject handleArea = AddUiObject(sliderRoot.transform, "Handle Slide Area");
+            Stretch(handleArea.GetComponent<RectTransform>(), 8f, 0f);
+            Image handle = AddImage(handleArea.transform, "Handle", BrandColors.Ink);
+            handle.rectTransform.sizeDelta = new Vector2(16f, 30f);
+            Slider slider = sliderRoot.AddComponent<Slider>();
+            slider.fillRect = fill.rectTransform;
+            slider.handleRect = handle.rectTransform;
+            slider.targetGraphic = handle;
+            slider.direction = Slider.Direction.LeftToRight;
+            slider.minValue = 0f;
+            slider.maxValue = 1f;
+            slider.value = 1f;
+
+            value = AddText(row.transform, name + "Value", "100%", 18f, TextAlignmentOptions.Right);
+            value.gameObject.GetComponent<LayoutElement>().preferredWidth = 70f;
+            return slider;
+        }
+
+        // Settings panel (hidden until opened): three volumes, resolution, fullscreen, colorblind palette.
+        // frob:ticket 01M3DG5Y1GSP9K4A0MY9MSHS37
+        // frob:ticket 01M3DG5Y2DX8GJYANMCGM0B19P
+        static void BuildSettingsPrefab()
+        {
+            AddOverlayCanvas("SettingsCanvas", 20, out GameObject canvasRoot);
+            Image dim = AddImage(canvasRoot.transform, "SettingsRoot", new Color(0.043f, 0.086f, 0.125f, 0.92f));
+            Stretch(dim.rectTransform);
+            GameObject panel = AddPanel(dim.transform, "SettingsPanel", new Vector2(720f, 620f), BrandColors.Panel);
+            AddVerticalLayout(panel, 40, 12f);
+            AddSectionTitle(panel.transform, "SETTINGS");
+            Slider master = AddSliderRow(panel.transform, "Master", "Master volume", out TMP_Text masterValue);
+            Slider music = AddSliderRow(panel.transform, "Music", "Music volume", out TMP_Text musicValue);
+            Slider effects = AddSliderRow(panel.transform, "Effects", "Effects volume", out TMP_Text effectsValue);
+
+            GameObject resRow = AddUiObject(panel.transform, "ResolutionRow");
+            resRow.AddComponent<LayoutElement>().preferredHeight = 42f;
+            HorizontalLayoutGroup resLayout = resRow.AddComponent<HorizontalLayoutGroup>();
+            resLayout.spacing = 12f;
+            resLayout.childControlHeight = true;
+            resLayout.childControlWidth = true;
+            resLayout.childForceExpandHeight = true;
+            resLayout.childForceExpandWidth = false;
+            TMP_Text resLabel = AddText(resRow.transform, "ResolutionLabel", "Resolution", 18f);
+            resLabel.gameObject.GetComponent<LayoutElement>().preferredWidth = 150f;
+            Button previous = AddButton(resRow.transform, "ResolutionPrevious", "<", 42f);
+            previous.gameObject.GetComponent<LayoutElement>().preferredWidth = 50f;
+            TMP_Text resText = AddText(resRow.transform, "ResolutionText", "1280 x 720", 18f, TextAlignmentOptions.Center);
+            resText.gameObject.GetComponent<LayoutElement>().flexibleWidth = 1f;
+            Button next = AddButton(resRow.transform, "ResolutionNext", ">", 42f);
+            next.gameObject.GetComponent<LayoutElement>().preferredWidth = 50f;
+
+            Toggle fullscreen = AddToggle(panel.transform, "FullscreenToggle", "Fullscreen");
+            Toggle colorblind = AddToggle(panel.transform, "ColorblindToggle", "Colorblind-safe stress colors");
+            TMP_Text message = AddText(panel.transform, "MessageText", string.Empty, 16f, TextAlignmentOptions.Center);
+            AddSpacer(panel.transform, 8f);
+            Button apply = AddButton(panel.transform, "ApplyButton", "APPLY", 48f, primary: true);
+            Button close = AddButton(panel.transform, "CloseButton", "BACK", 44f);
+
+            HullbreachSettingsView view = canvasRoot.AddComponent<HullbreachSettingsView>();
+            SerializedObject serialized = new SerializedObject(view);
+            Set(serialized, "root", dim.gameObject);
+            Set(serialized, "masterSlider", master);
+            Set(serialized, "musicSlider", music);
+            Set(serialized, "effectsSlider", effects);
+            Set(serialized, "masterValue", masterValue);
+            Set(serialized, "musicValue", musicValue);
+            Set(serialized, "effectsValue", effectsValue);
+            Set(serialized, "resolutionPrevious", previous);
+            Set(serialized, "resolutionNext", next);
+            Set(serialized, "resolutionText", resText);
+            Set(serialized, "fullscreenToggle", fullscreen);
+            Set(serialized, "colorblindToggle", colorblind);
+            Set(serialized, "applyButton", apply);
+            Set(serialized, "closeButton", close);
+            Set(serialized, "messageText", message);
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            PrefabUtility.SaveAsPrefabAsset(canvasRoot, SettingsPrefabPath);
+            Object.DestroyImmediate(canvasRoot);
+        }
+
+        // Queue: a FIND MATCH launcher at the bottom of the lobby and a panel with status and cancel.
+        // frob:ticket 01M3DG5Y1PX311E24E62K5FAKG
+        static void BuildQueuePrefab()
+        {
+            AddOverlayCanvas("QueueCanvas", 5, out GameObject canvasRoot);
+            GameObject launcher = AddPanel(canvasRoot.transform, "OpenButtonHolder", new Vector2(220f, 52f), BrandColors.Panel);
+            RectTransform launcherRect = launcher.GetComponent<RectTransform>();
+            launcherRect.anchorMin = launcherRect.anchorMax = launcherRect.pivot = new Vector2(0.5f, 0f);
+            launcherRect.anchoredPosition = new Vector2(0f, 24f);
+            VerticalLayoutGroup holder = AddVerticalLayout(launcher, 4, 0f);
+            holder.padding = new RectOffset(4, 4, 4, 4);
+            Button open = AddButton(launcher.transform, "OpenButton", "FIND MATCH", 44f, primary: true);
+
+            Image dim = AddImage(canvasRoot.transform, "QueueRoot", new Color(0.043f, 0.086f, 0.125f, 0.92f));
+            Stretch(dim.rectTransform);
+            GameObject panel = AddPanel(dim.transform, "QueuePanel", new Vector2(620f, 380f), BrandColors.Panel);
+            AddVerticalLayout(panel, 40, 12f);
+            AddSectionTitle(panel.transform, "FIND MATCH");
+            TMP_Text status = AddText(panel.transform, "StatusText", string.Empty, 20f, TextAlignmentOptions.Center);
+            status.textWrappingMode = TextWrappingModes.Normal;
+            status.gameObject.GetComponent<LayoutElement>().preferredHeight = 80f;
+            Button find = AddButton(panel.transform, "FindButton", "FIND MATCH", 52f, primary: true);
+            Button cancel = AddButton(panel.transform, "CancelButton", "CANCEL SEARCH", 46f);
+            Button close = AddButton(panel.transform, "CloseButton", "BACK", 42f);
+
+            HullbreachQueueView view = canvasRoot.AddComponent<HullbreachQueueView>();
+            SerializedObject serialized = new SerializedObject(view);
+            Set(serialized, "panelRoot", dim.gameObject);
+            Set(serialized, "openButton", open);
+            Set(serialized, "findButton", find);
+            Set(serialized, "cancelButton", cancel);
+            Set(serialized, "closeButton", close);
+            Set(serialized, "statusText", status);
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            PrefabUtility.SaveAsPrefabAsset(canvasRoot, QueuePrefabPath);
+            Object.DestroyImmediate(canvasRoot);
         }
 
         static void BuildGameScene()
@@ -391,7 +627,7 @@ namespace Hullbreach.Editor
 
         static void UpdateBuildSettings()
         {
-            string[] preferred = { LobbyScenePath, GameScenePath, "Assets/Scenes/DemoScene.unity", "Assets/Scenes/RocketScene.unity" };
+            string[] preferred = { TitleScenePath, LobbyScenePath, GameScenePath, "Assets/Scenes/DemoScene.unity", "Assets/Scenes/RocketScene.unity" };
             EditorBuildSettings.scenes = preferred.Where(File.Exists)
                 .Select(path => new EditorBuildSettingsScene(path, true)).ToArray();
         }

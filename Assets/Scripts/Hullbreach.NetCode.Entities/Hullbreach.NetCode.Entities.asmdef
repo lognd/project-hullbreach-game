@@ -7,6 +7,7 @@
         "Hullbreach.Net",
         "Hullbreach.Match",
         "Hullbreach.Platform",
+        "Hullbreach.Hud",
         "Hullbreach.Ship",
         "Unity.Burst",
         "Unity.Collections",
