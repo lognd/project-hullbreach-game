@@ -81,6 +81,10 @@ namespace Hullbreach.Game
         {
             if (controller == null) controller = GetComponent<ShipController>();
             if (controller == null) Debug.LogError("ShipRenderer requires a ShipController on the same GameObject.");
+            // S37-2: the saved settings decide the stress ramp; an explicit inspector tick still wins.
+            var store = new Hullbreach.Hud.GameSettingsStore(
+                System.IO.Path.Combine(Application.persistentDataPath, "settings.txt"), Debug.Log);
+            if (store.Load().ColorblindPalette) ColorblindPalette = true;
         }
 
         // Call after any edit to the ship's grid (placement, removal,

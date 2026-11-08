@@ -1,0 +1,7 @@
+kind = "field"
+field = "acceptance"
+new = ["GameSettings (volumes, resolution, colorblind) round-trips through a local settings file and falls back to defaults when it is missing or corrupt"]
+moved = []
+at = "2026-11-08T07:00:35Z"
+actor = "mcnairrobotics"
+rev = 1

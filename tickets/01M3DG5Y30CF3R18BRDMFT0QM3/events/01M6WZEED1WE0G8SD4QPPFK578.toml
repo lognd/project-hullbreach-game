@@ -1,0 +1,6 @@
+kind = "comment"
+subtype = "note"
+body = "Implemented as SeekingThrusterBehaviour (thruster variant 1): pushes toward the nearest enemy, falls back to ship-forward. The 'weld a firing thruster onto the target' mechanic in the title is not implemented; the shipped design is the homing-thrust variant. Covered by BlockBehaviourTests.SeekingThruster_*."
+at = "2026-11-08T07:02:28Z"
+actor = "mcnairrobotics"
+rev = 1
