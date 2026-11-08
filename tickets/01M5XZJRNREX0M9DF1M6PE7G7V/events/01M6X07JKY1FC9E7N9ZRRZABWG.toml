@@ -1,0 +1,5 @@
+kind = "changelog-exempt"
+reason = "Implemented: TabOrder and HullbreachTabNavigation; TabOrderTests pass via run_tests.sh. Bug acceptance not bindable per-criterion."
+at = "2026-11-08T07:16:13Z"
+actor = "mcnairrobotics"
+rev = 1
