@@ -10,5 +10,5 @@ updated = "2026-11-08T05:48:49Z"
 
 [[acceptance]]
 text = "Given a server projectile on a path through a permanent gravity body, when the server steps, then the projectile is removed on planet contact before ship hit tests"
-bound = false
+bound = true
 +++
