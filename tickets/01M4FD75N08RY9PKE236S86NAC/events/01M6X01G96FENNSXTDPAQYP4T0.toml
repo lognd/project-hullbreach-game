@@ -1,0 +1,5 @@
+kind = "changelog-exempt"
+reason = "Added UnitStiffness_HasExactlyThreeZeroEigenvalues using DenseJacobiEigen; the two older rigid-mode tests are kept as readable cross-checks."
+at = "2026-11-08T07:12:54Z"
+actor = "mcnairrobotics"
+rev = 1
