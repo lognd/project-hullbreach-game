@@ -2,7 +2,8 @@
 id = "01M500VDMD4G09F70H1KT3DWR0"
 title = "S07-4: Game server validates the player's platform session at connect"
 type = "task"
-category = "todo"
+category = "done"
+outcome = "done"
 priority = "high"
 points = 3
 parent = "01M3DG5Y0CBB0T10VK6X8FPXBY"
