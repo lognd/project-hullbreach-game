@@ -1,0 +1,5 @@
+kind = "changelog-exempt"
+reason = "Implemented in TabOrder; covered by TabOrderTests."
+at = "2026-11-08T07:16:51Z"
+actor = "mcnairrobotics"
+rev = 1
