@@ -8,7 +8,7 @@ points = 2
 parent = "01M500EVPWWECD3A2C08TJ1K5Q"
 reporter = "a-carten"
 created = "2026-10-15T14:46:46Z"
-updated = "2026-10-15T14:46:46Z"
+updated = "2026-11-08T07:17:24Z"
 labels = ["owner:a-carten", "game", "milestone:0.3.0", "creates:Assets/Scripts/Hullbreach.Hud/EnemyIndicatorModel.cs", "creates:Assets/Scripts/Hullbreach.Hud/EnemyIndicatorModel.cs.meta", "creates:Assets/Tests/EditMode/Hullbreach.Hud.Tests/EnemyIndicatorModelTests.cs", "creates:Assets/Tests/EditMode/Hullbreach.Hud.Tests/EnemyIndicatorModelTests.cs.meta"]
 scope = ["docs/design/ui-port.md", "Assets/Scripts/Hullbreach.Hud/EnemyIndicatorModel.cs", "Assets/Scripts/Hullbreach.Hud/EnemyIndicatorModel.cs.meta", "Assets/Tests/EditMode/Hullbreach.Hud.Tests/EnemyIndicatorModelTests.cs", "Assets/Tests/EditMode/Hullbreach.Hud.Tests/EnemyIndicatorModelTests.cs.meta"]
 
