@@ -187,6 +187,32 @@ namespace Hullbreach.Game
                     go.transform.rotation = Quaternion.Euler(0f, 0f, drawRot * Mathf.Rad2Deg);
                 }
             }
+            RefreshProjectileVisuals(replica, replicaIndex, renderTick);
+        }
+
+        // Netcode-id slot the projectile quads share with ship quads in _visuals; no ship uses it.
+        const ushort ProjectileVisualNetId = ushort.MaxValue;
+
+        // Draws each replicated projectile as a small quad blended between its last two server samples.
+        // frob:ticket 01M6WVRTC724W6RQYAA9WCEK5F
+        void RefreshProjectileVisuals(ClientReplica replica, int replicaIndex, float renderTick)
+        {
+            foreach (uint id in replica.ProjectileIds)
+            {
+                if (!replica.TryInterpolateProjectile(id, renderTick, out var pos)) continue;
+                var visKey = (replicaIndex, ProjectileVisualNetId, (int)id);
+                _seen.Add(visKey);
+                if (!_visuals.TryGetValue(visKey, out var go) || go == null)
+                {
+                    go = GameObject.CreatePrimitive(PrimitiveType.Quad);
+                    go.name = $"NetDemo.Projectile[{id}]";
+                    Object.Destroy(go.GetComponent<Collider>());
+                    go.transform.SetParent(transform, worldPositionStays: false);
+                    go.transform.localScale = new Vector3(0.25f, 0.25f, 1f);
+                    _visuals[visKey] = go;
+                }
+                go.transform.position = new Vector3(pos.x, pos.y, 0f);
+            }
         }
 
         // Same rotation convention as ShipBody.LocalToWorld, minus the position.

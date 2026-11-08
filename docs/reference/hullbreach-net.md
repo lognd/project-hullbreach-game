@@ -354,6 +354,34 @@ clock; the message is 23 bytes). Losing one is
 harmless since the next one supersedes it. See docs/netcode.md#message-table
 for the byte layout and quantization.
 
+### ProjectileState
+
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::ProjectileEntry -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::ProjectileEntry.Id -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::ProjectileEntry.Px -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::ProjectileEntry.Py -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::ProjectileEntry.Vx -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::ProjectileEntry.Vy -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::ProjectileEntry.ProjectileEntry -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::ProjectileState -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::ProjectileState.ServerTick -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::ProjectileState.Entries -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::ProjectileState.MaxEntries -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::ProjectileState.EntryByteSize -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::ProjectileState.ByteSize -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::ProjectileState.ProjectileState -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::ProjectileState.Write -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::ProjectileState.Read -->
+
+Server -> client, UNRELIABLE (`MessageKind.ProjectileState` = 14): every live
+server projectile this tick. Layout: kind u8, serverTick u32, count u8, then
+count x {id u32, px i16, py i16, vx i16, vy i16}; at most `MaxEntries` (40)
+entries, 6 + 12 * count bytes. The set is authoritative: an id absent from the
+newest message is gone. After the last shot vanishes the server sends one
+empty message so clients clear it. A count above the cap or a short body fails
+the reader (INV-001). Projectiles are never predicted; `ClientReplica`
+interpolates the last two samples by server tick and does not extrapolate.
+
 ### BlockPlaced
 
 <!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::BlockPlaced -->
@@ -499,6 +527,10 @@ and to which ship, without re-parsing wire bytes.
 <!-- describes: Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ClientReplica.ApplySnapshot -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ClientReplica.ApplyState -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ClientReplica.TryInterpolate -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ClientReplica.ProjectileIds -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ClientReplica.ProjectileCount -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ClientReplica.ApplyProjectileState -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ClientReplica.TryInterpolateProjectile -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ClientReplica.TryInterpolateAt -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ClientReplica.InterpolationDelayTicks -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ClientReplica.LatestServerTick -->

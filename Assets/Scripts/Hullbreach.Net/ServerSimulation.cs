@@ -142,6 +142,7 @@ namespace Hullbreach.Net
 
         uint _sequence;
         uint _tickIndex;
+        bool _projectilesOnWire;
 
         // Peers own NetIds 1..MaxPeerId (the transport id itself); fragments
         // cycle through FirstFragmentId..65535. Disjoint ranges mean a peer
@@ -540,6 +541,14 @@ namespace Hullbreach.Net
                 if (EmitPoseMessages) EmitUnreliable(peer, BuildState(state));
             }
 
+            // One message per peer so a late joiner sees shots already in flight.
+            // frob:ticket 01M6WVRTC724W6RQYAA9WCEK5F
+            if (EmitPoseMessages && (_projectiles.Count > 0 || _projectilesOnWire))
+            {
+                BroadcastProjectileState();
+                _projectilesOnWire = _projectiles.Count > 0;   // one empty message tells clients the last one is gone
+            }
+
             // Last, so impacts and structural damage from this tick are already on the grids.
             Match?.Tick();
             AnnounceMatchEnd();
@@ -893,6 +902,27 @@ namespace Hullbreach.Net
             _tickIndex);
 
         uint NextSequence() => ++_sequence;
+
+        void BroadcastProjectileState()
+        {
+            int count = Math.Min(_projectiles.Count, ProjectileState.MaxEntries);
+            var entries = new ProjectileEntry[count];
+            for (int i = 0; i < count; i++)
+            {
+                var p = _projectiles[i];
+                entries[i] = new ProjectileEntry(p.Id,
+                    Quantization.PackPosition(p.Position.x), Quantization.PackPosition(p.Position.y),
+                    Quantization.PackPosition(p.Velocity.x), Quantization.PackPosition(p.Velocity.y));
+            }
+            var message = new ProjectileState(_tickIndex, entries);
+            foreach (int peer in _peers.Keys)
+            {
+                var buffer = new byte[message.ByteSize];
+                var w = new ByteWriter(buffer);
+                message.Write(ref w);
+                _outbox.Send(peer, reliable: false, buffer, w.Position);
+            }
+        }
 
         void EmitUnreliable(int peer, ShipState state)
         {

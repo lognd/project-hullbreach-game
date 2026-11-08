@@ -218,6 +218,7 @@ too, even though the original design note only called it out for
 | `InputMessage` | client->server, unreliable | `u16 netId, u32 tick, i8 thrustAxis, i8 steer, u8 flags` | 9 B |
 | `ShipSnapshot` | server->client, reliable | `u32 seq, u16 netId, u16 count, {i8 x, i8 y, u8 typeId, u8 mods, u8 damage}[count], i16 px, i16 py, u16 rot, i16 vx, i16 vy, u16 av` | 17 + 5*count B |
 | `ShipState` | server->client, unreliable, ~50 Hz | `u16 netId, i16 px, i16 py, u16 rot, i16 vx, i16 vy, u16 av, u32 ackedInputTick, u32 serverTick` | 23 B |
+| `ProjectileState` | server->client, unreliable, ~50 Hz while shots fly | `u32 serverTick, u8 count, {u32 id, i16 px, i16 py, i16 vx, i16 vy}[count]` (count <= 40) | 6 + 12*count B |
 | `BlockPlaced` | server->client, reliable ordered | `u32 seq, u16 netId, i8 x, i8 y, u8 typeId, u8 mods` | 11 B |
 | `BlockDestroyed` | server->client, reliable ordered | `u32 seq, u16 netId, i8 x, i8 y` | 9 B |
 | `FragmentSpawned` | server->client, reliable ordered | `u32 seq, u16 parentId, u16 newId, i16 px, i16 py, u16 rot, i16 vx, i16 vy, u16 av` | 21 B |
