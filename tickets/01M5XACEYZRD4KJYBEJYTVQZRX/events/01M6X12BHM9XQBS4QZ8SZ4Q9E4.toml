@@ -1,0 +1,6 @@
+kind = "comment"
+subtype = "note"
+body = "HullbreachQueueView raises Matched(MatchHandoff) but nothing yet consumes it to load the game scene and join; still open after the queue screen landed (S29-2)."
+at = "2026-11-08T07:30:50Z"
+actor = "mcnairrobotics"
+rev = 1
