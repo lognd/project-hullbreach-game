@@ -2,7 +2,8 @@
 id = "01M3DG5Y1Z912W21FF70NBN22Q"
 title = "S32-2: Detect a destroyed or isolated core through the connectivity analysis"
 type = "task"
-category = "todo"
+category = "done"
+outcome = "done"
 priority = "critical"
 points = 2
 parent = "01M3DG5Y0NYCG6S3SA36MNKBZD"
