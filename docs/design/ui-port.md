@@ -117,6 +117,8 @@ assets), but it has three costs that now matter:
 <!-- describes: Assets/Scripts/Hullbreach.Hud/HudColor.cs::HudColor.CenterTickGrey -->
 <!-- describes: Assets/Scripts/Hullbreach.Hud/StressPalette.cs::StressPalette -->
 <!-- describes: Assets/Scripts/Hullbreach.Hud/StressPalette.cs::StressPalette.Sample -->
+<!-- describes: Assets/Scripts/Hullbreach.Hud/GameSettings.cs::GameSettings -->
+<!-- describes: Assets/Scripts/Hullbreach.Hud/GameSettingsStore.cs::GameSettingsStore -->
 <!-- describes: Assets/Scripts/Hullbreach.Hud/FlightTelemetryModel.cs::ChannelBarValue -->
 <!-- describes: Assets/Scripts/Hullbreach.Hud/FlightTelemetryModel.cs::ChannelBarValue.Label -->
 <!-- describes: Assets/Scripts/Hullbreach.Hud/FlightTelemetryModel.cs::ChannelBarValue.Fill -->
@@ -153,6 +155,11 @@ assets), but it has three costs that now matter:
   OK green, STRAIN yellow, CRITICAL red, center-tick grey).
 - `StressPalette` -- `Sample(ratio, colorblind)`: green-yellow-red stress
   ramp, or the Okabe-Ito blue-yellow-vermillion ramp when colorblind is on.
+- `GameSettings` / `GameSettingsStore` -- engine-free player settings (master,
+  music and effects volume, resolution, fullscreen, colorblind palette),
+  clamped on set and saved as key=value lines; a missing or unreadable file
+  gives defaults and failures are logged, never thrown. The settings screen
+  UI binds to this model; `ShipRenderer` reads the colorblind flag at start.
 - `BuilderHudModel` -- from a `BuilderSession`, the palette
   (`BlockPalette.All()`) and the hover verdict string: title line,
   palette rows (name, mass, cost, selected), total mass, block count,
