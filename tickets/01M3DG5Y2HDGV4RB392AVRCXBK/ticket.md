@@ -2,7 +2,8 @@
 id = "01M3DG5Y2HDGV4RB392AVRCXBK"
 title = "S38-3: Fragment detachment: groups disconnected from the core split off as debris with their own physics"
 type = "task"
-category = "todo"
+category = "done"
+outcome = "done"
 priority = "critical"
 points = 3
 parent = "01M3DG5Y0V6ZWSJZQW0H5VM80Z"
