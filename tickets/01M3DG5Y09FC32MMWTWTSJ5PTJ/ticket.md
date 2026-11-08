@@ -6,9 +6,13 @@ category = "todo"
 priority = "medium"
 reporter = "human"
 created = "2026-09-26T00:00:00Z"
-updated = "2026-11-08T07:17:11Z"
+updated = "2026-11-08T07:17:31Z"
 aliases = ["T-0009"]
 labels = ["jira:SCRUM-5", "owner:a-carten", "jira-status:done"]
+
+[[acceptance]]
+text = "Mock-up drawings of the game exist."
+bound = false
 +++
 
 https://aliens-against-humanity.atlassian.net/browse/SCRUM-5
