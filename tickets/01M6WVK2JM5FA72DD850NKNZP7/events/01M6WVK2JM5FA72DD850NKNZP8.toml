@@ -1,0 +1,10 @@
+kind = "create"
+title = "Server stats: detach-cascade blocks not counted in BlocksDestroyed"
+type = "bug"
+category = "todo"
+priority = "medium"
+acceptance = ["Blocks stranded by a projectile kill are credited to the shooter's BlocksDestroyed"]
+body = "ServerSimulation.ApplyProjectileImpact tallied only the directly destroyed block; stranded blocks became a fragment uncounted."
+at = "2026-11-08T05:55:06Z"
+actor = "mcnairrobotics"
+rev = 1
