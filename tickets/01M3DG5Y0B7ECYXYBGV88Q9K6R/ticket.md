@@ -6,9 +6,13 @@ category = "todo"
 priority = "medium"
 reporter = "human"
 created = "2026-09-26T00:00:00Z"
-updated = "2026-11-08T07:17:09Z"
+updated = "2026-11-08T07:17:32Z"
 aliases = ["T-0011"]
 labels = ["jira:SCRUM-7", "owner:mcnairrobotics", "jira-status:done"]
+
+[[acceptance]]
+text = "The initial repository is set up."
+bound = false
 +++
 
 https://aliens-against-humanity.atlassian.net/browse/SCRUM-7
