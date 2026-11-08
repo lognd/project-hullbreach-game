@@ -712,7 +712,9 @@ namespace Hullbreach.Net
                 BlockKey.Unpack(key, out int x, out int y);
                 var evt = new BlockDestroyed(NextSequence(), state.NetId, (sbyte)x, (sbyte)y);
                 BroadcastReliable(evt);
-                ResolveDetachAfterDestruction(peer, state);
+                // Blocks stranded by this kill count as the shooter's destroyed blocks too.
+                // frob:ticket 01M6WVK2JM5FA72DD850NKNZP7
+                Tally(p.OwnerPeer, 0, ResolveDetachAfterDestruction(peer, state), 0);
             }
             else
             {
@@ -788,13 +790,13 @@ namespace Hullbreach.Net
             ResolveDetachAfterDestruction(peer, state);
         }
 
-        // Runs FindDetached/SplitIntoComponents once per batch; see reference page.
-        void ResolveDetachAfterDestruction(int peer, PeerState state)
+        // Runs FindDetached/SplitIntoComponents once per batch; returns the stranded block count.
+        int ResolveDetachAfterDestruction(int peer, PeerState state)
         {
             var grid = state.Ship.Grid;
             var stranded = new List<int>();
             Connectivity.FindDetached(grid, stranded);
-            if (stranded.Count == 0) { state.Ship.RebuildDerivedViews(); return; }
+            if (stranded.Count == 0) { state.Ship.RebuildDerivedViews(); return 0; }
 
             var components = new List<List<int>>();
             Connectivity.SplitIntoComponents(grid, stranded, components);
@@ -831,6 +833,7 @@ namespace Hullbreach.Net
             }
 
             state.Ship.RebuildDerivedViews();
+            return stranded.Count;
         }
 
         // Next fragment NetId, cycling inside the fragment range so it never
