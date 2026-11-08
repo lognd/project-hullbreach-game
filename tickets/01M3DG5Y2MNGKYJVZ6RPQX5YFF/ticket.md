@@ -2,7 +2,8 @@
 id = "01M3DG5Y2MNGKYJVZ6RPQX5YFF"
 title = "S39-3: ShipController mapping keyboard input to thrusters"
 type = "task"
-category = "todo"
+category = "done"
+outcome = "done"
 priority = "critical"
 points = 2
 parent = "01M3DG5Y0W9SVT75MAQ9ZEKZCQ"
