@@ -1,0 +1,8 @@
+kind = "transition"
+from = "todo"
+to = "done"
+outcome = "wont-fix"
+reason = "post-demo scope: minimap and enemy arrow are not built; no model, view or feed exists"
+at = "2026-11-08T07:49:34Z"
+actor = "mcnairrobotics"
+rev = 1
