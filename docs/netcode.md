@@ -148,6 +148,19 @@ The three controls are optional serialized fields on `HullbreachLobbyView`,
 so an old `LobbyCanvas.prefab` keeps working; rebuild it with
 `Hullbreach > Online > Rebuild lobby and multiplayer scenes` to get them.
 
+### Queue connect flow
+
+<!-- describes: Assets/Scripts/Hullbreach.NetCode.Entities/HullbreachLanLobby.cs::HullbreachLanLobby.TryConnect -->
+<!-- describes: Assets/Scripts/Hullbreach.NetCode.Entities/HullbreachQueueConnect.cs::HullbreachQueueConnect -->
+
+When the queue finds a match, `HullbreachQueueConnect` (listening to `HullbreachQueueView.Matched`)
+builds a [`ConnectRequest`](reference/hullbreach-net.md#connectrequest), resolves its host with
+[`ConnectTarget`](reference/hullbreach-net.md#connecttarget), dials it from the client world
+(`HullbreachLanLobby.TryConnect`) and loads `MultiplayerGame`. Log line:
+`Hullbreach connect: server=... match_id=... resolved=...`. This Unity code was written without running
+the editor and has not been exercised in play mode; the JoinTicket is not yet sent as a Netcode RPC, so a
+server with `RequireJoinTicket` on will refuse the client until that is wired.
+
 ### Lobby keyboard flow
 
 <!-- describes: Assets/Scripts/Hullbreach.Platform/LobbyForm.cs::LobbyForm -->
@@ -228,6 +241,7 @@ too, even though the original design note only called it out for
 | `ShipRemoved` | server->client, reliable ordered | `u32 seq, u16 netId` | 7 B |
 | `ReadyUp` | client->server, reliable | `u8 ready` | 2 B |
 | `MatchStarted` | server->client, reliable ordered | `u32 seq, i32 peerA, i32 peerB` | 13 B |
+| `JoinTicket` | client->server, reliable | `u8[16] matchId` (UUID bytes) | 17 B |
 
 ### Ready-up
 

@@ -1,0 +1,26 @@
+kind = "evidence"
+captured_at = "2026-11-15T05:27:53Z"
+digest = "992a36aeccd9b15049d8dd2c68c8f765fd0609cfc26ce0b4f6202f5d5a514371"
+exit_code = 0
+head = "3e4daa5e091b738b9e066447a561b18ab6c0c0a6"
+inline = """
+  Determining projects to restore...\r
+  All projects are up-to-date for restore.\r
+  Hullbreach.Plain -> <worktree>\\tools\\plaincs\\Hullbreach.Plain\\bin\\Release\\netstandard2.1\\Hullbreach.Plain.dll\r
+  Hullbreach.Plain.Tests -> <worktree>\\tools\\plaincs\\Hullbreach.Plain.Tests\\bin\\Release\\net8.0\\Hullbreach.Plain.Tests.dll\r
+Test run for <worktree>\\tools\\plaincs\\Hullbreach.Plain.Tests\\bin\\Release\\net8.0\\Hullbreach.Plain.Tests.dll (.NETCoreApp,Version=v8.0)\r
+VSTest version 17.11.2 (x64)\r
+\r
+Starting test execution, please wait...\r
+A total of 1 test files matched the specified pattern.\r
+\r
+Passed!  - Failed:     0, Passed:    27, Skipped:     0, Total:    27, Duration: 33 ms - Hullbreach.Plain.Tests.dll (net8.0)\r
+"""
+passed = true
+provider = "command"
+ref = "dotnet test tools/plaincs/Hullbreach.Plain.Tests/Hullbreach.Plain.Tests.csproj -c Release --filter FullyQualifiedName~JoinTicket|FullyQualifiedName~DirectLaunch"
+size = 710
+status = "measured"
+at = "2026-11-15T05:27:53Z"
+actor = "lognd"
+rev = 1

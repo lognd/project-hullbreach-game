@@ -23,6 +23,8 @@ namespace Hullbreach.Net
         AlreadyJoined,
         // The supplied design failed DesignValidator.ValidateDesign.
         InvalidDesign,
+        // RequireJoinTicket is on and the peer has not presented the allocated match id.
+        TicketRejected,
     }
 
     // The authoritative, plain-C# server loop; see the reference page.
@@ -130,6 +132,35 @@ namespace Hullbreach.Net
             return true;
         }
 
+        // When true (a dedicated queue server) a peer must present the allocated match id before Join
+        // is accepted; false keeps LAN and test servers open. Default false.
+        // frob:ticket 01M5XACF0K75AVMM0MCNDDWXNE
+        // frob:doc docs/reference/hullbreach-net.md#serversimulation
+        public bool RequireJoinTicket;
+
+        // Peers whose JoinTicket matched the allocated id; cleared when they leave.
+        readonly HashSet<int> _ticketed = new HashSet<int>();
+
+        // Handles a peer's JoinTicket. True when it matches the allocated id, or when none is allocated
+        // and tickets are not required (nothing to check). A wrong, malformed or unexpected id queues the
+        // peer for disconnect and returns false.
+        // frob:ticket 01M5XACF0K75AVMM0MCNDDWXNE
+        // frob:doc docs/reference/hullbreach-net.md#serversimulation
+        public bool PresentTicket(int peer, string matchId)
+        {
+            ConfigResult<string> presented = QueueMatchId.Normalize(matchId);
+            if (!RequireJoinTicket && _queueMatchId == null) return presented.IsOk;
+            if (presented.IsOk && _queueMatchId != null && presented.Value == _queueMatchId)
+            {
+                _ticketed.Add(peer);
+                return true;
+            }
+            MatchLog?.Warning($"Hullbreach match: peer #{peer} presented a wrong or unexpected match id; disconnecting.");
+            _ticketed.Remove(peer);
+            if (!_droppedPeers.Contains(peer)) _droppedPeers.Enqueue(peer);
+            return false;
+        }
+
         readonly GravityField _gravity = new GravityField();
 
         // Exposed so a test/host can add permanent bodies (planets) before
@@ -152,6 +183,7 @@ namespace Hullbreach.Net
             public bool IsBuilding;
             public bool HasInput;
             public bool PendingFire;
+            public uint NextBuildTick;
             public bool InPushZone;
             public readonly TrustLevel Trust = new TrustLevel();
             public readonly Dictionary<int, bool> Failing = new Dictionary<int, bool>();
@@ -294,10 +326,31 @@ namespace Hullbreach.Net
             }
         }
 
+        // Seconds a peer must wait between block placements while a match is running, so building
+        // mid-fight is a trade-off (S34-3). Zero or less disables it; pre-match building is never limited.
+        // frob:ticket 01M3DG5Y25YGZ3DV7JSDB4BNMF
+        // frob:doc docs/reference/hullbreach-net.md#serversimulation
+        public float BuildCooldownSeconds = 1.5f;
+
+        // Seconds until the peer may place again during a live match; 0 when ready or unknown.
+        // frob:ticket 01M3DG5Y25YGZ3DV7JSDB4BNMF
+        // frob:doc docs/reference/hullbreach-net.md#serversimulation
+        public float BuildCooldownRemaining(int peer)
+        {
+            if (!_peers.TryGetValue(peer, out var state) || !MatchIsRunning) return 0f;
+            long left = (long)state.NextBuildTick - _tickIndex;
+            return left <= 0 ? 0f : left * Dt;
+        }
+
+        bool MatchIsRunning => Match != null && Match.Phase == MatchPhase.Running;
+
+        // A placement refused for cooldown is not distrusted: a client can legitimately press twice.
+        // frob:ticket 01M3DG5Y25YGZ3DV7JSDB4BNMF
         public bool TryPlaceBlock(int peer, int x, int y, byte typeId, byte modifiers)
         {
             if (!_peers.TryGetValue(peer, out var state) || state.Trust.AtFloor) return false;
             if (!state.IsBuilding) { Distrust(peer, state, TrustEventKind.BuildOutsideBuildMode); return false; }
+            if (BuildCooldownSeconds > 0f && MatchIsRunning && _tickIndex < state.NextBuildTick) return false;
             if (typeId >= BlockTypes.Count || !BlockKey.InRange(x, y) ||
                 state.Ship.Grid.Count >= ShipSnapshot.MaxBlocks)
             { Distrust(peer, state, TrustEventKind.RejectedBuild); return false; }
@@ -307,6 +360,8 @@ namespace Hullbreach.Net
             { Distrust(peer, state, TrustEventKind.RejectedBuild); return false; }
             if (!state.Ship.Grid.TryAdd(key, new Block(typeId, modifiers))) return false;
 
+            if (BuildCooldownSeconds > 0f && MatchIsRunning)
+                state.NextBuildTick = _tickIndex + (uint)Math.Ceiling(BuildCooldownSeconds * TickRate);
             state.Ship.RebuildDerivedViews();
             state.Solver.MarkTopologyChanged();
             Tally(peer, 0, 0, 1);
@@ -349,6 +404,7 @@ namespace Hullbreach.Net
         {
             if (peer < 1 || peer > MaxPeerId) return JoinResult.InvalidPeerId;
             if (_peers.ContainsKey(peer)) return JoinResult.AlreadyJoined;
+            if (RequireJoinTicket && !_ticketed.Contains(peer)) return JoinResult.TicketRejected;
             if (DesignValidator.ValidateDesign(initialDesign) != DesignVerdict.Ok) return JoinResult.InvalidDesign;
 
             // Runs before adding the newcomer to _peers; see reference page.
@@ -500,6 +556,7 @@ namespace Hullbreach.Net
         void RemovePeer(int peer, PeerState state)
         {
             _peers.Remove(peer);
+            _ticketed.Remove(peer);
             _gate.RemovePeer(peer);
             Match?.Disconnect(peer);
             AnnounceMatchEnd();

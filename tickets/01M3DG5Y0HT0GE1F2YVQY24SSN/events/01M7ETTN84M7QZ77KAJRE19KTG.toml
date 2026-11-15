@@ -1,0 +1,6 @@
+kind = "comment"
+subtype = "note"
+body = "Story status: S28-1, S28-3, S28-3b done. S28-2 is open only for the prefab rebuild (see its comment); the engine-free and C# lobby code is done. Criteria remain unproven until a two-machine run, so the story stays open."
+at = "2026-11-15T05:28:06Z"
+actor = "lognd"
+rev = 1

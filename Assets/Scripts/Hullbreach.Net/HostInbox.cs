@@ -30,6 +30,12 @@ namespace Hullbreach.Net
                     server.SetReady(peer, ready.Ready);
                     return true;
                 }
+                case MessageKind.JoinTicket:
+                {
+                    var ticket = JoinTicket.Read(ref r);
+                    if (r.Failed) return false;
+                    return server.PresentTicket(peer, ticket.MatchId);
+                }
                 default:
                     return false;
             }

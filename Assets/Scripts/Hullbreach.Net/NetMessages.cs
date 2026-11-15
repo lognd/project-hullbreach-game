@@ -30,6 +30,7 @@ namespace Hullbreach.Net
         ReadyUp = 12,
         MatchStarted = 13,
         ProjectileState = 14,
+        JoinTicket = 15,
     }
 
     // Client -> server, unreliable: this tick's intent. Latest-wins on drop.
@@ -428,6 +429,49 @@ namespace Hullbreach.Net
         }
     }
 
+    // Client -> server, reliable: the queue match id the client was sent to play (S29-3c).
+    // The server compares it with the id it was allocated before it accepts a ship.
+    // frob:ticket 01M5XACF0K75AVMM0MCNDDWXNE
+    // frob:doc docs/reference/hullbreach-net.md#jointicket
+    public readonly struct JoinTicket
+    {
+        // frob:doc docs/reference/hullbreach-net.md#jointicket
+        public const int ByteSize = 1 + 16;
+
+        // Canonical lowercase UUID (QueueMatchId form).
+        // frob:doc docs/reference/hullbreach-net.md#jointicket
+        public readonly string MatchId;
+
+        // frob:doc docs/reference/hullbreach-net.md#jointicket
+        public JoinTicket(string matchId) => MatchId = matchId;
+
+        // False (writing nothing) when the id is not a UUID, so a bad id never reaches the wire.
+        // frob:doc docs/reference/hullbreach-net.md#jointicket
+        public bool TryWrite(ref ByteWriter w)
+        {
+            if (!QueueMatchId.Normalize(MatchId).IsOk) return false;
+            w.WriteU8((byte)MessageKind.JoinTicket);
+            foreach (byte b in Guid.ParseExact(MatchId.Trim(), "D").ToByteArray()) w.WriteU8(b);
+            return true;
+        }
+
+        // Reads the MessageKind byte too; a truncated body or the all-zero id fails the reader.
+        // frob:doc docs/reference/hullbreach-net.md#jointicket
+        public static JoinTicket Read(ref ByteReader r)
+        {
+            r.ReadU8();
+            var bytes = new byte[16];
+            for (int i = 0; i < bytes.Length; i++) bytes[i] = r.ReadU8();
+            if (r.Failed) return default;
+            var guid = new Guid(bytes);
+            if (guid == Guid.Empty)
+            {
+                r.Fail();
+                return default;
+            }
+            return new JoinTicket(guid.ToString("D"));
+        }
+    }
     // Server -> client, reliable ordered: both peers were ready and the match is now running.
     // frob:ticket 01M3DG5Y1NW8M51ENVBT7EVKQY
     // frob:doc docs/reference/hullbreach-net.md#matchstarted
