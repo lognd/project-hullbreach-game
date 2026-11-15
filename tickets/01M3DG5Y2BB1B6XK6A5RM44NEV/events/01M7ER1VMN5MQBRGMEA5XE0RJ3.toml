@@ -1,0 +1,7 @@
+kind = "transition"
+from = "todo"
+to = "in-progress"
+reason = "lease: lognd in project-hullbreach-game-wt/RM44NEV; scope: ; ttl 7200s"
+at = "2026-11-15T04:39:29Z"
+actor = "lognd"
+rev = 1
