@@ -93,7 +93,7 @@ namespace Hullbreach.Game
 
         public static void PlayClick()
         {
-            var f = I; if (f != null) f.Play(f._click, 0.6f, 1f);
+            var f = I; if (f != null) f.Play(f._click, 0.45f, 1f);
         }
 
         // ---- state ----
@@ -214,7 +214,7 @@ namespace Hullbreach.Game
             if (Time.unscaledTime - _lastAlarm > 0.8f)
             {
                 _lastAlarm = Time.unscaledTime;
-                Play(_alarm, 0.9f, 1f);
+                Play(_alarm, 0.5f, 1f);
             }
         }
 
@@ -258,7 +258,7 @@ namespace Hullbreach.Game
         {
             float trauma = FeelModel.TraumaForDamage(damage) * (onPlayer ? 1f : 0.45f);
             AddShake(trauma);
-            Play(_hit, onPlayer ? 1f : 0.7f, Random.Range(0.9f, 1.1f));
+            Play(_hit, onPlayer ? 0.75f : 0.5f, Random.Range(0.9f, 1.1f));
 
             if (!_s.HitEffects) return;
 
@@ -292,7 +292,7 @@ namespace Hullbreach.Game
 
         void DoMuzzle(Vector2 pos, Vector2 dir)
         {
-            Play(_cannon, 0.8f, Random.Range(0.95f, 1.05f));
+            Play(_cannon, 0.5f, Random.Range(0.95f, 1.05f));
             if (_player != null) AddShake(0.04f); // a tiny kick, felt more than seen
             if (!_s.HitEffects) return;
             var t = GetSprite();
@@ -381,7 +381,7 @@ namespace Hullbreach.Game
             float mean = 0f;
             if (_playerCtl != null && _playerCtl.Ship != null)
                 mean = Mathf.Max(_playerCtl.Ship.ForwardThrottleMean, _playerCtl.Ship.ReverseThrottleMean * 0.8f);
-            float target = FeelModel.ThrusterVolume(mean) * 0.5f;
+            float target = FeelModel.ThrusterVolume(mean) * 0.3f;
             _thrustVol = Mathf.MoveTowards(_thrustVol, target, dt * 4f);
             _thrust.volume = FeelModel.Volume(_s.MasterVolume, _s.EffectsVolume, _thrustVol);
             _thrust.pitch = FeelModel.ThrusterPitch(mean);
@@ -392,7 +392,7 @@ namespace Hullbreach.Game
             if (interval > 0f && Time.unscaledTime >= _nextBeep)
             {
                 _nextBeep = Time.unscaledTime + interval;
-                Play(_beep, 0.55f, _stormSigned < 0f ? 1.15f : 1f);
+                Play(_beep, 0.4f, _stormSigned < 0f ? 1.15f : 1f);
             }
         }
     }
