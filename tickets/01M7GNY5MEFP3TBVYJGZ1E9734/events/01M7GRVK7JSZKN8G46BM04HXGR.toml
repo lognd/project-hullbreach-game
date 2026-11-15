@@ -1,0 +1,6 @@
+kind = "comment"
+subtype = "note"
+body = "Merged in #167: damage-driven failure plus ShipStressPreview. Tests merged: WingStressTests, ShipStressPreviewTests, DamageModelTests additions. Left open: the ticket has no acceptance criteria, so frob cannot close it, and evidence needs a dotnet test run that was out of scope for this pass. Editor verification (wide wing under full thrust, build-phase preview) pending. Next: add criteria, bind those test classes, close."
+at = "2026-11-15T23:32:09Z"
+actor = "lognd"
+rev = 1
