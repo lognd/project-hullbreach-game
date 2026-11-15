@@ -1,0 +1,12 @@
+kind = "create"
+title = "Add UNITY_LICENSE secret and run the server-build CI job once"
+type = "chore"
+category = "todo"
+priority = "high"
+points = 1
+parent = "01M3DG5Y3BPBEF660P4HCFME76"
+labels = ["game"]
+acceptance = ["The UNITY_LICENSE repository secret is set and the server-build job runs green on main"]
+at = "2026-11-15T12:16:07Z"
+actor = "lognd"
+rev = 1
