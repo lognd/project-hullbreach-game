@@ -2,7 +2,7 @@
 id = "01M7EQX7V98QT1Y5ETTY4NM8BP"
 title = "Fix main CI: POL-net-no-remote-sized-alloc false positive and tracked .grimble state"
 type = "bug"
-category = "todo"
+category = "in-progress"
 priority = "high"
 points = 1
 reporter = "lognd"
