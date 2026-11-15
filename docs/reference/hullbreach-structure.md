@@ -19,6 +19,11 @@ sees them through `InternalsVisibleTo` in `AssemblyInfo.cs`.
 <!-- describes: Assets/Scripts/Hullbreach.Structure/Failure/DamageModel.cs::DamageModel.Accumulate -->
 <!-- describes: Assets/Scripts/Hullbreach.Structure/Failure/DamageModel.cs::DamageModel.SofteningFactor -->
 <!-- describes: Assets/Scripts/Hullbreach.Structure/Failure/DamageModel.cs::DamageModel.ShouldDetach -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/Failure/DamageModel.cs::DamageModel.AccumulationRate -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/Failure/DamageModel.cs::DamageModel.BrittleSnapRatio -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/Failure/DamageModel.cs::DamageModel.CreakRatio -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/Failure/DamageModel.cs::DamageModel.DamageRatio -->
+<!-- describes: Assets/Scripts/Hullbreach.Structure/Failure/DamageModel.cs::DamageModel.SecondsToFail -->
 
 Damage accumulation as cheap pseudo-plasticity. "Ductile" means YIELD, not
 instant fracture: if blocks snapped the moment von Mises crossed yield it
@@ -34,15 +39,43 @@ solve stays linear. It also reuses the E multiplier the upgrades already need.
   until dropping below `RecoverRatio`: without this hysteresis band,
   blocks would chatter in and out of existence right at the threshold.
 - `Accumulate`: accumulates damage proportional to the overshoot above
-  yield, clamped to 0..1 (represented as a byte 0..255). Below yield
-  (ratio <= 1) damage does not change: this models plastic accumulation,
-  not elastic loading/unloading fatigue.
+  yield (`AccumulationRate` = 0.35 per ratio-overshoot-second), clamped to
+  0..1 (a byte 0..255). Every overstressed tick adds at least one byte
+  step, because a 20 ms tick at ratio 1.05 would otherwise round to zero
+  and a mildly overloaded block would never fail. Below yield (ratio <= 1)
+  damage does not change: this models plastic accumulation, not elastic
+  loading/unloading fatigue. The driving ratio is `DamageRatio` (the worse
+  of ductile and brittle).
 - `SofteningFactor`: stiffness multiplier from damage, floored at 0.05 so
   a block never reaches exactly zero stiffness, which would make K
   singular in a way inertia relief does not account for.
-- `ShouldDetach`: should this block detach this tick? Ductile failure uses
-  the hysteresis band described above. Brittle failure is instantaneous
-  (no hysteresis: a crack does not partially open).
+- `ShouldDetach(ductile, brittle, alreadyFailing, damage)`: the rule the
+  server and `ShipStructure` use. A block detaches only when it is
+  overstressed AND its damage has saturated (255), so yielding is a
+  process that takes time, as the first paragraph promises; the ductile
+  hysteresis band still applies to "overstressed". One exception: a
+  brittle ratio at or above `BrittleSnapRatio` (3.0) cracks at once. The
+  older three-argument overload (instant at the threshold) is kept for
+  callers that have no damage byte; the simulation no longer uses it.
+- `SecondsToFail(ratio)`: how long a block holds at a constant ratio,
+  softening feedback included (yield falls as damage rises, so the ratio
+  climbs). About 1.0 s at 2.6, 3 s at 1.3, never more than about 5 s at
+  any overload. For the build preview and HUD; the simulation does not call it.
+- `CreakRatio` (0.8): the "close to its limit" line used by the build
+  preview verdict (`Marginal`) and available to a HUD creak warning.
+
+**Why damage drives failure (the wide-wing finding).** A 22-block ship with
+a 6-block-wide wing and tip thrusters has a root armor block at ductile
+ratio 2.6 at full thrust (it is below 1.0 only under about 0.4 throttle).
+Because `ShouldDetach` used to break any block the tick its ratio reached
+1.0, `Accumulate` and softening were cosmetic: the first block went at
+0.14 s, five at once, and the stranded wings with them (22 blocks to 2
+within 0.2 s, no warning). Now the same ship shows damage at 0.16 s and
+loses its first block at 1.1 s; a sound design (every starter template
+peaks at about 0.5) is untouched. Calibration (`LoadScale`, the block
+table) is unchanged: the cantilever really does carry that load, only the
+speed of failure was wrong. Softening rebuilds K on every tick a block's
+damage changes, which is cheap at ship sizes.
 
 ### StressCriteria
 

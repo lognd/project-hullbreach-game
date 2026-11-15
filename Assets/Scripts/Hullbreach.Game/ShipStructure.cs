@@ -101,7 +101,8 @@ namespace Hullbreach.Game
                 int key = kvp.Key;
                 var stress = kvp.Value;
                 bool wasFailing = _failing.TryGetValue(key, out var f) && f;
-                bool shouldDetach = DamageModel.ShouldDetach(stress.DuctileRatio, stress.BrittleRatio, wasFailing);
+                grid.TryGet(key, out var current);
+                bool shouldDetach = DamageModel.ShouldDetach(stress.DuctileRatio, stress.BrittleRatio, wasFailing, current.Damage);
 
                 if (stress.DuctileRatio >= 1f || stress.BrittleRatio >= 1f)
                 {
@@ -120,7 +121,7 @@ namespace Hullbreach.Game
             {
                 if (!grid.TryGet(key, out var block)) continue;
                 Solver.BlockStresses.TryGetValue(key, out var stress);
-                byte newDamage = DamageModel.Accumulate(block.Damage, stress.DuctileRatio, Time.fixedDeltaTime);
+                byte newDamage = DamageModel.Accumulate(block.Damage, DamageModel.DamageRatio(stress.DuctileRatio, stress.BrittleRatio), Time.fixedDeltaTime);
                 grid.TrySet(key, block.WithDamage(newDamage));
             }
 

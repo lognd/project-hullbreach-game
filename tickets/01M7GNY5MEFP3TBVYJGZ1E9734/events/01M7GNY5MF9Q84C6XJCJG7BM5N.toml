@@ -1,0 +1,8 @@
+kind = "create"
+title = "Wide wings snap instantly under full thrust: damage-driven failure + build stress preview"
+type = "bug"
+category = "todo"
+priority = "medium"
+at = "2026-11-15T22:41:06Z"
+actor = "lognd"
+rev = 1

@@ -1039,7 +1039,8 @@ namespace Hullbreach.Net
                 int key = kvp.Key;
                 var stress = kvp.Value;
                 bool wasFailing = state.Failing.TryGetValue(key, out var f) && f;
-                bool shouldDetach = DamageModel.ShouldDetach(stress.DuctileRatio, stress.BrittleRatio, wasFailing);
+                grid.TryGet(key, out var current);
+                bool shouldDetach = DamageModel.ShouldDetach(stress.DuctileRatio, stress.BrittleRatio, wasFailing, current.Damage);
 
                 if (stress.DuctileRatio >= 1f || stress.BrittleRatio >= 1f)
                 {
@@ -1058,7 +1059,7 @@ namespace Hullbreach.Net
             {
                 if (!grid.TryGet(key, out var block)) continue;
                 state.Solver.BlockStresses.TryGetValue(key, out var stress);
-                byte newDamage = DamageModel.Accumulate(block.Damage, stress.DuctileRatio, Dt);
+                byte newDamage = DamageModel.Accumulate(block.Damage, DamageModel.DamageRatio(stress.DuctileRatio, stress.BrittleRatio), Dt);
                 grid.TrySet(key, block.WithDamage(newDamage));
                 BlockKey.Unpack(key, out int x, out int y);
                 BroadcastReliable(new BlockDamaged(NextSequence(), state.NetId, (sbyte)x, (sbyte)y, newDamage));
