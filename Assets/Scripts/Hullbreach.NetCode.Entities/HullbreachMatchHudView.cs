@@ -103,7 +103,7 @@ namespace Hullbreach.NetCode.Entities
             var go = new GameObject(name, typeof(RectTransform), typeof(TextMeshProUGUI));
             go.transform.SetParent(parent != null ? parent : transform, false);
             var t = go.GetComponent<TextMeshProUGUI>();
-            t.fontSize = size; t.alignment = align; t.raycastTarget = false; t.enableWordWrapping = false;
+            t.fontSize = size; t.alignment = align; t.raycastTarget = false; t.textWrappingMode = TMPro.TextWrappingModes.NoWrap;
             t.overflowMode = TextOverflowModes.Overflow;
             return t;
         }

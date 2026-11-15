@@ -144,7 +144,7 @@ namespace Hullbreach.NetCode.Entities
             go.transform.SetParent(parent, false);
             var t = go.GetComponent<TextMeshProUGUI>();
             t.fontSize = size; t.alignment = TextAlignmentOptions.Center; t.fontStyle = style;
-            t.raycastTarget = false; t.enableWordWrapping = false;
+            t.raycastTarget = false; t.textWrappingMode = TMPro.TextWrappingModes.NoWrap;
             var rt = t.rectTransform;
             rt.anchorMin = rt.anchorMax = rt.pivot = new Vector2(0.5f, 0.5f);
             rt.anchoredPosition = pos; rt.sizeDelta = box;

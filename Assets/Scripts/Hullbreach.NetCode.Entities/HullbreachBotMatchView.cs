@@ -84,7 +84,7 @@ namespace Hullbreach.NetCode.Entities
             var go = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI));
             go.transform.SetParent(parent, false);
             var t = go.GetComponent<TextMeshProUGUI>();
-            t.text = text; t.fontSize = size; t.raycastTarget = false; t.enableWordWrapping = false;
+            t.text = text; t.fontSize = size; t.raycastTarget = false; t.textWrappingMode = TMPro.TextWrappingModes.NoWrap;
             var rt = t.rectTransform;
             rt.anchorMin = rt.anchorMax = rt.pivot = new Vector2(0f, 1f);
             rt.anchoredPosition = pos; rt.sizeDelta = box;

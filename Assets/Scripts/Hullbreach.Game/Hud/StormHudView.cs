@@ -303,7 +303,7 @@ namespace Hullbreach.Game
             t.alignment = align;
             t.color = Color.white;
             t.raycastTarget = false;
-            t.enableWordWrapping = false;
+            t.textWrappingMode = TMPro.TextWrappingModes.NoWrap;
             return t;
         }
 
