@@ -12,14 +12,21 @@ namespace Hullbreach.Hud.Tests
         static BlockGrid WideWing()
         {
             var g = new BlockGrid();
-            void P(int x, int y, byte t) => g.TryAdd(BlockKey.Pack(x, y), new Block(t));
-            P(0, 0, BlockTypes.Core);
-            P(0, 1, BlockTypes.Hull); P(0, -1, BlockTypes.Hull); P(0, 2, BlockTypes.Cannon);
-            P(1, 1, BlockTypes.Fin); P(-1, 1, BlockTypes.Fin);
-            for (int x = 1; x <= 3; x++) { P(x, 0, BlockTypes.Armor); P(-x, 0, BlockTypes.Armor); }
-            for (int x = 4; x <= 6; x++) { P(x, 0, BlockTypes.Hull); P(-x, 0, BlockTypes.Hull); }
-            foreach (int x in new[] { 5, 6 }) { P(x, -1, BlockTypes.Thruster); P(-x, -1, BlockTypes.Thruster); }
+            foreach (var (x, y, t) in WingCells()) g.TryAdd(BlockKey.Pack(x, y), new Block(t));
             return g;
+        }
+
+        static System.Collections.Generic.IEnumerable<(int, int, byte)> WingCells()
+        {
+            yield return (0, 0, BlockTypes.Core);
+            yield return (0, 2, BlockTypes.Cannon);
+            foreach (int y in new[] { 1, -1 }) yield return (0, y, BlockTypes.Hull);
+            foreach (int side in new[] { 1, -1 })
+            {
+                yield return (side, 1, BlockTypes.Fin);
+                for (int x = 1; x <= 6; x++) yield return (side * x, 0, x <= 3 ? BlockTypes.Armor : BlockTypes.Hull);
+                for (int x = 5; x <= 6; x++) yield return (side * x, -1, BlockTypes.Thruster);
+            }
         }
 
         static BlockGrid CoreAndThruster()
@@ -113,9 +120,8 @@ namespace Hullbreach.Hud.Tests
             p.Observe(grid, 0.2f);
             Assert.AreEqual("Structure: Safe", p.Status);
             Assert.AreEqual(0f, p.PulseFor(p.Result.WeakestKey, 0.125f));
-            HudColor? c = p.TintFor(BlockKey.Pack(0, -1), false);
-            Assert.IsTrue(c.HasValue);
-            Assert.Greater(c.Value.G, c.Value.R);
+            HudColor c = p.TintFor(BlockKey.Pack(0, -1), false).GetValueOrDefault();
+            Assert.Greater(c.G, c.R);
             p.FocusWeakest(1f);
             Assert.Greater(p.PulseFor(p.Result.WeakestKey, 1.125f), 0f, "Fix it pulses even a Safe ship's weakest block");
         }
@@ -130,9 +136,8 @@ namespace Hullbreach.Hud.Tests
             Assert.AreEqual(StressVerdict.WillBreak, p.Result.Verdict);
             Assert.AreEqual("Structure: Will snap under full thrust", p.Status);
             int weakest = p.Result.WeakestKey;
-            HudColor? c = p.TintFor(weakest, false);
-            Assert.IsTrue(c.HasValue);
-            Assert.Greater(c.Value.R, c.Value.G * 3f);
+            HudColor c = p.TintFor(weakest, false).GetValueOrDefault();
+            Assert.Greater(c.R, c.G * 3f);
             Assert.Greater(p.PulseFor(weakest, 0.125f), 0f);
             Assert.AreEqual(0f, p.PulseFor(BlockKey.Pack(0, 0) == weakest ? BlockKey.Pack(0, 1) : BlockKey.Pack(0, 0), 0.125f), "only the weakest block pulses");
             string warning = StressPreviewPresenter.ReadyWarning(grid);
