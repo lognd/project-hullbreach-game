@@ -1,0 +1,6 @@
+kind = "comment"
+subtype = "note"
+body = "Engine-free half landed on branch ticket/YTVQZRX-NDDWXNE: ConnectTarget (host name to IPv4, injected resolver, 5 tests) plus Unity code HullbreachQueueConnect and HullbreachLanLobby.TryConnect. The Unity code was written without running the editor and is untested in play mode. Left open: needs an editor pass (wire HullbreachQueueConnect into the queue scene, confirm the dial and scene load)."
+at = "2026-11-15T05:28:06Z"
+actor = "lognd"
+rev = 1
