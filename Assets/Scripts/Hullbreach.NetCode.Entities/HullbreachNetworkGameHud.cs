@@ -23,7 +23,7 @@ namespace Hullbreach.NetCode.Entities
             int shipCount = replica?.Ships.Count ?? 0;
             string mode = HullbreachNetworkGameplayController.IsBuildMode ? "BUILD" : "FLIGHT";
             string controls = HullbreachNetworkGameplayController.IsBuildMode
-                ? $"1-7 select - click place - right-click remove - Tab fly\n{HullbreachNetworkGameplayController.BuildStatus}\n{BuildCooldownModel.Line(HullbreachNetworkGameplayController.BuildCooldownRemaining)}"
+                ? $"1-6 select - click place - X/right-click remove - Tab fly\n{HullbreachNetworkGameplayController.BuildStatus}\n{BuildCooldownModel.Line(HullbreachNetworkGameplayController.BuildCooldownRemaining)}"
                 : $"{ShipControls.ThrustSteerLine}\n{ShipControls.OnlineFireBuildLine}"; // frob:ticket 01M6WV815GYEJ58MTM4HSS4Z6K
             statusText.text = HullbreachNetCodeClient.IsConnected
                 ? $"Connected as #{HullbreachNetCodeClient.LocalNetworkId}  -  Replicated ships: {shipCount}  -  {mode}\n{HullbreachPlatformAdmission.StatusLine}\n{controls}"

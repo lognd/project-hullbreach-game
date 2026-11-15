@@ -52,13 +52,44 @@ namespace Hullbreach.NetCode.Entities
         int _hoverKey;
         bool _hasHover;
         bool _hoverValid;
+        bool _hoverWait;
+        GameObject _arrow;
         int? _pendingKey;
-        string _buildStatus = "Select a block with 1-7";
+        string _buildStatus = "Select a block with 1-6";
 
         public static bool Active { get; private set; }
         public static bool IsBuildMode { get; private set; } = true;
         public static byte SelectedTypeId { get; private set; } = BlockTypes.Hull;
-        public static string BuildStatus { get; private set; } = "Select a block with 1-7";
+        public static string BuildStatus { get; private set; } = "Select a block with 1-6";
+
+        // What the build panel shows: refusals from the server and from the local preview, and the READY state.
+        public static readonly ToastQueue Toasts = new ToastQueue();
+        public static bool ReadySent { get; private set; }
+        public static string HoverReason { get; private set; } = string.Empty;
+        // True once the server has started the match (both players ready): stock replaces the point budget.
+        public static bool MatchRunning
+        {
+            get
+            {
+                var replica = HullbreachNetCodeClient.Replica;
+                return replica != null && replica.Economy.HasSnapshot && replica.Economy.BudgetLeft < 0;
+            }
+        }
+        public static EconomyConfig Economy { get; } = EconomyConfig.Default();
+
+        public static void SelectType(byte typeId)
+        {
+            if (typeId == BlockTypes.Core || !BlockTypes.IsValid(typeId)) return;
+            SelectedTypeId = typeId;
+        }
+
+        public static void RequestReady()
+        {
+            if (ReadySent) return;
+            ReadySent = true;
+            Requests.Enqueue(new BuildRequest(0, 0, 0, 0, HullbreachBuildAction.Ready));
+            Toasts.Push("Ready. The match starts when your opponent is ready too.", Time.unscaledTime);
+        }
 
         // The server only enforces the cooldown once a match is live (two or more ships), so only show it then.
         // frob:ticket 01M3DG5Y25YGZ3DV7JSDB4BNMF
@@ -80,6 +111,8 @@ namespace Hullbreach.NetCode.Entities
             if (gameplayCamera == null) gameplayCamera = Camera.main;
             if (gameplayCamera != null) _baseOrthographicSize = gameplayCamera.orthographicSize;
             s_lastPlaceTime = -1000f;
+            ReadySent = false;
+            Toasts.Clear();
             PublishStatus();
         }
 
@@ -102,13 +135,17 @@ namespace Hullbreach.NetCode.Entities
 
             if (!IsBuildMode)
             {
+                DrainServerVerdicts();
                 SetHoverVisible(false);
                 return;
             }
 
-            for (int i = 0; i < BlockTypes.Count && i < 9; i++)
+            DrainServerVerdicts();
+
+            // Keys 1-6 pick Hull, Armor, Thruster, Cannon, Fin, Retro (the key number is the block id; the core is not buildable).
+            for (int i = 1; i < BlockTypes.Count && i < 10; i++)
             {
-                if (!Input.GetKeyDown(KeyCode.Alpha1 + i)) continue;
+                if (!Input.GetKeyDown(KeyCode.Alpha0 + i)) continue;
                 SelectedTypeId = (byte)i;
                 _pendingKey = null;
                 _buildStatus = $"Selected {BlockTypes.Get(SelectedTypeId).Name}";
@@ -137,9 +174,27 @@ namespace Hullbreach.NetCode.Entities
                 : BlockPalette.IsSymmetric(SelectedTypeId)
                     ? PlacementRules.CanPlace(ship.Grid, placementKey, SelectedTypeId, 0, out _)
                     : CanPlaceAnyFacing(ship, placementKey);
-            UpdateHover(ship, placementKey);
+            HoverReason = string.Empty;
+            if (_hoverValid)
+            {
+                BlockKey.Unpack(placementKey, out int hx, out int hy);
+                var preview = HullbreachNetCodeClient.Replica.Economy.PreviewPlacement(ship.Grid, Economy, MatchRunning,
+                    HullbreachNetCodeClient.Replica.SimulationTick, hx, hy, SelectedTypeId, modifiers, out byte detail);
+                if (preview != PlacementResult.Ok)
+                {
+                    HoverReason = EconomyRules.Describe(preview, detail);
+                    _hoverValid = preview == PlacementResult.Cooldown; // cooldown is amber, not a mistake
+                    _hoverWait = preview == PlacementResult.Cooldown;
+                }
+                else _hoverWait = false;
+            }
+            else _hoverWait = false;
+            UpdateHover(ship, placementKey, modifiers);
 
-            if (Input.GetMouseButtonDown(1))
+            bool overUi = UnityEngine.EventSystems.EventSystem.current != null && UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject();
+            if (overUi) return;
+
+            if (Input.GetMouseButtonDown(1) || Input.GetKeyDown(KeyCode.X) || Input.GetKeyDown(KeyCode.Delete))
             {
                 if (PlacementRules.CanRemove(ship.Grid, _hoverKey))
                 {
@@ -147,7 +202,7 @@ namespace Hullbreach.NetCode.Entities
                     Requests.Enqueue(new BuildRequest(x, y, 0, 0, HullbreachBuildAction.Remove));
                     _buildStatus = $"Removing ({x}, {y})";
                 }
-                else _buildStatus = "That block cannot be removed";
+                else { _buildStatus = "That block cannot be removed"; Toasts.Push(EconomyRules.Describe(PlacementResult.CannotRemove), Time.unscaledTime); }
                 _pendingKey = null;
                 PublishStatus();
             }
@@ -168,7 +223,20 @@ namespace Hullbreach.NetCode.Entities
             if (!PlacementRules.CanPlace(ship.Grid, key, SelectedTypeId, modifiers, out PlacementVerdict why))
             {
                 _buildStatus = BuilderSession.DescribeVerdict(why);
+                Toasts.Push(_buildStatus, Time.unscaledTime);
                 PublishStatus();
+                return;
+            }
+            if (HoverReason.Length > 0 && !_hoverWait)
+            {
+                _buildStatus = HoverReason;
+                Toasts.Push(HoverReason, Time.unscaledTime);
+                PublishStatus();
+                return;
+            }
+            if (_hoverWait)
+            {
+                Toasts.Push(HoverReason, Time.unscaledTime);
                 return;
             }
 
@@ -212,21 +280,52 @@ namespace Hullbreach.NetCode.Entities
             return true;
         }
 
-        void UpdateHover(ShipBody ship, int key)
+        void UpdateHover(ShipBody ship, int key, byte facing)
         {
             if (_hover == null)
             {
                 _hover = GameObject.CreatePrimitive(PrimitiveType.Quad);
                 _hover.name = "NetworkBuildPreview";
                 Destroy(_hover.GetComponent<Collider>());
+                _arrow = new GameObject("FacingArrow", typeof(MeshFilter), typeof(MeshRenderer));
+                _arrow.transform.SetParent(_hover.transform, false);
+                _arrow.GetComponent<MeshFilter>().sharedMesh = ArrowMesh();
+                var m = new Material(Shader.Find("Sprites/Default")) { color = Color.white };
+                _arrow.GetComponent<MeshRenderer>().sharedMaterial = m;
             }
             _hover.SetActive(_hasHover);
             float2 world = ship.LocalToWorld(BlockGrid.CenterOf(key));
             _hover.transform.SetPositionAndRotation(new Vector3(world.x, world.y, -0.2f),
                 Quaternion.Euler(0f, 0f, ship.Rotation * Mathf.Rad2Deg));
-            Color color = _hoverValid ? Color.green : Color.red;
-            color.a = 0.45f;
+            // green = placeable, amber = placeable once the cooldown ends, red = refused (the reason is in the toast line)
+            Color color = !_hoverValid ? new Color(1f, 0.2f, 0.2f) : _hoverWait ? new Color(1f, 0.7f, 0.2f) : new Color(0.2f, 1f, 0.35f);
+            color.a = 0.5f;
             _hover.GetComponent<MeshRenderer>().material.color = color;
+            // Block facing: 0 = +y, 1 = +x, 2 = -y, 3 = -x; only blocks that have a facing show the arrow.
+            bool directional = !BlockPalette.IsSymmetric(SelectedTypeId);
+            _arrow.SetActive(directional);
+            _arrow.transform.localRotation = Quaternion.Euler(0f, 0f, -90f * facing);
+            _arrow.transform.localPosition = new Vector3(0f, 0f, -0.01f);
+        }
+
+        static Mesh s_arrow;
+        static Mesh ArrowMesh()
+        {
+            if (s_arrow != null) return s_arrow;
+            s_arrow = new Mesh { name = "FacingArrow" };
+            s_arrow.vertices = new[] { new Vector3(0f, 0.42f), new Vector3(-0.3f, -0.05f), new Vector3(0.3f, -0.05f), new Vector3(-0.1f, -0.05f), new Vector3(0.1f, -0.05f), new Vector3(-0.1f, -0.38f), new Vector3(0.1f, -0.38f) };
+            s_arrow.triangles = new[] { 0, 2, 1, 3, 4, 5, 4, 6, 5 };
+            return s_arrow;
+        }
+
+        // Server verdicts (stock, budget, cooldown, buckling) become toasts so a refused block is never silent.
+        void DrainServerVerdicts()
+        {
+            var replica = HullbreachNetCodeClient.Replica;
+            if (replica == null) return;
+            while (replica.Economy.TryDequeueResult(out PlacementResultMessage msg))
+                if (msg.Result != PlacementResult.Ok && msg.Result != PlacementResult.Cooldown)
+                    Toasts.Push(EconomyRules.Describe(msg.Result, msg.Detail), Time.unscaledTime);
         }
 
         void SetHoverVisible(bool visible)
