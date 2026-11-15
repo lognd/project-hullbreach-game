@@ -17,6 +17,8 @@ namespace Hullbreach.NetCode.Entities
 
         MinimapDisc[] _planets = Array.Empty<MinimapDisc>();
         object _planetsFor;
+        System.Collections.Generic.List<Hullbreach.Net.PickupView> _pickupViews;
+        Vector2[] _pickupPos = new Vector2[24];
 
         public bool TryGetFrame(out StormHudFrame frame)
         {
@@ -49,6 +51,13 @@ namespace Hullbreach.NetCode.Entities
                 frame.ArenaRadius = 100f; // no storm announced yet: still show the radar around the origin
                 frame.Planets = _planets;
             }
+
+            if (_pickupViews == null) _pickupViews = new System.Collections.Generic.List<Hullbreach.Net.PickupView>(32);
+            replica.Economy.GetPickups(replica.LatestServerTick, _pickupViews);
+            int pc = Math.Min(_pickupViews.Count, 24);
+            if (_pickupPos.Length < pc) _pickupPos = new Vector2[24];
+            for (int i = 0; i < pc; i++) _pickupPos[i] = new Vector2(_pickupViews[i].Position.x, _pickupViews[i].Position.y);
+            frame.Pickups = _pickupPos; frame.PickupCount = pc;
 
             ushort local = HullbreachNetCodeClient.LocalNetworkId;
             foreach (var kv in replica.Ships)

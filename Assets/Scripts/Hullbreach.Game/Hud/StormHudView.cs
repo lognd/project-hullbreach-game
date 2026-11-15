@@ -117,7 +117,36 @@ namespace Hullbreach.Game
             float k = (_big ? bigMapSize : smallMapSize) / _texSize;
             PlaceDot(_selfDot, f.HasLocal, view, f.LocalPosition, k, true);
             PlaceDot(_enemyDot, f.HasEnemy, view, f.EnemyPosition, k, true);
+            DrawPickups(f, view, k);
             _mapHint.gameObject.SetActive(_big);
+        }
+
+        const int MaxPickupDots = 24;
+        readonly System.Collections.Generic.List<Image> _pickupDots = new System.Collections.Generic.List<Image>();
+
+        void DrawPickups(StormHudFrame f, MinimapView view, float k)
+        {
+            int n = f.Pickups != null ? Mathf.Min(f.PickupCount, MaxPickupDots) : 0;
+            float dot = _big ? 10f : 6f;
+            for (int i = 0; i < Mathf.Max(n, _pickupDots.Count); i++)
+            {
+                if (i >= _pickupDots.Count)
+                    _pickupDots.Add(NewImage("PickupDot" + i, _mapRect, _circle, new Color(1f, 0.85f, 0.25f)));
+                var img = _pickupDots[i];
+                bool show = false;
+                if (i < n)
+                {
+                    view.ToMap(f.Pickups[i].x, f.Pickups[i].y, out float mx, out float my);
+                    show = mx * mx + my * my <= view.PixelRadius * view.PixelRadius;
+                    if (show)
+                    {
+                        img.rectTransform.sizeDelta = new Vector2(dot, dot);
+                        img.rectTransform.anchoredPosition = new Vector2(mx * k, my * k);
+                    }
+                }
+                img.gameObject.SetActive(show);
+            }
+            if (_selfDot != null) _selfDot.transform.SetAsLastSibling();
         }
 
         void PlaceDot(Image dot, bool show, MinimapView view, Vector2 world, float k, bool clamp)

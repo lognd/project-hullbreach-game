@@ -60,8 +60,7 @@ namespace Hullbreach.Hud.Tests
             Assert.IsTrue(d.ScreenShake && d.HitEffects && d.SoundEffects);
             var back = GameSettings.Parse(new GameSettings { ScreenShake = false, HitEffects = false, SoundEffects = false }.Serialize());
             Assert.IsFalse(back.ScreenShake || back.HitEffects || back.SoundEffects);
-            Assert.IsTrue(GameSettings.Parse("master=1
-").ScreenShake); // old files keep the defaults
+            Assert.IsTrue(GameSettings.Parse("master=1").ScreenShake); // old files keep the defaults
         }
 
         [Test]

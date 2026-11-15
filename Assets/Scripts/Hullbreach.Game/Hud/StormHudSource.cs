@@ -23,6 +23,10 @@ namespace Hullbreach.Game
         // World-space planet discs for the radar; may be null.
         public MinimapDisc[] Planets;
 
+        // Block pickups to mark on the radar (online economy); may be null. Only the first PickupCount entries count.
+        public Vector2[] Pickups;
+        public int PickupCount;
+
         // The area the radar fits (arena centre and radius).
         public Vector2 ArenaCenter;
         public float ArenaRadius;
