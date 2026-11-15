@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Hullbreach.Bots;
 using Hullbreach.Core;
+using Hullbreach.Match;
 using Hullbreach.Net;
 using Unity.Collections;
 using Unity.Entities;
@@ -29,6 +30,7 @@ namespace Hullbreach.NetCode.Entities
         bool _arenaConfigured;
         bool _sparringJoined;
         BotPeer _bot;
+        uint _sparringTick;
         uint _simTick; // counts _simulation.Tick() calls, the same clock as StormStarted.StartTick
 
         protected override void OnCreate()
@@ -114,7 +116,11 @@ namespace Hullbreach.NetCode.Entities
                 }
             }
             if (_sparringJoined && _bot != null)
-                _bot.Drive(_simulation, _simTick);
+            {
+                // The bot sits still through the build phase: shots would land before the match has started.
+                if (_simulation.Match != null && _simulation.Match.Phase == MatchPhase.Running) _bot.Drive(_simulation, _simTick);
+                else _simulation.SetInput(peer, new InputMessage((ushort)peer, ++_sparringTick, 0, 0, 0));
+            }
         }
 
         void SynchronizeConnections()
