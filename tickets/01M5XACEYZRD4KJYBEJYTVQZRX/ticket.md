@@ -12,7 +12,7 @@ labels = ["game", "owner:mcnairrobotics"]
 
 [[acceptance]]
 text = "A found match becomes a resolvable connect target (ConnectRequest/ConnectTarget, tests)"
-bound = false
+bound = true
 
 [[acceptance]]
 text = "HullbreachQueueConnect dials on Matched and loads the match scene (editor-verified against a local platform with two accounts; no automated test)"
