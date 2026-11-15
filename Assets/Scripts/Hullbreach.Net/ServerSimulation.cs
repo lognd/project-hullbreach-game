@@ -183,6 +183,7 @@ namespace Hullbreach.Net
             public bool IsBuilding;
             public bool HasInput;
             public bool PendingFire;
+            public uint NextBuildTick;
             public bool InPushZone;
             public readonly TrustLevel Trust = new TrustLevel();
             public readonly Dictionary<int, bool> Failing = new Dictionary<int, bool>();
@@ -325,10 +326,31 @@ namespace Hullbreach.Net
             }
         }
 
+        // Seconds a peer must wait between block placements while a match is running, so building
+        // mid-fight is a trade-off (S34-3). Zero or less disables it; pre-match building is never limited.
+        // frob:ticket 01M3DG5Y25YGZ3DV7JSDB4BNMF
+        // frob:doc docs/reference/hullbreach-net.md#serversimulation
+        public float BuildCooldownSeconds = 1.5f;
+
+        // Seconds until the peer may place again during a live match; 0 when ready or unknown.
+        // frob:ticket 01M3DG5Y25YGZ3DV7JSDB4BNMF
+        // frob:doc docs/reference/hullbreach-net.md#serversimulation
+        public float BuildCooldownRemaining(int peer)
+        {
+            if (!_peers.TryGetValue(peer, out var state) || !MatchIsRunning) return 0f;
+            long left = (long)state.NextBuildTick - _tickIndex;
+            return left <= 0 ? 0f : left * Dt;
+        }
+
+        bool MatchIsRunning => Match != null && Match.Phase == MatchPhase.Running;
+
+        // A placement refused for cooldown is not distrusted: a client can legitimately press twice.
+        // frob:ticket 01M3DG5Y25YGZ3DV7JSDB4BNMF
         public bool TryPlaceBlock(int peer, int x, int y, byte typeId, byte modifiers)
         {
             if (!_peers.TryGetValue(peer, out var state) || state.Trust.AtFloor) return false;
             if (!state.IsBuilding) { Distrust(peer, state, TrustEventKind.BuildOutsideBuildMode); return false; }
+            if (BuildCooldownSeconds > 0f && MatchIsRunning && _tickIndex < state.NextBuildTick) return false;
             if (typeId >= BlockTypes.Count || !BlockKey.InRange(x, y) ||
                 state.Ship.Grid.Count >= ShipSnapshot.MaxBlocks)
             { Distrust(peer, state, TrustEventKind.RejectedBuild); return false; }
@@ -338,6 +360,8 @@ namespace Hullbreach.Net
             { Distrust(peer, state, TrustEventKind.RejectedBuild); return false; }
             if (!state.Ship.Grid.TryAdd(key, new Block(typeId, modifiers))) return false;
 
+            if (BuildCooldownSeconds > 0f && MatchIsRunning)
+                state.NextBuildTick = _tickIndex + (uint)Math.Ceiling(BuildCooldownSeconds * TickRate);
             state.Ship.RebuildDerivedViews();
             state.Solver.MarkTopologyChanged();
             Tally(peer, 0, 0, 1);

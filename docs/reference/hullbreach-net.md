@@ -687,6 +687,8 @@ state never reads it.
 <!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.RequireReady -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.SetReady -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.AssignQueueMatch -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.BuildCooldownSeconds -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.BuildCooldownRemaining -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.RequireJoinTicket -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.PresentTicket -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.ServerSimulation -->
@@ -712,6 +714,13 @@ transport (a `MonoBehaviour`, a headless loop) drains that outbox and
 forwards it. That separation is deliverable 4's whole point: this class,
 and therefore the entire server simulation, compiles and tests without
 knowing sockets exist.
+
+Mid-match building is a trade-off (S34-3): while a match is `Running` each peer may
+place one block per `BuildCooldownSeconds` (default 1.5 s, counted in server ticks; zero
+or less turns it off). A placement inside the cooldown is refused without distrust and
+without extending the wait; `BuildCooldownRemaining(peer)` tells a HUD how long is
+left. Building before the match starts is never limited. There is no resource cost: the
+repo has no resource system, so cost was not invented. Removal is not limited.
 
 Projectile hits: a hit damages the struck block and also applies the
 shot's `Spec.Impulse` to the victim ship at the hit point, along the shot's
