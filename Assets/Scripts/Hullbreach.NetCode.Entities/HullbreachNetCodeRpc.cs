@@ -19,6 +19,8 @@ namespace Hullbreach.NetCode.Entities
     public struct HullbreachJoinTicketRpc : IRpcCommand
     {
         public FixedString64Bytes MatchId;
+        // Equipped hull-skin slug from the platform; empty for the default skin.
+        public FixedString64Bytes Skin;
     }
 
     /// <summary>Client-side tag: the join ticket for this connection has been sent.</summary>

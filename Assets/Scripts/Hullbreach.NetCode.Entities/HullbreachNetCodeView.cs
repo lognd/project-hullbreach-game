@@ -1,6 +1,7 @@
 
 using System.Collections.Generic;
 using Hullbreach.Core;
+using Hullbreach.Net;
 using Unity.Mathematics;
 using UnityEngine;
 
@@ -76,6 +77,7 @@ namespace Hullbreach.NetCode.Entities
                             : remoteShipColor;
 
                     Color display = Color.Lerp(typeColor, teamColor, 0.28f);
+                    display = ApplySkin(display, netId, block.Key, block.Value.TypeId);
                     display = Color.Lerp(
                         display,
                         Color.black,
@@ -228,6 +230,19 @@ namespace Hullbreach.NetCode.Entities
 
                 _projectileVisuals.Remove(id);
             }
+        }
+
+        // Tints hull-like blocks with the owner's platform skin (ShipSkins); weapons and engines keep their colours so
+        // a ship stays readable. Unknown or default skins leave the colour alone.
+        static Color ApplySkin(Color color, ushort netId, int blockKey, byte typeId)
+        {
+            if (typeId == BlockTypes.Cannon || typeId == BlockTypes.Thruster || typeId == BlockTypes.RetroThruster)
+                return color;
+            if (!HullbreachNetCodeClient.ShipSkinIds.TryGetValue(netId, out byte skin) || skin == 0) return color;
+            ShipSkins.Look look = ShipSkins.LookOf(skin);
+            Color tinted = Color.Lerp(color, new Color(look.R, look.G, look.B), look.Mix);
+            if (look.Stripes && (blockKey & 1) == 0) tinted = Color.Lerp(tinted, Color.black, 0.3f);
+            return tinted;
         }
 
         static Color ColorForType(byte typeId) => typeId switch

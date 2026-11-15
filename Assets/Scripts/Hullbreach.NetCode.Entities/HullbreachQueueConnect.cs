@@ -57,7 +57,7 @@ namespace Hullbreach.NetCode.Entities
 
         void OnMatched(MatchHandoff handoff)
         {
-            ConfigResult<ConnectRequest> request = ConnectRequest.FromHandoff(handoff, _equippedSkins);
+            ConfigResult<ConnectRequest> request = ConnectRequest.FromHandoff(handoff, handoff.Skin.Length > 0 ? new[] { handoff.Skin } : _equippedSkins);
             if (!request.IsOk)
             {
                 Debug.LogWarning("Hullbreach connect: match handoff rejected: " + request.Error);
@@ -73,7 +73,7 @@ namespace Hullbreach.NetCode.Entities
                 return;
             }
 
-            HullbreachQueueTicket.Set(request.Value.MatchId);
+            HullbreachQueueTicket.Set(request.Value.MatchId, handoff.Skin);
             if (!HullbreachLanLobby.TryConnect(target.Value, out string error))
             {
                 HullbreachQueueTicket.Clear();

@@ -21,6 +21,9 @@ namespace Hullbreach.NetCode.Entities
         // The server simulation's tick count when this pose was written; the client clock for storm and pickups.
         [GhostField] public uint SimTick;
 
+        // ShipSkins id of the ship's owner (0 = default look); ships only.
+        [GhostField] public byte Skin;
+
         [GhostField(Quantization = 1000, Smoothing = SmoothingAction.InterpolateAndExtrapolate)]
         public float2 Position;
 

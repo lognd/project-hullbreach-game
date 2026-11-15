@@ -34,7 +34,7 @@ namespace Hullbreach.Net
                 {
                     var ticket = JoinTicket.Read(ref r);
                     if (r.Failed) return false;
-                    return server.PresentTicket(peer, ticket.MatchId);
+                    return server.PresentTicket(peer, ticket.MatchId, ticket.Skin);
                 }
                 default:
                     return false;

@@ -177,8 +177,15 @@ Allocation channel (how a dedicated server learns its match; the platform only r
 Verified in the editor on 2026-11-15 against a locally run platform (two accounts): the queue matched, the client dialed
 the assigned address, the ticket was accepted, a second client world presenting the same id joined as peer 2, and a
 wrong id was refused and timed out. Not verified: a standalone dedicated build (none was built, to save disk), two
-separate machines, equipped skins (the platform returns skin slugs in the match, but `MatchHandoff` drops them and no ship
-renders a skin, so every match uses the default skin), and the platform choosing a different address per match.
+separate machines, and the platform choosing a different address per match.
+
+Skins: the platform's queue response carries `skin` and `opponent_skin` (hull-skin item slugs, null for default).
+`MatchHandoff.Skin` keeps the player's own, `HullbreachQueueTicket.Skin` sends it in `HullbreachJoinTicketRpc`, and the
+server records it with `PresentTicket` and writes its `ShipSkins` id into each ship ghost (`HullbreachGhostPose.Skin`).
+Every client reads the id per ship (`HullbreachNetCodeClient.ShipSkinIds`) and `HullbreachNetCodeView` tints hull-like
+blocks (not cannons or thrusters) with that skin's colour, striping alternate blocks for some. Unknown or missing slugs
+render the default look. The opponent's look comes from the server, not from `opponent_skin`. Verified in the editor by
+screenshot with a crimson skin on the local ship; the platform side was not exercised with an owned and equipped skin.
 
 ### Online clock, sparring partner and effects
 

@@ -132,6 +132,21 @@ namespace Hullbreach.Net.Tests
         }
 
         [Test]
+        public void Map_MatchedStatus_CarriesBothSkinSlugs_NullMeansDefault()
+        {
+            // frob:tests Assets/Scripts/Hullbreach.Net/MatchHandoff.cs::Hullbreach.Net.MatchHandoff.Parse kind="unit"
+            string body = "{\"state\":\"matched\",\"match\":{\"match_id\":\"" + MatchId +
+                          "\",\"server_address\":\"10.0.0.5:7777\",\"opponent_id\":\"u2\"," +
+                          "\"skin\":\"hull-skin-deep-sea-camo\",\"opponent_skin\":null}}";
+            var o = MatchmakingClient.Map(PlatformHttpMethod.Get, PlatformHttpResponse.Http(200, body));
+            Assert.IsTrue(o.Queue.Match.IsOk, o.Queue.Match.Error);
+            Assert.AreEqual("hull-skin-deep-sea-camo", o.Queue.Match.Value.Skin);
+            Assert.AreEqual(string.Empty, o.Queue.Match.Value.OpponentSkin);
+            Assert.AreEqual(string.Empty,
+                MatchmakingClient.Map(PlatformHttpMethod.Get, PlatformHttpResponse.Http(200, Matched())).Queue.Match.Value.Skin);
+        }
+
+        [Test]
         public void Map_MatchedWithBadAddress_KeepsOkStatusButFailedHandoff()
         {
             var o = MatchmakingClient.Map(PlatformHttpMethod.Get, PlatformHttpResponse.Http(200, Matched("garbage")));

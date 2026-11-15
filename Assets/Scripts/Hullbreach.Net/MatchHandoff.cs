@@ -9,8 +9,11 @@ namespace Hullbreach.Net
     public readonly struct MatchHandoff
     {
         // frob:doc docs/reference/hullbreach-net.md#matchmaking
-        public MatchHandoff(string matchId, string host, ushort port, string opponentId)
+        public MatchHandoff(string matchId, string host, ushort port, string opponentId, string skin = null,
+            string opponentSkin = null)
         {
+            Skin = skin ?? string.Empty;
+            OpponentSkin = opponentSkin ?? string.Empty;
             MatchId = matchId;
             Host = host;
             Port = port;
@@ -32,12 +35,21 @@ namespace Hullbreach.Net
         // frob:doc docs/reference/hullbreach-net.md#matchmaking
         public string OpponentId { get; }
 
+        // This player's equipped hull-skin slug from the platform; empty means the default skin.
+        // frob:doc docs/reference/hullbreach-net.md#matchmaking
+        public string Skin { get; }
+
+        // The opponent's equipped hull-skin slug; empty means the default skin.
+        // frob:doc docs/reference/hullbreach-net.md#matchmaking
+        public string OpponentSkin { get; }
+
         // frob:doc docs/reference/hullbreach-net.md#matchmaking
         public override string ToString() => $"match_id='{MatchId}' server={Host}:{Port}";
 
         // Builds a handoff from the queue's match fields; bad input is an error, never a throw.
         // frob:doc docs/reference/hullbreach-net.md#matchmaking
-        public static ConfigResult<MatchHandoff> Parse(string matchId, string serverAddress, string opponentId = null)
+        public static ConfigResult<MatchHandoff> Parse(string matchId, string serverAddress, string opponentId = null,
+            string skin = null, string opponentSkin = null)
         {
             if (string.IsNullOrWhiteSpace(matchId))
                 return ConfigResult<MatchHandoff>.Fail("match has no match_id");
@@ -54,7 +66,8 @@ namespace Hullbreach.Net
             if (!ushort.TryParse(address.Substring(colon + 1), NumberStyles.None, CultureInfo.InvariantCulture,
                     out ushort port) || port == 0)
                 return ConfigResult<MatchHandoff>.Fail($"server_address '{address}' has an invalid port");
-            return ConfigResult<MatchHandoff>.Ok(new MatchHandoff(matchId.Trim(), host, port, opponentId ?? string.Empty));
+            return ConfigResult<MatchHandoff>.Ok(new MatchHandoff(matchId.Trim(), host, port, opponentId ?? string.Empty,
+                skin, opponentSkin));
         }
     }
 }

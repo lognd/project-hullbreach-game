@@ -733,6 +733,7 @@ state never reads it.
 <!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.PresentTicket -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.AdoptFirstTicket -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.IsTicketed -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.SkinOf -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.ServerSimulation -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.Ships -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.MaxPeerId -->
@@ -1235,6 +1236,8 @@ else is ignored and the default profile is used. `play online --profile
 <!-- describes: Assets/Scripts/Hullbreach.Net/MatchHandoff.cs::MatchHandoff.Host -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/MatchHandoff.cs::MatchHandoff.Port -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/MatchHandoff.cs::MatchHandoff.OpponentId -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/MatchHandoff.cs::MatchHandoff.Skin -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/MatchHandoff.cs::MatchHandoff.OpponentSkin -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/MatchHandoff.cs::MatchHandoff.ToString -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/MatchHandoff.cs::MatchHandoff.Parse -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/MatchmakingMachine.cs::MatchmakingState -->
@@ -1388,6 +1391,8 @@ throwing resolver, no IPv4 answer or an odd name is an error value. `Ticket` is 
 <!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::JoinTicket -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::JoinTicket.ByteSize -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::JoinTicket.MatchId -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::JoinTicket.MaxSkinLength -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::JoinTicket.Skin -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::JoinTicket.JoinTicket -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::JoinTicket.TryWrite -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::JoinTicket.Read -->
@@ -1398,6 +1403,28 @@ fails the reader on a truncated body or the all-zero id; `TryWrite` refuses a no
 `ServerSimulation.RequireJoinTicket` on, the server only accepts `Join` from a peer whose
 ticket equals the id from `AssignQueueMatch`; a mismatch queues the peer for disconnect. A
 dedicated server is told its id by `-hullbreachMatchId <uuid>` (`DirectLaunchPlan.MatchId`).
+
+An optional tail carries the player's equipped hull-skin slug: one length byte (at most
+`MaxSkinLength` = 64) then that many printable ASCII bytes. It is left out entirely for the default
+skin, so the message stays the original 17 bytes and old senders still parse; a slug that is too
+long or not ASCII is refused by `TryWrite`, and a tail longer than the datagram fails the reader.
+`ServerSimulation.PresentTicket(peer, id, skin)` stores the skin as a `ShipSkins` id (`SkinOf(peer)`)
+only when the ticket is accepted; an unknown slug is the default skin.
+
+### ShipSkins
+
+<!-- describes: Assets/Scripts/Hullbreach.Net/ShipSkins.cs::ShipSkins -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ShipSkins.cs::ShipSkins.Look -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ShipSkins.cs::ShipSkins.IdOf -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ShipSkins.cs::ShipSkins.SlugOf -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ShipSkins.cs::ShipSkins.LookOf -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ShipSkins.cs::ShipSkins.Count -->
+
+The platform's hull-skin slugs (its seeded catalogue plus the two demo skins) mapped to a one-byte id
+(1 through `Count`; 0 is the default look) so the ghost stream can carry them. `Look` is the minimal
+visible style: a tint colour, how strongly it mixes into hull-like blocks, and whether alternate
+blocks are darkened (stripes). `IdOf` returns 0 for null, empty or unknown slugs, so a skin the game
+has not heard of renders as the default instead of breaking the match.
 
 ### EconomyConfig
 

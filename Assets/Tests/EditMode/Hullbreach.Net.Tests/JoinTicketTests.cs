@@ -106,6 +106,85 @@ namespace Hullbreach.Net.Tests
         }
 
         [Test]
+        public void Skin_RoundTrips_AndNoSkinKeepsTheOriginalSeventeenBytes()
+        {
+            // frob:tests Assets/Scripts/Hullbreach.Net/NetMessages.cs::Hullbreach.Net.JoinTicket.TryWrite kind="unit"
+            // frob:tests Assets/Scripts/Hullbreach.Net/NetMessages.cs::Hullbreach.Net.JoinTicket.Read kind="unit"
+            const string Slug = "hull-skin-deep-sea-camo";
+            var buffer = new byte[128];
+            var w = new ByteWriter(buffer);
+            Assert.IsTrue(new JoinTicket(Id, Slug).TryWrite(ref w));
+            Assert.AreEqual(JoinTicket.ByteSize + 1 + Slug.Length, w.Position);
+            var r = new ByteReader(buffer, 0, w.Position);
+            JoinTicket read = JoinTicket.Read(ref r);
+            Assert.IsFalse(r.Failed);
+            Assert.AreEqual(Id, read.MatchId);
+            Assert.AreEqual(Slug, read.Skin);
+
+            var plain = new byte[JoinTicket.ByteSize];
+            var pw = new ByteWriter(plain);
+            Assert.IsTrue(new JoinTicket(Id).TryWrite(ref pw));
+            Assert.AreEqual(JoinTicket.ByteSize, pw.Position);
+            var pr = new ByteReader(plain, 0, pw.Position);
+            Assert.AreEqual(string.Empty, JoinTicket.Read(ref pr).Skin);
+        }
+
+        [Test]
+        public void Skin_BadOnTheWire_IsNotWrittenOrFailsTheReader()
+        {
+            // frob:tests Assets/Scripts/Hullbreach.Net/NetMessages.cs::Hullbreach.Net.JoinTicket.TryWrite kind="unit"
+            var buffer = new byte[256];
+            var w = new ByteWriter(buffer);
+            Assert.IsFalse(new JoinTicket(Id, new string('x', JoinTicket.MaxSkinLength + 1)).TryWrite(ref w));
+            Assert.IsFalse(new JoinTicket(Id, "caf\u00e9").TryWrite(ref w));
+
+            byte[] bytes = Wire(Id);
+            var padded = new byte[bytes.Length + 3];
+            bytes.CopyTo(padded, 0);
+            padded[bytes.Length] = 10; // claims 10 skin bytes but only 2 follow
+            var r = new ByteReader(padded, 0, padded.Length);
+            JoinTicket.Read(ref r);
+            Assert.IsTrue(r.Failed);
+        }
+
+        [Test]
+        public void Skin_IsKeptPerPeer_UnknownIsDefault_AndClearedOnLeave()
+        {
+            // frob:tests Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::Hullbreach.Net.ServerSimulation.PresentTicket kind="unit"
+            ServerSimulation server = Server();
+            server.AssignQueueMatch(Id);
+            Assert.IsTrue(server.PresentTicket(1, Id, "hull-skin-deep-sea-camo"));
+            Assert.IsTrue(server.PresentTicket(2, Id, "hull-skin-from-the-future"));
+            Assert.AreEqual(ShipSkins.IdOf("hull-skin-deep-sea-camo"), server.SkinOf(1));
+            Assert.AreNotEqual(0, server.SkinOf(1));
+            Assert.AreEqual(0, server.SkinOf(2));
+            Assert.AreEqual(0, server.SkinOf(3));
+            Assert.IsFalse(server.PresentTicket(4, Other, "hull-skin-deep-sea-camo"));
+            Assert.AreEqual(0, server.SkinOf(4), "a refused ticket sets no skin");
+            server.Leave(1);
+            Assert.AreEqual(0, server.SkinOf(1));
+        }
+
+        [Test]
+        public void ShipSkins_EverySlugRoundTrips_AndLooksAreDistinctFromDefault()
+        {
+            // frob:tests Assets/Scripts/Hullbreach.Net/ShipSkins.cs::Hullbreach.Net.ShipSkins.IdOf kind="unit"
+            Assert.AreEqual(17, ShipSkins.Count);
+            for (byte id = 1; id <= ShipSkins.Count; id++)
+            {
+                string slug = ShipSkins.SlugOf(id);
+                Assert.AreEqual(id, ShipSkins.IdOf(slug));
+                Assert.Greater(ShipSkins.LookOf(id).Mix, 0f, slug);
+            }
+            Assert.AreEqual(0, ShipSkins.IdOf(null));
+            Assert.AreEqual(0, ShipSkins.IdOf(""));
+            Assert.AreEqual(0, ShipSkins.IdOf("nope"));
+            Assert.AreEqual(0f, ShipSkins.LookOf(0).Mix);
+            Assert.AreEqual(0f, ShipSkins.LookOf(200).Mix);
+            Assert.AreEqual(string.Empty, ShipSkins.SlugOf(200));
+        }
+
+        [Test]
         public void AdoptFirstTicket_FirstValidTicketNamesTheMatch()
         {
             // frob:tests Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::Hullbreach.Net.ServerSimulation.PresentTicket kind="unit"

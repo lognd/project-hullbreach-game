@@ -168,7 +168,20 @@ namespace Hullbreach.Net
         // peer for disconnect and returns false.
         // frob:ticket 01M5XACF0K75AVMM0MCNDDWXNE
         // frob:doc docs/reference/hullbreach-net.md#serversimulation
-        public bool PresentTicket(int peer, string matchId)
+        public bool PresentTicket(int peer, string matchId, string skin = null)
+        {
+            bool ok = CheckTicket(peer, matchId);
+            if (ok) _skins[peer] = ShipSkins.IdOf(skin);
+            return ok;
+        }
+
+        // The skin id (ShipSkins) a peer presented with its ticket; 0 (default) when none, unknown, or a bot.
+        // frob:ticket 01M5XACF0K75AVMM0MCNDDWXNE
+        public byte SkinOf(int peer) => _skins.TryGetValue(peer, out byte id) ? id : (byte)0;
+
+        readonly Dictionary<int, byte> _skins = new Dictionary<int, byte>();
+
+        bool CheckTicket(int peer, string matchId)
         {
             ConfigResult<string> presented = QueueMatchId.Normalize(matchId);
             // No orchestrator told this server the match id: the first well-formed ticket names the match, and the
@@ -614,6 +627,12 @@ namespace Hullbreach.Net
         public void Leave(int peer)
         {
             if (_peers.TryGetValue(peer, out var state)) RemovePeer(peer, state);
+            else
+            {
+                // Connected and ticketed but never joined: forget the ticket and skin too.
+                _ticketed.Remove(peer);
+                _skins.Remove(peer);
+            }
         }
 
         // Pops one peer dropped by timeout so the host can close its connection.
@@ -630,6 +649,7 @@ namespace Hullbreach.Net
         {
             _peers.Remove(peer);
             _ticketed.Remove(peer);
+            _skins.Remove(peer);
             _gate.RemovePeer(peer);
             Match?.Disconnect(peer);
             AnnounceMatchEnd();
