@@ -1,0 +1,6 @@
+kind = "comment"
+subtype = "note"
+body = "Awaiting a CI run with the UNITY_LICENSE repository secret set: the linux server build job in .github/workflows/ci.yml skips itself without it, and it cannot be run locally, so no evidence is recorded. Leaving open rather than faking evidence; re-open evidence once the job has run green."
+at = "2026-11-15T05:25:44Z"
+actor = "lognd"
+rev = 1

@@ -1,0 +1,7 @@
+kind = "field"
+field = "acceptance"
+new = ["Given a peer that repeatedly makes implausible claims (refused builds, reserved input bits), when its trust drops, then the hit margin and late-input hold shrink and build claims are refused at the floor, and the peer is never disconnected for it (TrustLevelTests)"]
+moved = []
+at = "2026-11-15T05:24:12Z"
+actor = "lognd"
+rev = 1
