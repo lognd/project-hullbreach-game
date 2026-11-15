@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Hullbreach.Platform;
 
 namespace Hullbreach.Net
 {
@@ -32,6 +33,11 @@ namespace Hullbreach.Net
         // frob:doc docs/reference/hullbreach-net.md#directlaunchplan
         public const string ServerArg = "-hullbreachServer";
 
+        // The allocation channel for a queue server: the platform launches it with the match id it must serve (S29-3c).
+        // frob:ticket 01M5XACF0K75AVMM0MCNDDWXNE
+        // frob:doc docs/reference/hullbreach-net.md#directlaunchplan
+        public const string MatchIdArg = "-hullbreachMatchId";
+
         // frob:doc docs/reference/hullbreach-net.md#directlaunchplan
         public const ushort DefaultPort = 7979;
 
@@ -43,8 +49,9 @@ namespace Hullbreach.Net
 
         readonly List<string> _warnings;
 
-        DirectLaunchPlan(LaunchRole role, ushort port, string connectAddress, List<string> warnings)
+        DirectLaunchPlan(LaunchRole role, ushort port, string connectAddress, string matchId, List<string> warnings)
         {
+            MatchId = matchId;
             Role = role;
             Port = port;
             ConnectAddress = connectAddress;
@@ -60,6 +67,10 @@ namespace Hullbreach.Net
         // Numeric IP the client role dials; loopback for every other role.
         // frob:doc docs/reference/hullbreach-net.md#directlaunchplan
         public string ConnectAddress { get; }
+
+        // Canonical queue match id a dedicated server was told to serve; null when none was given or it was bad.
+        // frob:doc docs/reference/hullbreach-net.md#directlaunchplan
+        public string MatchId { get; }
 
         // Bad arguments fall back to defaults; these say what was ignored and why.
         // frob:doc docs/reference/hullbreach-net.md#directlaunchplan
@@ -101,7 +112,8 @@ namespace Hullbreach.Net
                 warnings.Add($"{ConnectArg} is ignored by a dedicated server.");
 
             string address = role == LaunchRole.Client ? ReadAddress(args, warnings) : LoopbackAddress;
-            return new DirectLaunchPlan(role, port, address, warnings);
+            string matchId = role == LaunchRole.Server ? ReadMatchId(args, warnings) : null;
+            return new DirectLaunchPlan(role, port, address, matchId, warnings);
         }
 
         // One greppable line per process; scripts and the doctor look for it.
@@ -115,7 +127,8 @@ namespace Hullbreach.Net
                 case LaunchRole.Client:
                     return $"Hullbreach direct: role=client connect={ConnectAddress}:{Port} scene={GameScene}";
                 case LaunchRole.Server:
-                    return $"Hullbreach direct: role=server listen=0.0.0.0:{Port} scene={GameScene}";
+                    return $"Hullbreach direct: role=server listen=0.0.0.0:{Port} scene={GameScene}" +
+                           (MatchId == null ? string.Empty : $" match_id={MatchId}");
                 default:
                     return "Hullbreach direct: role=lobby (no direct arguments)";
             }
@@ -152,6 +165,16 @@ namespace Hullbreach.Net
             if (ushort.TryParse(text, out ushort port) && port != 0) return port;
             warnings.Add($"Invalid {PortArg} '{text}'; using {DefaultPort}.");
             return DefaultPort;
+        }
+
+        static string ReadMatchId(IReadOnlyList<string> args, List<string> warnings)
+        {
+            if (!Has(args, MatchIdArg)) return null;
+            string text = ValueAfter(args, MatchIdArg);
+            ConfigResult<string> id = QueueMatchId.Normalize(text);
+            if (id.IsOk) return id.Value;
+            warnings.Add($"Invalid {MatchIdArg} '{text}': {id.Error}; the server will not accept queue players.");
+            return null;
         }
 
         static string ReadAddress(IReadOnlyList<string> args, List<string> warnings)

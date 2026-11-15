@@ -59,6 +59,33 @@ namespace Hullbreach.NetCode.Entities
             return true;
         }
 
+        // Dials a queue server whose name was already resolved to IPv4 (S29-3b), then loads the match.
+        // Not run in the editor yet; the JoinTicket RPC (S29-3c) is not wired, so a ticket-requiring server will refuse.
+        // frob:ticket 01M5XACEYZRD4KJYBEJYTVQZRX
+        // frob:doc docs/netcode.md#queue-connect-flow
+        public static bool TryConnect(ConnectTarget target, out string error)
+        {
+            World client = ClientServerBootstrap.ClientWorld;
+            if (client == null)
+            {
+                error = "No client world is running; connecting needs the lobby launch.";
+                Debug.LogWarning($"Hullbreach connect: refused: {error}");
+                return false;
+            }
+            if (!NetworkEndpoint.TryParse(target.Address, target.Port, out NetworkEndpoint endpoint))
+            {
+                error = $"Server address {target} is not usable.";
+                Debug.LogWarning($"Hullbreach connect: refused: {error}");
+                return false;
+            }
+
+            Request(client, new NetworkStreamRequestConnect { Endpoint = endpoint });
+            Debug.Log(target.Request.Describe() + $" resolved={target}, loading {DirectLaunchPlan.GameScene}.");
+            error = null;
+            LoadMatch();
+            return true;
+        }
+
         static void Request<T>(World world, T request) where T : unmanaged, IComponentData
         {
             Entity entity = world.EntityManager.CreateEntity(typeof(T));

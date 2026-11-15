@@ -687,6 +687,8 @@ state never reads it.
 <!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.RequireReady -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.SetReady -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.AssignQueueMatch -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.RequireJoinTicket -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.PresentTicket -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.ServerSimulation -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.Ships -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.MaxPeerId -->
@@ -800,14 +802,17 @@ byte of one datagram from a peer and calls `SetInput` (`Input`) or
 `SetReady` (`ReadyUp`). It returns false, applying nothing, for an empty
 datagram, a truncated or malformed message, or a kind a client must not send.
 The peer is always the transport's sender id. `NetDemo` calls it for every
-datagram its server transport receives.
+datagram its server transport receives. A `JoinTicket` datagram goes to
+`ServerSimulation.PresentTicket`; a wrong id returns false and the peer is queued
+for disconnect.
 
 ### JoinResult
 
 <!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::JoinResult -->
 
 Outcome of `ServerSimulation.Join`: `Joined`, `InvalidPeerId`,
-`AlreadyJoined`, `InvalidDesign`. A non-`Joined` result changes nothing.
+`AlreadyJoined`, `InvalidDesign`, `TicketRejected` (`RequireJoinTicket` is on and the
+peer has not presented the allocated match id). A non-`Joined` result changes nothing.
 
 ### DesignValidator
 
@@ -967,6 +972,8 @@ exactly the same addresses.
 <!-- describes: Assets/Scripts/Hullbreach.Net/DirectLaunchPlan.cs::DirectLaunchPlan.ConnectArg -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/DirectLaunchPlan.cs::DirectLaunchPlan.PortArg -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/DirectLaunchPlan.cs::DirectLaunchPlan.ServerArg -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/DirectLaunchPlan.cs::DirectLaunchPlan.MatchIdArg -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/DirectLaunchPlan.cs::DirectLaunchPlan.MatchId -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/DirectLaunchPlan.cs::DirectLaunchPlan.DefaultPort -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/DirectLaunchPlan.cs::DirectLaunchPlan.GameScene -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/DirectLaunchPlan.cs::DirectLaunchPlan.LoopbackAddress -->
@@ -1272,8 +1279,38 @@ reported to the platform under the id both players were given. It is used
 once, and returns false for a bad id or while a match is live. Without a
 call the match keeps a random uuid, as before.
 
-Not covered here, and left to follow-up tickets: the Unity queue screen,
-the code that calls `AssignQueueMatch` when the server learns its match
-(the allocation channel from the platform), a wire field so a client can
-present its `MatchId` on join, and sourcing equipped skins (the repo has no
-skin data yet, so the caller passes the ids).
+Still open: the Unity side of the match id handoff (the JoinTicket as a Netcode RPC, the
+server bootstrap reading `DirectLaunchPlan.MatchId` and calling `AssignQueueMatch`), and sourcing
+equipped skins (the repo has no skin data yet, so the caller passes the ids).
+
+### ConnectTarget
+
+<!-- describes: Assets/Scripts/Hullbreach.Net/ConnectTarget.cs::ConnectTarget -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ConnectTarget.cs::ConnectTarget.Address -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ConnectTarget.cs::ConnectTarget.Port -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ConnectTarget.cs::ConnectTarget.Request -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ConnectTarget.cs::ConnectTarget.Ticket -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ConnectTarget.cs::ConnectTarget.ToString -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ConnectTarget.cs::ConnectTarget.Resolve -->
+
+`ConnectTarget.Resolve(request, resolve)` turns a `ConnectRequest` into a numeric IPv4
+endpoint (S29-3b). A numeric host is used as is; a name must be letters, digits, dots and
+hyphens and goes through the injected `resolve` function (first IPv4 answer wins). A
+throwing resolver, no IPv4 answer or an odd name is an error value. `Ticket` is the
+`JoinTicket` the client sends after connecting.
+
+### JoinTicket
+
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::JoinTicket -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::JoinTicket.ByteSize -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::JoinTicket.MatchId -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::JoinTicket.JoinTicket -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::JoinTicket.TryWrite -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::JoinTicket.Read -->
+
+Client -> server, reliable (`MessageKind.JoinTicket` = 15): the queue match id the client was
+sent to play. Layout: kind u8, then the 16 UUID bytes (.NET `Guid.ToByteArray` order). `Read`
+fails the reader on a truncated body or the all-zero id; `TryWrite` refuses a non-UUID. With
+`ServerSimulation.RequireJoinTicket` on, the server only accepts `Join` from a peer whose
+ticket equals the id from `AssignQueueMatch`; a mismatch queues the peer for disconnect. A
+dedicated server is told its id by `-hullbreachMatchId <uuid>` (`DirectLaunchPlan.MatchId`).

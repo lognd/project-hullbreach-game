@@ -23,6 +23,8 @@ namespace Hullbreach.Net
         AlreadyJoined,
         // The supplied design failed DesignValidator.ValidateDesign.
         InvalidDesign,
+        // RequireJoinTicket is on and the peer has not presented the allocated match id.
+        TicketRejected,
     }
 
     // The authoritative, plain-C# server loop; see the reference page.
@@ -128,6 +130,35 @@ namespace Hullbreach.Net
             _queueMatchId = id.Value;
             MatchLog?.Info($"Hullbreach match: next match will be reported as {id.Value}.");
             return true;
+        }
+
+        // When true (a dedicated queue server) a peer must present the allocated match id before Join
+        // is accepted; false keeps LAN and test servers open. Default false.
+        // frob:ticket 01M5XACF0K75AVMM0MCNDDWXNE
+        // frob:doc docs/reference/hullbreach-net.md#serversimulation
+        public bool RequireJoinTicket;
+
+        // Peers whose JoinTicket matched the allocated id; cleared when they leave.
+        readonly HashSet<int> _ticketed = new HashSet<int>();
+
+        // Handles a peer's JoinTicket. True when it matches the allocated id, or when none is allocated
+        // and tickets are not required (nothing to check). A wrong, malformed or unexpected id queues the
+        // peer for disconnect and returns false.
+        // frob:ticket 01M5XACF0K75AVMM0MCNDDWXNE
+        // frob:doc docs/reference/hullbreach-net.md#serversimulation
+        public bool PresentTicket(int peer, string matchId)
+        {
+            ConfigResult<string> presented = QueueMatchId.Normalize(matchId);
+            if (!RequireJoinTicket && _queueMatchId == null) return presented.IsOk;
+            if (presented.IsOk && _queueMatchId != null && presented.Value == _queueMatchId)
+            {
+                _ticketed.Add(peer);
+                return true;
+            }
+            MatchLog?.Warning($"Hullbreach match: peer #{peer} presented a wrong or unexpected match id; disconnecting.");
+            _ticketed.Remove(peer);
+            if (!_droppedPeers.Contains(peer)) _droppedPeers.Enqueue(peer);
+            return false;
         }
 
         readonly GravityField _gravity = new GravityField();
@@ -349,6 +380,7 @@ namespace Hullbreach.Net
         {
             if (peer < 1 || peer > MaxPeerId) return JoinResult.InvalidPeerId;
             if (_peers.ContainsKey(peer)) return JoinResult.AlreadyJoined;
+            if (RequireJoinTicket && !_ticketed.Contains(peer)) return JoinResult.TicketRejected;
             if (DesignValidator.ValidateDesign(initialDesign) != DesignVerdict.Ok) return JoinResult.InvalidDesign;
 
             // Runs before adding the newcomer to _peers; see reference page.
@@ -500,6 +532,7 @@ namespace Hullbreach.Net
         void RemovePeer(int peer, PeerState state)
         {
             _peers.Remove(peer);
+            _ticketed.Remove(peer);
             _gate.RemovePeer(peer);
             Match?.Disconnect(peer);
             AnnounceMatchEnd();
