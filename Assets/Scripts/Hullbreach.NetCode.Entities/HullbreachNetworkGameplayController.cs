@@ -126,12 +126,73 @@ namespace Hullbreach.NetCode.Entities
             SelectedTypeId = typeId;
         }
 
+        static float s_confirmReadyUntil = -1f;
+        public static bool ConfirmingReady => s_confirmReadyUntil > Time.unscaledTime;
+
+        // READY with a safety net: with plenty of points unspent the first press only asks; a second press within a few
+        // seconds goes ahead. Never a blocker.
+        public static void RequestReadyChecked(int pointsLeft)
+        {
+            if (ReadySent) return;
+            if (BuildPanelModel.ShouldConfirmReady(pointsLeft) && !ConfirmingReady)
+            {
+                s_confirmReadyUntil = Time.unscaledTime + 6f;
+                Toasts.Push($"{pointsLeft} points unspent - press READY again to go anyway.", Time.unscaledTime);
+                return;
+            }
+            RequestReady();
+        }
+
         public static void RequestReady()
         {
             if (ReadySent) return;
             ReadySent = true;
+            RememberDesign();
             Requests.Enqueue(new BuildRequest(0, 0, 0, 0, HullbreachBuildAction.Ready));
             Toasts.Push("Ready. The match starts when your opponent is ready too.", Time.unscaledTime);
+        }
+
+        // ---- starter templates and the remembered design ----
+        // The server replaces the whole ship (ServerSimulation.ApplyDesign), so one click costs no build cooldown and
+        // can never leave a half-built ship. The last design is saved when the player presses READY and comes back
+        // at the start of the next match, so "Play vs Bot" starts from the ship they last flew.
+        const string LastDesignKey = "hullbreach.lastDesign";
+        static readonly Queue<string> Designs = new Queue<string>();
+        static bool s_designApplied;
+
+        public static void ApplyTemplate(ShipTemplate template)
+        {
+            if (template == null || ReadySent || MatchRunning) return;
+            Designs.Enqueue(template.Encode());
+            Toasts.Push($"{template.Name} ship applied.", Time.unscaledTime);
+        }
+
+        internal static bool TryDequeueDesign(out string design)
+        {
+            if (Designs.Count == 0) { design = null; return false; }
+            design = Designs.Dequeue();
+            return true;
+        }
+
+        static void RememberDesign()
+        {
+            if (!TryGetLocalShip(out ShipBody ship) || ship.Grid.Count < 2) return;
+            try { PlayerPrefs.SetString(LastDesignKey, ShipDesignCodec.Encode(ship.Grid)); PlayerPrefs.Save(); } catch { }
+        }
+
+        // Once per match, as soon as the server has our ship: put the remembered design back. The Cadet Trial keeps the
+        // balanced starter so its steps always make sense.
+        static void RestoreLastDesign()
+        {
+            if (s_designApplied || ReadySent || MatchRunning || HullbreachSparring.Trial) return;
+            if (!TryGetLocalShip(out ShipBody ship)) return;
+            s_designApplied = true;
+            string saved = null;
+            try { saved = PlayerPrefs.GetString(LastDesignKey, string.Empty); } catch { }
+            if (string.IsNullOrEmpty(saved) || saved == ShipDesignCodec.Encode(ship.Grid)) return;
+            if (!ShipDesignCodec.TryDecode(saved, out var blocks) || !ShipDesignCodec.TryBuildGrid(blocks, out _, out _)) return;
+            Designs.Enqueue(saved);
+            Toasts.Push("Your last ship is ready.", Time.unscaledTime);
         }
 
         // The server only enforces the cooldown once a match is live (two or more ships), so only show it then.
@@ -156,6 +217,8 @@ namespace Hullbreach.NetCode.Entities
             if (gameplayCamera != null) _baseOrthographicSize = Mathf.Min(gameplayCamera.orthographicSize, DefaultOrthographicSize);
             s_lastPlaceTime = -1000f;
             ReadySent = false;
+            s_designApplied = false;
+            Designs.Clear();
             Toasts.Clear();
             PublishStatus();
         }
@@ -169,6 +232,7 @@ namespace Hullbreach.NetCode.Entities
 
         void Update()
         {
+            RestoreLastDesign();
             if (Input.GetKeyDown(KeyCode.Tab))
             {
                 IsBuildMode = !IsBuildMode;

@@ -143,6 +143,70 @@ namespace Hullbreach.Net
             return PlacementResult.Ok;
         }
 
+        // Replaces the peer's whole ship with a saved or template design (one-click starters, S45-style "last design").
+        // Only before the match: once it runs, building goes through the stock rules. The design is untrusted, so it is
+        // replayed through the placement rules, the net design validator and the economy before anything changes.
+        // A refusal changes nothing and is not distrusted: a stale client can honestly send an old design.
+        // frob:doc docs/reference/hullbreach-net.md#serversimulation
+        public PlacementResult ApplyDesign(int peer, IReadOnlyList<DesignBlock> design)
+        {
+            if (!_peers.TryGetValue(peer, out var state) || state.Trust.AtFloor) return PlacementResult.NoShip;
+            if (MatchIsRunning) return PlacementResult.NotBuilding;
+            if (design == null || !ShipDesignCodec.TryBuildGrid(design, out BlockGrid target, out _)) return PlacementResult.BadRequest;
+
+            var wire = new SnapshotBlock[target.Count];
+            int n = 0;
+            foreach (var kv in target.All)
+            {
+                BlockKey.Unpack(kv.Key, out int bx, out int by);
+                wire[n++] = new SnapshotBlock((sbyte)bx, (sbyte)by, kv.Value.TypeId, kv.Value.Modifiers, 0);
+            }
+            var probe = new ShipSnapshot(0, (ushort)peer, wire, 0, 0, 0, 0, 0, 0);
+            if (DesignValidator.ValidateDesign(probe) != DesignVerdict.Ok || CheckDesignAgainstEconomy(probe).HasValue)
+                return PlacementResult.BadRequest;
+
+            BlockGrid grid = state.Ship.Grid;
+            if (ShipDesignCodec.Encode(grid) == ShipDesignCodec.Encode(target)) return PlacementResult.Ok;
+            var stale = new List<int>();
+            foreach (var kv in grid.All)
+            {
+                // Every block comes out and goes back in, not just the changed ones: a client drops blocks that lose their
+                // link to the core when a neighbour is destroyed, and would never redraw the ones left standing.
+                if (kv.Value.TypeId != BlockTypes.Core) stale.Add(kv.Key);
+            }
+            stale.Sort();
+            foreach (int key in stale)
+            {
+                grid.TryRemove(key);
+                state.Failing.Remove(key);
+                state.Construction.Remove(key);
+                state.StormCarry.Remove(key);
+                BlockKey.Unpack(key, out int rx, out int ry);
+                BroadcastReliable(new BlockDestroyed(NextSequence(), state.NetId, (sbyte)rx, (sbyte)ry));
+            }
+            var fresh = new List<int>();
+            foreach (var kv in target.All) if (!grid.Contains(kv.Key)) fresh.Add(kv.Key);
+            // Nearest the core first so every block is adjacent to one that is already in.
+            fresh.Sort((a, b) =>
+            {
+                BlockKey.Unpack(a, out int ax, out int ay); BlockKey.Unpack(b, out int bx2, out int by2);
+                int da = Math.Abs(ax) + Math.Abs(ay), db = Math.Abs(bx2) + Math.Abs(by2);
+                return da != db ? da.CompareTo(db) : a.CompareTo(b);
+            });
+            foreach (int key in fresh)
+            {
+                target.TryGet(key, out Block add);
+                grid.TryAdd(key, new Block(add.TypeId, add.Modifiers, 0));
+                BlockKey.Unpack(key, out int px, out int py);
+                BroadcastReliable(new BlockPlaced(NextSequence(), state.NetId, (sbyte)px, (sbyte)py, add.TypeId, add.Modifiers));
+            }
+            state.Ship.RebuildDerivedViews();
+            state.Solver.MarkTopologyChanged();
+            state.InventoryDirty = true;
+            Tally(peer, 0, 0, fresh.Count);
+            return PlacementResult.Ok;
+        }
+
         // Takes one of the peer's own blocks back. Mid-match it pays EconomyConfig.RefundPercent of a block (so two
         // deconstructs make one block, never a free one), shares the build cooldown, and any blocks it strands
         // become salvage instead of vanishing. Core and welded blocks refuse.

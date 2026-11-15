@@ -73,6 +73,8 @@ namespace Hullbreach.NetCode.Entities
                         FeelFx.Impact(pos, -dir, DamageDealt(replica, evt), mine);
                         break;
                     case ReplicaEventKind.BlockDestroyed:
+                        // Before the match a destroyed block is the builder or a starter-ship swap taking blocks off, not damage.
+                        if (!HullbreachNetworkGameplayController.MatchRunning) break;
                         HullbreachMatchHudView.Feed.Push(mine ? "You lost a block" : "Enemy block destroyed", mine ? Hullbreach.Hud.HudColor.WarningStrainYellow : Hullbreach.Hud.HudColor.SteerWhite, Time.unscaledTime);
                         FeelFx.Impact(pos, -dir, 90f, mine);
                         FeelFx.AddShake(mine ? 0.5f : 0.2f);

@@ -159,6 +159,12 @@ namespace Hullbreach.NetCode.Entities
             });
             EntityManager.AddComponentData(rpcEntity, new SendRpcCommandRequest { TargetConnection = Entity.Null });
 
+            while (HullbreachNetworkGameplayController.TryDequeueDesign(out string design))
+            {
+                Entity designEntity = EntityManager.CreateEntity();
+                EntityManager.AddComponentData(designEntity, new HullbreachDesignRpc { Design = new FixedString512Bytes(design) });
+                EntityManager.AddComponentData(designEntity, new SendRpcCommandRequest { TargetConnection = Entity.Null });
+            }
             while (HullbreachNetworkGameplayController.TryDequeueBuild(out var build))
             {
                 Entity buildEntity = EntityManager.CreateEntity();

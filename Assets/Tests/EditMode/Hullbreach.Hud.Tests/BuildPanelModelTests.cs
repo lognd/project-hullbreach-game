@@ -59,6 +59,20 @@ namespace Hullbreach.Hud.Tests
         }
 
         [Test]
+        public void ReadyWarnsAboutUnspentPointsButNeverBlocks()
+        {
+            Assert.AreEqual("READY (38 pts unspent)", BuildPanelModel.ReadyLabel(ReadyPhase.Building, true, 38, false, out bool press));
+            Assert.IsTrue(press, "a warning is not a blocker");
+            Assert.AreEqual("READY ANYWAY?", BuildPanelModel.ReadyLabel(ReadyPhase.Building, true, 38, true, out press));
+            Assert.IsTrue(press);
+            Assert.AreEqual("READY", BuildPanelModel.ReadyLabel(ReadyPhase.Building, true, 4, false, out _), "a few spare points are not worth a prompt");
+            Assert.AreEqual("READY", BuildPanelModel.ReadyLabel(ReadyPhase.Building, true, 0, false, out _));
+            Assert.AreEqual("READY - waiting for opponent", BuildPanelModel.ReadyLabel(ReadyPhase.Ready, true, 38, false, out _));
+            Assert.IsTrue(BuildPanelModel.ShouldConfirmReady(BuildPanelModel.UnspentWarnAt));
+            Assert.IsFalse(BuildPanelModel.ShouldConfirmReady(BuildPanelModel.UnspentWarnAt - 1));
+        }
+
+        [Test]
         public void ToastsExpireAndDoNotStack()
         {
             var q = new ToastQueue(2f, 2);

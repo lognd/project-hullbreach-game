@@ -73,6 +73,24 @@ namespace Hullbreach.Hud
             }
         }
 
+        // At least this many unspent points before READY asks "ready anyway?" (a cannon's worth: below it nothing useful is left).
+        // frob:doc docs/design/ui-port.md#hullbreachhud-module-reference
+        public const int UnspentWarnAt = 5;
+
+        // Whether READY should ask for a second press because a good chunk of the budget is still unspent.
+        // frob:doc docs/design/ui-port.md#hullbreachhud-module-reference
+        public static bool ShouldConfirmReady(int pointsLeft) => pointsLeft >= UnspentWarnAt;
+
+        // READY text that also names the unspent points; once the first press has asked, it reads "READY ANYWAY?".
+        // Not a blocker: the second press always goes through.
+        // frob:doc docs/design/ui-port.md#hullbreachhud-module-reference
+        public static string ReadyLabel(ReadyPhase phase, bool opponentPresent, int pointsLeft, bool confirming, out bool pressable)
+        {
+            string label = ReadyLabel(phase, opponentPresent, out pressable);
+            if (phase != ReadyPhase.Building || !pressable || !ShouldConfirmReady(pointsLeft)) return label;
+            return confirming ? "READY ANYWAY?" : Fmt($"READY ({pointsLeft} pts unspent)");
+        }
+
         static string Fmt(FormattableString s) => s.ToString(CultureInfo.InvariantCulture);
     }
 

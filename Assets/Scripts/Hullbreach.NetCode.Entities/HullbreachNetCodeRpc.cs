@@ -28,6 +28,12 @@ namespace Hullbreach.NetCode.Entities
     {
     }
 
+    /// <summary>Client to server: replace my ship with this design (see ShipDesignCodec) before the match starts.</summary>
+    public struct HullbreachDesignRpc : IRpcCommand
+    {
+        public FixedString512Bytes Design;
+    }
+
     public enum HullbreachBuildAction : byte
     {
         Place = 1,

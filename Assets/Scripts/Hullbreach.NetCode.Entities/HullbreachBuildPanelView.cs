@@ -1,3 +1,4 @@
+using Hullbreach.Builder;
 using Hullbreach.Core;
 using Hullbreach.Hud;
 using Hullbreach.Net;
@@ -40,6 +41,8 @@ namespace Hullbreach.NetCode.Entities
         Button _ready;
         Image _readyImage;
         TextMeshProUGUI _readyLabel;
+        int _pointsLeft;
+        GameObject _templateRoot;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         static void Create()
@@ -107,9 +110,36 @@ namespace Hullbreach.NetCode.Entities
             _readyImage = readyGo.GetComponent<Image>();
             _ready = readyGo.AddComponent<Button>();
             _ready.targetGraphic = _readyImage;
-            _ready.onClick.AddListener(HullbreachNetworkGameplayController.RequestReady);
+            _ready.onClick.AddListener(() => HullbreachNetworkGameplayController.RequestReadyChecked(_pointsLeft));
             _readyLabel = Label("Label", rrt, 22, FontStyles.Bold, Vector2.zero, Vector2.one, TextAlignmentOptions.Center);
             _readyLabel.color = new Color(0.08f, 0.1f, 0.14f, 1f);
+
+            // Starter ships: one click swaps the whole ship (before READY). Stacked at the lower left, clear of the hotbar.
+            _templateRoot = new GameObject("Templates", typeof(RectTransform));
+            _templateRoot.transform.SetParent(transform, false);
+            var trootRt = (RectTransform)_templateRoot.transform;
+            trootRt.anchorMin = trootRt.anchorMax = trootRt.pivot = new Vector2(0f, 0f);
+            trootRt.anchoredPosition = new Vector2(16f, 12f);
+            trootRt.sizeDelta = new Vector2(230f, 160f);
+            var templates = ShipTemplates.All;
+            var heading = Label("Heading", trootRt, 15, FontStyles.Bold, new Vector2(0f, 1f), new Vector2(1f, 1f), TextAlignmentOptions.Left);
+            heading.rectTransform.anchoredPosition = new Vector2(2f, 0f);
+            heading.text = "STARTER SHIPS";
+            heading.color = new Color(0.7f, 0.85f, 1f, 0.9f);
+            for (int i = 0; i < templates.Count; i++)
+            {
+                ShipTemplate template = templates[i];
+                var tb = Box("Template_" + template.Id, trootRt, Panel);
+                var trt2 = (RectTransform)tb.transform;
+                trt2.anchorMin = trt2.anchorMax = trt2.pivot = new Vector2(0f, 0f);
+                trt2.sizeDelta = new Vector2(230f, 30f);
+                trt2.anchoredPosition = new Vector2(0f, (templates.Count - 1 - i) * 34f);
+                var tbtn = tb.AddComponent<Button>();
+                tbtn.targetGraphic = tb.GetComponent<Image>();
+                tbtn.onClick.AddListener(() => HullbreachNetworkGameplayController.ApplyTemplate(template));
+                var tl = Label("Text", trt2, 17, FontStyles.Bold, Vector2.zero, Vector2.one, TextAlignmentOptions.Center);
+                tl.text = $"{template.Name}  ({template.Cost(BlockCosts.Default())} pt)";
+            }
 
             SetVisible(false);
         }
@@ -188,6 +218,7 @@ namespace Hullbreach.NetCode.Entities
             byte selected = HullbreachNetworkGameplayController.SelectedTypeId;
 
             foreach (var slot in _slots) slot.Background.gameObject.SetActive(build);
+            _templateRoot.SetActive(build && !running && !HullbreachNetworkGameplayController.ReadySent);
             foreach (var slot in _slots)
             {
                 int cost = config.Costs.CostOf(slot.TypeId);
@@ -213,13 +244,14 @@ namespace Hullbreach.NetCode.Entities
             _hoverLine.text = build ? HullbreachNetworkGameplayController.HoverReason : string.Empty;
 
             ReadyPhase phase = running ? ReadyPhase.Live : HullbreachNetworkGameplayController.ReadySent ? ReadyPhase.Ready : ReadyPhase.Building;
-            string label = BuildPanelModel.ReadyLabel(phase, replica.Ships.Count >= 2, out bool pressable);
+            _pointsLeft = running ? 0 : pointsLeft;
+            string label = BuildPanelModel.ReadyLabel(phase, replica.Ships.Count >= 2, _pointsLeft, HullbreachNetworkGameplayController.ConfirmingReady, out bool pressable);
             _ready.gameObject.SetActive(label.Length > 0);
             _ready.interactable = pressable;
             _readyLabel.text = label;
-            _readyImage.color = pressable ? Orange : new Color(0.25f, 0.3f, 0.38f, 0.95f);
+            _readyImage.color = pressable ? (HullbreachNetworkGameplayController.ConfirmingReady ? new Color(1f, 0.75f, 0.2f, 1f) : Orange) : new Color(0.25f, 0.3f, 0.38f, 0.95f);
             _readyLabel.color = pressable ? new Color(0.08f, 0.1f, 0.14f, 1f) : new Color(0.85f, 0.9f, 1f, 1f);
-            if (pressable && Input.GetKeyDown(KeyCode.Return)) HullbreachNetworkGameplayController.RequestReady();
+            if (pressable && Input.GetKeyDown(KeyCode.Return)) HullbreachNetworkGameplayController.RequestReadyChecked(_pointsLeft);
         }
     }
 }
