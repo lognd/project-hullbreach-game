@@ -294,6 +294,10 @@ namespace Hullbreach.Net
         // frob:doc docs/reference/hullbreach-net.md#clientreplica
         public GravityField PredictionGravity { get; set; }
 
+        // Must equal the server PlanetCrash or the predicted ship drifts at every atmosphere and touchdown.
+        // frob:doc docs/reference/hullbreach-net.md#clientreplica
+        public PlanetCrashConfig PredictionPlanetCrash { get; set; } = PlanetCrashConfig.Default();
+
         // Distance the predicted position moved on the latest reconcile (0 = prediction was right).
         // frob:doc docs/reference/hullbreach-net.md#clientreplica
         public float LastCorrection { get; private set; }
@@ -377,7 +381,7 @@ namespace Hullbreach.Net
         {
             if (replica.Predicted != null && !replica.PredictionStale) return;
 
-            var body = new ShipBody { Gravity = PredictionGravity };
+            var body = new ShipBody { Gravity = PredictionGravity, PlanetCrash = PredictionPlanetCrash };
             foreach (var kv in replica.Body.Grid.All) body.Grid.TryAdd(kv.Key, kv.Value);
             body.RebuildDerivedViews();
             body.Position = replica.Body.Position;

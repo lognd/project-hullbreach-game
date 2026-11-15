@@ -24,6 +24,10 @@ namespace Hullbreach.World
         // frob:doc docs/reference/hullbreach-world.md#gravityfield
         public int Count => _permanent.Count + _temporary.Count;
 
+        // Permanent bodies only (the ones that have a surface to touch).
+        // frob:doc docs/reference/hullbreach-world.md#gravityfield
+        public int PermanentCount => _permanent.Count;
+
         // frob:doc docs/reference/hullbreach-world.md#gravityfield
         public void Add(GravityBody body) => _permanent.Add(body);
 

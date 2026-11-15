@@ -58,13 +58,18 @@ namespace Hullbreach.Net
         // frob:ticket 01M7EXAGAAS0CRAVC1BEXJ5598
         // frob:doc docs/reference/hullbreach-net.md#arenaconfig
         public StormConfig Storm { get; }
+        // Planet crash, atmosphere and warning tunables; PlanetCrashConfig.Default() unless the JSON has a planets block.
+        // frob:doc docs/reference/hullbreach-net.md#arenaconfig
+        public PlanetCrashConfig Crash { get; }
 
         // frob:doc docs/reference/hullbreach-net.md#arenaconfig
         public ArenaConfig(IReadOnlyList<ArenaBodyConfig> bodies, float lateral, float altitude,
-            float vertical, float angleStep, ArenaBounds? bounds = null, StormConfig? storm = null)
+            float vertical, float angleStep, ArenaBounds? bounds = null, StormConfig? storm = null,
+            PlanetCrashConfig? crash = null)
         {
             Bounds = bounds ?? DefaultBounds;
             Storm = storm ?? StormConfig.Default();
+            Crash = crash ?? PlanetCrashConfig.Default();
             Bodies = bodies;
             SpawnLateral = lateral;
             SpawnAltitude = altitude;
@@ -172,7 +177,15 @@ namespace Hullbreach.Net
                 if (!st.IsOk) return ConfigResult<ArenaConfig>.Fail(st.Error);
                 storm = st.Value;
             }
-            return ConfigResult<ArenaConfig>.Ok(new ArenaConfig(bodies, lateral, altitude, vertical, step, bounds, storm));
+
+            PlanetCrashConfig crash = d.Crash;
+            if (root.TryGetValue("planets", out object rawPlanets))
+            {
+                var pl = ParsePlanets(rawPlanets as Dictionary<string, object>, crash);
+                if (!pl.IsOk) return ConfigResult<ArenaConfig>.Fail(pl.Error);
+                crash = pl.Value;
+            }
+            return ConfigResult<ArenaConfig>.Ok(new ArenaConfig(bodies, lateral, altitude, vertical, step, bounds, storm, crash));
         }
 
         // Reads a file and parses it; an unreadable file is an error, not an exception.
@@ -186,6 +199,38 @@ namespace Hullbreach.Net
                 return ConfigResult<ArenaConfig>.Fail("cannot read arena config '" + path + "': " + e.Message);
             }
             return Parse(text);
+        }
+
+        // Planets block: every key is an optional float override of PlanetCrashConfig, then Validate has the last word.
+        // frob:doc docs/reference/hullbreach-net.md#arenaconfig
+        static ConfigResult<PlanetCrashConfig> ParsePlanets(Dictionary<string, object> o, PlanetCrashConfig d)
+        {
+            if (o == null) return ConfigResult<PlanetCrashConfig>.Fail("planets must be an object");
+            PlanetCrashConfig c = d;
+            float substeps = c.MaxSubsteps;
+            string err = Read(o, "planets", "safeLandingSpeed", ref c.SafeLandingSpeed)
+                ?? Read(o, "planets", "catastrophicSpeed", ref c.CatastrophicSpeed)
+                ?? Read(o, "planets", "damagePerSpeed", ref c.DamagePerSpeed)
+                ?? Read(o, "planets", "coreDamageScale", ref c.CoreDamageScale)
+                ?? Read(o, "planets", "coreMaxDamagePerImpact", ref c.CoreMaxDamagePerImpact)
+                ?? Read(o, "planets", "restSpeed", ref c.RestSpeed)
+                ?? Read(o, "planets", "maxRestitution", ref c.MaxRestitution)
+                ?? Read(o, "planets", "sweepStep", ref c.SweepStep)
+                ?? Read(o, "planets", "maxSubsteps", ref substeps)
+                ?? Read(o, "planets", "atmosphereDepthFactor", ref c.AtmosphereDepthFactor)
+                ?? Read(o, "planets", "atmosphereMinDepth", ref c.AtmosphereMinDepth)
+                ?? Read(o, "planets", "atmosphereSafeSpeed", ref c.AtmosphereSafeSpeed)
+                ?? Read(o, "planets", "atmosphereDrag", ref c.AtmosphereDrag)
+                ?? Read(o, "planets", "heatSpeed", ref c.HeatSpeed)
+                ?? Read(o, "planets", "heatDamagePerSecond", ref c.HeatDamagePerSecond)
+                ?? Read(o, "planets", "heatMaxDamagePerSecond", ref c.HeatMaxDamagePerSecond)
+                ?? Read(o, "planets", "warningSeconds", ref c.WarningSeconds);
+            if (err != null) return ConfigResult<PlanetCrashConfig>.Fail(err);
+            c.MaxSubsteps = (int)Math.Round(substeps);
+            string problem = c.Validate();
+            return problem == null
+                ? ConfigResult<PlanetCrashConfig>.Ok(c)
+                : ConfigResult<PlanetCrashConfig>.Fail("planets: " + problem);
         }
 
         // Storm block: scalar keys override the defaults, a phases array replaces the default list,
