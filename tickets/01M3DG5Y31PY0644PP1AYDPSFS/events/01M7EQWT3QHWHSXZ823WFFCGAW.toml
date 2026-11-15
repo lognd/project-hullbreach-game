@@ -1,0 +1,26 @@
+kind = "evidence"
+captured_at = "2026-11-15T04:36:51Z"
+digest = "f1710941f98c63a2c58115858a0c8207820f6bb7aabfc66293813c5e8d3b608f"
+exit_code = -2147450735
+head = "5caf6f3d4f2fff784dbffe0eee721bbd4cd17f45"
+inline = """
+The command could not be loaded, possibly because:\r
+  * You intended to execute a .NET application:\r
+      The application 'test' does not exist.\r
+  * You intended to execute a .NET SDK command:\r
+      No .NET SDKs were found.\r
+\r
+Download a .NET SDK:\r
+https://aka.ms/dotnet/download\r
+\r
+Learn about SDK resolution:\r
+https://aka.ms/dotnet/sdk-not-found\r
+"""
+passed = false
+provider = "command"
+ref = "dotnet test tools/plaincs/Hullbreach.Plain.Tests/Hullbreach.Plain.Tests.csproj -c Release --filter FullyQualifiedName~PlacementRulesTests"
+size = 352
+status = "measured"
+at = "2026-11-15T04:36:51Z"
+actor = "lognd"
+rev = 1
