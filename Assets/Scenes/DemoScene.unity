@@ -132,6 +132,7 @@ GameObject:
   - component: {fileID: 2000004}
   - component: {fileID: 2000005}
   - component: {fileID: 2000006}
+  - component: {fileID: 2000007}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -271,6 +272,24 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   target: {fileID: 2002002}
   smoothing: 5
+  leadSeconds: 0.2
+  maxOrthographicSize: 24
+  fullSpeed: 40
+--- !u!114 &2000007
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2000001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f72477f7bf0f51040b3f22972df4e55a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  count: 160
+  span: 140
+  seed: 7
 --- !u!1 &2001001
 GameObject:
   m_ObjectHideFlags: 0
@@ -506,6 +525,7 @@ MonoBehaviour:
   controller: {fileID: 2002004}
   Overlay: 0
   FlashRatioThreshold: 0.8
+  ColorblindPalette: 0
 --- !u!114 &2002006
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -693,6 +713,7 @@ MonoBehaviour:
   controller: {fileID: 2003004}
   Overlay: 0
   FlashRatioThreshold: 0.8
+  ColorblindPalette: 0
 --- !u!114 &2003006
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1217,7 +1238,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2396411246158673740, guid: e6da8b218b4903a4c816e612c2d55890, type: 3}
       propertyPath: demoMode
-      value:
+      value: 
       objectReference: {fileID: 2001003}
     - target: {fileID: 2580910447572531606, guid: e6da8b218b4903a4c816e612c2d55890, type: 3}
       propertyPath: controller
