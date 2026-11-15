@@ -1,0 +1,11 @@
+kind = "create"
+title = "Camera size matrix check at common Game view sizes"
+type = "chore"
+category = "todo"
+priority = "low"
+points = 1
+labels = ["game"]
+acceptance = ["Ship and HUD readability is checked at 1280x720, 1920x1080 and 2560x1440 and findings recorded"]
+at = "2026-11-15T12:16:06Z"
+actor = "lognd"
+rev = 1
