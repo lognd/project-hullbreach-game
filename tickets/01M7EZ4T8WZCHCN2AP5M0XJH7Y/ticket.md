@@ -10,7 +10,7 @@ updated = "2026-11-15T12:13:21Z"
 
 [[acceptance]]
 text = "Touching a planet above the crash speed damages the touching blocks (core capped), configurable per arena, in the offline body and the server"
-bound = false
+bound = true
 
 [[acceptance]]
 text = "The HUD can query planet proximity (altitude, closing speed, time to impact, warning severity)"
