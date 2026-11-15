@@ -189,6 +189,7 @@ namespace Hullbreach.Game
             _player = target;
             _playerCtl = target != null ? target.GetComponent<ShipController>() : null;
             if (_playerCtl != null) _playerCtl.Damaged += OnPlayerDamaged;
+            if (_playerCtl != null) FlightHudView.Ensure(_playerCtl);
         }
 
         void OnDestroy()
