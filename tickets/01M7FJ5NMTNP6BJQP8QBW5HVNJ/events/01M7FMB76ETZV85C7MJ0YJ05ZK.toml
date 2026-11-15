@@ -1,0 +1,6 @@
+kind = "comment"
+subtype = "note"
+body = "Closing. #161: the server refuses shooting before the match starts and for the first 5 s after it, bots included (same server path). Note the shipped rule is match start + 5 s, not 'until the other side is ready': a READYed ship waiting for the opponent cannot shoot because the match has not started."
+at = "2026-11-15T12:54:03Z"
+actor = "lognd"
+rev = 1

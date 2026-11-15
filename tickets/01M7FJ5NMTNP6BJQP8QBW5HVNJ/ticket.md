@@ -7,7 +7,7 @@ priority = "medium"
 points = 2
 reporter = "lognd"
 created = "2026-11-15T12:16:04Z"
-updated = "2026-11-15T12:53:56Z"
+updated = "2026-11-15T12:54:03Z"
 labels = ["game"]
 
 [[acceptance]]
