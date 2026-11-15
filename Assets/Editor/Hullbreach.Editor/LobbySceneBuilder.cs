@@ -536,7 +536,7 @@ namespace Hullbreach.Editor
             Scene scene = EditorSceneManager.OpenScene("Assets/Scenes/DemoScene.unity", OpenSceneMode.Single);
             EditorSceneManager.SaveScene(scene, GameScenePath);
 
-            foreach (string rootName in new[] { "Demo", "PlayerShip", "TargetShip", "Powerups", "HudCanvas", "EventSystem" })
+            foreach (string rootName in new[] { "Demo", "PlayerShip", "TargetShip", "Powerups", "HudCanvas", "EventSystem", "StormHud" })
             {
                 GameObject root = GameObject.Find(rootName);
                 if (root != null) Object.DestroyImmediate(root);
@@ -557,6 +557,11 @@ namespace Hullbreach.Editor
             SerializedObject controllerSerialized = new SerializedObject(controller);
             Set(controllerSerialized, "gameplayCamera", camera);
             controllerSerialized.ApplyModifiedPropertiesWithoutUndo();
+
+            // Radar, storm countdown and arrows; reads the storm the server announced (see HullbreachStormHudSource).
+            var stormHud = new GameObject("StormHud");
+            stormHud.AddComponent<HullbreachStormHudSource>();
+            stormHud.AddComponent<StormHudView>();
 
             var subSceneObject = new GameObject("MultiplayerGhosts");
             SubScene subScene = subSceneObject.AddComponent<SubScene>();

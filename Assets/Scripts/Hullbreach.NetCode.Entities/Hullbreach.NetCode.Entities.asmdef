@@ -8,6 +8,8 @@
         "Hullbreach.Match",
         "Hullbreach.Platform",
         "Hullbreach.Hud",
+        "Hullbreach.World",
+        "Hullbreach.Game",
         "Hullbreach.Ship",
         "Unity.Burst",
         "Unity.Collections",

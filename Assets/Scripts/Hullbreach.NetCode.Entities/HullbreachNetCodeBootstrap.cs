@@ -8,6 +8,7 @@ using UnityEngine.SceneManagement;
 
 namespace Hullbreach.NetCode.Entities
 {
+    using World = Unity.Entities.World;
     // The direct/LAN plan for this process, parsed once from the real command line.
     // frob:doc docs/netcode.md#direct-and-lan-launch
     public static class HullbreachDirectLaunch
@@ -98,7 +99,7 @@ namespace Hullbreach.NetCode.Entities
             return true;
         }
 
-        static void RequestConnect(World client, DirectLaunchPlan plan)
+        static void RequestConnect(Unity.Entities.World client, DirectLaunchPlan plan)
         {
             // The plan only hands out numeric IPv4 addresses, so this parse cannot fail.
             NetworkEndpoint.TryParse(plan.ConnectAddress, plan.Port, out NetworkEndpoint endpoint);
