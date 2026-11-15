@@ -2,7 +2,7 @@
 id = "01M4GV3ZQT3PB0FHJX17AHZ2JB"
 title = "Restore C# frob:tests bindings for the physics audit tests after the frob 0.533.0 pin"
 type = "task"
-category = "todo"
+category = "in-progress"
 priority = "low"
 points = 1
 reporter = "GingerVHS"
