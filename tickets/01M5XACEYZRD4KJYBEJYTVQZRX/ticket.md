@@ -2,7 +2,7 @@
 id = "01M5XACEYZRD4KJYBEJYTVQZRX"
 title = "S29-3b: Unity connect flow consumes ConnectRequest (queue screen to scene load)"
 type = "task"
-category = "in-progress"
+category = "todo"
 priority = "high"
 parent = "01M3DG5Y0J805WP05DZV8GWAWA"
 reporter = "mcnairrobotics"

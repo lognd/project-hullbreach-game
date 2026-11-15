@@ -1,0 +1,7 @@
+kind = "transition"
+from = "in-progress"
+to = "todo"
+reason = "engine-free half landed; remaining work needs the Unity editor"
+at = "2026-11-15T05:28:06Z"
+actor = "lognd"
+rev = 1
