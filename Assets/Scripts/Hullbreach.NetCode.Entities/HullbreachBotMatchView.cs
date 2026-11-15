@@ -32,7 +32,17 @@ namespace Hullbreach.NetCode.Entities
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         static void Create()
         {
-            if (SceneManager.GetActiveScene().name != "LobbyScene") return;
+            SceneManager.sceneLoaded -= OnSceneLoaded;
+            SceneManager.sceneLoaded += OnSceneLoaded;
+            Spawn(SceneManager.GetActiveScene());
+        }
+
+        static void OnSceneLoaded(Scene scene, LoadSceneMode mode) => Spawn(scene);
+
+        // The panel lives in the lobby scene only, and comes back each time the lobby loads (after a match).
+        static void Spawn(Scene scene)
+        {
+            if (scene.name != "LobbyScene" || FindFirstObjectByType<HullbreachBotMatchView>() != null) return;
             new GameObject("BotMatchMenu").AddComponent<HullbreachBotMatchView>();
         }
 

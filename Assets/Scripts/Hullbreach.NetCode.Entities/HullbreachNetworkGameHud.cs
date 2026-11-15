@@ -38,6 +38,11 @@ namespace Hullbreach.NetCode.Entities
         async void Leave()
         {
             leaveButton.interactable = false;
+            if (HullbreachMatchExit.IsLocalMatch && !HullbreachDirectLaunch.Plan.IsDirect && HullbreachResultsOverlay.Instance != null)
+            {
+                HullbreachResultsOverlay.Instance.LeaveLocalToLobby(); // a bot or LAN match: rebuild the worlds, then the lobby
+                return;
+            }
             // A direct/LAN match has no lobby to go back to, so Leave closes the game.
             if (HullbreachDirectLaunch.Plan.IsDirect)
             {
