@@ -1,0 +1,11 @@
+kind = "create"
+title = "Auto-rejoin after a dropped connection (offline and online)"
+type = "task"
+category = "todo"
+priority = "medium"
+points = 5
+labels = ["game"]
+acceptance = ["After a connection loss the client retries and rejoins the same match within a timeout without returning to the lobby", "A rejoin test covers the server keeping the ship for a grace period"]
+at = "2026-11-15T12:16:02Z"
+actor = "lognd"
+rev = 1
