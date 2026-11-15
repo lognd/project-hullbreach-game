@@ -7,7 +7,7 @@ priority = "critical"
 parent = "01M3DG5Y04X6WZ1G61CVD7TX9S"
 reporter = "human"
 created = "2026-09-26T00:00:00Z"
-updated = "2026-11-15T05:30:29Z"
+updated = "2026-11-15T05:30:33Z"
 aliases = ["T-0025"]
 labels = ["jira:SCRUM-57", "owner:GingerVHS", "game", "physics", "milestone:0.2.0"]
 
@@ -17,7 +17,7 @@ bound = true
 
 [[acceptance]]
 text = "Adding a brace between two stressed blocks measurably lowers their stress."
-bound = false
+bound = true
 
 [[acceptance]]
 text = "A 60-block ship maintains the agreed frame budget on the reference laptop."
