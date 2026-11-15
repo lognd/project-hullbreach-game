@@ -57,7 +57,7 @@ namespace Hullbreach.Structure.Tests
             return grid;
         }
 
-        static void RunBenchmark(int totalBlocks, int ticks = 20)
+        static double[] RunBenchmark(int totalBlocks, int ticks = 20)
         {
             var grid = BuildShip(totalBlocks, out float2 thrusterPoint);
 
@@ -141,6 +141,35 @@ namespace Hullbreach.Structure.Tests
             Assert.IsTrue(float.IsFinite(solver.ResidualNorm), "residual is NaN/Infinity: likely a projection or assembly bug, not just slow convergence");
             Assert.LessOrEqual(maxTickAlloc, AllocBudgetBytesPerTick,
                 "steady-state Tick allocated far more than the boxed-enumerator floor; see class doc");
+
+            return steady;
+        }
+
+        // S36-4: 60 Hz frame is 16.67 ms; the solver may take a quarter of
+        // it in steady state. The buckling tick is NOT asserted: it was
+        // measured over a whole frame (see docs/roadmap.md#performance), so
+        // the test reports how many ticks bust the frame rather than hiding it.
+        const double FrameMs = 1000.0 / 60.0;
+        const double SteadyBudgetMs = FrameMs / 4.0;
+
+        // frob:tests Assets/Scripts/Hullbreach.Structure/StructuralSolver.cs::StructuralSolver.Tick
+        [Test]
+        public void FrameBudget_100Blocks_SteadyMedianFitsAndSpikesAreCounted()
+        {
+            var steady = RunBenchmark(100, 60); // sorted ascending
+            double median = steady[steady.Length / 2];
+            int overFrame = 0;
+            foreach (double ms in steady) if (ms > FrameMs) overFrame++;
+
+            TestContext.Out.WriteLine(
+                $"FRAMEBUDGET blocks=100 frameMs={FrameMs:F2} steadyBudgetMs={SteadyBudgetMs:F2} " +
+                $"median={median:F3} max={steady[steady.Length - 1]:F2} " +
+                $"ticksOverFrame={overFrame}/{steady.Length}");
+
+            Assert.Less(median, SteadyBudgetMs, "steady-state solver tick exceeds a quarter of a 60 Hz frame");
+            // Only buckling-eligible ticks (every 4th) may be slow; more
+            // means a non-periodic regression, not the known spike.
+            Assert.LessOrEqual(overFrame, steady.Length / 3, "over-frame ticks are not confined to the buckling cadence");
         }
 
         [Test]
