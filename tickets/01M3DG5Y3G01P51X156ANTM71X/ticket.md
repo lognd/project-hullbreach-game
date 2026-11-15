@@ -2,13 +2,14 @@
 id = "01M3DG5Y3G01P51X156ANTM71X"
 title = "S49-1: Defender-favored hit resolution within a documented tolerance"
 type = "task"
-category = "todo"
+category = "done"
+outcome = "fixed"
 priority = "high"
 points = 3
 parent = "01M3DG5Y16WHWDFT1WZAXCWTG1"
 reporter = "human"
 created = "2026-09-26T00:00:00Z"
-updated = "2026-11-15T05:23:42Z"
+updated = "2026-11-15T05:24:11Z"
 aliases = ["T-0112"]
 labels = ["jira:SCRUM-202", "owner:mcnairrobotics", "game", "netcode", "milestone:0.3.0"]
 
