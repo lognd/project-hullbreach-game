@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using Hullbreach.Builder;
 using Hullbreach.Core;
+using Hullbreach.Hud;
+using Hullbreach.Net;
 using Hullbreach.Ship;
 using Unity.Mathematics;
 using UnityEngine;
@@ -37,6 +39,14 @@ namespace Hullbreach.NetCode.Entities
         [SerializeField] Camera gameplayCamera;
         [SerializeField] float cameraSmoothing = 6f;
 
+        // Same lead and speed zoom as the offline CameraFollow: a plain follow trails a fast ship off screen.
+        [SerializeField] float leadSeconds = 0.17f;
+        [SerializeField] float maxOrthographicSize = 30f;
+        [SerializeField] float fullSpeed = 40f;
+
+        float _baseOrthographicSize;
+        static float s_lastPlaceTime = -1000f;
+
         GameObject _hover;
         int _hoverKey;
         bool _hasHover;
@@ -49,12 +59,26 @@ namespace Hullbreach.NetCode.Entities
         public static byte SelectedTypeId { get; private set; } = BlockTypes.Hull;
         public static string BuildStatus { get; private set; } = "Select a block with 1-7";
 
+        // The server only enforces the cooldown once a match is live (two or more ships), so only show it then.
+        // frob:ticket 01M3DG5Y25YGZ3DV7JSDB4BNMF
+        public static float BuildCooldownRemaining
+        {
+            get
+            {
+                var replica = HullbreachNetCodeClient.Replica;
+                if (replica == null || replica.Ships.Count < 2) return 0f;
+                return BuildCooldownModel.Remaining(Time.time - s_lastPlaceTime, ServerSimulation.DefaultBuildCooldownSeconds);
+            }
+        }
+
         void OnEnable()
         {
             Active = true;
             IsBuildMode = true;
             Requests.Clear();
             if (gameplayCamera == null) gameplayCamera = Camera.main;
+            if (gameplayCamera != null) _baseOrthographicSize = gameplayCamera.orthographicSize;
+            s_lastPlaceTime = -1000f;
             PublishStatus();
         }
 
@@ -150,6 +174,7 @@ namespace Hullbreach.NetCode.Entities
             BlockKey.Unpack(key, out int px, out int py);
             Requests.Enqueue(new BuildRequest(px, py, SelectedTypeId, modifiers, HullbreachBuildAction.Place));
             _pendingKey = null;
+            s_lastPlaceTime = Time.time;
             _buildStatus = $"Placing {BlockTypes.Get(SelectedTypeId).Name}";
             PublishStatus();
         }
@@ -157,9 +182,18 @@ namespace Hullbreach.NetCode.Entities
         void LateUpdate()
         {
             if (gameplayCamera == null || !TryGetLocalShip(out ShipBody ship)) return;
-            Vector3 desired = new Vector3(ship.Position.x, ship.Position.y, gameplayCamera.transform.position.z);
+            float speed = math.length(ship.Velocity);
+            float2 lead = speed > 0f
+                ? ship.Velocity / speed * CameraRigModel.LeadDistance(speed, leadSeconds, maxOrthographicSize * 0.5f)
+                : float2.zero;
+            Vector3 desired = new Vector3(ship.Position.x + lead.x, ship.Position.y + lead.y, gameplayCamera.transform.position.z);
             float t = 1f - Mathf.Exp(-cameraSmoothing * Time.deltaTime);
             gameplayCamera.transform.position = Vector3.Lerp(gameplayCamera.transform.position, desired, t);
+            if (_baseOrthographicSize > 0f)
+            {
+                float size = CameraRigModel.ZoomSize(speed, _baseOrthographicSize, maxOrthographicSize, fullSpeed);
+                gameplayCamera.orthographicSize = Mathf.Lerp(gameplayCamera.orthographicSize, size, t * 0.5f);
+            }
         }
 
         bool TryGetHoveredKey(ShipBody ship, out int key)

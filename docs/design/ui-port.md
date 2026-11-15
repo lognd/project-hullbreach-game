@@ -145,6 +145,10 @@ assets), but it has three costs that now matter:
 <!-- describes: Assets/Scripts/Hullbreach.Hud/CameraRigModel.cs::CameraRigModel.LeadDistance -->
 <!-- describes: Assets/Scripts/Hullbreach.Hud/CameraRigModel.cs::CameraRigModel.ZoomSize -->
 <!-- describes: Assets/Scripts/Hullbreach.Hud/CameraRigModel.cs::CameraRigModel.StarOffset -->
+<!-- describes: Assets/Scripts/Hullbreach.Hud/BuildCooldownModel.cs::BuildCooldownModel -->
+<!-- describes: Assets/Scripts/Hullbreach.Hud/BuildCooldownModel.cs::BuildCooldownModel.Remaining -->
+<!-- describes: Assets/Scripts/Hullbreach.Hud/BuildCooldownModel.cs::BuildCooldownModel.Line -->
+<!-- describes: Assets/Scripts/Hullbreach.Hud/BuildCooldownModel.cs::BuildCooldownModel.Fill -->
 <!-- describes: Assets/Scripts/Hullbreach.Hud/HullWarningModel.cs::HullWarning -->
 <!-- describes: Assets/Scripts/Hullbreach.Hud/HullWarningModel.cs::HullWarningModel -->
 <!-- describes: Assets/Scripts/Hullbreach.Hud/HullWarningModel.cs::HullWarningModel.Headline -->
