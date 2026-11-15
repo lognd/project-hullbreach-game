@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
+using Hullbreach.Net;
 using Hullbreach.World;
 
 namespace Hullbreach.Bots
@@ -41,6 +42,16 @@ namespace Hullbreach.Bots
             }
         }
 
+        // Match length percentile in seconds (0..1), over every match in the batch.
+        public double SecondsAt(double q)
+        {
+            if (Matches.Count == 0) return 0;
+            var list = new List<float>();
+            foreach (var m in Matches) list.Add(m.Seconds);
+            list.Sort();
+            return list[(int)Math.Min(list.Count - 1, Math.Max(0, Math.Round(q * (list.Count - 1))))];
+        }
+
         public int Ended(ArenaEnding e) => Tally(r => r.Ending == e);
 
         int Tally(Func<ArenaMatchResult, bool> pred)
@@ -51,6 +62,15 @@ namespace Hullbreach.Bots
         }
     }
 
+    // The rules a sweep plays under, beyond the storm: economy, planet crash and whether the bots use the economy.
+    // frob:doc docs/reference/hullbreach-bots.md#balancereport
+    public sealed class ArenaRules
+    {
+        public EconomyConfig? Economy;
+        public PlanetCrashConfig? Crash;
+        public bool Quartermaster = true;
+    }
+
     // Runs seed sweeps and prints the numbers that tuning needs: who wins, how long it takes, how it ends.
     // frob:doc docs/reference/hullbreach-bots.md#balancereport
     public static class BalanceReport
@@ -58,7 +78,7 @@ namespace Hullbreach.Bots
         // Plays `seeds` matches of A vs B. Odd seeds swap the spawn slots so a slot advantage cancels out.
         // frob:doc docs/reference/hullbreach-bots.md#balancereport
         public static ArenaBatch RunBatch(string name, ArenaSide a, ArenaSide b, int seeds, float maxSeconds,
-            StormConfig? storm, ulong firstSeed = 1)
+            StormConfig? storm, ulong firstSeed = 1, ArenaRules rules = null)
         {
             var batch = new ArenaBatch { Name = name, LabelA = a.Label, LabelB = b.Label };
             for (int i = 0; i < seeds; i++)
@@ -68,6 +88,7 @@ namespace Hullbreach.Bots
                 {
                     Seed = seed, A = Clone(a), B = Clone(b), SwapSlots = (i & 1) == 1,
                     MaxSeconds = maxSeconds, Storm = storm,
+                    Economy = rules?.Economy, Crash = rules?.Crash, Quartermaster = rules == null || rules.Quartermaster,
                     SameShip = a.Label == b.Label && a.Ship == null && b.Ship == null,
                 };
                 batch.Matches.Add(ArenaMatch.Run(cfg));
@@ -79,14 +100,15 @@ namespace Hullbreach.Bots
 
         // The standard scenario set: skill ladder, mirror, personality round robin.
         // frob:doc docs/reference/hullbreach-bots.md#balancereport
-        public static List<ArenaBatch> RunStandard(int seeds, float maxSeconds, StormConfig? storm, bool includePersonalities, string only = null)
+        public static List<ArenaBatch> RunStandard(int seeds, float maxSeconds, StormConfig? storm, bool includePersonalities, string only = null,
+            ulong firstSeed = 1, ArenaRules rules = null)
         {
             var list = new List<ArenaBatch>();
             ArenaSide E = Side(BotDifficulty.Easy), N = Side(BotDifficulty.Normal), H = Side(BotDifficulty.Hard);
             void Add(string name, ArenaSide a, ArenaSide b)
             {
                 if (only != null && name.IndexOf(only, StringComparison.OrdinalIgnoreCase) < 0) return;
-                list.Add(RunBatch(name, a, b, seeds, maxSeconds, storm));
+                list.Add(RunBatch(name, a, b, seeds, maxSeconds, storm, firstSeed, rules));
             }
             Add("Hard vs Easy", H, E);
             Add("Hard vs Normal", H, N);
@@ -124,5 +146,24 @@ namespace Hullbreach.Bots
             }
             return sb.ToString();
         }
+
+        // How matches ended and how long they ran: core breach, sudden death, time limit, draw, plus stalls and lengths.
+        // frob:doc docs/reference/hullbreach-bots.md#balancereport
+        public static string FormatEndings(IList<ArenaBatch> batches)
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine("scenario                          n  breach  sudden  limit  draw  stall   min    p25    p50    p75    max   mean");
+            foreach (ArenaBatch b in batches)
+            {
+                sb.AppendLine(string.Format(CultureInfo.InvariantCulture,
+                    "{0,-32} {1,3}  {2,5}%  {3,5}%  {4,4}%  {5,3}%  {6,4}% {7,5:0} {8,6:0} {9,6:0} {10,6:0} {11,6:0} {12,6:0}",
+                    b.Name, b.Count, Pct(b, b.Ended(ArenaEnding.CoreBreached)), Pct(b, b.Ended(ArenaEnding.Storm)),
+                    Pct(b, b.Ended(ArenaEnding.TimeLimit)), Pct(b, b.Ended(ArenaEnding.Draw)), Pct(b, b.Stalls),
+                    b.SecondsAt(0), b.SecondsAt(0.25), b.SecondsAt(0.5), b.SecondsAt(0.75), b.SecondsAt(1), b.AverageSeconds));
+            }
+            return sb.ToString();
+        }
+
+        static int Pct(ArenaBatch b, int n) => b.Count == 0 ? 0 : (int)Math.Round(100.0 * n / b.Count);
     }
 }

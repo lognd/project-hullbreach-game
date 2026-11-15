@@ -42,11 +42,37 @@ namespace Hullbreach.Bots
         public float2 Velocity;
         public float Rotation;
         public float AngularVelocity;
+        // The core marker (the minimap shows it).
         public float2 CorePosition;
+
+        // How hurt the core sprite looks, in quarter steps (0, 0.25, 0.5, 0.75, 1). A player sees the sprite's
+        // damage state, not the number, so the bot gets the same coarse reading.
         public float CoreDamage;
+
+        // Blocks on screen, in the enemy's local frame, with the same coarse damage state. Null when not visible.
+        public List<EnemyCell> Cells;
 
         // Rough radius of the hull, for hit tolerance.
         public float Radius;
+    }
+
+    // One enemy block as drawn: where, what kind, and how damaged it looks (0 to 3).
+    // frob:doc docs/reference/hullbreach-bots.md#botobservation
+    public struct EnemyCell
+    {
+        public float2 Local;
+        public byte Type;
+        public byte Stage;
+    }
+
+    // A pickup on the field, from the minimap: where it is now and how it drifts.
+    // frob:doc docs/reference/hullbreach-bots.md#botobservation
+    public struct PickupView
+    {
+        public float2 Position;
+        public float2 Velocity;
+        public byte Type;
+        public int ExpireTick;
     }
 
     // A shot in flight. Hostile is true for shots the enemy fired.
@@ -70,6 +96,10 @@ namespace Hullbreach.Bots
         public readonly List<ProjectileView> Projectiles = new List<ProjectileView>();
         public readonly List<GravityBody> Planets = new List<GravityBody>();
         public ArenaBounds Bounds;
+        public readonly List<PickupView> Pickups = new List<PickupView>();
+
+        // The bot's own spare blocks per type (its inventory bar).
+        public int[] Stock = new int[0];
 
         // Storm as the HUD shows it; HasStorm is false when the match has none.
         public bool HasStorm;

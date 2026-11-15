@@ -73,7 +73,7 @@ namespace Hullbreach.Bots.Tests
             Assert.That(batch.ShareA, Is.InRange(0.15, 0.85), "A share " + batch.ShareA);
         }
 
-        // frob:tests Assets/Scripts/Hullbreach.Bots/StormOverlay.cs::StormOverlay.Apply kind="unit"
+        // frob:tests Assets/Scripts/Hullbreach.Bots/ArenaMatch.cs::ArenaMatch.Run kind="unit"
         [Test]
         public void Match_WithStorm_DoesNotCrash()
         {

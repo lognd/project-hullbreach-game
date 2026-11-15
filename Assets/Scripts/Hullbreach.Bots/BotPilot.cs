@@ -1,5 +1,6 @@
 using System;
 using Unity.Mathematics;
+using Hullbreach.Core;
 using Hullbreach.Ship;
 using Hullbreach.World;
 
@@ -16,6 +17,7 @@ namespace Hullbreach.Bots
         Retreat = 4,
         AvoidPlanet = 5,
         ReturnToRing = 6,
+        Scavenge = 7,
     }
 
     // The layered brain: survive (planets, arena edge, storm ring), then fight (approach, hold range,
@@ -44,6 +46,7 @@ namespace Hullbreach.Bots
         bool _rollPassed;
         uint _modeUntilTick;
         uint _nextStrafeTick;
+        uint _nextFlankTick;
         float _strafeSign = 1f;
         bool _retreating;
 
@@ -146,6 +149,17 @@ namespace Hullbreach.Bots
                 return;
             }
 
+            if (TryScavenge(obs, enemy, out float2 pickupDir))
+            {
+                _mode = BotMode.Scavenge;
+                _accelDir = pickupDir;
+                _headDir = math.lengthsq(pickupDir) > 0.01f ? pickupDir : _headDir;
+                _accelWanted = math.lengthsq(pickupDir) > 0.01f;
+                _alignCos = 0.85f;
+                if (enemy.Visible) SolveAim(obs, enemy);
+                return;
+            }
+
             if (!enemy.Visible)
             {
                 _mode = BotMode.Idle;
@@ -198,18 +212,116 @@ namespace Hullbreach.Bots
                 return;
             }
 
-            // Hold range: a closing-speed controller toward the preferred distance.
+            // Look for a thinner side to hit: drift round the enemy toward fewer blocks between us and its core.
+            if (_profile.FlankPeriod > 0f && obs.Tick >= 1500u && obs.Tick >= _nextFlankTick && range < _profile.EngageRange * 1.8f && range > 7f)
+            {
+                _nextFlankTick = obs.Tick + (uint)(_profile.FlankPeriod * _rng.Range(0.8f, 1.25f) * 50f);
+                float side = FlankSide(self, enemy);
+                if (side != 0f)
+                {
+                    _mode = BotMode.Strafe;
+                    _modeUntilTick = obs.Tick + 30;
+                    _strafeSign = side;
+                    ApplyLateral(u, BotMode.Strafe);
+                    return;
+                }
+            }
+
+            // Hold range: a closing-speed controller toward the preferred distance, closer once the core looks hurt.
+            float engageRange = _profile.EngageRange * (1f - _profile.Pressure * math.saturate(enemy.CoreDamage * 2f - 0.5f));
             _mode = BotMode.Engage;
             _headDir = _aimValid ? _aimDir : u;
             _headAxisLocal = self.HasCannon ? self.AimLocal : new float2(0f, 1f);
-            float slack = _profile.EngageRange * _profile.RangeSlack;
-            float desiredClosing = math.clamp(0.3f * (range - _profile.EngageRange), -5f, 8f);
+            float slack = engageRange * _profile.RangeSlack;
+            float desiredClosing = math.clamp(0.3f * (range - engageRange), -5f, 8f);
             if (range < 9f) desiredClosing = math.min(desiredClosing, -1f);
-            if (math.abs(range - _profile.EngageRange) < slack * 0.5f) desiredClosing = 0f;
+            if (math.abs(range - engageRange) < slack * 0.5f) desiredClosing = 0f;
             float error = desiredClosing - closing;
             _alignCos = 0.8f;
             if (error > 0.8f) { _accelDir = u; _accelWanted = true; }
             else if (error < -0.8f) { _accelDir = -u; _accelWanted = true; }
+        }
+
+        // How many blocks stand between a gun on the given side of the enemy and its core, from the on-screen cells.
+        static float Cover(in EnemyView enemy, float2 coreWorld, float2 origin, float rot, float2 dir)
+        {
+            float cover = 0f;
+            var cells = enemy.Cells;
+            for (int i = 0; i < cells.Count; i++)
+            {
+                EnemyCell c = cells[i];
+                if (c.Type == BlockTypes.Core) continue;
+                float2 d = origin + Rotate(c.Local, rot) - coreWorld;
+                float along = math.dot(d, dir);
+                if (along < 0.3f || math.abs(d.x * dir.y - d.y * dir.x) > 0.75f) continue;
+                cover += c.Type == BlockTypes.Armor ? 2f : 1f;
+            }
+            return cover;
+        }
+
+        // +1 or -1 to circle toward a clearly thinner side of the enemy, 0 to stay put.
+        float FlankSide(in SelfView self, in EnemyView enemy)
+        {
+            if (enemy.Cells == null || enemy.Cells.Count == 0) return 0f;
+            float2 coreLocal = float2.zero;
+            bool found = false;
+            for (int i = 0; i < enemy.Cells.Count; i++)
+                if (enemy.Cells[i].Type == BlockTypes.Core) { coreLocal = enemy.Cells[i].Local; found = true; break; }
+            if (!found) return 0f;
+            float2 origin = enemy.CorePosition - Rotate(coreLocal, enemy.Rotation);
+            float2 b = math.normalizesafe(self.Position - enemy.CorePosition, new float2(0f, 1f));
+            float now = Cover(enemy, enemy.CorePosition, origin, enemy.Rotation, b);
+            float bestCost = now, bestCover = now;
+            float2 best = b;
+            for (int k = 0; k < 16; k++)
+            {
+                float a = k * (TwoPi / 16f);
+                float2 d = new float2(math.cos(a), math.sin(a));
+                float cover = Cover(enemy, enemy.CorePosition, origin, enemy.Rotation, d);
+                float turn = math.abs(Wrap(AngleOf(d) - AngleOf(b)));
+                float cost = cover + 0.8f * turn;
+                if (cost < bestCost) { bestCost = cost; best = d; bestCover = cover; }
+            }
+            if (now - bestCover < 2f) return 0f;
+            float cross = b.x * best.y - b.y * best.x;
+            return cross > 0f ? -1f : 1f;
+        }
+
+        // Picks a pickup worth a detour: close, not about to expire, away from planets and the storm edge, and only
+        // while no enemy is near and nothing is shooting at us. The command is a velocity-matching burn.
+        bool TryScavenge(BotObservation obs, EnemyView enemy, out float2 dir)
+        {
+            dir = float2.zero;
+            if (_profile.ScavengeRange <= 0f || obs.Pickups.Count == 0) return false;
+            SelfView self = obs.Self;
+            if (enemy.Visible && math.distance(enemy.Position, self.Position) < 24f) return false;
+            if (TryFindThreat(obs, out _)) return false;
+            bool found = false;
+            float bestScore = float.MaxValue;
+            PickupView pick = default;
+            for (int i = 0; i < obs.Pickups.Count; i++)
+            {
+                PickupView p = obs.Pickups[i];
+                float dist = math.distance(p.Position, self.Position);
+                if (dist > _profile.ScavengeRange) continue;
+                float eta = dist / 6f;
+                if (obs.Tick + eta * 50f + 50f > p.ExpireTick) continue;
+                float2 at = p.Position + p.Velocity * eta;
+                bool bad = false;
+                for (int k = 0; k < obs.Planets.Count; k++)
+                    if (math.distance(at, obs.Planets[k].Position) < obs.Planets[k].Radius + 9f) bad = true;
+                if (bad) continue;
+                if (obs.Bounds.Radius > 0f && obs.Bounds.Depth(at) > 0.25f) continue;
+                if (obs.HasStorm && !obs.Storm.IsSuddenDeath && obs.Storm.SignedDistance(at) < 6f) continue;
+                if (dist < bestScore) { bestScore = dist; pick = p; found = true; }
+            }
+            if (!found) return false;
+            float2 rel = pick.Position - self.Position;
+            float d = math.length(rel);
+            float2 want = pick.Velocity + math.normalizesafe(rel) * math.clamp(0.4f * d, 0.5f, 6f);
+            float2 err = want - self.Velocity;
+            dir = math.length(err) > 0.6f ? math.normalizesafe(err) : float2.zero;
+            return true;
         }
 
         void ApplyLateral(float2 u, BotMode mode)

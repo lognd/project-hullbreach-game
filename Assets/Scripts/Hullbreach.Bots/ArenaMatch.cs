@@ -52,8 +52,17 @@ namespace Hullbreach.Bots
         // Simulated match length; the server's own time limit is set to this.
         public float MaxSeconds = 150f;
 
-        // Null runs without a storm. Damage is applied by StormOverlay until ServerSimulation does it itself.
+        // Null runs without a storm; otherwise the real ServerSimulation storm runs this schedule and applies its damage.
         public StormConfig? Storm;
+
+        // Null uses EconomyConfig.Default() (economy on). Pass Default().WithEnabled(false) for free building.
+        public EconomyConfig? Economy;
+
+        // Null uses PlanetCrashConfig.Default() (planet crash and atmosphere on).
+        public PlanetCrashConfig? Crash;
+
+        // False keeps the bots from placing, deconstructing or scavenging, to measure what the economy play is worth.
+        public bool Quartermaster = true;
 
         // Seconds without any damage that count as a stall.
         public float StallSeconds = 60f;
@@ -130,10 +139,19 @@ namespace Hullbreach.Bots
                 MatchTimeLimitSeconds = config.MaxSeconds,
                 MatchFeed = new MatchEndFeed(),
                 EmitPoseMessages = false,
+                StormEnabled = config.Storm.HasValue,   // before Join: the match can start on the second join
             };
 
             int peerA = config.SwapSlots ? 2 : 1;
             int peerB = config.SwapSlots ? 1 : 2;
+            // The real server configures the arena before anyone joins: the match, its storm and its economy start on the
+            // second join, so they must already see this config. Configured again afterwards to place the ships.
+            ArenaConfig defaults = ArenaConfig.Defaults();
+            var arena = new ArenaConfig(defaults.Bodies, defaults.SpawnLateral, defaults.SpawnAltitude,
+                defaults.SpawnVertical, defaults.SpawnAngleStep, defaults.Bounds, config.Storm ?? StormConfig.Default(),
+                config.Crash ?? defaults.Crash, config.Economy ?? defaults.Economy);
+            sim.ConfigureDemoArena(arena);
+
             // Joined in peer order so slot 1 is always first in the arena's spawn order.
             var joins = new SortedDictionary<int, BotShip> { { peerA, shipA }, { peerB, shipB } };
             foreach (var kv in joins)
@@ -141,7 +159,7 @@ namespace Hullbreach.Bots
                 JoinResult jr = sim.Join(kv.Key, kv.Value.ToSnapshot((ushort)kv.Key, float2.zero, 0f, float2.zero));
                 if (jr != JoinResult.Joined) throw new InvalidOperationException("join refused: " + jr);
             }
-            sim.ConfigureDemoArena();
+            sim.ConfigureDemoArena(arena);
             if (sim.Match == null || sim.Match.Phase != MatchPhase.Running) throw new InvalidOperationException("match did not start");
 
             var pilotA = new BotPilot(BotProfile.For(config.A.Difficulty, config.A.Personality), master.Fork(1));
@@ -149,18 +167,9 @@ namespace Hullbreach.Bots
             var driverA = new BotPeer(peerA, peerB, pilotA);
             var driverB = new BotPeer(peerB, peerA, pilotB);
 
-            StormZone zone = null;
-            IStormSource stormSource = null;
-            StormOverlay overlay = null;
-            if (config.Storm.HasValue)
-            {
-                StormConfig sc = config.Storm.Value;
-                var candidates = new List<float2>();
-                for (int i = 0; sim.Gravity.TryGetPermanent(i, out GravityBody body); i++) candidates.Add(body.Position);
-                zone = new StormZone(sc, sim.Bounds.Center, candidates.ToArray(), (uint)config.Seed);
-                stormSource = new StormZoneSource(zone);
-                overlay = new StormOverlay(zone);
-            }
+            IStormSource stormSource = sim.ActiveStorm != null ? new StormZoneSource(sim.ActiveStorm) : null;
+            driverA.Quartermaster = config.Quartermaster ? new BotQuartermaster(shipA) : null;
+            driverB.Quartermaster = config.Quartermaster ? new BotQuartermaster(shipB) : null;
 
             var seenShots = new HashSet<uint>();
             int maxTicks = (int)(config.MaxSeconds * sim.TickRate) + 200;
@@ -173,7 +182,6 @@ namespace Hullbreach.Bots
                 long t0 = System.Diagnostics.Stopwatch.GetTimestamp();
                 driverA.Drive(sim, tick, stormSource);
                 driverB.Drive(sim, tick, stormSource);
-                overlay?.Apply(sim, tick, peerA, peerB);
                 long t1 = System.Diagnostics.Stopwatch.GetTimestamp();
                 sim.Tick();
                 long t2 = System.Diagnostics.Stopwatch.GetTimestamp();
@@ -202,7 +210,7 @@ namespace Hullbreach.Bots
             result.LongestQuietSeconds = longestQuiet / sim.TickRate;
             result.Stalled = result.LongestQuietSeconds >= config.StallSeconds;
 
-            ClassifyEnding(sim, result, peerA, peerB, overlay);
+            ClassifyEnding(sim, result, peerA, peerB, (int)tick);
             if (result.Ending != ArenaEnding.CoreBreached && result.Ending != ArenaEnding.Storm)
             {
                 int hi = Math.Max(result.DamageA, result.DamageB), lo = Math.Min(result.DamageA, result.DamageB);
@@ -225,7 +233,7 @@ namespace Hullbreach.Bots
                 ShipCapabilities.Measure(a).MaxForwardAccel, ShipCapabilities.Measure(a).MaxAngularAccel, math.degrees(a.Rotation), pa.FireRequests, pb.FireRequests, a.CannonCooldown, sim.Projectiles.Count, pa.LastErr, pa.LastSteer, a.AngularVelocity);
         }
 
-        static void ClassifyEnding(ServerSimulation sim, ArenaMatchResult result, int peerA, int peerB, StormOverlay overlay)
+        static void ClassifyEnding(ServerSimulation sim, ArenaMatchResult result, int peerA, int peerB, int tick)
         {
             MatchStateMachine m = sim.Match;
             if (m.Phase != MatchPhase.Ended) { result.Ending = ArenaEnding.Unfinished; return; }
@@ -241,8 +249,9 @@ namespace Hullbreach.Bots
             switch (m.Result)
             {
                 case MatchResult.CoreBreached:
-                    int loser = m.WinnerPeer == peerA ? peerB : peerA;
-                    result.Ending = overlay != null && overlay.CoreDamageBy(loser) > 0f ? ArenaEnding.Storm : ArenaEnding.CoreBreached;
+                    // A breach once the last ring has closed is the storm's sudden death, not the cannons.
+                    bool suddenDeath = sim.ActiveStorm != null && sim.ActiveStorm.At(tick).IsSuddenDeath;
+                    result.Ending = suddenDeath ? ArenaEnding.Storm : ArenaEnding.CoreBreached;
                     break;
                 case MatchResult.TimeLimit: result.Ending = ArenaEnding.TimeLimit; break;
                 case MatchResult.Draw: result.Ending = ArenaEnding.Draw; break;

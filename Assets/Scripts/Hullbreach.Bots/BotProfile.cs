@@ -64,6 +64,15 @@ namespace Hullbreach.Bots
         // Seconds between strafing bursts; 0 disables strafing.
         public float StrafePeriod { get; private set; }
 
+        // Seconds between looks for a thinner side of the enemy to attack; 0 never flanks.
+        public float FlankPeriod { get; private set; }
+
+        // 0..1: how much closer than EngageRange the bot presses once the enemy core looks hurt.
+        public float Pressure { get; private set; }
+
+        // Furthest pickup (world units) the bot will fly to when the fight is quiet; 0 never scavenges.
+        public float ScavengeRange { get; private set; }
+
         // Extra range-keeping slack as a fraction of EngageRange.
         public float RangeSlack { get; private set; }
 
@@ -76,16 +85,19 @@ namespace Hullbreach.Bots
                     p.ReactionTicks = 30; p.DecisionTicks = 18; p.AimSigma = 0.075f; p.LeadQuality = 0.35f;
                     p.GravityAwareLead = false; p.TriggerDiscipline = 0.55f; p.FireToleranceScale = 2.2f;
                     p.DodgeSkill = 0f; p.PlanetLookahead = 3f; p.StrafePeriod = 0f; p.RangeSlack = 0.5f;
+                    p.FlankPeriod = 0f; p.Pressure = 0f; p.ScavengeRange = 0f;
                     break;
                 case BotDifficulty.Normal:
                     p.ReactionTicks = 14; p.DecisionTicks = 9; p.AimSigma = 0.03f; p.LeadQuality = 0.85f;
                     p.GravityAwareLead = true; p.TriggerDiscipline = 0.85f; p.FireToleranceScale = 1.6f;
                     p.DodgeSkill = 0.2f; p.PlanetLookahead = 4f; p.StrafePeriod = 0f; p.RangeSlack = 0.3f;
+                    p.FlankPeriod = 9f; p.Pressure = 0.25f; p.ScavengeRange = 22f;
                     break;
                 default:
                     p.ReactionTicks = 9; p.DecisionTicks = 9; p.AimSigma = 0.012f; p.LeadQuality = 1f;
                     p.GravityAwareLead = true; p.TriggerDiscipline = 0.95f; p.FireToleranceScale = 2.0f;
                     p.DodgeSkill = 0.3f; p.PlanetLookahead = 4f; p.StrafePeriod = 0f; p.RangeSlack = 0.3f;
+                    p.FlankPeriod = 6f; p.Pressure = 0.4f; p.ScavengeRange = 30f;
                     break;
             }
             switch (personality)
