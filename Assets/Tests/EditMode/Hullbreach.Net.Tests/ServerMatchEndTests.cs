@@ -113,6 +113,30 @@ namespace Hullbreach.Net.Tests
             Assert.AreEqual(0, raised[0].StatsB.BlocksPlaced);
         }
 
+        [Test]
+        public void RefusedPlacements_AreNotCounted()
+        {
+            var (server, raised) = Arena();
+            server.Join(1, Ship(Core()));
+            server.Join(2, Ship(Core()));
+            server.SetInput(1, new InputMessage(1, 1, 0, 0, InputMessage.BuildModeBit));
+            Assert.IsTrue(server.TryPlaceBlock(1, 1, 0, BlockTypes.Hull, 0));
+            Assert.IsFalse(server.TryPlaceBlock(1, 1, 0, BlockTypes.Hull, 0), "the cell is taken");
+            Assert.IsFalse(server.TryPlaceBlock(1, 40, 40, BlockTypes.Hull, 0), "out of range");
+            server.Leave(2);
+            Assert.AreEqual(1, raised[0].StatsA.BlocksPlaced);
+        }
+
+        [Test]
+        public void ShipsStartingDesign_IsNotCountedAsPlaced()
+        {
+            var (server, raised) = Arena();
+            server.Join(1, Ship(Core(), new SnapshotBlock(1, 0, BlockTypes.Hull, 0, 0), new SnapshotBlock(2, 0, BlockTypes.Hull, 0, 0)));
+            server.Join(2, Ship(Core()));
+            server.Leave(2);
+            Assert.AreEqual(0, raised[0].StatsA.BlocksPlaced, "pre-match design blocks are not match placements");
+        }
+
         // frob:ticket 01M6WVK2JM5FA72DD850NKNZP7
         // A destroyed connector strands the block behind it; the shooter is credited for both.
         [Test]
