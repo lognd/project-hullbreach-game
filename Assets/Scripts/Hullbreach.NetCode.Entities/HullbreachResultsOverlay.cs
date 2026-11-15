@@ -150,7 +150,8 @@ namespace Hullbreach.NetCode.Entities
         static void EnsureEventSystem()
         {
             if (EventSystem.current != null) return;
-            new GameObject("EventSystem", typeof(EventSystem), typeof(StandaloneInputModule));
+            var go = new GameObject("EventSystem", typeof(EventSystem), typeof(StandaloneInputModule));
+            DontDestroyOnLoad(go);
         }
 
         static string NameOf(ResultsPlayerRow p)
