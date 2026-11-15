@@ -322,6 +322,7 @@ namespace Hullbreach.Structure
 
         int _tickIndex;
         int _bucklingDof = -1;
+        int[] _kgColumns;
         readonly List<BucklingMode> _bucklingModes = new List<BucklingMode>();
         readonly List<int> _buckledBlocks = new List<int>();
 
@@ -429,9 +430,17 @@ namespace Hullbreach.Structure
 
             // Reset only on an actual DOF-COUNT change, not merely a K
             // rebuild (TopologyDirty can stay true with no real change).
-            if (_bucklingDof != _assembly.DofCount)
+            // A rebuild with the same DOF count still allocates a new CSR
+            // pattern (a block removed and another added), so K_G must be
+            // re-attached whenever the pattern arrays changed, not only on a
+            // DOF-count change; otherwise K_G scatters into a stale pattern.
+            if (!ReferenceEquals(_kgColumns, _assembly.ColumnIndices))
             {
                 _kg.AttachSparsity(_assembly);
+                _kgColumns = _assembly.ColumnIndices;
+            }
+            if (_bucklingDof != _assembly.DofCount)
+            {
                 // _rigidModes was already recomputed this Tick for the
                 // same DofCount; reuse instead of allocating a second set.
                 _buckling.Reset(_assembly.DofCount, BucklingModeCount, _rigidModes);
