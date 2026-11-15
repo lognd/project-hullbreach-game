@@ -1,0 +1,7 @@
+kind = "field"
+field = "acceptance"
+new = ["Touching a planet above the crash speed damages the touching blocks (core capped), configurable per arena, in the offline body and the server", "The HUD can query planet proximity (altitude, closing speed, time to impact, warning severity)"]
+moved = []
+at = "2026-11-15T12:13:21Z"
+actor = "lognd"
+rev = 1
