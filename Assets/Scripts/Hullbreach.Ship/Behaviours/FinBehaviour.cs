@@ -12,7 +12,7 @@ namespace Hullbreach.Ship.Behaviours
         public void Step(ref BlockContext ctx)
         {
             float steerTarget = math.clamp(ctx.Input.Steer, -1f, 1f);
-            float updated = ctx.Throttle(steerTarget);
+            float updated = ctx.FinThrottle(steerTarget);
             if (updated == 0f) return;
 
             float2 perp = Facing.Perpendicular(ctx.Block.Modifiers);

@@ -67,6 +67,25 @@ namespace Hullbreach.Ship
         // frob:doc docs/reference/hullbreach-ship.md#shipbody
         public float AngularDamping = 0f;
 
+        // How the ship feels to fly: flight assist, ramps, brake, fire buffer. Legacy by default so raw physics
+        // tests stay pure; the server, the client prediction and ShipController all assign FlightTuning.Default().
+        // frob:doc docs/reference/hullbreach-ship.md#shipbody
+        public FlightTuning Tuning = FlightTuning.Legacy();
+
+        // Velocity the brake assist kills relative to; the dominant body's velocity. Planets are static, so zero.
+        // frob:doc docs/reference/hullbreach-ship.md#shipbody
+        public float2 BrakeReferenceVelocity;
+
+        // Seconds left on a buffered fire press (a press during cooldown still fires when the cannon is ready).
+        // frob:doc docs/reference/hullbreach-ship.md#shipbody
+        public float FireBufferRemaining => _fireBuffer;
+
+        // True while the gyro is holding or commanding the spin this tick.
+        // frob:doc docs/reference/hullbreach-ship.md#shipbody
+        public bool AssistActive { get; private set; }
+
+        float _fireBuffer;
+
         // Added to a planet's Radius when testing block contact, so a
         // block's half-extent does not visibly sink into the surface.
         // frob:doc docs/reference/hullbreach-ship.md#shipbody
@@ -275,10 +294,18 @@ namespace Hullbreach.Ship
 
             TickPowerups(dt);
 
-            StepBehaviours(ThrusterKeys, input, dt);
-            StepBehaviours(RetroKeys, input, dt);
-            StepBehaviours(FinKeys, input, dt);
-            StepBehaviours(WeaponKeys, input, dt);
+            // A fire press is remembered briefly so one that lands during cooldown still fires.
+            if (input.FirePressed) _fireBuffer = Tuning.FireBufferSeconds;
+            bool fireNow = input.FirePressed || _fireBuffer > 0f;
+            int shotsBefore = PendingShots.Count;
+            ShipInput driven = new ShipInput(input.ThrustAxis, input.Steer, fireNow, input.AssistOff);
+
+            StepBehaviours(ThrusterKeys, driven, dt);
+            StepBehaviours(RetroKeys, driven, dt);
+            StepBehaviours(FinKeys, driven, dt);
+            StepBehaviours(WeaponKeys, driven, dt);
+
+            _fireBuffer = PendingShots.Count > shotsBefore ? 0f : math.max(0f, _fireBuffer - dt);
 
             // After behaviours ramp their throttles, before anything reads
             // them, so readers see THIS tick's control state.
@@ -287,6 +314,7 @@ namespace Hullbreach.Ship
             ApplyGravityForces();
 
             float inertia = Grid.Mass.InertiaAboutCenterOfMass;
+            ApplyGyro(input, mass, inertia, dt);
 
             float2 worldForce = RotateByRotation(_forceAccum);
             float2 a = worldForce / mass;
@@ -299,10 +327,11 @@ namespace Hullbreach.Ship
             // use the NEW velocity to update position (as Box2D does).
             Velocity += a * dt;
             AngularVelocity += alpha * dt;
+            ApplyBrake(input, mass, dt);
 
             // Exponential decay on the NEW angular velocity: stable at any
-            // dt, never drives the spin through zero and back.
-            if (AngularDamping > 0f)
+            // dt, never drives the spin through zero and back. The gyro replaces it while assist is on.
+            if (AngularDamping > 0f && !AssistActive)
             {
                 AngularVelocity *= 1f / (1f + AngularDamping * dt);
             }
@@ -330,6 +359,41 @@ namespace Hullbreach.Ship
                 Rotation += AngularVelocity * h;
                 ResolvePlanetContacts(h);
             }
+        }
+
+        // Flight assist: steer commands a spin rate (capped by ship inertia) and a gyro torque tracks it, so a
+        // released stick holds the heading. The torque is proportional to ship mass and never overshoots the
+        // target within one step, so it is stable at any tick rate.
+        void ApplyGyro(in ShipInput input, float mass, float inertia, float dt)
+        {
+            AssistActive = Tuning.AssistEnabled && !input.AssistOff && inertia > 0f;
+            if (!AssistActive) return;
+
+            float target = math.clamp(input.Steer, -1f, 1f) * Tuning.MaxRateFor(inertia);
+            float predicted = AngularVelocity + _torqueAccum / inertia * dt;
+            float error = target - predicted;
+            if (error == 0f) return;
+
+            float alpha = Tuning.GyroTorquePerMass * mass / inertia * math.clamp(error / Tuning.GyroErrorSaturation, -1f, 1f);
+            float limit = math.abs(error) / dt;
+            alpha = math.clamp(alpha, -limit, limit);
+            _torqueAccum += alpha * inertia;
+        }
+
+        // Brake assist: while S is held, an extra deceleration against the velocity relative to the reference body.
+        // It scales with the retro thrusters' own acceleration and their spool-up, and stops the ship rather than
+        // reversing it. Ships without a retro thruster get nothing.
+        void ApplyBrake(in ShipInput input, float mass, float dt)
+        {
+            if (Tuning.BrakeGain <= 0f || input.ThrustAxis >= -0.05f || RetroKeys.Length == 0) return;
+
+            float retroAccel = RetroKeys.Length * RetroThrustPerBlock / mass;
+            float dv = Tuning.BrakeGain * retroAccel * ReverseThrottleMean * dt;
+            float2 rel = Velocity - BrakeReferenceVelocity;
+            float speed = math.length(rel);
+            if (speed <= 0f) return;
+            if (speed <= Tuning.BrakeStopSpeed || dv >= speed) { Velocity = BrakeReferenceVelocity; return; }
+            Velocity -= rel / speed * dv;
         }
 
         // 1 unless a planet surface is within reach this tick; then enough hops that none exceeds SweepStep.
@@ -614,8 +678,22 @@ namespace Hullbreach.Ship
         // frob:doc docs/reference/hullbreach-ship.md#shipbody
         public float RampThrottleFor(int key, byte modifiers, float target, float dt)
         {
-            float rate = ThrusterUpgrades.RampRate(modifiers);
             float current = _throttleByKey.TryGetValue(key, out var t) ? t : 0f;
+            bool up = math.abs(target) >= math.abs(current);
+            float rate = ThrusterUpgrades.RampRate(modifiers) * (up ? Tuning.ThrusterRampUpScale : Tuning.ThrusterRampDownScale);
+            float updated = RampToward(current, target, rate, dt);
+            _throttleByKey[key] = updated;
+            return updated;
+        }
+
+        // Fin ramp: quick on, quicker off, so steering is crisp. Falls back to the shared ramp when untuned.
+        // frob:doc docs/reference/hullbreach-ship.md#shipbody
+        public float RampFinThrottleFor(int key, byte modifiers, float target, float dt)
+        {
+            if (Tuning.FinRampUpSeconds <= 0f || Tuning.FinRampDownSeconds <= 0f) return RampThrottleFor(key, modifiers, target, dt);
+            float current = _throttleByKey.TryGetValue(key, out var t) ? t : 0f;
+            bool up = math.abs(target) >= math.abs(current);
+            float rate = 1f / (up ? Tuning.FinRampUpSeconds : Tuning.FinRampDownSeconds);
             float updated = RampToward(current, target, rate, dt);
             _throttleByKey[key] = updated;
             return updated;
@@ -816,12 +894,17 @@ namespace Hullbreach.Ship
         // frob:doc docs/reference/hullbreach-ship.md#shipinput
         public readonly bool FirePressed;
 
+        // Hold-to-disable flight assist: true means raw fin physics, no gyro.
         // frob:doc docs/reference/hullbreach-ship.md#shipinput
-        public ShipInput(float thrustAxis, float steer, bool firePressed)
+        public readonly bool AssistOff;
+
+        // frob:doc docs/reference/hullbreach-ship.md#shipinput
+        public ShipInput(float thrustAxis, float steer, bool firePressed, bool assistOff = false)
         {
             ThrustAxis = thrustAxis;
             Steer = steer;
             FirePressed = firePressed;
+            AssistOff = assistOff;
         }
     }
 }

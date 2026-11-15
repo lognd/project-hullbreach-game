@@ -215,6 +215,8 @@ dispatch with a single switch before deserializing anything.
 <!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::InputMessage.ThrustAxisFloat -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::InputMessage.SteerFloat -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::InputMessage.FirePressed -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::InputMessage.AssistOffBit -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::InputMessage.AssistOff -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::InputMessage.Write -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::InputMessage.Read -->
 
@@ -556,6 +558,7 @@ and to which ship, without re-parsing wire bytes.
 <!-- describes: Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ClientReplica -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ClientReplica.Ships -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ClientReplica.PredictionPlanetCrash -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ClientReplica.PredictionFlightTuning -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ClientReplica.ApplySnapshot -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ClientReplica.ApplyState -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ClientReplica.TryInterpolate -->
@@ -734,6 +737,7 @@ state never reads it.
 <!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.FirstFragmentId -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.ConfigureDemoArena -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.PlanetCrash -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.FlightTuning -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.Bounds -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.Storm -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.StormEnabled -->

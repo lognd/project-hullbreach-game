@@ -133,7 +133,8 @@ namespace Hullbreach.NetCode.Entities
                 _clientTick,
                 shaped.ThrustAxis,
                 shaped.Steer,
-                shaped.FirePressed);
+                shaped.FirePressed,
+                live && Input.GetKey(KeyCode.LeftShift));
             byte flags = basicInput.Flags;
             if (building) flags |= InputMessage.BuildModeBit;
             InputMessage input = new InputMessage(basicInput.NetId, basicInput.Tick,

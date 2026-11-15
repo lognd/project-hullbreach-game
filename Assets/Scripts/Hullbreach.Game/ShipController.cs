@@ -112,6 +112,7 @@ namespace Hullbreach.Game
                 FinForce = finForce,
                 CannonCooldown = cannonCooldown,
                 AngularDamping = angularDamping,
+                Tuning = FlightTuning.Default(),
             };
             AddAuthoredBlocks(blocks, preservedCoreKey: null);
             // Force the initial view build now rather than on the first Step,
@@ -177,7 +178,9 @@ namespace Hullbreach.Game
                 return;
             }
 
-            var input = InputEnabled ? new ShipInput(thrustAxis, steerAxis, fireLatched) : new ShipInput(0f, 0f, false);
+            // Holding left shift turns flight assist off (raw fin physics); same key as online.
+            bool assistOff = InputEnabled && Input.GetKey(KeyCode.LeftShift);
+            var input = InputEnabled ? new ShipInput(thrustAxis, steerAxis, fireLatched, assistOff) : new ShipInput(0f, 0f, false);
             fireLatched = false;   // consume exactly once
 
             ship.Step(input, Time.fixedDeltaTime);

@@ -303,6 +303,10 @@ namespace Hullbreach.Net
         // frob:doc docs/reference/hullbreach-net.md#clientreplica
         public PlanetCrashConfig PredictionPlanetCrash { get; set; } = PlanetCrashConfig.Default();
 
+        // Flight feel of the predicted body; keep equal to ServerSimulation.FlightTuning.
+        // frob:doc docs/reference/hullbreach-net.md#clientreplica
+        public FlightTuning PredictionFlightTuning { get; set; } = FlightTuning.Default();
+
         // Distance the predicted position moved on the latest reconcile (0 = prediction was right).
         // frob:doc docs/reference/hullbreach-net.md#clientreplica
         public float LastCorrection { get; private set; }
@@ -333,7 +337,7 @@ namespace Hullbreach.Net
         {
             if (!_hasLocal || !_ships.TryGetValue(_localNetId, out var replica)) return false;
 
-            var shipInput = new ShipInput(input.ThrustAxisFloat, input.SteerFloat, false);
+            var shipInput = new ShipInput(input.ThrustAxisFloat, input.SteerFloat, false, input.AssistOff);
             if (_pendingInputs.Count >= MaxPendingInputs) _pendingInputs.RemoveAt(0);
             _pendingInputs.Add(new PendingInput(input.Tick, shipInput));
 
@@ -386,7 +390,7 @@ namespace Hullbreach.Net
         {
             if (replica.Predicted != null && !replica.PredictionStale) return;
 
-            var body = new ShipBody { Gravity = PredictionGravity, PlanetCrash = PredictionPlanetCrash };
+            var body = new ShipBody { Gravity = PredictionGravity, PlanetCrash = PredictionPlanetCrash, Tuning = PredictionFlightTuning };
             foreach (var kv in replica.Body.Grid.All) body.Grid.TryAdd(kv.Key, kv.Value);
             body.RebuildDerivedViews();
             body.Position = replica.Body.Position;
@@ -911,7 +915,7 @@ namespace Hullbreach.Net
 
         // A thin convenience: ClientReplica does not own a transport itself.
         // frob:doc docs/reference/hullbreach-net.md#clientreplica
-        public static InputMessage BuildInput(ushort netId, uint tick, float thrustAxis, float steer, bool firePressed)
-            => InputMessage.FromFloats(netId, tick, thrustAxis, steer, firePressed);
+        public static InputMessage BuildInput(ushort netId, uint tick, float thrustAxis, float steer, bool firePressed, bool assistOff = false)
+            => InputMessage.FromFloats(netId, tick, thrustAxis, steer, firePressed, assistOff);
     }
 }
