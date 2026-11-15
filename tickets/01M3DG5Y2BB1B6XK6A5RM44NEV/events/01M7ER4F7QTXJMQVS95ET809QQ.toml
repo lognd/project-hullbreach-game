@@ -1,0 +1,66 @@
+kind = "evidence"
+accepts = [1]
+captured_at = "2026-11-15T04:40:51Z"
+digest = "4db30687753408d8e3bf391476fc579b62ec654ca4a920827f9d50db1cde5ffa"
+exit_code = 1
+head = "582bac693fdb1cd20cf0c4ae6e235b76856090c0"
+inline = """
+  Determining projects to restore...\r
+  All projects are up-to-date for restore.\r
+  Hullbreach.Plain -> <worktree>\\tools\\plaincs\\Hullbreach.Plain\\bin\\Release\\netstandard2.1\\Hullbreach.Plain.dll\r
+  Hullbreach.Plain.Tests -> <worktree>\\tools\\plaincs\\Hullbreach.Plain.Tests\\bin\\Release\\net8.0\\Hullbreach.Plain.Tests.dll\r
+Test run for <worktree>\\tools\\plaincs\\Hullbreach.Plain.Tests\\bin\\Release\\net8.0\\Hullbreach.Plain.Tests.dll (.NETCoreApp,Version=v8.0)\r
+VSTest version 17.11.2 (x64)\r
+\r
+Starting test execution, please wait...\r
+A total of 1 test files matched the specified pattern.\r
+  Failed Benchmark_2000Blocks [4 s]\r
+  Error Message:\r
+     steady-state Tick allocated far more than the boxed-enumerator floor; see class doc\r
+  Expected: less than or equal to 4096\r
+  But was:  6624\r
+\r
+  Stack Trace:\r
+     at Hullbreach.Structure.Tests.SolverBenchmarks.RunBenchmark(Int32 totalBlocks, Int32 ticks) in <worktree>\\Assets\\Tests\\EditMode\\Hullbreach.Structure.Tests\\SolverBenchmarks.cs:line 142\r
+   at Hullbreach.Structure.Tests.SolverBenchmarks.Benchmark_2000Blocks() in <worktree>\\Assets\\Tests\\EditMode\\Hullbreach.Structure.Tests\\SolverBenchmarks.cs:line 193\r
+
+1)    at Hullbreach.Structure.Tests.SolverBenchmarks.RunBenchmark(Int32 totalBlocks, Int32 ticks) in <worktree>\\Assets\\Tests\\EditMode\\Hullbreach.Structure.Tests\\SolverBenchmarks.cs:line 142\r
+   at Hullbreach.Structure.Tests.SolverBenchmarks.Benchmark_2000Blocks() in <worktree>\\Assets\\Tests\\EditMode\\Hullbreach.Structure.Tests\\SolverBenchmarks.cs:line 193\r
+
+\r
+  Standard Output Messages:\r
+ blocks=2000 tick=0 dof=10702 iterations=400 converged=False residual=1504 ms=493.17 continued=False ticksSinceRestart=0\r
+ blocks=2000 tick=1 dof=10702 iterations=400 converged=False residual=131.3 ms=238.64 continued=True ticksSinceRestart=1\r
+ blocks=2000 tick=2 dof=10702 iterations=400 converged=False residual=457.9 ms=233.03 continued=True ticksSinceRestart=2\r
+ blocks=2000 tick=3 dof=10702 iterations=400 converged=False residual=2693 ms=232.39 continued=True ticksSinceRestart=3\r
+ blocks=2000 tick=4 dof=10702 iterations=284 converged=False residual=131.3 ms=173.71 continued=False ticksSinceRestart=0\r
+ blocks=2000 tick=5 dof=10702 iterations=400 converged=False residual=839.6 ms=227.43 continued=False ticksSinceRestart=0\r
+ blocks=2000 tick=6 dof=10702 iterations=400 converged=False residual=306.9 ms=228.74 continued=False ticksSinceRestart=0\r
+ blocks=2000 tick=7 dof=10702 iterations=400 converged=False residual=564.5 ms=228.96 continued=False ticksSinceRestart=0\r
+ blocks=2000 tick=8 dof=10702 iterations=400 converged=False residual=311.3 ms=231.38 continued=False ticksSinceRestart=0\r
+ blocks=2000 tick=9 dof=10702 iterations=400 converged=False residual=371 ms=239.15 continued=False ticksSinceRestart=0\r
+ blocks=2000 tick=10 dof=10702 iterations=400 converged=False residual=383.7 ms=228.50 continued=False ticksSinceRestart=0\r
+ blocks=2000 tick=11 dof=10702 iterations=400 converged=False residual=402.5 ms=228.36 continued=False ticksSinceRestart=0\r
+ blocks=2000 tick=12 dof=10702 iterations=400 converged=False residual=466.1 ms=227.28 continued=False ticksSinceRestart=0\r
+ blocks=2000 tick=13 dof=10702 iterations=400 converged=False residual=2648 ms=229.52 continued=True ticksSinceRestart=1\r
+ blocks=2000 tick=14 dof=10702 iterations=400 converged=False residual=5129 ms=229.68 continued=True ticksSinceRestart=2\r
+ blocks=2000 tick=15 dof=10702 iterations=400 converged=False residual=466.1 ms=237.20 continued=False ticksSinceRestart=0\r
+ blocks=2000 tick=16 dof=10702 iterations=400 converged=False residual=230.3 ms=232.32 continued=False ticksSinceRestart=0\r
+ blocks=2000 tick=17 dof=10702 iterations=400 converged=False residual=384.6 ms=237.06 continued=False ticksSinceRestart=0\r
+ blocks=2000 tick=18 dof=10702 iterations=400 converged=False residual=145.2 ms=239.96 continued=False ticksSinceRestart=0\r
+ blocks=2000 tick=19 dof=10702 iterations=400 converged=False residual=478.8 ms=237.15 continued=False ticksSinceRestart=0\r
+ TICKMS blocks=2000 rebuildTick0=493.17 min=173.71 median=231.38 max=239.96 (steady-state ticks 1..19, ms)\r
+ SUMMARY blocks=2000 ticks=20 totalMs=4854 avgMsPerTick=242.700 maxIterationsPerTick=400 maxAllocBytesPerTick=6624 criticalLoadFactor=\\u{221e}\r
+\r
+\r
+\r
+Failed!  - Failed:     1, Passed:     3, Skipped:     0, Total:     4, Duration: 7 s - Hullbreach.Plain.Tests.dll (net8.0)\r
+"""
+passed = false
+provider = "command"
+ref = "dotnet test tools/plaincs/Hullbreach.Plain.Tests/Hullbreach.Plain.Tests.csproj -c Release --filter FullyQualifiedName~SolverBenchmarks"
+size = 4390
+status = "measured"
+at = "2026-11-15T04:40:51Z"
+actor = "lognd"
+rev = 1
