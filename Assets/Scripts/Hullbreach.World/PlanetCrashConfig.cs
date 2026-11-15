@@ -121,6 +121,17 @@ namespace Hullbreach.World
             return t * t;
         }
 
+        // Surface restitution after a hard hit: full up to SafeLandingSpeed, fading linearly to a dead stop at
+        // CatastrophicSpeed, so a crash lands with damage instead of bouncing back out of the planet well.
+        // frob:doc docs/reference/hullbreach-world.md#planetcrashconfig
+        public float EffectiveRestitution(float restitution, float closing)
+        {
+            if (closing <= SafeLandingSpeed) return restitution;
+            float span = CatastrophicSpeed - SafeLandingSpeed;
+            if (span <= 0f || closing >= CatastrophicSpeed) return 0f;
+            return restitution * (1f - (closing - SafeLandingSpeed) / span);
+        }
+
         // Damage one block takes from an impact. `closing` is its own closing speed, `touching` the number of
         // blocks sharing the hit. A core is scaled down and capped unless the hit is catastrophic.
         // frob:doc docs/reference/hullbreach-world.md#planetcrashconfig

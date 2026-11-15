@@ -51,6 +51,41 @@ namespace Hullbreach.Ship.Tests
         }
 
         [Test]
+        public void EffectiveRestitution_FadesFromFullAtSafeSpeedToNoneAtCatastrophic()
+        {
+            var cfg = PlanetCrashConfig.Default();
+            Assert.AreEqual(0.5f, cfg.EffectiveRestitution(0.5f, cfg.SafeLandingSpeed), 1e-5f);
+            Assert.AreEqual(0.25f, cfg.EffectiveRestitution(0.5f, (cfg.SafeLandingSpeed + cfg.CatastrophicSpeed) * 0.5f), 1e-5f);
+            Assert.AreEqual(0f, cfg.EffectiveRestitution(0.5f, cfg.CatastrophicSpeed));
+            Assert.AreEqual(0f, cfg.EffectiveRestitution(0.5f, 99f));
+        }
+
+        [Test]
+        public void VeryHardLanding_DeadStopsWithRealDamage_AndDoesNotEscapeThePlanet()
+        {
+            // A 3x3 slab landing at 35 u/s on a Demo-sized planet (mu 900, r 18, restitution 0.2) used to rebound
+            // faster than the escape speed and leave the arena with every block intact.
+            var field = new GravityField();
+            field.Add(new GravityBody(new float2(0f, -60f), 900f, 18f, 0.2f));
+            var ship = new ShipBody { Gravity = field };
+            for (int x = -1; x <= 1; x++)
+                for (int y = -1; y <= 1; y++)
+                    ship.Grid.TryAdd(BlockKey.Pack(x, y), new Block(x == 0 && y == 0 ? BlockTypes.Core : BlockTypes.Hull, 0));
+            ship.RebuildDerivedViews();
+            ship.Position = new float2(0f, -36f);
+            ship.Velocity = new float2(0f, -35f);
+            float maxUp = 0f;
+            for (int i = 0; i < 1000; i++) { ship.Step(default, Dt); maxUp = math.max(maxUp, ship.Velocity.y); }
+            Assert.Less(maxUp, 3f, "no meaningful rebound");
+            Assert.Less(ship.Position.y, 0f, "still near the planet");
+            int total = 0;
+            for (int x = -1; x <= 1; x++)
+                for (int y = -1; y <= 1; y++)
+                    if (ship.Grid.TryGet(BlockKey.Pack(x, y), out Block b)) total += b.Damage;
+            Assert.Greater(total, 300, "a 35 u/s crash does real damage");
+        }
+
+        [Test]
         public void GentleTouchdown_BelowTheSafeSpeed_DamagesNothing()
         {
             var ship = Column(Field(mu: 1f), 3, coreY: 0);
