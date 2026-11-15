@@ -1,0 +1,6 @@
+kind = "comment"
+subtype = "note"
+body = "Criteria 1 and 2 are implemented by ~ANTM71X (branch ticket/ANTM71X, HitTolerance) and ~0GMV7S1 (branch ticket/0GMV7S1, TrustLevel), plaincs 833 pass. Criterion 3 (trust events visible to administrators on the platform) is NOT met: the game only logs to MatchLog and queues TrustEvent (ServerSimulation.TryDequeueTrustEvent); it needs a platform endpoint and admin view. Story left open."
+at = "2026-11-15T04:45:31Z"
+actor = "lognd"
+rev = 1

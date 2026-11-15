@@ -31,9 +31,10 @@ namespace Hullbreach.Net
         // frob:doc docs/reference/hullbreach-net.md#hittolerance
         public static HitTolerance None => new HitTolerance(0f, 0f);
 
-        // Distance a graze is forgiven for a defender moving at `defenderSpeed`.
+        // Distance a graze is forgiven for a defender moving at `defenderSpeed`; the defender's
+        // trust (0..1) scales it, so a peer with implausible claims gets less benefit of the doubt.
         // frob:doc docs/reference/hullbreach-net.md#hittolerance
-        public float MarginFor(float defenderSpeed)
-            => math.min(MaxMargin, math.max(0f, defenderSpeed) * GraceSeconds);
+        public float MarginFor(float defenderSpeed, float trust = 1f)
+            => math.min(MaxMargin, math.max(0f, defenderSpeed) * GraceSeconds) * math.clamp(trust, 0f, 1f);
     }
 }
