@@ -37,6 +37,8 @@ namespace Hullbreach.Game
             sr.sprite = ShipRenderer.MakeSprite();
             sr.color = Color.yellow;
             transform.localScale = new Vector3(spec.Radius * 2f, spec.Radius * 2f, 1f);
+            FeelFx.AttachTrail(gameObject, spec.Radius);
+            FeelFx.Muzzle(origin, direction, carrierVelocity);
 
             var body = GetComponent<Rigidbody2D>();
             body.gravityScale = 0f;
@@ -111,6 +113,7 @@ namespace Hullbreach.Game
 
             targetController.ApplyImpulse(hitPoint, direction * _spec.Impulse);
             targetController.ApplyDamage(hitPoint, _spec.Damage);
+            FeelFx.Impact(hitPoint, direction, _spec.Damage, targetController.transform == FeelFx.PlayerTransform);
             DropWellIfAny(hitPoint);
 
             Destroy(gameObject);

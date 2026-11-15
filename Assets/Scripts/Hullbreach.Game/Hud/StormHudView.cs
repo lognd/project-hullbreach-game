@@ -84,6 +84,8 @@ namespace Hullbreach.Game
                     : stage == StormHudModel.Shrink ? new Color(1f, 0.8f, 0.3f) : Color.white;
             }
 
+            FeelFx.ReportStorm(storm, signed, band);
+
             // Screen tint
             float a = f.HasLocal ? StormHudModel.WarningAlpha(storm, signed, band, Time.unscaledTime) : 0f;
             _tint.color = new Color(0.9f, 0.05f, 0.05f, a);

@@ -54,6 +54,17 @@ namespace Hullbreach.Hud.Tests
         }
 
         [Test]
+        public void FeelToggles_DefaultOn_AndRoundTrip()
+        {
+            var d = new GameSettings();
+            Assert.IsTrue(d.ScreenShake && d.HitEffects && d.SoundEffects);
+            var back = GameSettings.Parse(new GameSettings { ScreenShake = false, HitEffects = false, SoundEffects = false }.Serialize());
+            Assert.IsFalse(back.ScreenShake || back.HitEffects || back.SoundEffects);
+            Assert.IsTrue(GameSettings.Parse("master=1
+").ScreenShake); // old files keep the defaults
+        }
+
+        [Test]
         public void Parse_SkipsJunkAndKeepsDefaults()
         {
             var s = GameSettings.Parse("master=loud\nwidth=10\nheight=10\nbogus\nfuture=1\ncolorblind=1\n");
