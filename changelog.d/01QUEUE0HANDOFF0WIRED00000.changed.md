@@ -1,0 +1,1 @@
+Online queue handoff is wired end to end: a found match dials the assigned server, presents its match id in a JoinTicket RPC, and a dedicated server started with `-hullbreachMatchId <uuid>` or `-hullbreachQueueServer` only admits ticketed players. Servers without those flags stay open.

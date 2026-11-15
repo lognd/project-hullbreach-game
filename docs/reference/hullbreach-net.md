@@ -731,6 +731,8 @@ state never reads it.
 <!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.BuildCooldownRemaining -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.RequireJoinTicket -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.PresentTicket -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.AdoptFirstTicket -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.IsTicketed -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.ServerSimulation -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.Ships -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.MaxPeerId -->
@@ -861,6 +863,11 @@ The peer is always the transport's sender id. `NetDemo` calls it for every
 datagram its server transport receives. A `JoinTicket` datagram goes to
 `ServerSimulation.PresentTicket`; a wrong id returns false and the peer is queued
 for disconnect.
+
+`ServerSimulation.AdoptFirstTicket` (default false) is for a queue server nobody told its match id: while
+`RequireJoinTicket` is on and no match is assigned, the first valid ticket calls `AssignQueueMatch` with its id, so the
+opponent's identical ticket is accepted and any other id is refused. `IsTicketed(peer)` says whether a peer has presented
+an accepted ticket; the NetCode server system uses it to hold back a peer's join until then.
 
 ### JoinResult
 

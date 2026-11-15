@@ -12,6 +12,20 @@ namespace Hullbreach.NetCode.Entities
         public byte Flags;
     }
 
+    /// <summary>
+    /// Client -> server, once per connection when the player came from the queue: the platform's match id (a UUID), the
+    /// engine-free JoinTicket on the Netcode wire.
+    /// </summary>
+    public struct HullbreachJoinTicketRpc : IRpcCommand
+    {
+        public FixedString64Bytes MatchId;
+    }
+
+    /// <summary>Client-side tag: the join ticket for this connection has been sent.</summary>
+    public struct HullbreachJoinTicketSent : Unity.Entities.IComponentData
+    {
+    }
+
     public enum HullbreachBuildAction : byte
     {
         Place = 1,
