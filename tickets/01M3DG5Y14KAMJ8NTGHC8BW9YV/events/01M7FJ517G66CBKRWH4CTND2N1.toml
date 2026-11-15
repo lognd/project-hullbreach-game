@@ -1,0 +1,6 @@
+kind = "comment"
+subtype = "note"
+body = "Reviewed 2026-11-15, left open: ~HCFME76 (server build in CI) is the only unfinished child and has never run (needs UNITY_LICENSE)."
+at = "2026-11-15T12:15:43Z"
+actor = "lognd"
+rev = 1
