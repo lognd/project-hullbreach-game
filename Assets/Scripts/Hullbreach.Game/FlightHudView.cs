@@ -36,9 +36,9 @@ namespace Hullbreach.Game
             canvas.renderMode = RenderMode.ScreenSpaceOverlay; canvas.sortingOrder = 40;
             _warn = Text("Warning", 44, FontStyles.Bold, new Vector2(0.5f, 0.72f));
             _assist = Text("Assist", 18, FontStyles.Bold, new Vector2(0.5f, 0.06f));
-            _hint = Text("Hint", 15, FontStyles.Normal, new Vector2(0.5f, 0.025f));
+            _hint = Text("Hint", 18, FontStyles.Normal, new Vector2(0.5f, 0.025f));
             _hint.text = FlightWarningModel.ControlsHint;
-            _hint.color = new Color(0.75f, 0.8f, 0.9f, 0.7f);
+            _hint.color = new Color(0.78f, 0.84f, 0.94f, 0.85f);
         }
 
         TextMeshProUGUI Text(string name, float size, FontStyles style, Vector2 anchor)
@@ -54,7 +54,9 @@ namespace Hullbreach.Game
         void Update()
         {
             var ship = _body?.Invoke();
-            if (ship == null) { _warn.text = _assist.text = string.Empty; return; }
+            // No ship to fly (the build phase, or between rounds): no flight controls hint either.
+            if (ship == null) { _warn.text = _assist.text = _hint.text = string.Empty; return; }
+            _hint.text = FlightWarningModel.ControlsHint;
             var p = ship.QueryPlanetProximity();
             string msg = p.HasBody ? FlightWarningModel.Text((int)p.Severity, p.MustBrake, p.Heating, p.TimeToImpact) : string.Empty;
             _warn.text = msg;
