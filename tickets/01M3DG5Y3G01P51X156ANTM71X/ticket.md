@@ -8,9 +8,13 @@ points = 3
 parent = "01M3DG5Y16WHWDFT1WZAXCWTG1"
 reporter = "human"
 created = "2026-09-26T00:00:00Z"
-updated = "2026-11-15T04:42:42Z"
+updated = "2026-11-15T05:23:42Z"
 aliases = ["T-0112"]
 labels = ["jira:SCRUM-202", "owner:mcnairrobotics", "game", "netcode", "milestone:0.3.0"]
+
+[[acceptance]]
+text = "Given a client and server that disagree about a hit, when the shot grazes within the documented speed*grace tolerance of a block edge, then the server resolves it as a miss, while a centre hit still hits (HitToleranceTests)"
+bound = false
 +++
 
 Defender-favored hit resolution within a documented tolerance
