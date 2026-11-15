@@ -46,6 +46,54 @@ namespace Hullbreach.Net.Tests
             Assert.AreEqual(0, CountStarted(outbox, 2));
         }
 
+        static bool Damaged(ServerSimulation server, int peer)
+        {
+            if (!server.Ships.ContainsKey(peer)) return true; // the core was breached and the ship removed
+            foreach (var kv in server.Ships[peer].Grid.All) if (kv.Value.Damage > 0) return true;
+            return false;
+        }
+
+        // frob:ticket 01M7FJ5NMTNP6BJQP8QBW5HVNJ
+        [Test]
+        public void BeforeTheMatchStarts_ReadiedShipCannotShoot_ThenCanOnceItRuns()
+        {
+            var (server, _) = Lobby();
+            server.Join(1, new ShipSnapshot(0, 0, new[] { new SnapshotBlock(0, 0, BlockTypes.Core, 0, 0), new SnapshotBlock(0, 1, BlockTypes.Cannon, 0, 0) }, 0, 0, 0, 0, 0, 0));
+            server.Join(2, Ship());
+            server.Ships[1].Position = Unity.Mathematics.float2.zero;
+            server.Ships[2].Position = new Unity.Mathematics.float2(0f, 4f);
+            server.SetReady(1, true);
+            uint tick = 1;
+            for (int i = 0; i < 400; i++)
+            {
+                server.SetInput(1, InputMessage.FromFloats(1, tick, 0f, 0f, true));
+                server.SetInput(2, InputMessage.FromFloats(2, tick, 0f, 0f, false));
+                tick++;
+                server.Tick();
+            }
+            Assert.IsFalse(Damaged(server, 2), "the builder took no damage while it was still building");
+
+            server.SetReady(2, true);
+            Assert.AreEqual(MatchPhase.Running, server.Match.Phase);
+            bool fired = false;
+            for (int i = 0; i < 100 && !fired; i++)
+            {
+                server.SetInput(1, InputMessage.FromFloats(1, tick, 0f, 0f, true));
+                tick++;
+                server.Tick();
+                fired = Damaged(server, 2);
+            }
+            Assert.IsFalse(fired, "still inside the shot grace right after the match starts");
+            for (int i = 0; i < 400 && !fired; i++)
+            {
+                server.SetInput(1, InputMessage.FromFloats(1, tick, 0f, 0f, true));
+                tick++;
+                server.Tick();
+                fired = Damaged(server, 2);
+            }
+            Assert.IsTrue(fired, "shooting works once the grace has passed");
+        }
+
         [Test]
         public void BothReady_StartsTheMatch_AndAnnouncesToBothPeersOnce()
         {
