@@ -157,6 +157,8 @@ namespace Hullbreach.Game
             ((RectTransform)dot.transform).anchoredPosition = new Vector2(mx * k, my * k);
         }
 
+        const float EnemyArrowBottomClearance = 110f;
+
         void DrawArrows(StormHudFrame f, Camera cam, bool storm, float signed)
         {
             _enemyArrow.gameObject.SetActive(false);
@@ -173,7 +175,13 @@ namespace Hullbreach.Game
             {
                 Vector3 sp = cam.WorldToScreenPoint(new Vector3(f.EnemyPosition.x, f.EnemyPosition.y, 0f)) - centre;
                 EdgeArrow arrow = EdgeArrowModel.ToTarget(halfW, halfH, 60f, sp.x / scale, sp.y / scale);
-                if (arrow.Visible) PlaceArrow(_enemyArrow, arrow);
+                if (arrow.Visible)
+                {
+                    // Keep the arrow above the bottom hint line and the ASSIST label instead of sitting on top of them.
+                    float minY = -halfH + EnemyArrowBottomClearance;
+                    if (arrow.Y < minY) arrow = new EdgeArrow(true, arrow.X, minY, arrow.AngleDegrees);
+                    PlaceArrow(_enemyArrow, arrow);
+                }
             }
 
             if (StormHudModel.ShowPullArrow(storm, signed))
