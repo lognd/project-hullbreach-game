@@ -119,7 +119,7 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
---- !u!1 &1606100312
+--- !u!1 &203555812
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -127,8 +127,8 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 1606100314}
-  - component: {fileID: 1606100313}
+  - component: {fileID: 203555814}
+  - component: {fileID: 203555813}
   m_Layer: 0
   m_Name: HullbreachGhostPrefabs
   m_TagString: Untagged
@@ -136,26 +136,26 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1606100313
+--- !u!114 &203555813
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1606100312}
+  m_GameObject: {fileID: 203555812}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 224653e492b54a56aeb770c1ebec4b66, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   GhostPrefab: {fileID: 6592084419395384894, guid: 803dd90d436ac0843bafdddb265a3ffe, type: 3}
---- !u!4 &1606100314
+--- !u!4 &203555814
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1606100312}
+  m_GameObject: {fileID: 203555812}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
@@ -168,4 +168,4 @@ Transform:
 SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
-  - {fileID: 1606100314}
+  - {fileID: 203555814}
