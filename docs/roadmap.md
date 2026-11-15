@@ -223,6 +223,22 @@ unchanged in order.
 
 ## Performance history (perf/preconditioner, 2026-09-20)
 
+**Frame budget at 100 blocks (S36-4, 2026-11-14), measured, not a pass.**
+`FrameBudget_100Blocks_SteadyMedianFitsAndSpikesAreCounted` runs 60 ticks of
+the 100-block benchmark ship and prints a `FRAMEBUDGET` line. Machine: AMD
+Ryzen 7 4800H (8 cores), 7.4 GB RAM visible, native Windows 11, .NET 8
+Release, single-threaded managed code, no Burst. This is the dev box; no
+"reference laptop" is defined anywhere in the repo, so it stands in for one
+until a team member records the same line on theirs. Three runs of the
+20-tick benchmark: median 0.15-0.16 ms, one-time rebuild 92-102 ms, worst tick
+38-45 ms. The 60-tick run: median 0.161 ms, max 38.34 ms, 15 of 59
+steady-state ticks over the 16.67 ms frame. Reading: steady-state cost fits
+the 4.17 ms budget by ~25x, but every buckling tick (every 4th) costs roughly
+2x a whole frame, and the tick-0 rebuild costs ~6 frames. The test asserts the
+median budget and that over-frame ticks stay on the buckling cadence; it does
+not assert the spike away, because it is real and unfixed (follow-up: spread
+buckling across ticks or move it off the main thread).
+
 Kept for the reasoning, not the numbers: everything below is a **Debug**
 build and predates Krylov continuation, the buckling budget and the
 aggregate cap. Where it disagrees with the section above, the section
