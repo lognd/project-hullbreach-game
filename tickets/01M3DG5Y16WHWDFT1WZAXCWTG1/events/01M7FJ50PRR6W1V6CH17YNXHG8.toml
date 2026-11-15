@@ -1,0 +1,6 @@
+kind = "comment"
+subtype = "note"
+body = "Reviewed 2026-11-15, left open. Criteria 1 and 2 done (children ANTM71X, 0GMV7S1). Criterion 3: the platform half exists (POST /api/v1/trust-events with server key; admin player detail returns trust_events and web Players.tsx lists them; tests/unit/test_trust_events.py, test_admin_players.py) but the game never sends them: ServerSimulation queues TrustEvent and TryDequeueTrustEvent has no caller. New game ticket created to forward them."
+at = "2026-11-15T12:15:43Z"
+actor = "lognd"
+rev = 1
