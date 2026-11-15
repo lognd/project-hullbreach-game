@@ -215,6 +215,8 @@ dispatch with a single switch before deserializing anything.
 <!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::InputMessage.ThrustAxisFloat -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::InputMessage.SteerFloat -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::InputMessage.FirePressed -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::InputMessage.AssistOffBit -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::InputMessage.AssistOff -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::InputMessage.Write -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::InputMessage.Read -->
 
@@ -313,6 +315,37 @@ Client -> server, reliable (`MessageKind.ReadyUp` = 12): the peer is ready
 (or, with `false`, no longer ready) to start. Layout: kind u8, flag u8
 (0 or 1; `Read` fails the reader on anything else or a truncated body).
 The server only acts on it when `ServerSimulation.RequireReady` is on.
+
+### StormStarted
+
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::StormStarted -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::StormStarted.MaxPhases -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::StormStarted.MaxCandidates -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::StormStarted.MaxByteSize -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::StormStarted.Sequence -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::StormStarted.Seed -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::StormStarted.StartTick -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::StormStarted.ArenaCenter -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::StormStarted.Candidates -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::StormStarted.Config -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::StormStarted.StormStarted -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::StormStarted.BuildZone -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::StormStarted.TryWrite -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::StormStarted.Read -->
+
+Server -> client, reliable ordered (`MessageKind.StormStarted` = 16), sent to
+every peer when a match starts (ready-up or not) unless `StormEnabled` is
+off. It is everything a client needs to rebuild the match `StormZone`, since
+the ring is a pure function of it plus the tick. Layout: kind u8, sequence
+u32, seed u32, start tick u32, arena centre f32 x2, candidate count u8 and
+that many f32 x2 planet centres (max 16), six config floats (tick rate,
+start radius, grace, warning fraction, hard-limit margin, sudden-death DPS),
+phase count u8 and that many phases of four f32 (hold, shrink, target radius,
+damage per second; max 16). `Seed` is `ServerSimulation.StormSeedFor(matchId)`.
+`BuildZone()` returns the same `StormZone` the server runs; the storm tick is
+`ShipState.ServerTick - StartTick`. `Read` fails the reader on a truncated
+body, counts over the caps, non-finite centres or a config that fails
+`StormConfig.Validate`; `TryWrite` refuses an invalid config.
 
 ### MatchStarted
 
@@ -524,6 +557,8 @@ and to which ship, without re-parsing wire bytes.
 
 <!-- describes: Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ClientReplica -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ClientReplica.Ships -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ClientReplica.PredictionPlanetCrash -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ClientReplica.PredictionFlightTuning -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ClientReplica.ApplySnapshot -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ClientReplica.ApplyState -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ClientReplica.TryInterpolate -->
@@ -548,6 +583,8 @@ and to which ship, without re-parsing wire bytes.
 <!-- describes: Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ClientReplica.TryDequeueEvent -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ClientReplica.BuildInput -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ClientReplica.MatchStartedPeers -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ClientReplica.Storm -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ClientReplica.StormStart -->
 
 The non-authoritative twin of `ServerSimulation`: applies `ShipSnapshot`/
 `ShipState`/reliable events received over an `ITransport` (or fed directly
@@ -623,6 +660,9 @@ cannot stall the stream. Sequence comparison is wrap-safe.
 
 `MatchStartedPeers` is null until a `MatchStarted` arrives, then holds the
 two peer ids the server announced (a lobby can switch to the match view).
+`Storm` and `StormStart` stay null until a `StormStarted` arrives; then `Storm`
+is the rebuilt `StormZone` (same schedule as the server) and `StormStart`
+carries `StartTick` for mapping a server tick to the storm tick.
 
 ### ReplicaApplyResult
 
@@ -696,7 +736,13 @@ state never reads it.
 <!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.MaxPeerId -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.FirstFragmentId -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.ConfigureDemoArena -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.PlanetCrash -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.FlightTuning -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.Bounds -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.Storm -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.StormEnabled -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.ActiveStorm -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.StormSeedFor -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.Log -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.Join -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.Leave -->
@@ -719,8 +765,9 @@ Mid-match building is a trade-off (S34-3): while a match is `Running` each peer 
 place one block per `BuildCooldownSeconds` (default 1.5 s, counted in server ticks; zero
 or less turns it off). A placement inside the cooldown is refused without distrust and
 without extending the wait; `BuildCooldownRemaining(peer)` tells a HUD how long is
-left. Building before the match starts is never limited. There is no resource cost: the
-repo has no resource system, so cost was not invented. Removal is not limited.
+left. Building before the match starts is never limited. With the block economy on
+(the default, see EconomyConfig) a live placement also spends one spare block of that type
+from the peer's stock, and removal is a refunded Deconstruct on the same cooldown.
 
 Projectile hits: a hit damages the struck block and also applies the
 shot's `Spec.Impulse` to the victim ship at the hit point, along the shot's
@@ -1040,6 +1087,8 @@ Launch scripts and log checks grep for both.
 <!-- describes: Assets/Scripts/Hullbreach.Net/ArenaConfig.cs::ArenaConfig.SpawnVertical -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ArenaConfig.cs::ArenaConfig.SpawnAngleStep -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ArenaConfig.cs::ArenaConfig.Bounds -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ArenaConfig.cs::ArenaConfig.Storm -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ArenaConfig.cs::ArenaConfig.Crash -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ArenaConfig.cs::ArenaConfig.DefaultBounds -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ArenaConfig.cs::ArenaConfig.ArenaConfig -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ArenaConfig.cs::ArenaConfig.Defaults -->
@@ -1077,6 +1126,25 @@ and `strength` (>= 0); omitted keys keep the defaults.
 `ServerSimulation.Bounds` holds the active edge and `ServerSimulation.Log`
 receives its enter/leave events; each tick a ship in the push zone gets an
 inward velocity change after its step, never a solver force.
+
+`Storm` (S41) is the optional JSON `storm` block: scalar keys `tickRate`,
+`startRadius`, `graceSeconds`, `warningFraction`, `hardLimitMargin` and
+`suddenDeathDamagePerSecond` override the `StormConfig.Default()` values, and
+a `phases` array of `{hold, shrink, radius, damage}` (all four required)
+replaces the default phases. The result goes through `StormConfig.Validate`,
+and a failure comes back as an error prefixed `storm:`; absent means defaults.
+
+Server wiring: when a match starts the server builds the `StormZone` (its
+`TickRate` replaces the config rate, planet centres come from the arena
+bodies, the arena centre from `Bounds`, the seed from the match id) and sends
+`StormStarted`. Each tick it reads `At(serverTick - startTick)` and applies
+`DamageFor` to every block of every ship through `ApplyDamageAtWorldPoint`,
+after the structural pass and before `MatchStateMachine.Tick`. Damage under
+one point is carried per block to the next tick, so slow phases are not
+rounded away. A non-core block reaching 255 is destroyed and detached like
+any other kill; a core at 255 is a breach, so sudden death ends the match
+through the normal core-breach rule. Projectiles outside `WithinHardLimit`
+are removed (the server holds no free debris; fragments are client events).
 
 ### BlockGridDesign
 
@@ -1323,3 +1391,57 @@ fails the reader on a truncated body or the all-zero id; `TryWrite` refuses a no
 `ServerSimulation.RequireJoinTicket` on, the server only accepts `Join` from a peer whose
 ticket equals the id from `AssignQueueMatch`; a mismatch queues the peer for disconnect. A
 dedicated server is told its id by `-hullbreachMatchId <uuid>` (`DirectLaunchPlan.MatchId`).
+
+### EconomyConfig
+
+Every block-economy tunable: `Costs` (BlockCosts: budget 60, size cap 40 blocks, welded
+surcharge 2), `StartingStock` (3 hull), `MaxStockPerType` (30), `ConstructionSeconds` and
+`ConstructionDamage` (a new block starts at Damage 170 and heals over 8 s), `SalvagePercent` (70),
+`SalvageSpread`, `RefundPercent` (50), the comeback trickle (`TrickleSeconds` 20,
+`TrickleDeficitStep` 0.25, `TrickleMaxMultiplier` 3, `TrickleStockCap` 6, `TrickleMatchCap` 12)
+and `Pickups` (PickupConfig). `Enabled=false` restores free building. An optional `economy` JSON
+block in the arena config overrides any of it; `Validate()` returns the first problem or null.
+
+### EconomyRules
+
+Stateless, shared by server and HUD: `CheckPlacement` returns a PlacementResult in the order
+cooldown, bad request, core, placement verdict, size cap, stock (live) or budget (pre-match).
+`BudgetLeft`, `WouldFailImmediately` (cold-solver before/after comparison under the ship's recent
+forces) and `Describe` (toast text) round it out.
+
+### PlacementResult
+
+Ok, NoShip, NotBuilding, BadRequest, Cooldown, OutOfStock, SizeCap, OverBudget, CoreNotBuildable,
+Disconnected, WouldBuckle, CannotRemove. Only NotBuilding, BadRequest and CannotRemove distrust the peer.
+
+### PlacementResultMessage
+
+Peer-only, unsequenced verdict for every build or deconstruct attempt (action, x, y, type, result,
+detail, cooldown ticks). It consumes no sequence number because the reliable stream is global.
+
+### InventorySnapshot
+
+Peer-only, unsequenced, latest-wins by Tick: per-type counts, pre-match BudgetLeft (-1 live),
+BlockCount, MaxBlocks and CooldownTicks. More than 16 counts fail the reader.
+
+### PickupSpawned
+
+Sequenced broadcast: a pickup appeared. Its position afterwards is origin + velocity * time.
+
+### PickupDespawned
+
+Sequenced broadcast: a pickup is gone, with a PickupRemoval reason and the collecting peer.
+
+### ClientEquipment
+
+`ClientReplica.Economy` (ClientEconomy): `Stock`, `TotalStock`, `BudgetLeft`, `BlockCount`,
+`MaxBlocks`, `CooldownSeconds(nowTick)`, `GetPickups(tick, list)` for the minimap, `LastResult`,
+`TryDequeueResult`, `TryDequeueCollected` and `PreviewPlacement`. Read-only; it never changes server state.
+
+### ServerEconomy
+
+`ServerSimulation` additions: `Economy`, `Pickups`, `StockOf`, `BudgetLeftOf`,
+`BuildCooldownTicksRemaining`, `GrantStock` (test hook), `CheckPlacement` (read-only), `PlaceBlock`
+and `Deconstruct` (both return PlacementResult and notify the owner). `TryPlaceBlock` and
+`TryRemoveBlock` wrap them. `Join` can now return `DesignTooLarge` or `OverBudget`.
+Welded cost is not enforced over the wire (the Welded flag is not carried in snapshots).

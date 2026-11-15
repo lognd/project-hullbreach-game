@@ -42,9 +42,12 @@ namespace Hullbreach.Game
             Vector2 velocity = _targetBody != null ? _targetBody.linearVelocity : Vector2.zero;
             float speed = velocity.magnitude;
             Vector2 lead = speed > 0f ? velocity / speed * CameraRigModel.LeadDistance(speed, leadSeconds, maxOrthographicSize * 0.5f) : Vector2.zero;
+            FeelFx.UndoShake(transform);
             Vector3 desired = new Vector3(target.position.x + lead.x, target.position.y + lead.y, transform.position.z);
             float blend = 1f - Mathf.Exp(-smoothing * Time.deltaTime);
             transform.position = Vector3.Lerp(transform.position, desired, blend);
+            FeelFx.ApplyShake(transform);
+            FeelFx.ReportPlayer(target, _targetBody);
 
             if (_camera != null && _camera.orthographic)
             {

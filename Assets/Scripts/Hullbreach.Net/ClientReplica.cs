@@ -157,6 +157,21 @@ namespace Hullbreach.Net
         // frob:doc docs/reference/hullbreach-net.md#clientreplica
         public (int PeerA, int PeerB)? MatchStartedPeers { get; private set; }
 
+        // The match's storm as announced by the server; null until StormStarted arrives.
+        // frob:ticket 01M7EXAGAAS0CRAVC1BEXJ5598
+        // frob:doc docs/reference/hullbreach-net.md#clientreplica
+        public StormZone Storm { get; private set; }
+
+        // The raw announcement, for StartTick (storm tick = server tick - StartTick); null until received.
+        // frob:ticket 01M7EXAGAAS0CRAVC1BEXJ5598
+        // frob:doc docs/reference/hullbreach-net.md#clientreplica
+        public StormStarted? StormStart { get; private set; }
+
+        // Stock, pickups and build verdicts the server told this client about (S45); read-only for the HUD.
+        // frob:ticket 01M7EYG4KH9BT32Q4ERZVBQ3M4
+        // frob:doc docs/reference/hullbreach-net.md#clientreplica
+        public ClientEconomy Economy { get; } = new ClientEconomy();
+
         uint _lastAppliedSequence;
         bool _haveBaseline;
 
@@ -284,6 +299,14 @@ namespace Hullbreach.Net
         // frob:doc docs/reference/hullbreach-net.md#clientreplica
         public GravityField PredictionGravity { get; set; }
 
+        // Must equal the server PlanetCrash or the predicted ship drifts at every atmosphere and touchdown.
+        // frob:doc docs/reference/hullbreach-net.md#clientreplica
+        public PlanetCrashConfig PredictionPlanetCrash { get; set; } = PlanetCrashConfig.Default();
+
+        // Flight feel of the predicted body; keep equal to ServerSimulation.FlightTuning.
+        // frob:doc docs/reference/hullbreach-net.md#clientreplica
+        public FlightTuning PredictionFlightTuning { get; set; } = FlightTuning.Default();
+
         // Distance the predicted position moved on the latest reconcile (0 = prediction was right).
         // frob:doc docs/reference/hullbreach-net.md#clientreplica
         public float LastCorrection { get; private set; }
@@ -314,7 +337,7 @@ namespace Hullbreach.Net
         {
             if (!_hasLocal || !_ships.TryGetValue(_localNetId, out var replica)) return false;
 
-            var shipInput = new ShipInput(input.ThrustAxisFloat, input.SteerFloat, false);
+            var shipInput = new ShipInput(input.ThrustAxisFloat, input.SteerFloat, false, input.AssistOff);
             if (_pendingInputs.Count >= MaxPendingInputs) _pendingInputs.RemoveAt(0);
             _pendingInputs.Add(new PendingInput(input.Tick, shipInput));
 
@@ -367,7 +390,7 @@ namespace Hullbreach.Net
         {
             if (replica.Predicted != null && !replica.PredictionStale) return;
 
-            var body = new ShipBody { Gravity = PredictionGravity };
+            var body = new ShipBody { Gravity = PredictionGravity, PlanetCrash = PredictionPlanetCrash, Tuning = PredictionFlightTuning };
             foreach (var kv in replica.Body.Grid.All) body.Grid.TryAdd(kv.Key, kv.Value);
             body.RebuildDerivedViews();
             body.Position = replica.Body.Position;
@@ -585,6 +608,20 @@ namespace Hullbreach.Net
                     ApplyGravityWellSpawned(well);
                     return ReplicaApplyResult.Applied;
                 }
+                case MessageKind.InventorySnapshot:
+                {
+                    var inventory = InventorySnapshot.Read(ref r);
+                    if (r.Failed) return ReplicaApplyResult.Malformed;
+                    Economy.ApplySnapshot(inventory);
+                    return ReplicaApplyResult.Applied;
+                }
+                case MessageKind.PlacementResult:
+                {
+                    var placement = PlacementResultMessage.Read(ref r);
+                    if (r.Failed) return ReplicaApplyResult.Malformed;
+                    Economy.ApplyResult(placement);
+                    return ReplicaApplyResult.Applied;
+                }
                 case MessageKind.BlockPlaced:
                 case MessageKind.BlockDestroyed:
                 case MessageKind.FragmentSpawned:
@@ -593,6 +630,9 @@ namespace Hullbreach.Net
                 case MessageKind.ShipRemoved:
                 case MessageKind.MatchEnded:
                 case MessageKind.MatchStarted:
+                case MessageKind.StormStarted:
+                case MessageKind.PickupSpawned:
+                case MessageKind.PickupDespawned:
                 {
                     // u32 sequence number right after the kind byte; a body that
                     // turns out short is skipped in order by ApplyOne.
@@ -752,6 +792,28 @@ namespace Hullbreach.Net
                     MatchStartedPeers = (m.PeerA, m.PeerB);
                     return true;
                 }
+                case MessageKind.PickupSpawned:
+                {
+                    var m = PickupSpawned.Read(ref r);
+                    if (r.Failed) return false;
+                    Economy.ApplySpawn(m);
+                    return true;
+                }
+                case MessageKind.PickupDespawned:
+                {
+                    var m = PickupDespawned.Read(ref r);
+                    if (r.Failed) return false;
+                    Economy.ApplyDespawn(m);
+                    return true;
+                }
+                case MessageKind.StormStarted:
+                {
+                    var m = StormStarted.Read(ref r);
+                    if (r.Failed) return false;
+                    StormStart = m;
+                    Storm = m.BuildZone();
+                    return true;
+                }
                 default:
                     return false;
             }
@@ -853,7 +915,7 @@ namespace Hullbreach.Net
 
         // A thin convenience: ClientReplica does not own a transport itself.
         // frob:doc docs/reference/hullbreach-net.md#clientreplica
-        public static InputMessage BuildInput(ushort netId, uint tick, float thrustAxis, float steer, bool firePressed)
-            => InputMessage.FromFloats(netId, tick, thrustAxis, steer, firePressed);
+        public static InputMessage BuildInput(ushort netId, uint tick, float thrustAxis, float steer, bool firePressed, bool assistOff = false)
+            => InputMessage.FromFloats(netId, tick, thrustAxis, steer, firePressed, assistOff);
     }
 }

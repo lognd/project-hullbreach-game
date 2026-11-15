@@ -112,6 +112,7 @@ namespace Hullbreach.Game
                 FinForce = finForce,
                 CannonCooldown = cannonCooldown,
                 AngularDamping = angularDamping,
+                Tuning = FlightTuning.Default(),
             };
             AddAuthoredBlocks(blocks, preservedCoreKey: null);
             // Force the initial view build now rather than on the first Step,
@@ -177,7 +178,9 @@ namespace Hullbreach.Game
                 return;
             }
 
-            var input = InputEnabled ? new ShipInput(thrustAxis, steerAxis, fireLatched) : new ShipInput(0f, 0f, false);
+            // Holding left shift turns flight assist off (raw fin physics); same key as online.
+            bool assistOff = InputEnabled && Input.GetKey(KeyCode.LeftShift);
+            var input = InputEnabled ? new ShipInput(thrustAxis, steerAxis, fireLatched, assistOff) : new ShipInput(0f, 0f, false);
             fireLatched = false;   // consume exactly once
 
             ship.Step(input, Time.fixedDeltaTime);
@@ -218,7 +221,14 @@ namespace Hullbreach.Game
         // World-space wrapper over ShipBody.ApplyDamageAtWorldPoint.
         // frob:doc docs/reference/hullbreach-game.md#shipcontroller
         public void ApplyDamage(Vector2 worldPoint, byte damage)
-            => ship.ApplyDamageAtWorldPoint(new float2(worldPoint.x, worldPoint.y), damage, out _);
+        {
+            ship.ApplyDamageAtWorldPoint(new float2(worldPoint.x, worldPoint.y), damage, out int key);
+            bool core = key >= 0 && ship.Grid.CoreKey.HasValue && ship.Grid.CoreKey.Value == key;
+            Damaged?.Invoke(worldPoint, damage, core);
+        }
+
+        // Raised for every ApplyDamage (world point, damage, whether the core block was the one hit); feel effects listen.
+        public event Action<Vector2, byte, bool> Damaged;
 
         // Adds each authored block to the grid, logging a warning per rejected one
         // (out of range, duplicate cell, or a second core). Returns the rejected count.

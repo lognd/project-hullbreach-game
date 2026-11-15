@@ -512,6 +512,22 @@ namespace Hullbreach.Editor
                 hudSo.ApplyModifiedPropertiesWithoutUndo();
             }
 
+            // Storm HUD (minimap, countdown, arrows): one object, idempotent; it builds its own uGUI at runtime.
+            var stormHudGo = GameObject.Find("StormHud");
+            if (stormHudGo == null)
+            {
+                stormHudGo = new GameObject("StormHud");
+                SceneManager.MoveGameObjectToScene(stormHudGo, scene);
+            }
+            var stormSource = stormHudGo.GetComponent<DemoStormHudSource>() ?? stormHudGo.AddComponent<DemoStormHudSource>();
+            if (stormHudGo.GetComponent<StormHudView>() == null) stormHudGo.AddComponent<StormHudView>();
+            if (demoMode != null)
+            {
+                var stormSo = new SerializedObject(stormSource);
+                stormSo.FindProperty("demoMode").objectReferenceValue = demoMode;
+                stormSo.ApplyModifiedPropertiesWithoutUndo();
+            }
+
             // Only drop the old HUD once the new one is fully bound, else DemoMode is left with none.
             var oldBuilderHud = demoGo != null ? demoGo.GetComponent<BuilderHud>() : null;
             if (oldBuilderHud != null && problems.Count == 0 && oldBuilderHud != newBuilderHud)

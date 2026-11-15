@@ -1,7 +1,9 @@
 using System;
 using System.Text;
 using Hullbreach.Match;
+using Unity.Mathematics;
 using Hullbreach.Platform;
+using Hullbreach.World;
 
 namespace Hullbreach.Net
 {
@@ -31,6 +33,11 @@ namespace Hullbreach.Net
         MatchStarted = 13,
         ProjectileState = 14,
         JoinTicket = 15,
+        StormStarted = 16,
+        PickupSpawned = 17,
+        PickupDespawned = 18,
+        InventorySnapshot = 19,
+        PlacementResult = 20,
     }
 
     // Client -> server, unreliable: this tick's intent. Latest-wins on drop.
@@ -58,6 +65,9 @@ namespace Hullbreach.Net
         // frob:doc docs/reference/hullbreach-net.md#inputmessage
         public const byte FireBit = 0x01;
         public const byte BuildModeBit = 0x02;
+        // Hold-to-disable flight assist.
+        // frob:doc docs/reference/hullbreach-net.md#inputmessage
+        public const byte AssistOffBit = 0x04;
 
         // frob:doc docs/reference/hullbreach-net.md#inputmessage
         public InputMessage(ushort netId, uint tick, sbyte thrustAxis, sbyte steer, byte flags)
@@ -70,7 +80,7 @@ namespace Hullbreach.Net
         }
 
         // frob:doc docs/reference/hullbreach-net.md#inputmessage
-        public static InputMessage FromFloats(ushort netId, uint tick, float thrustAxis, float steer, bool firePressed)
+        public static InputMessage FromFloats(ushort netId, uint tick, float thrustAxis, float steer, bool firePressed, bool assistOff = false)
         {
             sbyte QuantizeAxis(float v)
             {
@@ -78,6 +88,7 @@ namespace Hullbreach.Net
                 return (sbyte)Math.Round(clamped * 127f, MidpointRounding.AwayFromZero);
             }
             byte flags = firePressed ? FireBit : (byte)0;
+            if (assistOff) flags |= AssistOffBit;
             return new InputMessage(netId, tick, QuantizeAxis(thrustAxis), QuantizeAxis(steer), flags);
         }
 
@@ -91,6 +102,10 @@ namespace Hullbreach.Net
         public bool FirePressed => (Flags & FireBit) != 0;
 
         public bool BuildMode => (Flags & BuildModeBit) != 0;
+
+        // True while the player holds the flight-assist-off key.
+        // frob:doc docs/reference/hullbreach-net.md#inputmessage
+        public bool AssistOff => (Flags & AssistOffBit) != 0;
 
         // frob:doc docs/reference/hullbreach-net.md#inputmessage
         public void Write(ref ByteWriter w)
@@ -472,6 +487,101 @@ namespace Hullbreach.Net
             return new JoinTicket(guid.ToString("D"));
         }
     }
+    // Server -> client, reliable ordered: everything a client needs to rebuild the match's StormZone.
+    // The ring is a pure function of this plus the tick, so nothing else is replicated (S41).
+    // frob:ticket 01M7EXAGAAS0CRAVC1BEXJ5598
+    // frob:doc docs/reference/hullbreach-net.md#stormstarted
+    public readonly struct StormStarted
+    {
+        // frob:doc docs/reference/hullbreach-net.md#stormstarted
+        public const int MaxPhases = 16;
+        // frob:doc docs/reference/hullbreach-net.md#stormstarted
+        public const int MaxCandidates = 16;
+        // kind, seq, seed, startTick, arena centre, candidate count, 16 candidates,
+        // six config floats, phase count, 16 phases of four floats.
+        // frob:doc docs/reference/hullbreach-net.md#stormstarted
+        public const int MaxByteSize = 1 + 4 + 4 + 4 + 8 + 1 + MaxCandidates * 8 + 6 * 4 + 1 + MaxPhases * 16;
+
+        // frob:doc docs/reference/hullbreach-net.md#stormstarted
+        public readonly uint Sequence;
+        // Picks the planet the last ring drifts toward; derived from the match id.
+        // frob:doc docs/reference/hullbreach-net.md#stormstarted
+        public readonly uint Seed;
+        // Server tick the match began on; storm tick = server tick - StartTick.
+        // frob:doc docs/reference/hullbreach-net.md#stormstarted
+        public readonly uint StartTick;
+        // frob:doc docs/reference/hullbreach-net.md#stormstarted
+        public readonly float2 ArenaCenter;
+        // Planet centres the final ring may drift toward.
+        // frob:doc docs/reference/hullbreach-net.md#stormstarted
+        public readonly float2[] Candidates;
+        // frob:doc docs/reference/hullbreach-net.md#stormstarted
+        public readonly StormConfig Config;
+
+        // frob:doc docs/reference/hullbreach-net.md#stormstarted
+        public StormStarted(uint sequence, uint seed, uint startTick, float2 arenaCenter,
+            float2[] candidates, StormConfig config)
+        {
+            Sequence = sequence; Seed = seed; StartTick = startTick; ArenaCenter = arenaCenter;
+            Candidates = candidates ?? new float2[0]; Config = config;
+        }
+
+        // The same zone the server built.
+        // frob:doc docs/reference/hullbreach-net.md#stormstarted
+        public StormZone BuildZone() => new StormZone(Config, ArenaCenter, Candidates, Seed);
+
+        // False (writing nothing) when the config is invalid or over the wire caps.
+        // frob:doc docs/reference/hullbreach-net.md#stormstarted
+        public bool TryWrite(ref ByteWriter w)
+        {
+            if (Config.Validate() != null || Config.Phases.Length > MaxPhases
+                || Candidates.Length > MaxCandidates) return false;
+            w.WriteU8((byte)MessageKind.StormStarted);
+            w.WriteU32(Sequence);
+            w.WriteU32(Seed);
+            w.WriteU32(StartTick);
+            w.WriteF32(ArenaCenter.x); w.WriteF32(ArenaCenter.y);
+            w.WriteU8((byte)Candidates.Length);
+            foreach (float2 c in Candidates) { w.WriteF32(c.x); w.WriteF32(c.y); }
+            w.WriteF32(Config.TickRate); w.WriteF32(Config.StartRadius); w.WriteF32(Config.GraceSeconds);
+            w.WriteF32(Config.WarningFraction); w.WriteF32(Config.HardLimitMargin);
+            w.WriteF32(Config.SuddenDeathDamagePerSecond);
+            w.WriteU8((byte)Config.Phases.Length);
+            foreach (StormPhase p in Config.Phases)
+            {
+                w.WriteF32(p.HoldSeconds); w.WriteF32(p.ShrinkSeconds);
+                w.WriteF32(p.TargetRadius); w.WriteF32(p.DamagePerSecond);
+            }
+            return true;
+        }
+
+        // Reads the MessageKind byte too; counts over the caps or a config that fails Validate fail the reader.
+        // frob:doc docs/reference/hullbreach-net.md#stormstarted
+        public static StormStarted Read(ref ByteReader r)
+        {
+            r.ReadU8();
+            uint seq = r.ReadU32(), seed = r.ReadU32(), start = r.ReadU32();
+            var center = new float2(r.ReadF32(), r.ReadF32());
+            int nc = r.ReadU8();
+            if (r.Failed || nc > MaxCandidates || r.Remaining < nc * 8) { r.Fail(); return default; }
+            var cands = new float2[nc];
+            for (int i = 0; i < nc; i++) cands[i] = new float2(r.ReadF32(), r.ReadF32());
+            float tick = r.ReadF32(), radius = r.ReadF32(), grace = r.ReadF32();
+            float warn = r.ReadF32(), margin = r.ReadF32(), sd = r.ReadF32();
+            int np = r.ReadU8();
+            if (r.Failed || np > MaxPhases || r.Remaining < np * 16) { r.Fail(); return default; }
+            var phases = new StormPhase[np];
+            for (int i = 0; i < np; i++)
+                phases[i] = new StormPhase(r.ReadF32(), r.ReadF32(), r.ReadF32(), r.ReadF32());
+            if (r.Failed) return default;
+            var config = new StormConfig(tick, radius, grace, warn, margin, sd, phases);
+            bool finite = math.all(math.isfinite(center));
+            foreach (float2 c in cands) finite &= math.all(math.isfinite(c));
+            if (!finite || config.Validate() != null) { r.Fail(); return default; }
+            return new StormStarted(seq, seed, start, center, cands, config);
+        }
+    }
+
     // Server -> client, reliable ordered: both peers were ready and the match is now running.
     // frob:ticket 01M3DG5Y1NW8M51ENVBT7EVKQY
     // frob:doc docs/reference/hullbreach-net.md#matchstarted

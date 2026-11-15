@@ -75,6 +75,12 @@ namespace Hullbreach.World
             new StormPhase(20f, 25f, 0f, 128f),
         });
 
+        // Same schedule at another tick rate, so the server's own rate drives the ring.
+        // frob:doc docs/reference/hullbreach-world.md#stormzone
+        public StormConfig WithTickRate(float tickRate) =>
+            new StormConfig(tickRate, StartRadius, GraceSeconds, WarningFraction, HardLimitMargin,
+                SuddenDeathDamagePerSecond, Phases);
+
         // Total storm length in seconds, including grace.
         // frob:doc docs/reference/hullbreach-world.md#stormzone
         public float TotalSeconds()

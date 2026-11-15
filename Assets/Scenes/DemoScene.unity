@@ -1772,18 +1772,6 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 8509294856611213040, guid: e6da8b218b4903a4c816e612c2d55890, type: 3}
-      propertyPath: m_Color.b
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8509294856611213040, guid: e6da8b218b4903a4c816e612c2d55890, type: 3}
-      propertyPath: m_Color.g
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8509294856611213040, guid: e6da8b218b4903a4c816e612c2d55890, type: 3}
-      propertyPath: m_Color.r
-      value: 0.4792453
-      objectReference: {fileID: 0}
     - target: {fileID: 8769106322418689171, guid: e6da8b218b4903a4c816e612c2d55890, type: 3}
       propertyPath: m_AnchorMax.x
       value: 0
@@ -1815,18 +1803,6 @@ PrefabInstance:
     - target: {fileID: 8769106322418689171, guid: e6da8b218b4903a4c816e612c2d55890, type: 3}
       propertyPath: m_AnchoredPosition.y
       value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8864421891318793616, guid: e6da8b218b4903a4c816e612c2d55890, type: 3}
-      propertyPath: m_Color.b
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8864421891318793616, guid: e6da8b218b4903a4c816e612c2d55890, type: 3}
-      propertyPath: m_Color.g
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8864421891318793616, guid: e6da8b218b4903a4c816e612c2d55890, type: 3}
-      propertyPath: m_Color.r
-      value: 0.3283019
       objectReference: {fileID: 0}
     - target: {fileID: 8877867163912012005, guid: e6da8b218b4903a4c816e612c2d55890, type: 3}
       propertyPath: demoMode
@@ -1948,6 +1924,70 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &862306234
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 862306237}
+  - component: {fileID: 862306236}
+  - component: {fileID: 862306235}
+  m_Layer: 0
+  m_Name: StormHud
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &862306235
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 862306234}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c5dee7d0c54094f449bf3f8cf1a5fdd2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  worldCamera: {fileID: 0}
+  toggleKey: 109
+  smallMapSize: 230
+  bigMapSize: 720
+--- !u!114 &862306236
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 862306234}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6a07446a742890741a6780a121aeb99e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  demoMode: {fileID: 2001003}
+  seed: 1337
+  enemy: {fileID: 0}
+--- !u!4 &862306237
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 862306234}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -1960,3 +2000,4 @@ SceneRoots:
   - {fileID: 2005002}
   - {fileID: 276084957}
   - {fileID: 38937213}
+  - {fileID: 862306237}

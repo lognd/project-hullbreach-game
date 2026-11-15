@@ -145,6 +145,10 @@ assets), but it has three costs that now matter:
 <!-- describes: Assets/Scripts/Hullbreach.Hud/CameraRigModel.cs::CameraRigModel.LeadDistance -->
 <!-- describes: Assets/Scripts/Hullbreach.Hud/CameraRigModel.cs::CameraRigModel.ZoomSize -->
 <!-- describes: Assets/Scripts/Hullbreach.Hud/CameraRigModel.cs::CameraRigModel.StarOffset -->
+<!-- describes: Assets/Scripts/Hullbreach.Hud/BuildCooldownModel.cs::BuildCooldownModel -->
+<!-- describes: Assets/Scripts/Hullbreach.Hud/BuildCooldownModel.cs::BuildCooldownModel.Remaining -->
+<!-- describes: Assets/Scripts/Hullbreach.Hud/BuildCooldownModel.cs::BuildCooldownModel.Line -->
+<!-- describes: Assets/Scripts/Hullbreach.Hud/BuildCooldownModel.cs::BuildCooldownModel.Fill -->
 <!-- describes: Assets/Scripts/Hullbreach.Hud/HullWarningModel.cs::HullWarning -->
 <!-- describes: Assets/Scripts/Hullbreach.Hud/HullWarningModel.cs::HullWarningModel -->
 <!-- describes: Assets/Scripts/Hullbreach.Hud/HullWarningModel.cs::HullWarningModel.Headline -->
@@ -222,6 +226,22 @@ so the HUD reads `12.3` on every OS locale (covered by `HudCultureTests`).
   (thrust, reverse, steer) and a powerup row list cloned from a row
   template, grown once and destroyed back down when powerups expire.
 - `HullWarningBanner` -- view over `HullWarningModel`; shown only in Fly.
+
+#### StormHudView
+
+Storm minimap and HUD (`Hullbreach.Game/Hud/StormHudView.cs`). One component builds its own uGUI at
+runtime and draws from an `IStormHudSource` on the same object, so the demo and the online scene share it.
+
+- Radar (top-right): planets, own ship (cyan), enemy (red; pinned to the rim when far), the current storm
+  ring (white), the next ring (green) and the danger side tinted red. `M` toggles an enlarged map.
+- Top-centre: `Shrink in 0:18` (or `Closing 0:07`, `NO SAFE ZONE`) and the stage line (`Storm: ring 2 holding`).
+- Full-screen red tint: faint pulse in the warning band, stronger outside the ring.
+- Edge arrow toward an off-screen enemy; cyan `SAFE ZONE` arrow along `StormState.PullDirection` when outside.
+- Maths (engine-free, tested in `MinimapAndStormHudTests`): `MinimapView`, `MinimapRaster`, `StormHudModel`, `EdgeArrowModel`.
+- Sources: `DemoStormHudSource` (local `StormZone` from the scene's gravity bodies, fixed seed, advanced by
+  physics ticks while flying) and `HullbreachStormHudSource` (online: `ClientReplica.Storm`, `StormStart`,
+  `LatestServerTick`; planets are the storm's candidate points since clients do not know body radii).
+- Wiring: `HudPrefabBuilder.WireDemoScene` adds the `StormHud` object to DemoScene; `LobbySceneBuilder` adds it to MultiplayerGame.
 
 ### Editor (`Assets/Editor/Hullbreach.Editor/`, Editor-only asmdef)
 
@@ -370,3 +390,11 @@ https://aliens-against-humanity.atlassian.net/jira/software/projects/SCRUM/board
 SCRUM-54 S33 "Choose from a block palette" (SCRUM-108, BuilderHud),
 SCRUM-58 S37 "See where my ship is about to fail" (hull warning), and
 epic SCRUM-15 E8 "Game shell" for the screens this foundation enables.
+
+## Feel layer
+
+`FeelFx` (Hullbreach.Game) is created on first use and plays the hit/shot/storm feedback: impact flash and sparks, floating
+damage numbers, camera shake scaled by damage (`FeelModel.TraumaForDamage`), muzzle flash and a shot trail, a throttle-driven
+thruster loop, a storm warning beep, and a red flash plus alarm when the local core is hit. Sound is synthesised in code
+(`ProceduralAudio`, no asset licences). The numbers live engine-free in `Hullbreach.Hud/FeelModel.cs`. Settings keys in
+`settings.txt` (all default on): `shake=0|1`, `hitfx=0|1`, `sfx=0|1`; master and effects volumes also apply.

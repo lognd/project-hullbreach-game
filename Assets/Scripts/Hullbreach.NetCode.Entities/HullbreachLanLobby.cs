@@ -7,6 +7,7 @@ using UnityEngine.SceneManagement;
 
 namespace Hullbreach.NetCode.Entities
 {
+    using World = Unity.Entities.World;
     // Hosts or joins a LAN match from the lobby screen with no Unity Services (S28-2).
     // It drives the idle worlds the lobby launch already created, then loads the match.
     // frob:doc docs/netcode.md#lan-host-and-join-from-the-lobby
@@ -86,7 +87,7 @@ namespace Hullbreach.NetCode.Entities
             return true;
         }
 
-        static void Request<T>(World world, T request) where T : unmanaged, IComponentData
+        static void Request<T>(Unity.Entities.World world, T request) where T : unmanaged, IComponentData
         {
             Entity entity = world.EntityManager.CreateEntity(typeof(T));
             world.EntityManager.SetComponentData(entity, request);
