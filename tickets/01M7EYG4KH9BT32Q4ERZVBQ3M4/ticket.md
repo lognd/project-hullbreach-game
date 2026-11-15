@@ -10,7 +10,7 @@ updated = "2026-11-15T12:12:58Z"
 
 [[acceptance]]
 text = "Live placement spends per-peer typed stock, refuses with a reason and a cooldown, and new blocks start damaged then harden; deconstruct refunds half"
-bound = false
+bound = true
 
 [[acceptance]]
 text = "Pre-match build budget and block cap reject oversized designs"
