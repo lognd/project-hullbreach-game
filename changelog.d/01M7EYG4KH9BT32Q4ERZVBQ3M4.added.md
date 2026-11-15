@@ -1,0 +1,1 @@
+- Block economy: a pre-match point budget and block cap, live stock for building mid-match with a cooldown, crates and wreck salvage to collect, and a 50% refund for deconstructing.

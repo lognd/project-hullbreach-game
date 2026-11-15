@@ -1,0 +1,6 @@
+kind = "comment"
+subtype = "note"
+body = "Closing. Criterion 2: LobbySceneBuilder creates HOST LAN and JOIN ADDRESS buttons and LobbyCanvas.prefab on main contains them (PR #124, rebuilt in the editor). Launch plan and address validation covered by 52 passing tests (LanEndpoint, DirectLaunchPlan, LobbyForm). Play Mode (editor) runs by earlier agents: host from MultiplayerGame logged 'Connected as #1' and PR #154 hub exercised LAN host / join as guest. The button click-through itself has no automated test."
+at = "2026-11-15T12:14:07Z"
+actor = "lognd"
+rev = 1

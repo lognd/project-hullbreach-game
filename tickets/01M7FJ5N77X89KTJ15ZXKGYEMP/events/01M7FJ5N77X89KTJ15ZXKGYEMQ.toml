@@ -1,0 +1,11 @@
+kind = "create"
+title = "Deconstructed-blocks stat in the match-ended message and results screen"
+type = "task"
+category = "todo"
+priority = "low"
+points = 2
+labels = ["game"]
+acceptance = ["MatchEnded carries blocks deconstructed per player and the results screen shows it", "Wire round-trip test covers the new field"]
+at = "2026-11-15T12:16:04Z"
+actor = "lognd"
+rev = 1

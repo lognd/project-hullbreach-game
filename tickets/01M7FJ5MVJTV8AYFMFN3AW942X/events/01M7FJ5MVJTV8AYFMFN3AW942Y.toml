@@ -1,0 +1,11 @@
+kind = "create"
+title = "Bot storm awareness (pilot flies back inside the zone)"
+type = "task"
+category = "todo"
+priority = "medium"
+points = 3
+labels = ["game"]
+acceptance = ["A bot outside the storm radius steers toward the safe zone and takes less storm damage than a bot that ignores it, shown in the headless arena", "Retire the StormOverlay stand-in now that ServerSimulation applies the storm"]
+at = "2026-11-15T12:16:03Z"
+actor = "lognd"
+rev = 1

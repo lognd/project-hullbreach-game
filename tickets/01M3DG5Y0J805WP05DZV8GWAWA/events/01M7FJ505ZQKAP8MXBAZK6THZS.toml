@@ -1,0 +1,6 @@
+kind = "comment"
+subtype = "note"
+body = "Reviewed 2026-11-15, left open: children ~YTVQZRX and ~NDDWXNE are still unwired in Unity (HullbreachQueueConnect not attached; no JoinTicket RPC), so criterion 2 (two queued players land in one match without typing an address) is not met end to end. Queue screen with cancel and bot offer after 15 s exist (QueueScreenModelTests)."
+at = "2026-11-15T12:15:42Z"
+actor = "lognd"
+rev = 1

@@ -1,0 +1,6 @@
+kind = "comment"
+subtype = "note"
+body = "Reviewed 2026-11-15, left open. Criterion 2 and 3 are backed (S28-3 ready-up tests; MatchResultReporter is a no-op for guests, test Reporter_IsANoOpForGuestsAndUnconfiguredServers). Criterion 1 (a second player on the network joins by typing the host address) has only been run on loopback/one machine in the editor (hub LAN host and guest join, PRs #138/#154); no two-machine check and no automated test of the lobby buttons. Close after one real two-machine join, or attach an attestation."
+at = "2026-11-15T12:15:41Z"
+actor = "lognd"
+rev = 1

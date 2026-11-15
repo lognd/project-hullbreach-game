@@ -1,0 +1,6 @@
+kind = "comment"
+subtype = "note"
+body = "Reviewed 2026-11-15, left open. Criterion 2 is covered (MultiplayerGameplayTests: reliable BlockPlaced updates the opponent replica). Criterion 1 is only Play-verified (click placement PR #148, build UI PR #139). Criterion 3: server uses PlacementRules.CanPlace via EconomyRules.CheckPlacement plus a WouldBuckle structural check, but no test exercises a mid-match Disconnected or WouldBuckle refusal. Follow-up ticket created for those server tests."
+at = "2026-11-15T12:15:42Z"
+actor = "lognd"
+rev = 1

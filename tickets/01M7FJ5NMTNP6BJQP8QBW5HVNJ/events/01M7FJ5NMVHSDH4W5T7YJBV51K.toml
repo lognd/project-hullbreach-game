@@ -1,0 +1,11 @@
+kind = "create"
+title = "Opponent cannot shoot during the build-phase grace period after READY"
+type = "bug"
+category = "todo"
+priority = "medium"
+points = 2
+labels = ["game"]
+acceptance = ["A ship that pressed READY cannot be damaged until the other side is ready or a short grace period ends, bots included", "A server test covers the grace period"]
+at = "2026-11-15T12:16:04Z"
+actor = "lognd"
+rev = 1

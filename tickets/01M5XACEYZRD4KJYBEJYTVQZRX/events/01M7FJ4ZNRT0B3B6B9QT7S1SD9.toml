@@ -1,0 +1,6 @@
+kind = "comment"
+subtype = "note"
+body = "Reviewed 2026-11-15, left open. Engine-free ConnectRequest/ConnectTarget and HullbreachLanLobby.TryConnect exist and are tested, but HullbreachQueueConnect is not attached to any scene or prefab and nothing else subscribes to HullbreachQueueView.Matched (grep of Assets), so a found match never dials the server. Remaining: add the component to the lobby/queue scene (LobbySceneBuilder), run a queue match in Play Mode. No acceptance criteria recorded on this ticket."
+at = "2026-11-15T12:15:42Z"
+actor = "lognd"
+rev = 1

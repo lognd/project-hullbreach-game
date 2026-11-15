@@ -1,0 +1,12 @@
+kind = "create"
+title = "Server tests for mid-match placement refusals (Disconnected, WouldBuckle)"
+type = "task"
+category = "todo"
+priority = "medium"
+points = 2
+parent = "01M3DG5Y0QWT3XQ9HHJGV4H9H0"
+labels = ["game"]
+acceptance = ["A mid-match PlaceBlock of a disconnected cell is refused with Disconnected and not distrusted", "A mid-match PlaceBlock that would fail immediately under load is refused with WouldBuckle"]
+at = "2026-11-15T12:16:05Z"
+actor = "lognd"
+rev = 1
