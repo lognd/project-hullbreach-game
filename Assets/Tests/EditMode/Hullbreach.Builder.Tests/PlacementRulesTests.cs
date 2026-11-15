@@ -67,6 +67,35 @@ namespace Hullbreach.Builder.Tests
         }
 
         [Test]
+        public void CanRemove_RefusesWeldedThruster()
+        {
+            var g = new BlockGrid();
+            g.TryAdd(BlockKey.Pack(0, 0), new Block(BlockTypes.Core));
+            g.TryAdd(BlockKey.Pack(1, 0), new Block(BlockTypes.Thruster).WithWelded(true));
+            Assert.IsFalse(PlacementRules.CanRemove(g, BlockKey.Pack(1, 0)));
+        }
+
+        [Test]
+        public void Session_Remove_LeavesWeldedThrusterInPlace()
+        {
+            var s = new BuilderSession();
+            s.Grid.TryAdd(BlockKey.Pack(0, 0), new Block(BlockTypes.Core));
+            s.Grid.TryAdd(BlockKey.Pack(1, 0), new Block(BlockTypes.Thruster).WithWelded(true));
+            int depth = s.UndoDepth;
+            Assert.IsFalse(s.Remove(BlockKey.Pack(1, 0)));
+            Assert.IsTrue(s.Grid.Contains(BlockKey.Pack(1, 0)));
+            Assert.AreEqual(depth, s.UndoDepth, "a refused removal records no undo entry");
+        }
+
+        [Test]
+        public void WithDamageAndModifiers_PreserveWeld()
+        {
+            var b = new Block(BlockTypes.Thruster).WithWelded(true).WithDamage(9).WithModifiers(2);
+            Assert.IsTrue(b.IsWelded);
+            Assert.IsFalse(b.WithWelded(false).IsWelded);
+        }
+
+        [Test]
         public void CanRemove_AllowsOrdinaryBlock()
         {
             var g = new BlockGrid();

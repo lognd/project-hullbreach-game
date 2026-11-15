@@ -822,6 +822,59 @@ known block types, no duplicate cells, exactly one core, and every block
 connected to the core. Returns a `DesignVerdict` naming the first rule
 broken.
 
+### HitTolerance
+
+<!-- describes: Assets/Scripts/Hullbreach.Net/HitTolerance.cs::HitTolerance -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/HitTolerance.cs::HitTolerance.GraceSeconds -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/HitTolerance.cs::HitTolerance.MaxMargin -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/HitTolerance.cs::HitTolerance.Default -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/HitTolerance.cs::HitTolerance.None -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/HitTolerance.cs::HitTolerance.MarginFor -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.Tolerance -->
+
+The documented hit tolerance (S49-1). Clients never claim hits: the server
+decides every impact against its own ship poses, so "the client and the
+server disagree" always resolves server-side, in the defender's favor within
+a bound. A projectile's circle is shrunk by `MarginFor(defenderSpeed)` =
+`min(MaxMargin, speed * GraceSeconds)` world units before the cell test, so a
+graze that overlaps a block by less than the margin is a miss. A shot whose
+centre is inside a block is always a hit, however large the margin. The
+default is 0.1 s of forgiven lag capped at 0.5 units; `HitTolerance.None`
+turns it off. `ServerSimulation.Tolerance` holds the active value. The
+defender's trust (see `TrustLevel`) scales the margin: full trust gets all
+of it, a peer at the floor gets none.
+
+### TrustLevel
+
+<!-- describes: Assets/Scripts/Hullbreach.Net/TrustLevel.cs::TrustLevel -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/TrustLevel.cs::TrustLevel.PenaltyPerEvent -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/TrustLevel.cs::TrustLevel.RecoveryPerSecond -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/TrustLevel.cs::TrustLevel.Value -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/TrustLevel.cs::TrustLevel.AtFloor -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/TrustLevel.cs::TrustLevel.Penalize -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/TrustLevel.cs::TrustLevel.Recover -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/TrustLevel.cs::TrustEventKind -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/TrustLevel.cs::TrustEvent -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.TrustOf -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.TryDequeueTrustEvent -->
+
+Per-peer trust (S49-2), 1.0 at join. What lowers it (0.2 each, floor 0):
+a block placement or removal the rules refuse, a build request outside build
+mode, and input with reserved flag bits set. Lag never does: an input with an
+older tick is dropped silently, so honest jitter keeps full trust. What
+raises it: 0.02 per second of simulated time, so the floor heals in 50 s.
+
+What tightens as it drops: the defender's hit margin (`HitTolerance`)
+scales linearly with trust, and the hold on late input
+(`InputHoldSeconds`) scales from 100 % down to 20 %. At the floor the server
+refuses that peer's build claims until trust recovers. It never disconnects
+a peer for low trust: only the input timeout does that.
+
+Every change is written to `ServerSimulation.MatchLog` as a warning and
+queued as a `TrustEvent`; the host drains them with `TryDequeueTrustEvent`
+(oldest 256 kept). Sending them on to the platform for the administrator view
+is not done here: that needs a platform endpoint (S49 criterion 3).
+
 ### ProjectileHitTest
 
 <!-- describes: Assets/Scripts/Hullbreach.Net/ProjectileHitTest.cs::ProjectileHitTest -->

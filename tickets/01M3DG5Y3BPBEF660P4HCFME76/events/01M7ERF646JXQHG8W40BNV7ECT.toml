@@ -1,0 +1,6 @@
+kind = "comment"
+subtype = "note"
+body = "Workflow-only change on branch ticket/HCFME76 (.github/workflows/ci.yml, new server-build job + gate need). NOT RUN: no Unity license or Actions access from the dev box; YAML only parsed locally. Without a UNITY_LICENSE secret the job passes with a notice. First real run needs UNITY_LICENSE/UNITY_EMAIL/UNITY_PASSWORD secrets; unverified assumptions: game-ci image for 6000.0.43f1 includes the Linux Dedicated Server module (HullbreachBuild fails with a clear message if not), Mono backend. Ticket left open."
+at = "2026-11-15T04:46:53Z"
+actor = "lognd"
+rev = 1

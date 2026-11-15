@@ -1,0 +1,28 @@
+kind = "evidence"
+captured_at = "2026-11-15T04:42:42Z"
+digest = "6cf475daabe157b581a0fb51376db9a2d68fedc1c4f4cade134253083045c3a0"
+exit_code = 0
+head = "77a614b4585e8eca9ef2ce005183d8364567b4e7"
+inline = """
+  Determining projects to restore...\r
+  All projects are up-to-date for restore.\r
+  Hullbreach.Plain -> <worktree>\\tools\\plaincs\\Hullbreach.Plain\\bin\\Release\\netstandard2.1\\Hullbreach.Plain.dll\r
+  Hullbreach.Plain.Tests -> <worktree>\\tools\\plaincs\\Hullbreach.Plain.Tests\\bin\\Release\\net8.0\\Hullbreach.Plain.Tests.dll\r
+Test run for <worktree>\\tools\\plaincs\\Hullbreach.Plain.Tests\\bin\\Release\\net8.0\\Hullbreach.Plain.Tests.dll (.NETCoreApp,Version=v8.0)\r
+VSTest version 17.11.2 (x64)\r
+\r
+Starting test execution, please wait...\r
+A total of 1 test files matched the specified pattern.\r
+  Skipped LoginThenServerValidatesToken_AgainstRealPlatform [21 ms]\r
+  Skipped ReporterPostsAMatch_AgainstRealPlatform_Is201AndMovesRatings [< 1 ms]\r
+\r
+Passed!  - Failed:     0, Passed:   827, Skipped:     2, Total:   829, Duration: 6 s - Hullbreach.Plain.Tests.dll (net8.0)\r
+"""
+passed = true
+provider = "command"
+ref = "dotnet test tools/plaincs/Hullbreach.Plain.Tests/Hullbreach.Plain.Tests.csproj -c Release --filter TestCategory!=Slow"
+size = 858
+status = "measured"
+at = "2026-11-15T04:42:42Z"
+actor = "lognd"
+rev = 1

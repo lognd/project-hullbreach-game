@@ -44,6 +44,36 @@ namespace Hullbreach.Net
         // ShipState stream enabled by default.
         public bool EmitPoseMessages = true;
 
+        // Benefit of the doubt a shot's target gets on a graze (S49-1); HitTolerance.None disables it.
+        // frob:doc docs/reference/hullbreach-net.md#hittolerance
+        public HitTolerance Tolerance = HitTolerance.Default;
+
+        // Trust events not yet forwarded by the host (for the platform's admin view).
+        readonly Queue<TrustEvent> _trustEvents = new Queue<TrustEvent>();
+
+        // Trust 0..1 of a joined peer, or -1 when unknown.
+        // frob:doc docs/reference/hullbreach-net.md#trustlevel
+        public float TrustOf(int peer) => _peers.TryGetValue(peer, out var state) ? state.Trust.Value : -1f;
+
+        // Pops the oldest trust event so the host can log or report it; each event is also
+        // written to MatchLog when one is set.
+        // frob:doc docs/reference/hullbreach-net.md#trustlevel
+        public bool TryDequeueTrustEvent(out TrustEvent evt)
+        {
+            if (_trustEvents.Count > 0) { evt = _trustEvents.Dequeue(); return true; }
+            evt = default;
+            return false;
+        }
+
+        void Distrust(int peer, PeerState state, TrustEventKind kind)
+        {
+            float before = state.Trust.Penalize();
+            var evt = new TrustEvent(peer, kind, _tickIndex, before, state.Trust.Value);
+            if (_trustEvents.Count >= 256) _trustEvents.Dequeue();
+            _trustEvents.Enqueue(evt);
+            MatchLog?.Warning($"Hullbreach trust: peer #{peer} {kind} at tick {_tickIndex}; trust {before:0.00} -> {state.Trust.Value:0.00}.");
+        }
+
         // Match length in seconds of simulated time; 0 or less disables the limit (default 10 minutes).
         // frob:ticket 01M3DG5Y36WE3D2224D54MR2S6
         // frob:doc docs/reference/hullbreach-net.md#serversimulation
@@ -123,6 +153,7 @@ namespace Hullbreach.Net
             public bool HasInput;
             public bool PendingFire;
             public bool InPushZone;
+            public readonly TrustLevel Trust = new TrustLevel();
             public readonly Dictionary<int, bool> Failing = new Dictionary<int, bool>();
         }
 
@@ -265,12 +296,15 @@ namespace Hullbreach.Net
 
         public bool TryPlaceBlock(int peer, int x, int y, byte typeId, byte modifiers)
         {
-            if (!_peers.TryGetValue(peer, out var state) || !state.IsBuilding ||
-                typeId >= BlockTypes.Count || !BlockKey.InRange(x, y) ||
-                state.Ship.Grid.Count >= ShipSnapshot.MaxBlocks) return false;
+            if (!_peers.TryGetValue(peer, out var state) || state.Trust.AtFloor) return false;
+            if (!state.IsBuilding) { Distrust(peer, state, TrustEventKind.BuildOutsideBuildMode); return false; }
+            if (typeId >= BlockTypes.Count || !BlockKey.InRange(x, y) ||
+                state.Ship.Grid.Count >= ShipSnapshot.MaxBlocks)
+            { Distrust(peer, state, TrustEventKind.RejectedBuild); return false; }
 
             int key = BlockKey.Pack(x, y);
-            if (!PlacementRules.CanPlace(state.Ship.Grid, key, typeId, modifiers, out _)) return false;
+            if (!PlacementRules.CanPlace(state.Ship.Grid, key, typeId, modifiers, out _))
+            { Distrust(peer, state, TrustEventKind.RejectedBuild); return false; }
             if (!state.Ship.Grid.TryAdd(key, new Block(typeId, modifiers))) return false;
 
             state.Ship.RebuildDerivedViews();
@@ -282,11 +316,13 @@ namespace Hullbreach.Net
 
         public bool TryRemoveBlock(int peer, int x, int y)
         {
-            if (!_peers.TryGetValue(peer, out var state) || !state.IsBuilding || !BlockKey.InRange(x, y))
-                return false;
+            if (!_peers.TryGetValue(peer, out var state) || state.Trust.AtFloor) return false;
+            if (!state.IsBuilding) { Distrust(peer, state, TrustEventKind.BuildOutsideBuildMode); return false; }
+            if (!BlockKey.InRange(x, y)) { Distrust(peer, state, TrustEventKind.RejectedBuild); return false; }
 
             int key = BlockKey.Pack(x, y);
-            if (!PlacementRules.CanRemove(state.Ship.Grid, key)) return false;
+            if (!PlacementRules.CanRemove(state.Ship.Grid, key))
+            { Distrust(peer, state, TrustEventKind.RejectedBuild); return false; }
 
             var before = new HashSet<int>();
             foreach (int existingKey in state.Ship.Grid.SortedKeys) before.Add(existingKey);
@@ -480,7 +516,10 @@ namespace Hullbreach.Net
         public void SetInput(int peer, InputMessage input)
         {
             if (!_peers.TryGetValue(peer, out var state)) return;
+            // An older tick is honest reordering or lag, never a trust event.
             if (state.HasInput && unchecked((int)(input.Tick - state.LatestInput.Tick)) < 0) return;
+            if ((input.Flags & ~(InputMessage.FireBit | InputMessage.BuildModeBit)) != 0)
+                Distrust(peer, state, TrustEventKind.ReservedInputBits);
             state.LatestInput = input;
             state.HasInput = true;
             state.IsBuilding = input.BuildMode;
@@ -507,7 +546,9 @@ namespace Hullbreach.Net
                 var state = _peers[peer];
                 // A late packet keeps the last axes for InputHoldSeconds instead of cutting thrust.
                 // frob:ticket 01M6WV815GYEJ58MTM4HSS4Z6K
-                bool held = state.HasInput && state.SecondsSinceInput <= InputHoldSeconds;
+                state.Trust.Recover(dt);
+                // Less trust, shorter hold: a flaky-but-honest peer keeps most of it, a distrusted one little.
+                bool held = state.HasInput && state.SecondsSinceInput <= InputHoldSeconds * (0.2f + 0.8f * state.Trust.Value);
                 var input = held
                     ? new ShipInput(state.LatestInput.ThrustAxisFloat, state.LatestInput.SteerFloat, state.PendingFire)
                     : new ShipInput(0f, 0f, false);
@@ -693,7 +734,9 @@ namespace Hullbreach.Net
             foreach (int candidate in peers)
             {
                 if (candidate == p.OwnerPeer) continue;
-                if (ProjectileHitTest.TryHitShipCell(_peers[candidate].Ship, p.Position, p.Spec.Radius, out int k))
+                var defender = _peers[candidate].Ship;
+                float margin = Tolerance.MarginFor(math.length(defender.Velocity), _peers[candidate].Trust.Value);
+                if (ProjectileHitTest.TryHitShipCell(defender, p.Position, p.Spec.Radius, margin, out int k))
                 {
                     peer = candidate;
                     key = k;
