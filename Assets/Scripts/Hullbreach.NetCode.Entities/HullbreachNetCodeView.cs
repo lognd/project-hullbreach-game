@@ -129,6 +129,25 @@ namespace Hullbreach.NetCode.Entities
 
         Sprite SpriteForType(byte typeId)
         {
+            Sprite sprite = SpriteForTypeOrNull(typeId);
+            return sprite != null ? sprite : FallbackSprite();
+        }
+
+        // A scene with an unwired sprite slot must still show the ship, so fall back to a plain white square.
+        static Sprite s_fallback;
+
+        static Sprite FallbackSprite()
+        {
+            if (s_fallback != null) return s_fallback;
+            var texture = new Texture2D(1, 1, TextureFormat.RGBA32, false) { filterMode = FilterMode.Point };
+            texture.SetPixel(0, 0, Color.white);
+            texture.Apply();
+            s_fallback = Sprite.Create(texture, new Rect(0, 0, 1, 1), new Vector2(0.5f, 0.5f), 1f);
+            return s_fallback;
+        }
+
+        Sprite SpriteForTypeOrNull(byte typeId)
+        {
             return typeId switch
             {
                 BlockTypes.Cannon => turretSprite,
@@ -189,7 +208,7 @@ namespace Hullbreach.NetCode.Entities
                     var renderer =
                         visual.GetComponent<SpriteRenderer>();
 
-                    renderer.sprite = projectileSprite;
+                    renderer.sprite = projectileSprite != null ? projectileSprite : FallbackSprite();
                     renderer.color = Color.yellow;
                 }
             }

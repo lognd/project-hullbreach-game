@@ -550,7 +550,7 @@ namespace Hullbreach.Editor
             camera.orthographicSize = 16f;
 
             var presenter = new GameObject("NetworkShipPresenter");
-            presenter.AddComponent<HullbreachNetCodeView>();
+            WireShipSprites(new SerializedObject(presenter.AddComponent<HullbreachNetCodeView>()));
 
             var gameplay = new GameObject("NetworkGameplay");
             HullbreachNetworkGameplayController controller = gameplay.AddComponent<HullbreachNetworkGameplayController>();
@@ -597,6 +597,24 @@ namespace Hullbreach.Editor
 
             CreateEventSystem();
             EditorSceneManager.SaveScene(scene, GameScenePath);
+        }
+
+        // Without these the replica's blocks have no sprite and the whole ship is invisible; a scene rebuild
+        // once dropped them. GUIDs are the Assets/Art sprites the multiplayer view was authored against.
+        static void WireShipSprites(SerializedObject view)
+        {
+            var sprites = new (string field, string guid)[]
+            {
+                ("turretSprite", "6b7b4537ca1ceba448f7131de38d4c03"),
+                ("thursterSprite", "6338a94d3be7d3045b88034fd3e85d2d"),
+                ("armorSprite", "c2c218d0f0e94a44dbd4116fa4441261"),
+                ("finSprite", "d203e6a00e96a194d83981982900888b"),
+                ("blockSprite", "b9e5871c7275e2e4e9ea18f610b6134d"),
+                ("projectileSprite", "44b3384c81064054299f0ca8bd3577f9"),
+            };
+            foreach ((string field, string guid) in sprites)
+                Set(view, field, AssetDatabase.LoadAssetAtPath<Sprite>(AssetDatabase.GUIDToAssetPath(guid)));
+            view.ApplyModifiedPropertiesWithoutUndo();
         }
 
         static void BuildGhostPrefab()
@@ -763,6 +781,13 @@ namespace Hullbreach.Editor
             colors.pressedColor = new Color(0.7f, 0.7f, 0.7f, 1f);
             colors.disabledColor = new Color(0.45f, 0.45f, 0.45f, 0.7f);
             button.colors = colors;
+            // Raised buttons sit on Raised panels, so without an edge they read as bare text.
+            if (!primary)
+            {
+                Outline edge = root.AddComponent<Outline>();
+                edge.effectColor = new Color(BrandColors.Cyan.r, BrandColors.Cyan.g, BrandColors.Cyan.b, 0.55f);
+                edge.effectDistance = new Vector2(1.5f, -1.5f);
+            }
             LayoutElement layout = root.AddComponent<LayoutElement>();
             layout.preferredHeight = height;
             TMP_Text label = AddText(root.transform, "Label", text, labelSize, TextAlignmentOptions.Center);
