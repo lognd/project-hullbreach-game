@@ -6,6 +6,7 @@
         "Hullbreach.Builder",
         "Hullbreach.Net",
         "Hullbreach.Match",
+        "Hullbreach.Bots",
         "Hullbreach.Platform",
         "Hullbreach.Hud",
         "Hullbreach.World",

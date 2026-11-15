@@ -1,0 +1,1 @@
+Added Play vs Bot (Easy, Normal, Hard) and Cadet Trial on the lobby screen, the queue's fight-a-bot offer after 15 s, and replaced the passive sparring dummy with a BotPeer-driven opponent that is always ready and labelled unranked.

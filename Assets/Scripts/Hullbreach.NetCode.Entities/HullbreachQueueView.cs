@@ -20,6 +20,7 @@ namespace Hullbreach.NetCode.Entities
         [SerializeField] Button closeButton;
         [SerializeField] TMP_Text statusText;
 
+        Button _botButton;
         MatchmakingSession _session;
         MatchmakingState _lastState = MatchmakingState.Idle;
 
@@ -38,6 +39,37 @@ namespace Hullbreach.NetCode.Entities
             cancelButton.onClick.AddListener(Cancel);
             closeButton.onClick.AddListener(Close);
             panelRoot.SetActive(false);
+            _botButton = MakeBotButton();
+        }
+
+        // "Fight a bot" appears after QueueScreenModel.BotOfferSeconds with no opponent; the match is unranked.
+        Button MakeBotButton()
+        {
+            var go = new GameObject("FightBotButton", typeof(RectTransform), typeof(Image), typeof(Button));
+            go.transform.SetParent(panelRoot.transform, false);
+            go.GetComponent<Image>().color = new Color(0.12f, 0.35f, 0.5f, 1f);
+            var rt = (RectTransform)go.transform;
+            rt.anchorMin = rt.anchorMax = rt.pivot = new Vector2(0.5f, 0f);
+            rt.anchoredPosition = new Vector2(0f, 20f);
+            rt.sizeDelta = new Vector2(420f, 52f);
+            var label = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI));
+            label.transform.SetParent(go.transform, false);
+            var t = label.GetComponent<TextMeshProUGUI>();
+            t.text = "No opponent yet - fight a bot (unranked)";
+            t.fontSize = 22; t.alignment = TextAlignmentOptions.Center; t.raycastTarget = false; t.enableWordWrapping = false;
+            t.rectTransform.anchorMin = Vector2.zero; t.rectTransform.anchorMax = Vector2.one;
+            t.rectTransform.offsetMin = t.rectTransform.offsetMax = Vector2.zero;
+            var button = go.GetComponent<Button>();
+            button.onClick.AddListener(FightBot);
+            go.SetActive(false);
+            return button;
+        }
+
+        void FightBot()
+        {
+            if (QueueScreenModel.CanCancel(_session.Machine)) Cancel();
+            if (!HullbreachBotMatch.Start(Hullbreach.Bots.BotDifficulty.Normal, false, out string error))
+                statusText.text = FriendlyError.From(error);
         }
 
         // Shows the panel; the find button starts a search.
@@ -85,6 +117,7 @@ namespace Hullbreach.NetCode.Entities
             statusText.color = QueueScreenModel.IsAlert(machine) ? BrandColors.Orange : BrandColors.Ink;
             findButton.interactable = QueueScreenModel.CanSearch(machine);
             cancelButton.interactable = QueueScreenModel.CanCancel(machine);
+            _botButton.gameObject.SetActive(QueueScreenModel.OffersBot(machine));
         }
     }
 }

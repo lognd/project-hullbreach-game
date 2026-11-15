@@ -40,6 +40,15 @@ namespace Hullbreach.Net
             machine.State == MatchmakingState.Idle || machine.State == MatchmakingState.Cancelled ||
             machine.State == MatchmakingState.Failed;
 
+        // After this long in the queue with no opponent, the screen offers a bot match (P0-5).
+        // frob:doc docs/reference/hullbreach-net.md#matchmaking
+        public const double BotOfferSeconds = 15.0;
+
+        // True once a running search has waited BotOfferSeconds.
+        // frob:doc docs/reference/hullbreach-net.md#matchmaking
+        public static bool OffersBot(MatchmakingMachine machine) =>
+            machine.State == MatchmakingState.Queued && machine.ElapsedSeconds >= BotOfferSeconds;
+
         // Failures are alerts (orange); everything else is plain ink.
         // frob:doc docs/reference/hullbreach-net.md#matchmaking
         public static bool IsAlert(MatchmakingMachine machine) => machine.State == MatchmakingState.Failed;
