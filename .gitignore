@@ -196,3 +196,6 @@ __pycache__/
 htmlcov/
 coverage.xml
 .env
+
+# grimble state and cache (frob check refuses tracked state)
+.grimble/
