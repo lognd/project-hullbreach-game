@@ -55,6 +55,7 @@ namespace Hullbreach.NetCode.Entities
             ConsumeInputs();
             ConsumeBuildRequests();
             _simulation.Tick();
+            DropTimedOutPeers();
             SynchronizeGhosts();
             FlushOutbox();
         }
@@ -109,6 +110,25 @@ namespace Hullbreach.NetCode.Entities
                 if (_shipGhosts.TryGetValue(peer, out Entity ghost) && EntityManager.Exists(ghost))
                     EntityManager.DestroyEntity(ghost);
                 _shipGhosts.Remove(peer);
+            }
+        }
+
+        // The simulation already removed the ship; here the ghost and the connection go too. _joinedPeers
+        // keeps the peer until its connection vanishes, otherwise SynchronizeConnections would rejoin it.
+        void DropTimedOutPeers()
+        {
+            while (_simulation.TryDequeueDroppedPeer(out int peer))
+            {
+                Debug.Log($"Hullbreach server: peer #{peer} timed out; closing its connection.");
+                if (_shipGhosts.TryGetValue(peer, out Entity ghost) && EntityManager.Exists(ghost))
+                    EntityManager.DestroyEntity(ghost);
+                _shipGhosts.Remove(peer);
+                if (_connections.TryGetValue(peer, out Entity connection) && EntityManager.Exists(connection) &&
+                    !EntityManager.HasComponent<NetworkStreamRequestDisconnect>(connection))
+                    EntityManager.AddComponentData(connection, new NetworkStreamRequestDisconnect
+                    {
+                        Reason = NetworkStreamDisconnectReason.ConnectionClose,
+                    });
             }
         }
 
