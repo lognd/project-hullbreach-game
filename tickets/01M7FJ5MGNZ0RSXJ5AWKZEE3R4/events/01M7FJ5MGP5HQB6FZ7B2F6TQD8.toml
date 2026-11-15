@@ -1,0 +1,11 @@
+kind = "create"
+title = "Pickup snapshot for reconnecting clients"
+type = "task"
+category = "todo"
+priority = "medium"
+points = 3
+labels = ["game"]
+acceptance = ["A client that connects mid-match receives the current crates and salvage as a snapshot", "A ServerSimulation test covers the snapshot"]
+at = "2026-11-15T12:16:03Z"
+actor = "lognd"
+rev = 1
