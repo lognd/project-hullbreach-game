@@ -16,10 +16,18 @@ split is why this is not an abstract base class with a subclass per block
 kind, which would cost a heap object and a virtual call in the innermost
 loop of the FE assembly and lock the simulation out of Burst.
 
+`Flags` (bit 0 = welded, S44) is a separate byte because `Modifiers` is fully
+allocated (facing, ramp, variant). A welded block cannot be removed in build
+mode (see PlacementRules.CanRemove).
+
 <!-- describes: Assets/Scripts/Hullbreach.Core/Grid/Block.cs::Block -->
 <!-- describes: Assets/Scripts/Hullbreach.Core/Grid/Block.cs::Block.TypeId -->
 <!-- describes: Assets/Scripts/Hullbreach.Core/Grid/Block.cs::Block.Modifiers -->
 <!-- describes: Assets/Scripts/Hullbreach.Core/Grid/Block.cs::Block.Damage -->
+<!-- describes: Assets/Scripts/Hullbreach.Core/Grid/Block.cs::Block.Flags -->
+<!-- describes: Assets/Scripts/Hullbreach.Core/Grid/Block.cs::Block.FlagWelded -->
+<!-- describes: Assets/Scripts/Hullbreach.Core/Grid/Block.cs::Block.IsWelded -->
+<!-- describes: Assets/Scripts/Hullbreach.Core/Grid/Block.cs::Block.WithWelded -->
 <!-- describes: Assets/Scripts/Hullbreach.Core/Grid/Block.cs::Block.Block -->
 <!-- describes: Assets/Scripts/Hullbreach.Core/Grid/Block.cs::Block.DamageFraction -->
 <!-- describes: Assets/Scripts/Hullbreach.Core/Grid/Block.cs::Block.WithDamage -->
