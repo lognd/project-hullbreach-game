@@ -129,16 +129,58 @@ namespace Hullbreach.NetCode.Entities
         static float s_confirmReadyUntil = -1f;
         public static bool ConfirmingReady => s_confirmReadyUntil > Time.unscaledTime;
 
-        // READY with a safety net: with plenty of points unspent the first press only asks; a second press within a few
-        // seconds goes ahead. Never a blocker.
+        // Build-phase structure preview for the local ship: re-solved ~150 ms after each edit, drives the block tint,
+        // the weakest-block pulse and the status line. Never gates anything.
+        public static readonly StressPreviewPresenter Stress = new StressPreviewPresenter();
+        public static bool ColorblindPalette { get; private set; }
+        // True while the READY press that warned about the structure is waiting for "Fly anyway" or "Fix it".
+        public static bool StructureWarned => ConfirmingReady && s_structureWarned;
+        // Tint and status only while the ship can still be edited.
+        public static bool StressPreviewActive => Active && IsBuildMode && !MatchRunning;
+        static bool s_structureWarned;
+        static int s_stressEvaluations;
+
+        static void UpdateStress()
+        {
+            if (!IsBuildMode || ReadySent || MatchRunning) return;
+            if (!TryGetLocalShip(out ShipBody ship)) { Stress.Reset(); return; }
+            Stress.Observe(ship.Grid, Time.unscaledTime);
+            if (Stress.Evaluations == s_stressEvaluations) return;
+            s_stressEvaluations = Stress.Evaluations;
+            // The design changed since the warning: forget it, so the next READY looks at the new ship.
+            if (s_structureWarned) { s_structureWarned = false; s_confirmReadyUntil = -1f; }
+        }
+
+        // "Fix it": stay in the builder and pulse the weakest block.
+        public static void FixStructure()
+        {
+            s_structureWarned = false;
+            s_confirmReadyUntil = -1f;
+            Stress.FocusWeakest(Time.unscaledTime);
+            Toasts.Push("Pulsing the weakest block - shorten the lever arm or add armor.", Time.unscaledTime);
+        }
+
+        // READY with a safety net: with plenty of points unspent, or a design that will snap under full thrust, the first
+        // press only asks; a second press within a few seconds ("Fly anyway") goes ahead. Never a blocker.
         public static void RequestReadyChecked(int pointsLeft)
         {
             if (ReadySent) return;
-            if (BuildPanelModel.ShouldConfirmReady(pointsLeft) && !ConfirmingReady)
+            if (!ConfirmingReady)
             {
-                s_confirmReadyUntil = Time.unscaledTime + 6f;
-                Toasts.Push($"{pointsLeft} points unspent - press READY again to go anyway.", Time.unscaledTime);
-                return;
+                bool unspent = BuildPanelModel.ShouldConfirmReady(pointsLeft);
+                string structure = TryGetLocalShip(out ShipBody ship) ? StressPreviewPresenter.ReadyWarning(ship.Grid) : null;
+                if (unspent || structure != null)
+                {
+                    s_confirmReadyUntil = Time.unscaledTime + 6f;
+                    s_structureWarned = structure != null;
+                    if (structure != null)
+                    {
+                        Toasts.Push(structure, Time.unscaledTime);
+                        Stress.FocusWeakest(Time.unscaledTime);
+                    }
+                    if (unspent) Toasts.Push($"{pointsLeft} points unspent - press READY again to go anyway.", Time.unscaledTime);
+                    return;
+                }
             }
             RequestReady();
         }
@@ -220,6 +262,16 @@ namespace Hullbreach.NetCode.Entities
             s_designApplied = false;
             Designs.Clear();
             Toasts.Clear();
+            Stress.Reset();
+            s_stressEvaluations = Stress.Evaluations;
+            s_structureWarned = false;
+            s_confirmReadyUntil = -1f;
+            try
+            {
+                ColorblindPalette = new GameSettingsStore(
+                    System.IO.Path.Combine(Application.persistentDataPath, "settings.txt"), null).Load().ColorblindPalette;
+            }
+            catch { ColorblindPalette = false; }
             PublishStatus();
         }
 
@@ -233,6 +285,7 @@ namespace Hullbreach.NetCode.Entities
         void Update()
         {
             RestoreLastDesign();
+            UpdateStress();
             if (Input.GetKeyDown(KeyCode.Tab))
             {
                 IsBuildMode = !IsBuildMode;

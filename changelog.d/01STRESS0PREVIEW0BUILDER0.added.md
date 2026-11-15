@@ -1,0 +1,1 @@
+The builder now previews structural stress: blocks tint green / amber / red, the weakest block pulses when the design is not Safe, a status line reads "Structure: Safe / Marginal / Will snap under full thrust", and READY warns (with Fix it / Fly anyway) before you fly a design that will break.

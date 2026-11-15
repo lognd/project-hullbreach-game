@@ -692,13 +692,57 @@ the grid.
   (WillBreak, about 1.0 s to fail); the same blocks with the thrusters at
   x = +-2,3 peak at 0.74 (Safe).
 
-**Unity follow-up (build UI).** Hold one `ShipStressPreview` in the builder
-controller. After each place/remove (debounced about 150 ms) call
-`Evaluate(grid)` and: (1) tint each block from `result.Risk[key]` (green
-below 0.8, amber to 1.0, red above, same ramp as the Stress overlay);
-(2) pulse the block `result.WeakestKey` when the verdict is not Safe;
-(3) on READY, run once with `IncludeBuckling = true` and, if
-`Verdict == WillBreak`, show `result.Warning` ("This design will snap under
-full thrust") with Fix / Fly anyway. It must be a warning, never a blocker,
-as with the unspent-points confirm. The server stays authoritative.
+### Stress preview in the builder
+
+<!-- describes: Assets/Scripts/Hullbreach.Hud/StressPreviewPresenter.cs::StressTintModel -->
+<!-- describes: Assets/Scripts/Hullbreach.Hud/StressPreviewPresenter.cs::StressTintModel.AmberAt -->
+<!-- describes: Assets/Scripts/Hullbreach.Hud/StressPreviewPresenter.cs::StressTintModel.RedAt -->
+<!-- describes: Assets/Scripts/Hullbreach.Hud/StressPreviewPresenter.cs::StressTintModel.Tint -->
+<!-- describes: Assets/Scripts/Hullbreach.Hud/StressPreviewPresenter.cs::StressTintModel.StatusLine -->
+<!-- describes: Assets/Scripts/Hullbreach.Hud/StressPreviewPresenter.cs::StressTintModel.StatusColor -->
+<!-- describes: Assets/Scripts/Hullbreach.Hud/StressPreviewPresenter.cs::StressTintModel.Pulse -->
+<!-- describes: Assets/Scripts/Hullbreach.Hud/StressPreviewPresenter.cs::StressPreviewPresenter -->
+<!-- describes: Assets/Scripts/Hullbreach.Hud/StressPreviewPresenter.cs::StressPreviewPresenter.DebounceSeconds -->
+<!-- describes: Assets/Scripts/Hullbreach.Hud/StressPreviewPresenter.cs::StressPreviewPresenter.FocusSeconds -->
+<!-- describes: Assets/Scripts/Hullbreach.Hud/StressPreviewPresenter.cs::StressPreviewPresenter.Result -->
+<!-- describes: Assets/Scripts/Hullbreach.Hud/StressPreviewPresenter.cs::StressPreviewPresenter.Evaluations -->
+<!-- describes: Assets/Scripts/Hullbreach.Hud/StressPreviewPresenter.cs::StressPreviewPresenter.Observe -->
+<!-- describes: Assets/Scripts/Hullbreach.Hud/StressPreviewPresenter.cs::StressPreviewPresenter.Reset -->
+<!-- describes: Assets/Scripts/Hullbreach.Hud/StressPreviewPresenter.cs::StressPreviewPresenter.TintFor -->
+<!-- describes: Assets/Scripts/Hullbreach.Hud/StressPreviewPresenter.cs::StressPreviewPresenter.PulseFor -->
+<!-- describes: Assets/Scripts/Hullbreach.Hud/StressPreviewPresenter.cs::StressPreviewPresenter.FocusWeakest -->
+<!-- describes: Assets/Scripts/Hullbreach.Hud/StressPreviewPresenter.cs::StressPreviewPresenter.Status -->
+<!-- describes: Assets/Scripts/Hullbreach.Hud/StressPreviewPresenter.cs::StressPreviewPresenter.ReadyWarning -->
+
+The online build panel runs `ShipStressPreview` on the local ship through the
+engine-free `StressPreviewPresenter` (Hullbreach.Hud); the Unity layer only
+reads it.
+
+- **Tint.** `HullbreachNetworkGameplayController` calls `Stress.Observe(grid,
+  Time.unscaledTime)` each frame while building. A cheap grid fingerprint
+  (cell, type, facing) detects any place, remove or template swap; the preview
+  is re-solved once the grid has been still for 150 ms (no buckling), so a burst
+  of edits costs one solve. `HullbreachNetCodeView` blends each local block
+  toward `StressTintModel.Tint(risk)`: green below 0.8, amber 0.8 to 1.0, red at
+  1.0 and above. The colorblind setting (`GameSettings.ColorblindPalette`)
+  swaps in the blue / yellow / vermillion ramp.
+- **Pulse.** The weakest block (`WeakestKey`) pulses at 2 Hz when the verdict is
+  not Safe, and for four seconds after "Fix it" even when Safe.
+- **Status line.** One line above the refusal line: "Structure: Safe",
+  "Structure: Marginal" or "Structure: Will snap under full thrust", coloured
+  with the same ramp. Hidden once the match is running.
+- **READY.** The first press runs one evaluation with `IncludeBuckling = true`
+  (`StressPreviewPresenter.ReadyWarning`). If the verdict is WillBreak the press
+  only warns: the toast shows `result.Warning`, the READY button reads
+  "FLY ANYWAY?" and a "Fix it" button appears. "Fix it" stays in the builder and
+  pulses the weakest block; a second READY press within six seconds goes ahead.
+  Editing the ship clears the warning so the next READY re-checks the new
+  design. This shares the unspent-points confirm window (`ConfirmingReady`), so
+  both reasons are asked once. It is a warning, never a blocker, and the server
+  stays authoritative. Bots and the starter templates never go through this
+  path; the templates all evaluate Safe (tested).
+
+The Unity view code (tint, status line, Fix it button) was written without an
+editor and is covered by review only; the presenter and models are plain-C#
+tested in `StressPreviewPresenterTests`.
 
