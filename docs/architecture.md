@@ -88,6 +88,10 @@ Concretely, from each `.asmdef`'s `references`:
   purely a grid-geometry question.
 - `Hullbreach.Net` -> `Core`, `Ship`, `World`, `Structure`. Engine-free wire
   messages, quantization, authoritative simulation, and client replication.
+- `Hullbreach.Bots` -> `Core`, `Match`, `Platform`, `Builder`, `Ship`, `World`, `Structure`, `Net`.
+  Engine-free bot opponents: a pilot, a ship builder and a headless arena that
+  plug in as an ordinary peer through `ServerSimulation.SetInput`. See
+  [reference/hullbreach-bots.md](reference/hullbreach-bots.md).
 - `Hullbreach.NetCode.Entities` -> `Net`, Unity Entities/NetCode/Transport.
   Unity-specific client/server bootstrap and RPC bridge; it forwards the
   existing `Hullbreach.Net` bytes instead of defining a second protocol.
