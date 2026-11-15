@@ -183,6 +183,8 @@ namespace Hullbreach.Net
             public bool IsBuilding;
             public bool HasInput;
             public bool PendingFire;
+            // Block damage at the start of this tick step; see SnapshotDamage.
+            public readonly Dictionary<int, byte> DamageBeforeStep = new Dictionary<int, byte>();
             public uint NextBuildTick;
             public bool InPushZone;
             public readonly TrustLevel Trust = new TrustLevel();
@@ -325,6 +327,10 @@ namespace Hullbreach.Net
         // frob:doc docs/reference/hullbreach-net.md#serversimulation
         public ArenaBounds Bounds { get; private set; } = ArenaConfig.DefaultBounds;
 
+        // Crash, atmosphere and warning tunables every ship on this server uses; replaced by ConfigureDemoArena.
+        // frob:doc docs/reference/hullbreach-net.md#serversimulation
+        public PlanetCrashConfig PlanetCrash { get; private set; } = PlanetCrashConfig.Default();
+
         // Diagnostics sink for arena edge events; defaults to a no-op.
         // frob:doc docs/reference/hullbreach-net.md#serversimulation
         public IPlatformLog Log { get; set; } = NullPlatformLog.Instance;
@@ -340,6 +346,8 @@ namespace Hullbreach.Net
             _gravity.Clear();
             Bounds = config.Bounds;
             Storm = config.Storm;
+            PlanetCrash = config.Crash;
+            foreach (var peerState in _peers.Values) peerState.Ship.PlanetCrash = PlanetCrash;
             _stormCandidates = new float2[config.Bodies.Count];
             for (int i = 0; i < _stormCandidates.Length; i++)
                 _stormCandidates[i] = new float2(config.Bodies[i].X, config.Bodies[i].Y);
@@ -461,6 +469,7 @@ namespace Hullbreach.Net
             {
                 Gravity = _gravity,
                 World = _sink,
+                PlanetCrash = PlanetCrash,
             };
 
             foreach (var b in initialDesign.Blocks)
@@ -684,7 +693,9 @@ namespace Hullbreach.Net
 
                 if (state.IsBuilding) continue;
 
+                SnapshotDamage(state);
                 state.Ship.Step(input, dt);
+                ReportBodyDamage(peer, state);
                 ApplyArenaPush(peer, state, dt);
                 DrainShots(peer, state.Ship);
             }
@@ -767,6 +778,36 @@ namespace Hullbreach.Net
                 foreach (int key in destroyed) state.StormCarry.Remove(key);
                 if (destroyed.Count > 0) DestroyAndDetach(peer, state, destroyed);
             }
+        }
+
+        // Remembers every block damage before a ship steps, so crash and heating damage done inside the
+        // step can be told to the clients afterwards.
+        static void SnapshotDamage(PeerState state)
+        {
+            state.DamageBeforeStep.Clear();
+            foreach (var block in state.Ship.Grid.All) state.DamageBeforeStep[block.Key] = block.Value.Damage;
+        }
+
+        // Broadcasts what a planet did to the ship this step and removes blocks it wore down to 255; the
+        // core is only ever damaged, never removed, so the match rules decide the loss.
+        // frob:doc docs/reference/hullbreach-net.md#serversimulation
+        void ReportBodyDamage(int peer, PeerState state)
+        {
+            var grid = state.Ship.Grid;
+            int coreKey = grid.CoreKeyOrDefault();
+            List<int> destroyed = null;
+            var keys = new List<int>();
+            foreach (int k in grid.SortedKeys) keys.Add(k);
+            foreach (int key in keys)
+            {
+                if (!grid.TryGet(key, out Block block)) continue;
+                state.DamageBeforeStep.TryGetValue(key, out byte before);
+                if (block.Damage == before) continue;
+                if (block.Damage >= Connectivity.DestroyedDamage && key != coreKey) { (destroyed ??= new List<int>()).Add(key); continue; }
+                BlockKey.Unpack(key, out int x, out int y);
+                BroadcastReliable(new BlockDamaged(NextSequence(), state.NetId, (sbyte)x, (sbyte)y, block.Damage));
+            }
+            if (destroyed != null) DestroyAndDetach(peer, state, destroyed);
         }
 
         // Nudges a ship back toward the arena; a velocity change only, so no force reaches the

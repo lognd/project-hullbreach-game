@@ -72,6 +72,10 @@ namespace Hullbreach.Ship
         // frob:doc docs/reference/hullbreach-ship.md#shipbody
         public float ContactClearance = 0.5f;
 
+        // Planet crash, atmosphere and warning tunables; the server and the client prediction must share one value.
+        // frob:doc docs/reference/hullbreach-ship.md#shipbody
+        public PlanetCrashConfig PlanetCrash = PlanetCrashConfig.Default();
+
         // Cleared and repopulated every Step, for the renderer/audio.
         // frob:doc docs/reference/hullbreach-ship.md#shipbody
         public readonly List<(int key, float2 normal, float speed)> ContactsThisStep = new List<(int, float2, float)>();
@@ -116,6 +120,18 @@ namespace Hullbreach.Ship
         float2 _forceAccum;
         float _torqueAccum;
 
+        // Farthest block corner from the ship origin; lets Step skip substepping while far from every planet.
+        float _reach = 1f;
+
+        // Fractional heating damage per block, carried so slow burns are not rounded away.
+        readonly Dictionary<int, float> _heatCarry = new Dictionary<int, float>();
+
+        // Scratch for one contact pass; reused so Step stays allocation-free.
+        readonly List<int> _contactKeys = new List<int>();
+        readonly List<float2> _contactNormals = new List<float2>();
+        readonly List<float> _contactClosing = new List<float>();
+        readonly List<int> _contactBodies = new List<int>();
+
         // Keyed by grid key: a cell has exactly one block/behaviour, so
         // keys never collide.
         readonly Dictionary<int, float> _throttleByKey = new Dictionary<int, float>();
@@ -158,6 +174,11 @@ namespace Hullbreach.Ship
             foreach (int key in _powerupExpiryByKey.Keys)
                 if (!Grid.Contains(key)) removed.Add(key);
             foreach (int key in removed) _powerupExpiryByKey.Remove(key);
+
+            float reach = 1f;
+            foreach (int key in Grid.SortedKeys)
+                reach = math.max(reach, math.length(BlockGrid.CenterOf(key)) + 0.71f);
+            _reach = reach;
 
             Grid.ClearDirty();
         }
@@ -285,13 +306,50 @@ namespace Hullbreach.Ship
             {
                 AngularVelocity *= 1f / (1f + AngularDamping * dt);
             }
-            Position += Velocity * dt;
-            Rotation += AngularVelocity * dt;
 
             _forceAccum = float2.zero;
             _torqueAccum = 0f;
 
-            ResolvePlanetContacts(dt);
+            ContactsThisStep.Clear();
+            if (Gravity == null)
+            {
+                Position += Velocity * dt;
+                Rotation += AngularVelocity * dt;
+                return;
+            }
+
+            ApplyAtmosphere(dt);
+
+            // Fast ships move in several short hops with a contact test after each, so a block
+            // can never skip across the surface layer in one tick.
+            int substeps = SweepSubsteps(dt);
+            float h = dt / substeps;
+            for (int s = 0; s < substeps; s++)
+            {
+                Position += Velocity * h;
+                Rotation += AngularVelocity * h;
+                ResolvePlanetContacts(h);
+            }
+        }
+
+        // 1 unless a planet surface is within reach this tick; then enough hops that none exceeds SweepStep.
+        int SweepSubsteps(float dt)
+        {
+            float travel = (math.length(Velocity) + math.abs(AngularVelocity) * _reach) * dt;
+            if (travel <= PlanetCrash.SweepStep) return 1;
+
+            bool near = false;
+            int count = Gravity.PermanentCount;
+            for (int i = 0; i < count && !near; i++)
+            {
+                if (!Gravity.TryGetPermanent(i, out var body)) continue;
+                float gap = math.length(Position - body.Position) - body.Radius - ContactClearance;
+                near = gap <= _reach + travel;
+            }
+            if (!near) return 1;
+
+            int steps = (int)math.ceil(travel / PlanetCrash.SweepStep);
+            return math.clamp(steps, 1, PlanetCrash.MaxSubsteps);
         }
 
         // Each block's own weight is pushed through AddForceAtPoint at its
@@ -317,90 +375,211 @@ namespace Hullbreach.Ship
             }
         }
 
-        // Tests every block against Gravity for contact and applies
-        // push-out, restitution/friction impulses and contact damage.
-        void ResolvePlanetContacts(float dt)
+        // Tests every block against Gravity for contact; applies push-out, a restitution impulse
+        // (none for a gentle touch, capped so no setting adds energy), friction, and crash damage
+        // to exactly the blocks that touch. `h` is the substep length.
+        void ResolvePlanetContacts(float h)
         {
-            ContactsThisStep.Clear();
-            if (Gravity == null || Grid.Mass.Total <= 0f) return;
+            if (Grid.Mass.Total <= 0f) return;
 
-            // Grid.SortedKeys is already the deterministic, allocation-free
-            // key view BlockGrid maintains.
+            // Grid.SortedKeys is already the deterministic, allocation-free key view.
             var keys = Grid.SortedKeys;
+            var cfg = PlanetCrash;
 
-            // Pass 1: find the single deepest penetration and push the
-            // whole ship out once, so a flat landing is not pushed out repeatedly.
+            // Pass 1: push the whole ship out once by the deepest penetration, so a flat landing is not pushed out repeatedly.
             float deepestPenetration = 0f;
             float2 deepestNormal = float2.zero;
-            bool anyContact = false;
-
             for (int i = 0; i < keys.Length; i++)
             {
-                int key = keys[i];
-                float2 worldCenter = LocalToWorld(BlockGrid.CenterOf(key));
-                if (!Gravity.TryContact(worldCenter, ContactClearance, out _, out var normal, out var penetration)) continue;
-                anyContact = true;
-                if (penetration > deepestPenetration)
-                {
-                    deepestPenetration = penetration;
-                    deepestNormal = normal;
-                }
+                float2 center = LocalToWorld(BlockGrid.CenterOf(keys[i]));
+                if (!Gravity.TryContact(center, ContactClearance, out _, out var n, out var pen)) continue;
+                if (pen > deepestPenetration) { deepestPenetration = pen; deepestNormal = n; }
             }
-
-            if (anyContact && deepestPenetration > 0f)
-            {
-                Position += deepestNormal * deepestPenetration;
-            }
-
-            if (!anyContact) return;
+            if (deepestPenetration <= 0f) return;
+            Position += deepestNormal * deepestPenetration;
 
             float mass = Grid.Mass.Total;
             float inertia = Grid.Mass.InertiaAboutCenterOfMass;
+            float2 comWorld = LocalToWorld(Grid.Mass.CenterOfMass);
+
+            // Pass 2: snapshot every contact BEFORE any impulse, so one block impulse cannot
+            // change what the next block is charged for (order independent damage).
+            _contactKeys.Clear(); _contactNormals.Clear(); _contactClosing.Clear(); _contactBodies.Clear();
+            int pressing = 0;
+            for (int i = 0; i < keys.Length; i++)
+            {
+                int key = keys[i];
+                float2 center = LocalToWorld(BlockGrid.CenterOf(key));
+                if (!Gravity.TryContact(center, ContactClearance, out int bodyIndex, out var normal, out _)) continue;
+                float2 r = center - comWorld;
+                float2 blockVelocity = Velocity + AngularVelocity * new float2(-r.y, r.x);
+                float closing = -math.dot(blockVelocity, normal);
+                _contactKeys.Add(key); _contactNormals.Add(normal); _contactClosing.Add(closing); _contactBodies.Add(bodyIndex);
+                if (closing > 0f) pressing++;
+            }
+
+            // Pass 3: respond block by block.
+            for (int c = 0; c < _contactKeys.Count; c++)
+            {
+                int key = _contactKeys[c];
+                float2 normal = _contactNormals[c];
+                float closing = _contactClosing[c];
+                float2 worldCenter = LocalToWorld(BlockGrid.CenterOf(key));
+                float2 r = worldCenter - comWorld;
+
+                float restitution = 0f;
+                if (Gravity.TryGetPermanent(_contactBodies[c], out var body))
+                    restitution = math.clamp(body.SurfaceRestitution, 0f, cfg.MaxRestitution);
+                if (closing < cfg.RestSpeed) restitution = 0f;
+
+                // Re-read the live normal velocity: an earlier block this pass may already have stopped the closing.
+                float2 liveVelocity = Velocity + AngularVelocity * new float2(-r.y, r.x);
+                float vn = math.dot(liveVelocity, normal);
+                if (vn < 0f)
+                {
+                    float crossRN = r.x * normal.y - r.y * normal.x;
+                    float denom = inertia > 0f ? (1f / mass) + (crossRN * crossRN) / inertia : (1f / mass);
+                    ApplyImpulseAtWorldPoint(worldCenter, normal * (-(1f + restitution) * vn / denom));
+                }
+
+                // Ground friction: bleed the tangential velocity after the bounce.
+                float2 tangent = new float2(-normal.y, normal.x);
+                float2 postVelocity = Velocity + AngularVelocity * new float2(-r.y, r.x);
+                float vt = math.dot(postVelocity, tangent);
+                float frictionImpulseMag = -vt * math.clamp(Friction * h, 0f, 1f) * mass;
+                if (frictionImpulseMag != 0f) ApplyImpulseAtWorldPoint(worldCenter, tangent * frictionImpulseMag);
+
+                ContactsThisStep.Add((key, normal, math.abs(closing)));
+
+                if (closing > cfg.SafeLandingSpeed && Grid.TryGet(key, out var block))
+                {
+                    float damage = cfg.ImpactDamage(closing, pressing, block.TypeId == BlockTypes.Core);
+                    if (damage >= 1f)
+                        Grid.TrySet(key, block.WithDamage((byte)math.min(255, block.Damage + (int)damage)));
+                }
+            }
+        }
+
+        // Drag and heating while fast inside a thin band above a planet surface. Velocity changes only,
+        // like the arena push, so no force reaches the structural solver; the core is never heated.
+        void ApplyAtmosphere(float dt)
+        {
+            var cfg = PlanetCrash;
+            float speed = math.length(Velocity);
+            if (speed <= cfg.AtmosphereSafeSpeed) return;
+
+            float2 comWorld = LocalToWorld(Grid.Mass.CenterOfMass);
+            int count = Gravity.PermanentCount;
+            for (int i = 0; i < count; i++)
+            {
+                if (!Gravity.TryGetPermanent(i, out var body)) continue;
+                speed = math.length(Velocity);
+                if (speed <= cfg.AtmosphereSafeSpeed) return;
+
+                float altitude = math.length(comWorld - body.Position) - body.Radius;
+                float density = cfg.AtmosphereDensity(body, altitude);
+                if (density <= 0f) continue;
+
+                float2 direction = Velocity / speed;
+                float excess = speed - cfg.AtmosphereSafeSpeed;
+                float slow = math.min(cfg.AtmosphereDrag * density * excess * dt, excess);
+                Velocity -= direction * slow;
+
+                if (speed > cfg.HeatSpeed) HeatLeadingBlocks(direction, comWorld, density, speed, dt);
+            }
+        }
+
+        void HeatLeadingBlocks(float2 direction, float2 comWorld, float density, float speed, float dt)
+        {
+            var cfg = PlanetCrash;
+            float perSecond = math.min(cfg.HeatMaxDamagePerSecond,
+                cfg.HeatDamagePerSecond * density * (speed - cfg.HeatSpeed) / cfg.HeatSpeed);
+            if (perSecond <= 0f) return;
+
+            var keys = Grid.SortedKeys;
+            float front = float.NegativeInfinity;
+            for (int i = 0; i < keys.Length; i++)
+                front = math.max(front, math.dot(LocalToWorld(BlockGrid.CenterOf(keys[i])) - comWorld, direction));
 
             for (int i = 0; i < keys.Length; i++)
             {
                 int key = keys[i];
-                float2 worldCenter = LocalToWorld(BlockGrid.CenterOf(key));
-                if (!Gravity.TryContact(worldCenter, ContactClearance, out int bodyIndex, out var normal, out _)) continue;
+                if (math.dot(LocalToWorld(BlockGrid.CenterOf(key)) - comWorld, direction) < front - 0.5f) continue;
+                if (!Grid.TryGet(key, out var block) || block.TypeId == BlockTypes.Core) continue;
 
-                float2 r = worldCenter - LocalToWorld(Grid.Mass.CenterOfMass);
-                float2 blockVelocity = Velocity + AngularVelocity * new float2(-r.y, r.x);
-                float vn = math.dot(blockVelocity, normal);
+                _heatCarry.TryGetValue(key, out float carry);
+                carry += perSecond * dt;
+                int whole = (int)carry;
+                _heatCarry[key] = carry - whole;
+                if (whole > 0) Grid.TrySet(key, block.WithDamage((byte)math.min(255, block.Damage + whole)));
+            }
+        }
 
-                float restitution = Gravity.TryGetPermanent(bodyIndex, out var body) ? body.SurfaceRestitution : 0f;
+        // The nearest planet as seen from the lowest block: gap, closing speed, time to touchdown and
+        // how bad it would be. Allocation-free; safe to call every frame from the HUD.
+        // frob:doc docs/reference/hullbreach-ship.md#shipbody
+        public PlanetProximity QueryPlanetProximity()
+        {
+            var result = new PlanetProximity
+            {
+                BodyIndex = -1, TimeToImpact = float.PositiveInfinity, StopDistance = float.PositiveInfinity, Severity = ImpactSeverity.None, IsSafe = true,
+            };
+            if (Gravity == null || Grid.Mass.Total <= 0f) return result;
 
-                if (vn < 0f)
+            var keys = Grid.SortedKeys;
+            float bestGap = float.PositiveInfinity;
+            float2 bestCenter = float2.zero;
+            int bestBody = -1;
+            GravityBody bestBodyValue = default;
+            int count = Gravity.PermanentCount;
+            for (int b = 0; b < count; b++)
+            {
+                if (!Gravity.TryGetPermanent(b, out var body)) continue;
+                for (int i = 0; i < keys.Length; i++)
                 {
-                    float crossRN = r.x * normal.y - r.y * normal.x;
-                    float denom = inertia > 0f
-                        ? (1f / mass) + (crossRN * crossRN) / inertia
-                        : (1f / mass);
-                    float impulseMag = -(1f + restitution) * vn / denom;
-                    float2 impulse = normal * impulseMag;
-                    ApplyImpulseAtWorldPoint(worldCenter, impulse);
-                }
-
-                // Ground friction: bleed the tangential velocity,
-                // recomputed after restitution so friction acts post-bounce.
-                float2 tangent = new float2(-normal.y, normal.x);
-                float2 postR = worldCenter - LocalToWorld(Grid.Mass.CenterOfMass);
-                float2 postVelocity = Velocity + AngularVelocity * new float2(-postR.y, postR.x);
-                float vt = math.dot(postVelocity, tangent);
-                float frictionImpulseMag = -vt * math.clamp(Friction * dt, 0f, 1f) * mass;
-                if (frictionImpulseMag != 0f)
-                {
-                    ApplyImpulseAtWorldPoint(worldCenter, tangent * frictionImpulseMag);
-                }
-
-                ContactsThisStep.Add((key, normal, math.abs(vn)));
-
-                if (math.abs(vn) > ContactDamageSpeed && Grid.TryGet(key, out var block))
-                {
-                    float damageAmount = math.clamp((math.abs(vn) - ContactDamageSpeed) * ContactDamagePerSpeed, 0f, 255f);
-                    int newDamage = math.min(255, block.Damage + (int)damageAmount);
-                    Grid.TrySet(key, block.WithDamage((byte)newDamage));
+                    float2 center = LocalToWorld(BlockGrid.CenterOf(keys[i]));
+                    float gap = math.length(center - body.Position) - body.Radius - ContactClearance;
+                    if (gap < bestGap) { bestGap = gap; bestCenter = center; bestBody = b; bestBodyValue = body; }
                 }
             }
+            if (bestBody < 0) return result;
+
+            var cfg = PlanetCrash;
+            float2 toShip = bestCenter - bestBodyValue.Position;
+            float2 normal = math.normalizesafe(toShip, new float2(0f, 1f));
+            float2 comWorld = LocalToWorld(Grid.Mass.CenterOfMass);
+            float2 r = bestCenter - comWorld;
+            float2 velocity = Velocity + AngularVelocity * new float2(-r.y, r.x);
+            float closing = -math.dot(velocity, normal);
+
+            result.HasBody = true;
+            result.BodyIndex = bestBody;
+            result.SurfaceNormal = normal;
+            result.Altitude = math.max(bestGap, 0f);
+            result.ClosingSpeed = closing;
+            result.TangentialSpeed = math.abs(math.dot(velocity, new float2(-normal.y, normal.x)));
+
+            float comAltitude = math.length(comWorld - bestBodyValue.Position) - bestBodyValue.Radius;
+            result.AtmosphereDensity = cfg.AtmosphereDensity(bestBodyValue, comAltitude);
+            float speed = math.length(Velocity);
+            result.Heating = result.AtmosphereDensity > 0f && speed > cfg.HeatSpeed;
+
+            float inward = -math.dot(Gravity.AccelerationAt(bestCenter), normal);
+            const float MinClosing = 0.25f;
+            if (closing > MinClosing)
+            {
+                result.TimeToImpact = PlanetProximity.TimeToCover(result.Altitude, closing, inward, out float impact);
+                result.PredictedImpactSpeed = impact;
+                if (result.TimeToImpact <= cfg.WarningSeconds)
+                    result.Severity = PlanetProximity.Classify(cfg, impact);
+
+                float thrust = ThrusterKeys.Length * ThrustPerBlock / Grid.Mass.Total;
+                float net = thrust - inward;
+                result.StopDistance = net > 1e-3f ? closing * closing / (2f * net) : float.PositiveInfinity;
+                result.MustBrake = result.Severity >= ImpactSeverity.Caution && result.StopDistance * 1.3f >= result.Altitude;
+            }
+            result.IsSafe = result.Severity < ImpactSeverity.Caution && !result.Heating;
+            return result;
         }
 
         // The entire dispatch: a new variant needs only an IBlockBehaviour

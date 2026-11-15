@@ -555,6 +555,7 @@ and to which ship, without re-parsing wire bytes.
 
 <!-- describes: Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ClientReplica -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ClientReplica.Ships -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ClientReplica.PredictionPlanetCrash -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ClientReplica.ApplySnapshot -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ClientReplica.ApplyState -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ClientReplica.TryInterpolate -->
@@ -732,6 +733,7 @@ state never reads it.
 <!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.MaxPeerId -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.FirstFragmentId -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.ConfigureDemoArena -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.PlanetCrash -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.Bounds -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.Storm -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.StormEnabled -->
@@ -1081,6 +1083,7 @@ Launch scripts and log checks grep for both.
 <!-- describes: Assets/Scripts/Hullbreach.Net/ArenaConfig.cs::ArenaConfig.SpawnAngleStep -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ArenaConfig.cs::ArenaConfig.Bounds -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ArenaConfig.cs::ArenaConfig.Storm -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ArenaConfig.cs::ArenaConfig.Crash -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ArenaConfig.cs::ArenaConfig.DefaultBounds -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ArenaConfig.cs::ArenaConfig.ArenaConfig -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ArenaConfig.cs::ArenaConfig.Defaults -->
