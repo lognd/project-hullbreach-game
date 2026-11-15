@@ -2,12 +2,13 @@
 id = "01M4GTH6T6R4Q370Z8XCYPJRB7"
 title = "NetCode server system ignores timed-out peers (ghost and connection stay)"
 type = "bug"
-category = "in-progress"
+category = "done"
+outcome = "fixed"
 priority = "medium"
 points = 2
 reporter = "mcnairrobotics"
 created = "2026-10-09T17:14:20Z"
-updated = "2026-11-15T04:35:57Z"
+updated = "2026-11-15T05:22:14Z"
 labels = ["owner:mcnairrobotics"]
 scope = ["Assets/Scripts/Hullbreach.NetCode.Entities/HullbreachNetCodeServerSystem.cs"]
 
