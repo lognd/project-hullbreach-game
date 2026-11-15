@@ -78,6 +78,9 @@ namespace Hullbreach.NetCode.Entities
                         FeelFx.AddShake(mine ? 0.5f : 0.2f);
                         break;
                     case ReplicaEventKind.BlockPlaced:
+                        if (mine) HullbreachTrialProbe.BlocksPlaced++;
+                        FeelFx.PlayClick();
+                        break;
                     case ReplicaEventKind.PowerupApplied:
                         FeelFx.PlayClick();
                         break;
@@ -100,7 +103,7 @@ namespace Hullbreach.NetCode.Entities
                 // A shot already well away from its owner was fired before we looked; no flash for it.
                 if (replica.Ships.TryGetValue(v.OwnerNetId, out ShipBody shooter) &&
                     (p - new Vector2(shooter.Position.x, shooter.Position.y)).magnitude < 8f)
-                { MuzzlesFired++; FeelFx.Muzzle(p, d, Vector2.zero); }
+                { MuzzlesFired++; if (v.OwnerNetId == local) HullbreachTrialProbe.ShotsFired++; FeelFx.Muzzle(p, d, Vector2.zero); }
             }
             if (_seenProjectiles.Count > 256)
             {

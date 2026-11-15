@@ -69,7 +69,7 @@ namespace Hullbreach.NetCode.Entities
             Button(prt, "Easy", new Vector2(12f, -52f), new Vector2(128f, 44f), () => Go(BotDifficulty.Easy, false));
             Button(prt, "Normal", new Vector2(150f, -52f), new Vector2(128f, 44f), () => Go(BotDifficulty.Normal, false));
             Button(prt, "Hard", new Vector2(288f, -52f), new Vector2(128f, 44f), () => Go(BotDifficulty.Hard, false));
-            Button(prt, "CADET TRIAL  (learn to fly and shoot)", new Vector2(12f, -104f), new Vector2(404f, 44f), () => Go(BotDifficulty.Easy, true));
+            Button(prt, HullbreachCadetTrialView.EverCompleted ? "CADET TRIAL  (completed - replay)" : "CADET TRIAL  (learn to fly and shoot)", new Vector2(12f, -104f), new Vector2(404f, 44f), () => Go(BotDifficulty.Easy, true));
             _note = Label(prt, string.Empty, 20, new Vector2(12f, -154f), new Vector2(404f, 30f));
         }
 
