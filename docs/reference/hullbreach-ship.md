@@ -397,6 +397,7 @@ so pure physics tests stay pure.
 - Brake: with a retro thruster, holding S adds `BrakeGain` times the retro acceleration
   against the velocity relative to `ShipBody.BrakeReferenceVelocity` (the dominant body;
   planets are static so it is zero). It stops the ship and never reverses it.
+  The default gain (22) stops a Demo ship from 20 u/s in about 2 s.
 - Fire buffer: a fire press that lands during cooldown is remembered for
   `FireBufferSeconds` and fires the moment the cannon is ready; a shot clears it.
 

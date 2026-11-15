@@ -72,7 +72,7 @@ namespace Hullbreach.Ship
             t.ThrusterRampDownScale = 5f / 3f;     // 1.5x slower off than on
             t.FinRampUpSeconds = 0.15f;
             t.FinRampDownSeconds = 0.10f;
-            t.BrakeGain = 3f;
+            t.BrakeGain = 22f;
             t.FireBufferSeconds = 0.15f;
             return t;
         }
