@@ -19,16 +19,21 @@ namespace Hullbreach.NetCode.Entities
 
         void Update()
         {
+            if (Input.GetKeyDown(KeyCode.F3)) _debug = !_debug;
             var replica = HullbreachNetCodeClient.Replica;
             int shipCount = replica?.Ships.Count ?? 0;
-            string mode = HullbreachNetworkGameplayController.IsBuildMode ? "BUILD" : "FLIGHT";
-            string controls = HullbreachNetworkGameplayController.IsBuildMode
-                ? $"1-6 select - click place - X/right-click remove - Tab fly\n{HullbreachNetworkGameplayController.BuildStatus}\n{BuildCooldownModel.Line(HullbreachNetworkGameplayController.BuildCooldownRemaining)}"
-                : $"{ShipControls.ThrustSteerLine}\n{ShipControls.OnlineFireBuildLine}"; // frob:ticket 01M6WV815GYEJ58MTM4HSS4Z6K
-            statusText.text = HullbreachNetCodeClient.IsConnected
-                ? $"Connected as #{HullbreachNetCodeClient.LocalNetworkId}  -  Replicated ships: {shipCount}  -  {mode}\n{HullbreachPlatformAdmission.StatusLine}\n{controls}"
-                : "Waiting for Netcode connection...";
+            bool build = HullbreachNetworkGameplayController.IsBuildMode;
+            string mode = build ? "BUILD" : "FLIGHT";
+            string controls = build
+                ? "1-6 pick  X remove  Tab fly"
+                : $"{ShipControls.ThrustSteerLine}";
+            if (!HullbreachNetCodeClient.IsConnected) { statusText.text = "Waiting for Netcode connection..."; return; }
+            statusText.text = _debug
+                ? $"{mode}  #{HullbreachNetCodeClient.LocalNetworkId}  ships {shipCount}  {HullbreachPlatformAdmission.StatusLine}\n{controls}"
+                : $"{mode}\n{controls}"; // frob:ticket 01M6WV815GYEJ58MTM4HSS4Z6K
         }
+
+        bool _debug;
 
         async void Leave()
         {
