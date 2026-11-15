@@ -68,9 +68,12 @@ namespace Hullbreach.NetCode.Entities
                 {
                     case ReplicaEventKind.BlockDamaged:
                         ImpactsFired++;
+                        if (IsCore(replica, evt))
+                            HullbreachMatchHudView.Feed.Push(mine ? "YOUR CORE HIT" : "ENEMY CORE HIT", mine ? Hullbreach.Hud.HudColor.WarningCriticalRed : Hullbreach.Hud.HudColor.ReverseGreen, Time.unscaledTime);
                         FeelFx.Impact(pos, -dir, DamageDealt(replica, evt), mine);
                         break;
                     case ReplicaEventKind.BlockDestroyed:
+                        HullbreachMatchHudView.Feed.Push(mine ? "You lost a block" : "Enemy block destroyed", mine ? Hullbreach.Hud.HudColor.WarningStrainYellow : Hullbreach.Hud.HudColor.SteerWhite, Time.unscaledTime);
                         FeelFx.Impact(pos, -dir, 90f, mine);
                         FeelFx.AddShake(mine ? 0.5f : 0.2f);
                         break;
@@ -106,6 +109,9 @@ namespace Hullbreach.NetCode.Entities
                 foreach (uint id in _scratch) _seenProjectiles.Remove(id);
             }
         }
+
+        static bool IsCore(ClientReplica replica, ReplicaEvent evt) =>
+            replica.Ships.TryGetValue(evt.NetId, out ShipBody ship) && ship.Grid.TryGet(BlockKey.Pack(evt.X, evt.Y), out Block block) && block.TypeId == BlockTypes.Core;
 
         float DamageDealt(ClientReplica replica, ReplicaEvent evt)
         {

@@ -576,7 +576,7 @@ namespace Hullbreach.Editor
             scaler.referenceResolution = new Vector2(1920f, 1080f);
             canvasGo.AddComponent<GraphicRaycaster>();
 
-            GameObject statusPanel = AddPanel(canvasGo.transform, "NetworkStatusPanel", new Vector2(900f, 130f),
+            GameObject statusPanel = AddPanel(canvasGo.transform, "NetworkStatusPanel", new Vector2(580f, 120f),
                 BrandColors.Panel);
             RectTransform statusRect = statusPanel.GetComponent<RectTransform>();
             statusRect.anchorMin = statusRect.anchorMax = statusRect.pivot = new Vector2(0f, 1f);
@@ -588,7 +588,7 @@ namespace Hullbreach.Editor
             statusLayout.childControlWidth = true;
             statusLayout.childForceExpandHeight = true;
             statusLayout.childForceExpandWidth = false;
-            TMP_Text status = AddText(statusPanel.transform, "StatusText", "Waiting for Netcode connection...", 18f);
+            TMP_Text status = AddText(statusPanel.transform, "StatusText", "Waiting for Netcode connection...", 28f);
             LayoutElement statusElement = status.gameObject.AddComponent<LayoutElement>();
             statusElement.flexibleWidth = 1f;
             Button leave = AddButton(statusPanel.transform, "LeaveButton", "LEAVE", 50f);

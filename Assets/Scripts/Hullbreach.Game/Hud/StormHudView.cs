@@ -236,10 +236,10 @@ namespace Hullbreach.Game
             _tint = NewImage("WarningTint", root, null, new Color(0.9f, 0.05f, 0.05f, 0f));
             Stretch(_tint.rectTransform);
 
-            _countdown = NewText("Countdown", root, 40, FontStyles.Bold, TextAlignmentOptions.Center);
-            Anchor(_countdown.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -22f), new Vector2(700f, 54f));
-            _stage = NewText("Stage", root, 22, FontStyles.Normal, TextAlignmentOptions.Center);
-            Anchor(_stage.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -72f), new Vector2(700f, 30f));
+            _countdown = NewText("Countdown", root, 48, FontStyles.Bold, TextAlignmentOptions.Center);
+            Anchor(_countdown.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -16f), new Vector2(700f, 62f));
+            _stage = NewText("Stage", root, 30, FontStyles.Normal, TextAlignmentOptions.Center);
+            Anchor(_stage.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -80f), new Vector2(900f, 40f));
             _stage.color = new Color(0.8f, 0.85f, 0.95f);
 
             var mapGo = new GameObject("Minimap", typeof(RectTransform), typeof(RawImage));
@@ -251,18 +251,18 @@ namespace Hullbreach.Game
             _enemyDot = NewImage("EnemyDot", _mapRect, _circle, new Color(1f, 0.25f, 0.2f));
             _selfDot = NewImage("SelfDot", _mapRect, _circle, new Color(0.3f, 0.95f, 1f));
             _mapHint = NewText("MapHint", _mapRect, 18, FontStyles.Normal, TextAlignmentOptions.Center);
-            Anchor(_mapHint.rectTransform, new Vector2(0.5f, 0f), new Vector2(0f, -24f), new Vector2(500f, 24f));
+            Anchor(_mapHint.rectTransform, new Vector2(0.5f, 0f), new Vector2(0f, -40f), new Vector2(1400f, 40f));
             _mapHint.text = "White ring: safe zone   Green ring: next zone   Red: storm   (M closes)";
-            _mapHint.fontSize = 16;
+            _mapHint.fontSize = 28;
 
             _enemyArrow = NewImage("EnemyArrow", root, _triangle, new Color(1f, 0.3f, 0.25f));
             _enemyArrow.rectTransform.sizeDelta = new Vector2(46f, 46f);
             _pullArrow = NewImage("StormPullArrow", root, _triangle, new Color(0.35f, 0.9f, 1f));
             _pullArrow.rectTransform.sizeDelta = new Vector2(56f, 56f);
-            _pullLabel = NewText("PullLabel", root, 22, FontStyles.Bold, TextAlignmentOptions.Center);
+            _pullLabel = NewText("PullLabel", root, 30, FontStyles.Bold, TextAlignmentOptions.Center);
             _pullLabel.text = "SAFE ZONE";
             _pullLabel.color = new Color(0.35f, 0.9f, 1f);
-            _pullLabel.rectTransform.sizeDelta = new Vector2(220f, 30f);
+            _pullLabel.rectTransform.sizeDelta = new Vector2(360f, 44f);
             foreach (var rt in new[] { _enemyArrow.rectTransform, _pullArrow.rectTransform, _pullLabel.rectTransform })
                 rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.5f);
 
