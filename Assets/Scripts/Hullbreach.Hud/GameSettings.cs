@@ -37,6 +37,12 @@ namespace Hullbreach.Hud
         // frob:doc docs/design/ui-port.md#hullbreachhud-module-reference
         public bool ColorblindPalette { get; set; }
 
+        // Game-feel toggles (all on by default): camera shake, hit flashes/particles/damage numbers, synthesised sound.
+        // frob:doc docs/design/ui-port.md#feel-layer
+        public bool ScreenShake { get; set; } = true;
+        public bool HitEffects { get; set; } = true;
+        public bool SoundEffects { get; set; } = true;
+
         // Rejects sizes below MinResolution; returns whether the size was accepted.
         // frob:doc docs/design/ui-port.md#hullbreachhud-module-reference
         public bool SetResolution(int width, int height)
@@ -58,7 +64,10 @@ namespace Hullbreach.Hud
                 + "width=" + ResolutionWidth.ToString(inv) + "\n"
                 + "height=" + ResolutionHeight.ToString(inv) + "\n"
                 + "fullscreen=" + (Fullscreen ? "1" : "0") + "\n"
-                + "colorblind=" + (ColorblindPalette ? "1" : "0") + "\n";
+                + "colorblind=" + (ColorblindPalette ? "1" : "0") + "\n"
+                + "shake=" + (ScreenShake ? "1" : "0") + "\n"
+                + "hitfx=" + (HitEffects ? "1" : "0") + "\n"
+                + "sfx=" + (SoundEffects ? "1" : "0") + "\n";
         }
 
         // Unknown keys and unparsable values are skipped so older and newer builds share a file.
@@ -82,6 +91,9 @@ namespace Hullbreach.Hud
                 s.SetResolution(wi, hi);
             if (seen.TryGetValue("fullscreen", out v)) s.Fullscreen = v == "1";
             if (seen.TryGetValue("colorblind", out v)) s.ColorblindPalette = v == "1";
+            if (seen.TryGetValue("shake", out v)) s.ScreenShake = v != "0";
+            if (seen.TryGetValue("hitfx", out v)) s.HitEffects = v != "0";
+            if (seen.TryGetValue("sfx", out v)) s.SoundEffects = v != "0";
             return s;
         }
 

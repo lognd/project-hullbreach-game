@@ -390,3 +390,11 @@ https://aliens-against-humanity.atlassian.net/jira/software/projects/SCRUM/board
 SCRUM-54 S33 "Choose from a block palette" (SCRUM-108, BuilderHud),
 SCRUM-58 S37 "See where my ship is about to fail" (hull warning), and
 epic SCRUM-15 E8 "Game shell" for the screens this foundation enables.
+
+## Feel layer
+
+`FeelFx` (Hullbreach.Game) is created on first use and plays the hit/shot/storm feedback: impact flash and sparks, floating
+damage numbers, camera shake scaled by damage (`FeelModel.TraumaForDamage`), muzzle flash and a shot trail, a throttle-driven
+thruster loop, a storm warning beep, and a red flash plus alarm when the local core is hit. Sound is synthesised in code
+(`ProceduralAudio`, no asset licences). The numbers live engine-free in `Hullbreach.Hud/FeelModel.cs`. Settings keys in
+`settings.txt` (all default on): `shake=0|1`, `hitfx=0|1`, `sfx=0|1`; master and effects volumes also apply.
