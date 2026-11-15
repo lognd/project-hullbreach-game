@@ -149,6 +149,8 @@ namespace Hullbreach.Ship
         readonly List<int> _contactKeys = new List<int>();
         readonly List<float2> _contactNormals = new List<float2>();
         readonly List<float> _contactClosing = new List<float>();
+        readonly List<float> _contactRestitution = new List<float>();
+        readonly List<float> _contactImpulse = new List<float>();
         readonly List<int> _contactBodies = new List<int>();
 
         // Keyed by grid key: a cell has exactly one block/behaviour, so
@@ -442,6 +444,8 @@ namespace Hullbreach.Ship
         // Tests every block against Gravity for contact; applies push-out, a restitution impulse
         // (none for a gentle touch, capped so no setting adds energy), friction, and crash damage
         // to exactly the blocks that touch. `h` is the substep length.
+        const int ContactIterations = 6;
+
         void ResolvePlanetContacts(float h)
         {
             if (Grid.Mass.Total <= 0f) return;
@@ -468,7 +472,7 @@ namespace Hullbreach.Ship
 
             // Pass 2: snapshot every contact BEFORE any impulse, so one block impulse cannot
             // change what the next block is charged for (order independent damage).
-            _contactKeys.Clear(); _contactNormals.Clear(); _contactClosing.Clear(); _contactBodies.Clear();
+            _contactKeys.Clear(); _contactNormals.Clear(); _contactClosing.Clear(); _contactBodies.Clear(); _contactRestitution.Clear(); _contactImpulse.Clear();
             int pressing = 0;
             for (int i = 0; i < keys.Length; i++)
             {
@@ -482,7 +486,40 @@ namespace Hullbreach.Ship
                 if (closing > 0f) pressing++;
             }
 
-            // Pass 3: respond block by block.
+            // Pass 3a: normal impulses, solved together. Each contact keeps the total impulse it has pushed with
+            // (never negative) and the loop repeats a few times, so a flat landing on several blocks stops dead
+            // instead of one corner block kicking the whole ship back up (a single sequential pass overshoots).
+            for (int c = 0; c < _contactKeys.Count; c++)
+            {
+                float restitution = 0f;
+                if (Gravity.TryGetPermanent(_contactBodies[c], out var body))
+                    restitution = math.clamp(body.SurfaceRestitution, 0f, cfg.MaxRestitution);
+                restitution = cfg.EffectiveRestitution(restitution, _contactClosing[c]);
+                if (_contactClosing[c] < cfg.RestSpeed) restitution = 0f;
+                _contactRestitution.Add(restitution);
+                _contactImpulse.Add(0f);
+            }
+            for (int iteration = 0; iteration < ContactIterations; iteration++)
+            {
+                for (int c = 0; c < _contactKeys.Count; c++)
+                {
+                    float2 normal = _contactNormals[c];
+                    float2 worldCenter = LocalToWorld(BlockGrid.CenterOf(_contactKeys[c]));
+                    float2 r = worldCenter - comWorld;
+                    float2 liveVelocity = Velocity + AngularVelocity * new float2(-r.y, r.x);
+                    float vn = math.dot(liveVelocity, normal);
+                    float wanted = _contactClosing[c] > 0f ? _contactRestitution[c] * _contactClosing[c] : 0f;
+                    float crossRN = r.x * normal.y - r.y * normal.x;
+                    float denom = inertia > 0f ? (1f / mass) + (crossRN * crossRN) / inertia : (1f / mass);
+                    float delta = (wanted - vn) / denom;
+                    float accumulated = math.max(0f, _contactImpulse[c] + delta);
+                    float applied = accumulated - _contactImpulse[c];
+                    _contactImpulse[c] = accumulated;
+                    if (applied != 0f) ApplyImpulseAtWorldPoint(worldCenter, normal * applied);
+                }
+            }
+
+            // Pass 3b: friction and damage, block by block.
             for (int c = 0; c < _contactKeys.Count; c++)
             {
                 int key = _contactKeys[c];
@@ -490,21 +527,6 @@ namespace Hullbreach.Ship
                 float closing = _contactClosing[c];
                 float2 worldCenter = LocalToWorld(BlockGrid.CenterOf(key));
                 float2 r = worldCenter - comWorld;
-
-                float restitution = 0f;
-                if (Gravity.TryGetPermanent(_contactBodies[c], out var body))
-                    restitution = math.clamp(body.SurfaceRestitution, 0f, cfg.MaxRestitution);
-                if (closing < cfg.RestSpeed) restitution = 0f;
-
-                // Re-read the live normal velocity: an earlier block this pass may already have stopped the closing.
-                float2 liveVelocity = Velocity + AngularVelocity * new float2(-r.y, r.x);
-                float vn = math.dot(liveVelocity, normal);
-                if (vn < 0f)
-                {
-                    float crossRN = r.x * normal.y - r.y * normal.x;
-                    float denom = inertia > 0f ? (1f / mass) + (crossRN * crossRN) / inertia : (1f / mass);
-                    ApplyImpulseAtWorldPoint(worldCenter, normal * (-(1f + restitution) * vn / denom));
-                }
 
                 // Ground friction: bleed the tangential velocity after the bounce.
                 float2 tangent = new float2(-normal.y, normal.x);

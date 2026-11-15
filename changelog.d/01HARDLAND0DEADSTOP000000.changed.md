@@ -1,0 +1,1 @@
+Hard planet landings now dead-stop with damage: bounce fades with impact speed and the contact impulses are solved together, so a 35 u/s crash no longer rebounds out of the planet well with every block intact.

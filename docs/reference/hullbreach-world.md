@@ -167,6 +167,7 @@ return to) a stable pass without hand-tuning a velocity.
 <!-- describes: Assets/Scripts/Hullbreach.World/PlanetCrashConfig.cs::PlanetCrashConfig.Validate -->
 <!-- describes: Assets/Scripts/Hullbreach.World/PlanetCrashConfig.cs::PlanetCrashConfig.AtmosphereDepth -->
 <!-- describes: Assets/Scripts/Hullbreach.World/PlanetCrashConfig.cs::PlanetCrashConfig.AtmosphereDensity -->
+<!-- describes: Assets/Scripts/Hullbreach.World/PlanetCrashConfig.cs::PlanetCrashConfig.EffectiveRestitution -->
 <!-- describes: Assets/Scripts/Hullbreach.World/PlanetCrashConfig.cs::PlanetCrashConfig.ImpactDamage -->
 
 Every tunable of planet crashes and the thin atmosphere, in one struct with
@@ -183,6 +184,9 @@ Every tunable of planet crashes and the thin atmosphere, in one struct with
   full, uncapped amount and can kill a core that is on the contact side.
 - Bounces are clamped to `MaxRestitution` and are zero below `RestSpeed`, so
   a resting ship does not jitter and a bounce never adds energy.
+- The bounce also fades with impact speed (`EffectiveRestitution`): full up to
+  `SafeLandingSpeed`, linearly down to none at `CatastrophicSpeed`, so a hard
+  crash dead-stops with damage instead of rebounding out of the planet well.
 - `SweepStep` and `MaxSubsteps` bound the per-tick substepping that stops a
   fast ship tunnelling through the surface.
 - The atmosphere is a band above the surface (`AtmosphereDepth`, at least

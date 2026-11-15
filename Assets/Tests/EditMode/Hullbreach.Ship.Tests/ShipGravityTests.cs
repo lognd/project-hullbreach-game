@@ -86,12 +86,13 @@ namespace Hullbreach.Ship.Tests
                 ship.Step(default, 1f / 60f);
             }
 
-            float distanceFromCenter = math.length(ship.Position);
-            Assert.GreaterOrEqual(distanceFromCenter, 5f - 1e-3f);
+            // The block (not the ship origin, which sits at a block corner) must end outside the surface.
+            float2 blockCenter = ship.LocalToWorld(BlockGrid.CenterOf(BlockKey.Pack(0, 0)));
+            Assert.GreaterOrEqual(math.length(blockCenter), 5f - 1e-3f);
 
             // After contact resolution the block's velocity along the
             // outward normal must not still drive it INTO the planet.
-            float2 normal = math.normalize(ship.Position);
+            float2 normal = math.normalize(blockCenter);
             float normalVelocity = math.dot(ship.Velocity, normal);
             Assert.GreaterOrEqual(normalVelocity, -1e-2f);
         }
