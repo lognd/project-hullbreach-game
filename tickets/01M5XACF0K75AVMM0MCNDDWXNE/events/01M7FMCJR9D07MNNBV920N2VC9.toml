@@ -1,0 +1,6 @@
+kind = "comment"
+subtype = "note"
+body = "Closed for items 1 and 2 (#162: JoinTicket RPC, -hullbreachMatchId / -hullbreachQueueServer, JoinTicketTests 9 pass). Item 3 (skins) is NOT done: MatchHandoff drops the platform skin/opponent_skin, so every match uses the default skin. Split into ~BSEK1EH. Not verified: standalone server build, two machines."
+at = "2026-11-15T12:54:48Z"
+actor = "lognd"
+rev = 1
