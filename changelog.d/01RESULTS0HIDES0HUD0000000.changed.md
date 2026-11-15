@@ -1,0 +1,1 @@
+- Results screen now covers the whole window with an opaque backdrop, so the storm tint, Shrink timer and combat HUD no longer show around the results panel.
