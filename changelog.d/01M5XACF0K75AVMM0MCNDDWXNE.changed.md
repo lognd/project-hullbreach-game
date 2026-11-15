@@ -1,0 +1,1 @@
+- A match found in the online queue now dials the server automatically and presents its match id when joining.
