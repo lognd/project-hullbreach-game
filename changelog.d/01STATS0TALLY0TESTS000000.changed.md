@@ -1,0 +1,1 @@
+- Match report tests: refused placements and the pre-match design are not counted as blocks placed (the server already counted real placements).
