@@ -187,6 +187,8 @@ namespace Hullbreach.Net
             public bool InPushZone;
             public readonly TrustLevel Trust = new TrustLevel();
             public readonly Dictionary<int, bool> Failing = new Dictionary<int, bool>();
+            // Storm damage below one whole point, per block key, carried to the next tick.
+            public readonly Dictionary<int, float> StormCarry = new Dictionary<int, float>();
         }
 
         // Per-peer counters for the match report. They live outside PeerState so the report
@@ -285,6 +287,40 @@ namespace Hullbreach.Net
             }
         }
 
+        // Shrinking-ring schedule for the next match; its tick rate is replaced by TickRate when the match starts.
+        // frob:ticket 01M7EXAGAAS0CRAVC1BEXJ5598
+        // frob:doc docs/reference/hullbreach-net.md#serversimulation
+        public StormConfig Storm = StormConfig.Default();
+
+        // False runs matches with no storm (no damage, no despawn, no StormStarted message).
+        // frob:ticket 01M7EXAGAAS0CRAVC1BEXJ5598
+        // frob:doc docs/reference/hullbreach-net.md#serversimulation
+        public bool StormEnabled = true;
+
+        // The live match storm; null before a match starts or when StormEnabled is off.
+        // frob:ticket 01M7EXAGAAS0CRAVC1BEXJ5598
+        // frob:doc docs/reference/hullbreach-net.md#serversimulation
+        public StormZone ActiveStorm { get; private set; }
+
+        // Server tick the storm clock counts from (the tick the match started on).
+        uint _stormStartTick;
+
+        // Planet centres the final ring may drift toward, from the arena config.
+        float2[] _stormCandidates = new float2[0];
+
+        // Stable 32-bit seed from a match id (FNV-1a), so the server and a replay agree on the ring.
+        // frob:ticket 01M7EXAGAAS0CRAVC1BEXJ5598
+        // frob:doc docs/reference/hullbreach-net.md#serversimulation
+        public static uint StormSeedFor(string matchId)
+        {
+            unchecked
+            {
+                uint h = 2166136261u;
+                foreach (char c in matchId ?? string.Empty) { h ^= c; h *= 16777619u; }
+                return h;
+            }
+        }
+
         // Soft arena edge applied each tick; replaced by ConfigureDemoArena (S41-1).
         // frob:doc docs/reference/hullbreach-net.md#serversimulation
         public ArenaBounds Bounds { get; private set; } = ArenaConfig.DefaultBounds;
@@ -303,6 +339,10 @@ namespace Hullbreach.Net
         {
             _gravity.Clear();
             Bounds = config.Bounds;
+            Storm = config.Storm;
+            _stormCandidates = new float2[config.Bodies.Count];
+            for (int i = 0; i < _stormCandidates.Length; i++)
+                _stormCandidates[i] = new float2(config.Bodies[i].X, config.Bodies[i].Y);
             Log.Info("arena bounds radius=" + Bounds.Radius + " margin=" + Bounds.Margin
                 + " strength=" + Bounds.Strength);
             foreach (ArenaBodyConfig body in config.Bodies) _gravity.Add(body.ToGravityBody());
@@ -478,7 +518,35 @@ namespace Hullbreach.Net
                 ParticipantFor(ids[0]), ParticipantFor(ids[1]),
                 () => _tickIndex * (double)Dt, MatchFeed, queueId == null ? (Func<string>)null : () => queueId,
                 MatchLog, MatchTimeLimitSeconds);
-            if (Match.Start() && RequireReady) AnnounceMatchStart(ids[0], ids[1]);
+            if (!Match.Start()) return;
+            if (RequireReady) AnnounceMatchStart(ids[0], ids[1]);
+            StartStorm();
+        }
+
+        // Builds the ring from the match id and tells every peer how to rebuild it.
+        // frob:ticket 01M7EXAGAAS0CRAVC1BEXJ5598
+        void StartStorm()
+        {
+            ActiveStorm = null;
+            if (!StormEnabled) return;
+            StormConfig config = Storm.WithTickRate(TickRate);
+            string problem = config.Validate();
+            if (problem != null)
+            {
+                MatchLog?.Warning($"Hullbreach storm: disabled for this match, bad config: {problem}.");
+                return;
+            }
+            uint seed = StormSeedFor(Match.MatchId);
+            _stormStartTick = _tickIndex;
+            ActiveStorm = new StormZone(config, Bounds.Center, _stormCandidates, seed);
+            var message = new StormStarted(NextSequence(), seed, _stormStartTick, Bounds.Center, _stormCandidates, config);
+            foreach (int peer in _peers.Keys)
+            {
+                var buffer = new byte[StormStarted.MaxByteSize];
+                var w = new ByteWriter(buffer);
+                if (!message.TryWrite(ref w)) return;
+                _outbox.Send(peer, reliable: true, buffer, w.Position);
+            }
         }
 
         // Adds the joiner to the gate; a gate whose match already ended is replaced by a fresh one.
@@ -635,6 +703,8 @@ namespace Hullbreach.Net
                 ResolveStructuralFailures(peer, state);
             }
 
+            ApplyStorm(peerIds);
+
             foreach (int peer in peerIds)
             {
                 if (!_peers.TryGetValue(peer, out var state)) continue; // may have been removed by a timeout above
@@ -653,6 +723,50 @@ namespace Hullbreach.Net
             // Last, so impacts and structural damage from this tick are already on the grids.
             Match?.Tick();
             AnnounceMatchEnd();
+        }
+
+        // Hurts every block outside the ring through the normal damage path; the core is spared until
+        // sudden death. Fractions under a point are carried per block so slow phases are not rounded away.
+        // frob:ticket 01M7EXAGAAS0CRAVC1BEXJ5598
+        void ApplyStorm(List<int> peerIds)
+        {
+            if (ActiveStorm == null || !MatchIsRunning) return;
+            StormState zone = ActiveStorm.At((int)Math.Min(int.MaxValue, _tickIndex - _stormStartTick));
+            if (zone.DamagePerTick <= 0f) return;
+
+            foreach (int peer in peerIds)
+            {
+                if (!_peers.TryGetValue(peer, out var state)) continue;
+                ShipBody ship = state.Ship;
+                BlockGrid grid = ship.Grid;
+                if (grid.Count == 0) continue;
+                int coreKey = grid.CoreKeyOrDefault();
+                var keys = new List<int>();
+                foreach (int k in grid.SortedKeys) keys.Add(k);
+                var destroyed = new List<int>();
+                foreach (int key in keys)
+                {
+                    float2 point = ship.LocalToWorld(BlockGrid.CenterOf(key));
+                    float hp = zone.DamageFor(point, key == coreKey);
+                    if (hp <= 0f) continue;
+                    state.StormCarry.TryGetValue(key, out float carry);
+                    carry += hp;
+                    int whole = (int)carry;
+                    state.StormCarry[key] = carry - whole;
+                    if (whole <= 0 || !grid.TryGet(key, out Block before)) continue;
+
+                    ship.ApplyDamageAtWorldPoint(point, (byte)math.min(255, whole), out _);
+                    if (!grid.TryGet(key, out Block after)) continue;
+                    if (after.Damage >= Connectivity.DestroyedDamage && key != coreKey) destroyed.Add(key);
+                    else if (after.Damage != before.Damage)
+                    {
+                        BlockKey.Unpack(key, out int x, out int y);
+                        BroadcastReliable(new BlockDamaged(NextSequence(), state.NetId, (sbyte)x, (sbyte)y, after.Damage));
+                    }
+                }
+                foreach (int key in destroyed) state.StormCarry.Remove(key);
+                if (destroyed.Count > 0) DestroyAndDetach(peer, state, destroyed);
+            }
         }
 
         // Nudges a ship back toward the arena; a velocity change only, so no force reaches the
@@ -768,6 +882,11 @@ namespace Hullbreach.Net
                 p.LifeRemaining -= dt;
 
                 if (p.LifeRemaining <= 0f) { _projectiles.RemoveAt(i); continue; }
+
+                // Shots that outrun the storm hard limit are gone for good rather than orbiting forever.
+                if (ActiveStorm != null && MatchIsRunning
+                    && !ActiveStorm.At((int)Math.Min(int.MaxValue, _tickIndex - _stormStartTick)).WithinHardLimit(p.Position))
+                { _projectiles.RemoveAt(i); continue; }
 
                 // Planets are solid to shots: despawn on contact and log it.
                 // frob:doc docs/reference/hullbreach-net.md#serversimulation

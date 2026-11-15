@@ -54,12 +54,17 @@ namespace Hullbreach.Net
         // Soft edge of the arena (S41-1); defaults sit inside Quantization.PositionLimit.
         // frob:doc docs/reference/hullbreach-net.md#arenaconfig
         public ArenaBounds Bounds { get; }
+        // Shrinking-ring schedule; StormConfig.Default() unless the JSON has a storm block.
+        // frob:ticket 01M7EXAGAAS0CRAVC1BEXJ5598
+        // frob:doc docs/reference/hullbreach-net.md#arenaconfig
+        public StormConfig Storm { get; }
 
         // frob:doc docs/reference/hullbreach-net.md#arenaconfig
         public ArenaConfig(IReadOnlyList<ArenaBodyConfig> bodies, float lateral, float altitude,
-            float vertical, float angleStep, ArenaBounds? bounds = null)
+            float vertical, float angleStep, ArenaBounds? bounds = null, StormConfig? storm = null)
         {
             Bounds = bounds ?? DefaultBounds;
+            Storm = storm ?? StormConfig.Default();
             Bodies = bodies;
             SpawnLateral = lateral;
             SpawnAltitude = altitude;
@@ -159,7 +164,15 @@ namespace Hullbreach.Net
                 if (err != null) return ConfigResult<ArenaConfig>.Fail(err);
                 bounds = new ArenaBounds(new float2(bx, by), br, bm, bs);
             }
-            return ConfigResult<ArenaConfig>.Ok(new ArenaConfig(bodies, lateral, altitude, vertical, step, bounds));
+
+            StormConfig storm = d.Storm;
+            if (root.TryGetValue("storm", out object rawStorm))
+            {
+                var st = ParseStorm(rawStorm as Dictionary<string, object>, storm);
+                if (!st.IsOk) return ConfigResult<ArenaConfig>.Fail(st.Error);
+                storm = st.Value;
+            }
+            return ConfigResult<ArenaConfig>.Ok(new ArenaConfig(bodies, lateral, altitude, vertical, step, bounds, storm));
         }
 
         // Reads a file and parses it; an unreadable file is an error, not an exception.
@@ -173,6 +186,47 @@ namespace Hullbreach.Net
                 return ConfigResult<ArenaConfig>.Fail("cannot read arena config '" + path + "': " + e.Message);
             }
             return Parse(text);
+        }
+
+        // Storm block: scalar keys override the defaults, a phases array replaces the default list,
+        // and StormConfig.Validate has the last word.
+        // frob:ticket 01M7EXAGAAS0CRAVC1BEXJ5598
+        static ConfigResult<StormConfig> ParseStorm(Dictionary<string, object> o, StormConfig d)
+        {
+            if (o == null) return ConfigResult<StormConfig>.Fail("storm must be an object");
+            float tick = d.TickRate, radius = d.StartRadius, grace = d.GraceSeconds, warn = d.WarningFraction;
+            float margin = d.HardLimitMargin, sudden = d.SuddenDeathDamagePerSecond;
+            string err = Read(o, "storm", "tickRate", ref tick) ?? Read(o, "storm", "startRadius", ref radius)
+                ?? Read(o, "storm", "graceSeconds", ref grace) ?? Read(o, "storm", "warningFraction", ref warn)
+                ?? Read(o, "storm", "hardLimitMargin", ref margin)
+                ?? Read(o, "storm", "suddenDeathDamagePerSecond", ref sudden);
+            if (err != null) return ConfigResult<StormConfig>.Fail(err);
+            StormPhase[] phases = d.Phases;
+            if (o.TryGetValue("phases", out object rawPhases))
+            {
+                var list = rawPhases as List<object>;
+                if (list == null || list.Count == 0)
+                    return ConfigResult<StormConfig>.Fail("storm.phases must be a non-empty array");
+                phases = new StormPhase[list.Count];
+                for (int i = 0; i < list.Count; i++)
+                {
+                    string at = "storm.phases[" + i.ToString(CultureInfo.InvariantCulture) + "]";
+                    var p = list[i] as Dictionary<string, object>;
+                    if (p == null) return ConfigResult<StormConfig>.Fail(at + " must be an object");
+                    float hold = 0f, shrink = 0f, target = 0f, dps = 0f;
+                    foreach (string required in new[] { "hold", "shrink", "radius", "damage" })
+                        if (!p.ContainsKey(required)) return ConfigResult<StormConfig>.Fail(at + "." + required + " is required");
+                    err = Read(p, at, "hold", ref hold) ?? Read(p, at, "shrink", ref shrink)
+                        ?? Read(p, at, "radius", ref target) ?? Read(p, at, "damage", ref dps);
+                    if (err != null) return ConfigResult<StormConfig>.Fail(err);
+                    phases[i] = new StormPhase(hold, shrink, target, dps);
+                }
+            }
+            var config = new StormConfig(tick, radius, grace, warn, margin, sudden, phases);
+            string problem = config.Validate();
+            return problem == null
+                ? ConfigResult<StormConfig>.Ok(config)
+                : ConfigResult<StormConfig>.Fail("storm: " + problem);
         }
 
         static ConfigResult<ArenaBodyConfig> ParseBody(Dictionary<string, object> o, int index)
