@@ -14,7 +14,7 @@ labels = ["jira:SCRUM-203", "owner:mcnairrobotics", "game", "netcode", "mileston
 
 [[acceptance]]
 text = "Given a peer that repeatedly makes implausible claims (refused builds, reserved input bits), when its trust drops, then the hit margin and late-input hold shrink and build claims are refused at the floor, and the peer is never disconnected for it (TrustLevelTests)"
-bound = false
+bound = true
 +++
 
 Per-client trust level that tightens tolerances instead of disconnecting
