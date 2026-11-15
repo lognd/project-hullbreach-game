@@ -16,7 +16,7 @@ bound = true
 
 [[acceptance]]
 text = "A dedicated server takes its expected match id from -hullbreachMatchId and refuses a peer with the wrong or missing ticket"
-bound = false
+bound = true
 +++
 
 found while working ~RHV8HRV. Remaining: (1) a net message field so a client presents ConnectRequest.MatchId when joining (changes NetMessages wire format, needs its own tests); (2) the allocation channel that tells a dedicated server its expected match id, then AssignQueueMatch; (3) equipped skins have no data source in the repo yet, ConnectRequest takes ids from the caller.
