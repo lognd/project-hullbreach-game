@@ -7,12 +7,12 @@ priority = "medium"
 points = 2
 reporter = "lognd"
 created = "2026-11-15T12:16:04Z"
-updated = "2026-11-15T12:16:04Z"
+updated = "2026-11-15T12:53:41Z"
 labels = ["game"]
 
 [[acceptance]]
 text = "A ship that pressed READY cannot be damaged until the other side is ready or a short grace period ends, bots included"
-bound = false
+bound = true
 
 [[acceptance]]
 text = "A server test covers the grace period"
