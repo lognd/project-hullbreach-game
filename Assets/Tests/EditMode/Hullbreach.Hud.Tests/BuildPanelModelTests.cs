@@ -39,6 +39,7 @@ namespace Hullbreach.Hud.Tests
         {
             Assert.AreEqual("x3", BuildPanelModel.SlotDetail(true, 3, 4));
             Assert.AreEqual("4 pt", BuildPanelModel.SlotDetail(false, 3, 4));
+            Assert.AreEqual("none left", BuildPanelModel.SlotDetail(true, 0, 4), "an empty slot says why it is greyed");
             Assert.IsFalse(BuildPanelModel.SlotUsable(true, 0, 4, 100));
             Assert.IsTrue(BuildPanelModel.SlotUsable(true, 1, 4, 0));
             Assert.IsFalse(BuildPanelModel.SlotUsable(false, 9, 5, 4));

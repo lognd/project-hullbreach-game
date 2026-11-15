@@ -50,7 +50,7 @@ namespace Hullbreach.Hud
         // Second line of a hotbar slot: the spare count once the match runs, the point cost before it.
         // frob:doc docs/design/ui-port.md#hullbreachhud-module-reference
         public static string SlotDetail(bool matchRunning, int stock, int cost) =>
-            matchRunning ? Fmt($"x{stock}") : Fmt($"{cost} pt");
+            matchRunning ? (stock >= 1 ? Fmt($"x{stock}") : "none left") : Fmt($"{cost} pt");
 
         // Whether a slot can be used right now (the view greys it out otherwise).
         // frob:doc docs/design/ui-port.md#hullbreachhud-module-reference

@@ -1,0 +1,1 @@
+- Build palette is more compact (less of the screen covered), an empty stock slot now reads none left, and the default camera sits closer so ships read at 1280x720.

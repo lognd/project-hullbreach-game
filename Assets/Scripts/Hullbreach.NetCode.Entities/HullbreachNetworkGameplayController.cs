@@ -83,6 +83,8 @@ namespace Hullbreach.NetCode.Entities
 
         // Same lead and speed zoom as the offline CameraFollow: a plain follow trails a fast ship off screen.
         [SerializeField] float leadSeconds = 0.17f;
+        /// <summary>Resting camera half-height in world units; the scene asks for 16, which left ships small at 1280x720.</summary>
+        public const float DefaultOrthographicSize = 10f;
         [SerializeField] float maxOrthographicSize = 30f;
         [SerializeField] float fullSpeed = 40f;
 
@@ -150,7 +152,8 @@ namespace Hullbreach.NetCode.Entities
             IsBuildMode = true;
             Requests.Clear();
             if (gameplayCamera == null) gameplayCamera = Camera.main;
-            if (gameplayCamera != null) _baseOrthographicSize = gameplayCamera.orthographicSize;
+            // Capped (not scaled) so a rematch in the same scene does not shrink it again; ships read better at 1280x720 this close.
+            if (gameplayCamera != null) _baseOrthographicSize = Mathf.Min(gameplayCamera.orthographicSize, DefaultOrthographicSize);
             s_lastPlaceTime = -1000f;
             ReadySent = false;
             Toasts.Clear();

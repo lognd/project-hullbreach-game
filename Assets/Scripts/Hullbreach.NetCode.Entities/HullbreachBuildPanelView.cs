@@ -72,13 +72,13 @@ namespace Hullbreach.NetCode.Entities
                 var go = Box("Slot" + type, transform, Panel);
                 var rt = (RectTransform)go.transform;
                 rt.anchorMin = rt.anchorMax = rt.pivot = new Vector2(0.5f, 0f);
-                rt.sizeDelta = new Vector2(w, 58f);
-                rt.anchoredPosition = new Vector2(-total / 2f + w / 2f + i * (w + gap), 62f);
+                rt.sizeDelta = new Vector2(w, 52f);
+                rt.anchoredPosition = new Vector2(-total / 2f + w / 2f + i * (w + gap), 12f);
                 slot.Background = go.GetComponent<Image>();
                 var button = go.AddComponent<Button>();
                 button.targetGraphic = slot.Background;
                 button.onClick.AddListener(() => HullbreachNetworkGameplayController.SelectType(type));
-                slot.Title = Label("Title", rt, 20, FontStyles.Bold, new Vector2(0f, 0.5f), new Vector2(1f, 1f), TextAlignmentOptions.Center);
+                slot.Title = Label("Title", rt, 18, FontStyles.Bold, new Vector2(0f, 0.5f), new Vector2(1f, 1f), TextAlignmentOptions.Center);
                 slot.Detail = Label("Detail", rt, 20, FontStyles.Normal, new Vector2(0f, 0f), new Vector2(1f, 0.5f), TextAlignmentOptions.Center);
                 _slots[i] = slot;
             }
@@ -90,20 +90,20 @@ namespace Hullbreach.NetCode.Entities
 
             _toast = Label("Toast", transform, 24, FontStyles.Bold, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), TextAlignmentOptions.Center);
             var trt = _toast.rectTransform;
-            trt.pivot = new Vector2(0.5f, 0f); trt.sizeDelta = new Vector2(900f, 90f); trt.anchoredPosition = new Vector2(0f, 156f);
+            trt.pivot = new Vector2(0.5f, 0f); trt.sizeDelta = new Vector2(900f, 44f); trt.anchoredPosition = new Vector2(0f, 100f);
             _toast.color = new Color(1f, 0.55f, 0.35f, 1f);
 
             _hoverLine = Label("HoverReason", transform, 20, FontStyles.Normal, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), TextAlignmentOptions.Center);
             var hrt = _hoverLine.rectTransform;
             hrt.pivot = new Vector2(0.5f, 0f); hrt.sizeDelta = new Vector2(900f, 30f); hrt.anchoredPosition = new Vector2(0f, 128f + 22f);
             _hoverLine.color = new Color(1f, 0.85f, 0.5f, 1f);
-            hrt.anchoredPosition = new Vector2(0f, 250f);
+            hrt.anchoredPosition = new Vector2(0f, 150f);
 
             var readyGo = Box("ReadyButton", transform, Orange);
             var rrt = (RectTransform)readyGo.transform;
             rrt.anchorMin = rrt.anchorMax = rrt.pivot = new Vector2(1f, 0f);
             rrt.sizeDelta = new Vector2(320f, 64f);
-            rrt.anchoredPosition = new Vector2(-24f, 62f);
+            rrt.anchoredPosition = new Vector2(-24f, 12f);
             _readyImage = readyGo.GetComponent<Image>();
             _ready = readyGo.AddComponent<Button>();
             _ready.targetGraphic = _readyImage;
@@ -125,8 +125,8 @@ namespace Hullbreach.NetCode.Entities
         static void PlaceBar(Bar bar, float left, float width)
         {
             bar.Root.anchorMin = bar.Root.anchorMax = bar.Root.pivot = new Vector2(0.5f, 0f);
-            bar.Root.sizeDelta = new Vector2(width, 28f);
-            bar.Root.anchoredPosition = new Vector2(left + width / 2f, 126f);
+            bar.Root.sizeDelta = new Vector2(width, 26f);
+            bar.Root.anchoredPosition = new Vector2(left + width / 2f, 70f);
         }
 
         Bar MakeBar(string name, Vector2 _, float width, float __)
