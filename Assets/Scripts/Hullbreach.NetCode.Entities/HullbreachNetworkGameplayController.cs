@@ -37,6 +37,47 @@ namespace Hullbreach.NetCode.Entities
 
         static readonly Queue<BuildRequest> Requests = new Queue<BuildRequest>();
 
+        // ---- test hook: a mouse without hardware ----
+        // Play Mode checks cannot move the real cursor, so they set a screen position and send a click here. Both go
+        // through exactly the code a real mouse does (hover cell, over-UI test, placement), nothing is bypassed.
+        static Vector2? s_scriptedMouse;
+        static int s_scriptedLeftFrame = int.MinValue, s_scriptedRightFrame = int.MinValue;
+
+        /// <summary>Pretends the cursor is at this screen position (null returns to the real mouse).</summary>
+        public static void ScriptMouse(Vector2? screenPosition) => s_scriptedMouse = screenPosition;
+
+        /// <summary>Pretends the left (or right) button went down this frame; it stays valid for one more frame.</summary>
+        public static void ScriptClick(bool right = false)
+        {
+            if (right) s_scriptedRightFrame = Time.frameCount; else s_scriptedLeftFrame = Time.frameCount;
+        }
+
+        static Vector3 MousePosition => s_scriptedMouse.HasValue ? (Vector3)s_scriptedMouse.Value : Input.mousePosition;
+
+        static bool MouseDown(int button)
+        {
+            int frame = button == 0 ? s_scriptedLeftFrame : s_scriptedRightFrame;
+            if ((long)Time.frameCount - frame <= 1)
+            {
+                if (button == 0) s_scriptedLeftFrame = int.MinValue; else s_scriptedRightFrame = int.MinValue;
+                return true;
+            }
+            return Input.GetMouseButtonDown(button);
+        }
+
+        // True when a UI element sits under the pointer; with a scripted pointer this is a real raycast through the
+        // EventSystem, so clicking the build panel does not place a block behind it.
+        static bool PointerOverUi()
+        {
+            var es = UnityEngine.EventSystems.EventSystem.current;
+            if (es == null) return false;
+            if (!s_scriptedMouse.HasValue) return es.IsPointerOverGameObject();
+            var data = new UnityEngine.EventSystems.PointerEventData(es) { position = s_scriptedMouse.Value };
+            var hits = new List<UnityEngine.EventSystems.RaycastResult>();
+            es.RaycastAll(data, hits);
+            return hits.Count > 0;
+        }
+
         [SerializeField] Camera gameplayCamera;
         [SerializeField] float cameraSmoothing = 6f;
 
@@ -191,10 +232,10 @@ namespace Hullbreach.NetCode.Entities
             else _hoverWait = false;
             UpdateHover(ship, placementKey, modifiers);
 
-            bool overUi = UnityEngine.EventSystems.EventSystem.current != null && UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject();
+            bool overUi = PointerOverUi();
             if (overUi) return;
 
-            if (Input.GetMouseButtonDown(1) || Input.GetKeyDown(KeyCode.X) || Input.GetKeyDown(KeyCode.Delete))
+            if (MouseDown(1) || Input.GetKeyDown(KeyCode.X) || Input.GetKeyDown(KeyCode.Delete))
             {
                 if (PlacementRules.CanRemove(ship.Grid, _hoverKey))
                 {
@@ -207,7 +248,7 @@ namespace Hullbreach.NetCode.Entities
                 PublishStatus();
             }
 
-            if (!Input.GetMouseButtonDown(0)) return;
+            if (!MouseDown(0)) return;
 
             if (!BlockPalette.IsSymmetric(SelectedTypeId) && !_pendingKey.HasValue)
             {
@@ -271,7 +312,7 @@ namespace Hullbreach.NetCode.Entities
         {
             key = 0;
             if (gameplayCamera == null) return false;
-            Vector3 world = gameplayCamera.ScreenToWorldPoint(Input.mousePosition);
+            Vector3 world = gameplayCamera.ScreenToWorldPoint(MousePosition);
             float2 local = ship.WorldToLocal(new float2(world.x, world.y));
             int x = Mathf.FloorToInt(local.x);
             int y = Mathf.FloorToInt(local.y);

@@ -1,0 +1,1 @@
+Build placement can now be driven without hardware (HullbreachNetworkGameplayController.ScriptMouse and ScriptClick, which go through the real hover, over-UI and placement code) so Play Mode checks can prove a mouse click places and removes a block.
