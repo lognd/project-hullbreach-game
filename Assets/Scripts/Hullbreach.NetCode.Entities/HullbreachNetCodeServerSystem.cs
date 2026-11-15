@@ -103,7 +103,7 @@ namespace Hullbreach.NetCode.Entities
                 Entity source = sources[i].SourceConnection;
                 if (!EntityManager.HasComponent<NetworkId>(source)) continue;
                 int peer = EntityManager.GetComponentData<NetworkId>(source).Value;
-                bool ok = _simulation.PresentTicket(peer, tickets[i].MatchId.ToString());
+                bool ok = _simulation.PresentTicket(peer, tickets[i].MatchId.ToString(), tickets[i].Skin.ToString());
                 Debug.Log($"Hullbreach server: peer #{peer} join ticket {(ok ? "accepted" : "refused")}.");
             }
             if (entities.Length > 0) EntityManager.DestroyEntity(entities);
@@ -310,6 +310,7 @@ namespace Hullbreach.NetCode.Entities
                     NetId = (ushort)pair.Key,
                     SimulationId = (uint)pair.Key,
                     SimTick = _simTick,
+                    Skin = _simulation.SkinOf(pair.Key),
                     Position = ship.Position,
                     Rotation = ship.Rotation,
                     Velocity = ship.Velocity,

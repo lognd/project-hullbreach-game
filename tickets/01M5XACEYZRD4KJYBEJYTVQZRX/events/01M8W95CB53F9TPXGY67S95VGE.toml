@@ -1,0 +1,6 @@
+kind = "comment"
+subtype = "note"
+body = "Criterion 2 now has a play-mode test: Hullbreach.Demo.Tests.QueueConnectPlayTests loads the real LobbyScene, raises the real HullbreachQueueView.Matched event, and asserts the dial log line for 127.0.0.1:7979, the pending join ticket and that MultiplayerGame becomes the active scene. Ran with test run --mode playmode --async-tests: 1 passed."
+at = "2026-11-15T13:17:22Z"
+actor = "mcnairrobotics"
+rev = 1

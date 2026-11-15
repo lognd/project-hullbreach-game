@@ -1,0 +1,6 @@
+kind = "comment"
+subtype = "note"
+body = "Skins carried end to end: MatchHandoff.Skin/OpponentSkin from the queue response, the join ticket (message tail and Netcode RPC) sends the player's slug, the server stores it per peer and replicates a ShipSkins id in the ghost pose, and HullbreachNetCodeView tints hull-like blocks per skin (default for unknown slugs). Slugs match the platform seed catalogue (15 hull-skin items) plus the 2 demo skins. Edit-mode tests cover wire round trip, old 17-byte ticket, per-peer storage, handoff parsing; screenshot-checked a crimson skin in the editor. Not exercised: a real platform account that owns and equips a skin."
+at = "2026-11-15T13:17:22Z"
+actor = "mcnairrobotics"
+rev = 1

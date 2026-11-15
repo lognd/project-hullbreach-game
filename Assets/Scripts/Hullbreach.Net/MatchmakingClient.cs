@@ -188,7 +188,9 @@ namespace Hullbreach.Net
                         ? ConfigResult<MatchHandoff>.Fail("matched status has no match")
                         : MatchHandoff.Parse(PlatformJson.GetString(match, "match_id"),
                             PlatformJson.GetString(match, "server_address"),
-                            PlatformJson.GetString(match, "opponent_id"));
+                            PlatformJson.GetString(match, "opponent_id"),
+                            PlatformJson.GetString(match, "skin"),
+                            PlatformJson.GetString(match, "opponent_skin"));
                     break;
                 default:
                     return Bad("unknown queue state '" + state + "'");

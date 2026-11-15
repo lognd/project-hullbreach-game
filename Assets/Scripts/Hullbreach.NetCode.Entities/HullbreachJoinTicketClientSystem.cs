@@ -11,9 +11,20 @@ namespace Hullbreach.NetCode.Entities
     {
         public static string Pending { get; private set; } = string.Empty;
 
-        public static void Set(string matchId) => Pending = matchId ?? string.Empty;
+        /// <summary>The platform skin slug this player presents with the ticket; empty for the default skin.</summary>
+        public static string Skin { get; private set; } = string.Empty;
 
-        public static void Clear() => Pending = string.Empty;
+        public static void Set(string matchId, string skin = null)
+        {
+            Pending = matchId ?? string.Empty;
+            Skin = skin ?? string.Empty;
+        }
+
+        public static void Clear()
+        {
+            Pending = string.Empty;
+            Skin = string.Empty;
+        }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         static void ResetStatics() => Clear();
@@ -46,6 +57,7 @@ namespace Hullbreach.NetCode.Entities
                 EntityManager.AddComponent<HullbreachJoinTicketSent>(connection);
                 var rpc = new HullbreachJoinTicketRpc();
                 rpc.MatchId.CopyFromTruncated(id);
+                rpc.Skin.CopyFromTruncated(HullbreachQueueTicket.Skin);
                 Entity request = EntityManager.CreateEntity();
                 EntityManager.AddComponentData(request, rpc);
                 EntityManager.AddComponentData(request, new SendRpcCommandRequest { TargetConnection = Entity.Null });

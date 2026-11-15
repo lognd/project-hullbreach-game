@@ -31,6 +31,8 @@ namespace Hullbreach.NetCode.Entities
 
         public static ClientReplica Replica { get; internal set; }
         public static ushort LocalNetworkId { get; internal set; }
+        /// <summary>ShipSkins id per ship (net id), from the ghost stream; absent means the default look.</summary>
+        public static readonly Dictionary<ushort, byte> ShipSkinIds = new Dictionary<ushort, byte>();
         public static IReadOnlyDictionary<uint, ProjectileVisual> Projectiles { get; internal set; }
         // Test hook (Play Mode scripts): replaces the keyboard while flying. Null = real input.
         public static ShipInput? ScriptedInput;
@@ -85,6 +87,7 @@ namespace Hullbreach.NetCode.Entities
             {
                 HullbreachNetCodeClient.Replica = null;
                 HullbreachNetCodeClient.LocalNetworkId = 0;
+                HullbreachNetCodeClient.ShipSkinIds.Clear();
                 HullbreachNetCodeClient.Projectiles = null;
             }
             _pending.Clear();
@@ -184,6 +187,7 @@ namespace Hullbreach.NetCode.Entities
                 if (pose.Kind == (byte)HullbreachGhostKind.Ship)
                 {
                     _replica.ObserveSimulationTick(pose.SimTick);
+                    HullbreachNetCodeClient.ShipSkinIds[pose.NetId] = pose.Skin;
                     _replica.ApplyGhostPose(pose.NetId, pose.Position, pose.Rotation,
                         pose.Velocity, pose.AngularVelocity, _clientTick);
                 }

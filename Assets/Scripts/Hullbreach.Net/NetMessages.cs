@@ -457,16 +457,37 @@ namespace Hullbreach.Net
         // frob:doc docs/reference/hullbreach-net.md#jointicket
         public readonly string MatchId;
 
+        // Longest skin slug on the wire.
         // frob:doc docs/reference/hullbreach-net.md#jointicket
-        public JoinTicket(string matchId) => MatchId = matchId;
+        public const int MaxSkinLength = 64;
+
+        // The equipped hull-skin slug; empty (and then not written at all, so the message stays the
+        // original 17 bytes) for the default skin.
+        // frob:doc docs/reference/hullbreach-net.md#jointicket
+        public readonly string Skin;
+
+        // frob:doc docs/reference/hullbreach-net.md#jointicket
+        public JoinTicket(string matchId, string skin = null)
+        {
+            MatchId = matchId;
+            Skin = skin ?? string.Empty;
+        }
 
         // False (writing nothing) when the id is not a UUID, so a bad id never reaches the wire.
         // frob:doc docs/reference/hullbreach-net.md#jointicket
         public bool TryWrite(ref ByteWriter w)
         {
             if (!QueueMatchId.Normalize(MatchId).IsOk) return false;
+            string skin = Skin ?? string.Empty;
+            if (skin.Length > MaxSkinLength) return false;
+            foreach (char c in skin) if (c < 0x20 || c > 0x7E) return false;
             w.WriteU8((byte)MessageKind.JoinTicket);
             foreach (byte b in Guid.ParseExact(MatchId.Trim(), "D").ToByteArray()) w.WriteU8(b);
+            if (skin.Length > 0)
+            {
+                w.WriteU8((byte)skin.Length);
+                foreach (char c in skin) w.WriteU8((byte)c);
+            }
             return true;
         }
 
@@ -484,7 +505,20 @@ namespace Hullbreach.Net
                 r.Fail();
                 return default;
             }
-            return new JoinTicket(guid.ToString("D"));
+            string skin = string.Empty;
+            if (r.Remaining > 0)
+            {
+                int length = r.ReadU8();
+                if (length > MaxSkinLength || length > r.Remaining)
+                {
+                    r.Fail();
+                    return default;
+                }
+                var text = new System.Text.StringBuilder(MaxSkinLength);
+                for (int i = 0; i < length; i++) text.Append((char)r.ReadU8());
+                skin = text.ToString();
+            }
+            return new JoinTicket(guid.ToString("D"), skin);
         }
     }
     // Server -> client, reliable ordered: everything a client needs to rebuild the match's StormZone.

@@ -1,0 +1,1 @@
+Equipped platform hull skins now reach the match: the queue handoff keeps `skin`/`opponent_skin`, the join ticket sends the player's skin, the server replicates each ship's skin id, and ships render a per-skin tint (default for unknown slugs). A play-mode test proves a found match dials the server and loads the game scene.
