@@ -16,6 +16,7 @@ static class Program
         float seconds = 150f;
         bool storm = false, personalities = false, trace = false; string only = null; string shipDiff = null;
         string[] one = null;
+        ulong first = 1; bool noEcon = false, noCrash = false, noQm = false;
         for (int i = 0; i < args.Length; i++)
         {
             switch (args[i])
@@ -34,6 +35,10 @@ static class Program
                 case "--only": only = args[++i]; break;
                 case "--shipdiff": shipDiff = args[++i]; break;
                 case "--storm": storm = true; break;
+                case "--first": first = ulong.Parse(args[++i]); break;
+                case "--noecon": noEcon = true; break;
+                case "--nocrash": noCrash = true; break;
+                case "--noqm": noQm = true; break;
                 case "--personalities": personalities = true; break;
                 case "--one": one = new[] { args[++i], args[++i], args[++i] }; break;
                 default: Console.Error.WriteLine("unknown option " + args[i]); return 2;
@@ -41,11 +46,14 @@ static class Program
         }
 
         StormConfig? stormConfig = storm ? StormConfig.Default() : (StormConfig?)null;
+        var rules = new ArenaRules { Quartermaster = !noQm };
+        if (noEcon) rules.Economy = Hullbreach.Net.EconomyConfig.Default().WithEnabled(false);
+        if (noCrash) { var pc = PlanetCrashConfig.Default(); pc.DamagePerSpeed = 0f; pc.HeatDamagePerSecond = 0f; pc.HeatMaxDamagePerSecond = 0f; rules.Crash = pc; }
         if (one != null)
         {
             var cfg = new ArenaMatchConfig
             {
-                Trace = trace ? (Action<string>)Console.WriteLine : null, Seed = ulong.Parse(one[2]), MaxSeconds = seconds, Storm = stormConfig,
+                Trace = trace ? (Action<string>)Console.WriteLine : null, Seed = ulong.Parse(one[2]), MaxSeconds = seconds, Storm = stormConfig, Economy = rules.Economy, Crash = rules.Crash, Quartermaster = rules.Quartermaster,
                 A = new ArenaSide { Difficulty = (BotDifficulty)Enum.Parse(typeof(BotDifficulty), one[0], true) },
                 B = new ArenaSide { Difficulty = (BotDifficulty)Enum.Parse(typeof(BotDifficulty), one[1], true) },
             };
@@ -64,9 +72,15 @@ static class Program
         }
 
         var sw = Stopwatch.StartNew();
-        List<ArenaBatch> batches = BalanceReport.RunStandard(seeds, seconds, stormConfig, personalities, only);
+        List<ArenaBatch> batches = BalanceReport.RunStandard(seeds, seconds, stormConfig, personalities, only, first, rules);
         Console.Write(BalanceReport.Format(batches,
             $"Hullbreach bot arena: {seeds} seeds per scenario, {seconds:0}s limit, storm {(storm ? "on" : "off")}"));
+        Console.Write(BalanceReport.FormatEndings(batches));
+        foreach (ArenaBatch b in batches)
+            foreach (ArenaMatchResult m in b.Matches)
+                Console.WriteLine(string.Format(System.Globalization.CultureInfo.InvariantCulture,
+                    "M,{0},{1},{2},{3:0.0},{4},{5},{6},{7},{8},{9:0.00},{10:0.00},{11},{12}", b.Name, m.Seed, m.Ending, m.Seconds, m.Winner, m.Verdict,
+                    m.Stalled ? 1 : 0, m.DamageA, m.DamageB, m.CoreHealthA, m.CoreHealthB, m.BlocksA, m.BlocksB));
         Console.WriteLine($"(wall time {sw.Elapsed.TotalSeconds:0.0}s)");
         foreach (ArenaBatch b in batches)
             foreach (ArenaMatchResult m in b.Matches)

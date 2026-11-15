@@ -66,10 +66,14 @@ profile fires on a perfect solution every time. The bot sees the enemy as a dela
 <!-- describes: Assets/Scripts/Hullbreach.Bots/BotObservation.cs::SelfView -->
 <!-- describes: Assets/Scripts/Hullbreach.Bots/BotObservation.cs::EnemyView -->
 <!-- describes: Assets/Scripts/Hullbreach.Bots/BotObservation.cs::ProjectileView -->
+<!-- describes: Assets/Scripts/Hullbreach.Bots/BotObservation.cs::EnemyCell -->
+<!-- describes: Assets/Scripts/Hullbreach.Bots/BotObservation.cs::PickupView -->
 
-What one player could read off the screen: the own ship (pose, velocity, core damage, thrust and
-turn ability, cannon cooldown), the enemy (pose, velocity, core position and damage), shots in flight,
-the planets, the arena edge and, when there is one, the storm. It carries no enemy input and no enemy design.
+What one player could read off the screen: the own ship (pose, velocity, exact core damage from its own HUD,
+thrust and turn ability, cannon cooldown, spare blocks), the enemy as drawn (pose, velocity, the core marker the
+minimap shows, its blocks with a four-step damage sprite), shots in flight, pickups, the planets, the arena edge
+and, when there is one, the storm. The enemy's core damage is rounded down to quarters, because the sprite shows a
+state, not a number. It carries no enemy input, no exact enemy health and no number a spectator could not read.
 
 ### IShipInputSource
 
@@ -94,10 +98,12 @@ The layered pilot. Layers, highest priority first:
 1. Survive: predict a coasting path under the visible gravity and burn away from any planet it
    grazes; turn back at the arena edge; stay inside the storm ring (and pre-position for the next
    one) when a storm is present. With no storm the layer is simply inactive.
-2. Retreat when the core is badly hurt and losing.
-3. Dodge a shot whose closest approach is inside the ship's width (Easy never, Normal and Hard lightly; they do not strafe, because turning away from the target costs shots).
-4. Hold the preferred range with a closing-speed controller.
-5. Aim and fire: an iterative gravity-aware lead solution against a delayed, noisy copy of the
+2. Scavenge: when the enemy is over 24 units away and nothing is shooting, fly to a nearby pickup (not near a planet, the edge or the storm ring, and not about to expire) with a velocity-matching burn.
+3. Retreat when the core is badly hurt and losing.
+4. Dodge a shot whose closest approach is inside the ship's width (Easy never, Normal and Hard lightly; they do not strafe, because turning away from the target costs shots).
+5. Flank: after 30 s, every few seconds look at the enemy's on-screen blocks and circle toward a side with at least two fewer blocks between the guns and its core.
+6. Hold the preferred range, closing in when the enemy core sprite looks hurt with a closing-speed controller.
+7. Aim and fire: an iterative gravity-aware lead solution against a delayed, noisy copy of the
    enemy, fire discipline (a per-cooldown roll, a tolerance cone, no shot into a planet).
 
 `Mode` is the layer that last decided, for traces and tests.
@@ -152,6 +158,7 @@ Where a bot reads the storm. Returning false means no storm, and every storm beh
 <!-- describes: Assets/Scripts/Hullbreach.Bots/BotPeer.cs::BotPeer.Observe -->
 <!-- describes: Assets/Scripts/Hullbreach.Bots/BotPeer.cs::BotPeer.PeerId -->
 <!-- describes: Assets/Scripts/Hullbreach.Bots/BotPeer.cs::BotPeer.Source -->
+<!-- describes: Assets/Scripts/Hullbreach.Bots/BotPeer.cs::BotPeer.Quartermaster -->
 <!-- describes: Assets/Scripts/Hullbreach.Bots/BotPeer.cs::DiscardOutbox -->
 
 Stands where a network client would. Once per tick call `Drive(sim, tick, storm)`: it builds the
@@ -161,6 +168,22 @@ further. `DiscardOutbox` is the `IServerOutbox` for matches with no real clients
 
 To host a bot in a live match: `Join(botPeer, design.ToSnapshot(...))` like any client, then call
 `Drive` every server tick (inputs hold for 0.25 s and a peer is dropped after 5 s of silence).
+
+### BotQuartermaster
+
+<!-- describes: Assets/Scripts/Hullbreach.Bots/BotQuartermaster.cs::BotQuartermaster -->
+<!-- describes: Assets/Scripts/Hullbreach.Bots/BotQuartermaster.cs::BotQuartermaster.Act -->
+<!-- describes: Assets/Scripts/Hullbreach.Bots/BotQuartermaster.cs::BotQuartermaster.Placed -->
+<!-- describes: Assets/Scripts/Hullbreach.Bots/BotQuartermaster.cs::BotQuartermaster.Deconstructed -->
+
+The economy half of play, through the calls a build menu makes: `SetInput` with the build-mode flag, then
+`PlaceBlock` or `Deconstruct`. Every ten ticks, when the enemy is over 18 units away and no hostile shot is
+within 25, it puts the highest-priority lost part of its own design back from stock (engines, guns, fins,
+armour, hull in that order) and, when nothing is missing, deconstructs the most damaged hull or armour block
+(damage 215 or more, never a fresh one) for the refund. Build mode freezes the ship for that tick and the server
+adds its own cooldown, which is the price of doing it. Collecting crates and salvage is movement, so the pilot
+does it (`BotMode.Scavenge`); the server collects on contact. `ArenaMatchConfig.Quartermaster = false` turns the
+whole economy side off to measure what it is worth.
 
 ### ArenaMatch
 
@@ -173,9 +196,10 @@ To host a bot in a live match: `Join(botPeer, design.ToSnapshot(...))` like any 
 
 One headless bot-vs-bot match through the real `ServerSimulation` (same join checks, projectiles,
 contacts, structural solver and match state machine). It never throws: a crash becomes
-`ArenaEnding.Crash` with the message in `Error`. A match with no core breach ends at the time limit; if the
-cores are tied the server calls it a draw, and the result also carries a `PointsWinner` (the side that
-dealt clearly more damage) so a balance report can still rank the two.
+`ArenaEnding.Crash` with the message in `Error`. The storm, economy and planet crash are the
+server's own (`ArenaMatchConfig.Storm`, `Economy`, `Crash`); the harness adds no damage of its own. A breach after the last
+ring has closed is classed `Storm` (sudden death). A match with no breach ends at the time limit; the result also
+carries a `PointsWinner` (the side that dealt clearly more damage) so a balance report can still rank the two.
 
 ### BalanceReport
 
@@ -187,17 +211,6 @@ dealt clearly more damage) so a balance report can still rank the two.
 
 Seed sweeps and the stdout table. Odd seeds swap the spawn slots so a slot advantage cancels, and a mirror
 batch gives both sides the same ship. Run it with `tools/plaincs/bot_report.sh`.
-
-### StormOverlay
-
-<!-- describes: Assets/Scripts/Hullbreach.Bots/StormOverlay.cs::StormOverlay -->
-<!-- describes: Assets/Scripts/Hullbreach.Bots/StormOverlay.cs::StormOverlay.Apply -->
-<!-- describes: Assets/Scripts/Hullbreach.Bots/StormOverlay.cs::StormOverlay.CoreDamageBy -->
-<!-- describes: Assets/Scripts/Hullbreach.Bots/StormOverlay.cs::StormOverlay.TotalDamageTo -->
-
-A stand-in for the server applying storm damage, used only by the arena until `ServerSimulation` does it
-itself. It marks blocks damaged but never removes them. Retire it once the storm wiring lands, or storm damage
-is counted twice.
 
 ## Unity follow-up (not engine-free)
 

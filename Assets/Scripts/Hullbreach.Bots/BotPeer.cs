@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System;
 using Unity.Mathematics;
 using Hullbreach.Core;
@@ -73,8 +74,16 @@ namespace Hullbreach.Bots
         {
             BotObservation obs = Observe(sim, tick, storm);
             ShipInput input = _source.Next(obs);
-            sim.SetInput(_peer, InputMessage.FromFloats((ushort)_peer, tick, input.ThrustAxis, input.Steer, input.FirePressed));
+            InputMessage message = InputMessage.FromFloats((ushort)_peer, tick, input.ThrustAxis, input.Steer, input.FirePressed);
+            // Building is a few frozen ticks in build mode, then back to flight on the next input.
+            if (Quartermaster != null && Quartermaster.Act(sim, _peer, tick, obs, (flags) => sim.SetInput(_peer,
+                new InputMessage(message.NetId, message.Tick, message.ThrustAxis, message.Steer, (byte)(message.Flags | flags)))))
+                return;
+            sim.SetInput(_peer, message);
         }
+
+        // The economy side of play (rebuild, refund, scavenge); null leaves the bot flying only.
+        public BotQuartermaster Quartermaster { get; set; }
 
         // Builds what the player at this peer can see. Nothing here reads the enemy's input or design.
         // frob:doc docs/reference/hullbreach-bots.md#botpeer
@@ -99,6 +108,11 @@ namespace Hullbreach.Bots
 
             for (int i = 0; sim.Gravity.TryGetPermanent(i, out GravityBody body); i++) obs.Planets.Add(body);
             obs.Bounds = sim.Bounds;
+
+            obs.Pickups.Clear();
+            foreach (Pickup pk in sim.Pickups)
+                obs.Pickups.Add(new PickupView { Position = pk.PositionAt((int)tick, sim.TickRate), Velocity = pk.Velocity, Type = pk.Type, ExpireTick = pk.ExpireTick });
+            obs.Stock = sim.StockOf(_peer);
 
             obs.HasStorm = false;
             if (storm != null && storm.TryGetState(tick, out StormState state))
@@ -136,7 +150,7 @@ namespace Hullbreach.Bots
             };
         }
 
-        static EnemyView ViewEnemy(ShipBody them)
+        EnemyView ViewEnemy(ShipBody them)
         {
             float2 corePos = them.Position;
             if (them.Grid.CoreKey.HasValue) corePos = them.LocalToWorld(BlockGrid.CenterOf(them.Grid.CoreKey.Value));
@@ -152,10 +166,22 @@ namespace Hullbreach.Bots
                 Rotation = them.Rotation,
                 AngularVelocity = them.AngularVelocity,
                 CorePosition = corePos,
-                CoreDamage = CoreDamage(them.Grid),
+                CoreDamage = math.floor(CoreDamage(them.Grid) * 4f) / 4f,
+                Cells = Cells(them),
                 Radius = radius,
             };
         }
+
+        // What the enemy's blocks look like on screen: position, kind and a four-step damage sprite.
+        List<EnemyCell> Cells(ShipBody them)
+        {
+            _cells.Clear();
+            foreach (var kv in them.Grid.All)
+                _cells.Add(new EnemyCell { Local = BlockGrid.CenterOf(kv.Key), Type = kv.Value.TypeId, Stage = (byte)math.min(3, kv.Value.Damage / 64) });
+            return _cells;
+        }
+
+        readonly List<EnemyCell> _cells = new List<EnemyCell>();
 
         static float CoreDamage(BlockGrid grid)
         {

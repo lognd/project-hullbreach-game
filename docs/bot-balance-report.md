@@ -35,3 +35,20 @@ repeated here, and neither were the storm and personality sweeps, so treat those
 About 0.15 s of wall time per simulated second, nearly all of it the structural solver in
 `ServerSimulation.Tick` (the bots take about 0.5 percent). The unit tests use 20 s matches. Run scenarios as
 separate processes with `--only` (not in parallel with a build; concurrent `dotnet run` builds collide).
+
+## Update: real storm, economy and planet crash (follow-up PR)
+
+The arena now runs the server's own storm, economy and planet crash; `StormOverlay` is gone. The harness
+configures the arena before the peers join, because the match, its storm and its economy start on the second
+join. (Before this fix the default storm ran in every match, including the ones labelled "no storm".)
+
+300 s limit, 40 seeds per scenario, 240 matches each, zero crashes:
+
+| Run | Core breach | Storm sudden death | Time limit | Draw | Stall | Median length |
+|---|---|---|---|---|---|---|
+| No storm | 45% | 0% | 32% | 23% | 13% | 300 s |
+| Default storm | 14% | 70% | 0% | 17% | 78% | 285 s |
+
+Scripted held thrust, held steer, both together, tap and alternating inputs, and a real bot match with firing
+off, never push a bot design past 0.64 of its stress limit, so no flight-model change was needed. With the
+default storm, sudden death (at 284 s) decides most matches, so the storm schedule is the next thing to tune.
