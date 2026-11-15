@@ -80,6 +80,12 @@ namespace Hullbreach.NetCode.Entities
             signOutButton.onClick.RemoveListener(_model.SignOut);
         }
 
+        // The Play hub's guest path (LAN, bots): answer the form as "play offline" without showing it.
+        public void ContinueAsGuest()
+        {
+            if (_model != null && !_model.IsDone) _model.PlayOffline();
+        }
+
         void SubmitFromField(string _) => Submit();
 
         // The model blanks the password field as it sends, so the clearing is unit-tested.
