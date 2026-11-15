@@ -7,7 +7,7 @@ priority = "critical"
 parent = "01M3DG5Y02BXW6QBAG8X1JFSW2"
 reporter = "human"
 created = "2026-09-26T00:00:00Z"
-updated = "2026-11-15T05:28:06Z"
+updated = "2026-11-15T12:15:41Z"
 aliases = ["T-0017"]
 labels = ["jira:SCRUM-49", "owner:mcnairrobotics", "game", "milestone:0.1.0"]
 
