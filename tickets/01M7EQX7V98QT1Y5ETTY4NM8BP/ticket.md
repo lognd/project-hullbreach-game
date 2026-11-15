@@ -2,12 +2,13 @@
 id = "01M7EQX7V98QT1Y5ETTY4NM8BP"
 title = "Fix main CI: POL-net-no-remote-sized-alloc false positive and tracked .grimble state"
 type = "bug"
-category = "in-progress"
+category = "done"
+outcome = "fixed"
 priority = "high"
 points = 1
 reporter = "lognd"
 created = "2026-11-15T04:37:05Z"
-updated = "2026-11-15T04:38:25Z"
+updated = "2026-11-15T12:14:08Z"
 scope = ["scripts/check_unity_tree.sh", "Assets/Scripts/Hullbreach.Net/NetMessages.cs", ".gitignore"]
 
 [[acceptance]]
