@@ -7,7 +7,7 @@ priority = "medium"
 points = 2
 reporter = "lognd"
 created = "2026-11-15T12:16:04Z"
-updated = "2026-11-15T12:53:41Z"
+updated = "2026-11-15T12:53:56Z"
 labels = ["game"]
 
 [[acceptance]]
@@ -16,5 +16,5 @@ bound = true
 
 [[acceptance]]
 text = "A server test covers the grace period"
-bound = false
+bound = true
 +++
