@@ -761,8 +761,9 @@ Mid-match building is a trade-off (S34-3): while a match is `Running` each peer 
 place one block per `BuildCooldownSeconds` (default 1.5 s, counted in server ticks; zero
 or less turns it off). A placement inside the cooldown is refused without distrust and
 without extending the wait; `BuildCooldownRemaining(peer)` tells a HUD how long is
-left. Building before the match starts is never limited. There is no resource cost: the
-repo has no resource system, so cost was not invented. Removal is not limited.
+left. Building before the match starts is never limited. With the block economy on
+(the default, see EconomyConfig) a live placement also spends one spare block of that type
+from the peer's stock, and removal is a refunded Deconstruct on the same cooldown.
 
 Projectile hits: a hit damages the struck block and also applies the
 shot's `Spec.Impulse` to the victim ship at the hit point, along the shot's
@@ -1386,3 +1387,57 @@ fails the reader on a truncated body or the all-zero id; `TryWrite` refuses a no
 `ServerSimulation.RequireJoinTicket` on, the server only accepts `Join` from a peer whose
 ticket equals the id from `AssignQueueMatch`; a mismatch queues the peer for disconnect. A
 dedicated server is told its id by `-hullbreachMatchId <uuid>` (`DirectLaunchPlan.MatchId`).
+
+### EconomyConfig
+
+Every block-economy tunable: `Costs` (BlockCosts: budget 60, size cap 40 blocks, welded
+surcharge 2), `StartingStock` (3 hull), `MaxStockPerType` (30), `ConstructionSeconds` and
+`ConstructionDamage` (a new block starts at Damage 170 and heals over 8 s), `SalvagePercent` (70),
+`SalvageSpread`, `RefundPercent` (50), the comeback trickle (`TrickleSeconds` 20,
+`TrickleDeficitStep` 0.25, `TrickleMaxMultiplier` 3, `TrickleStockCap` 6, `TrickleMatchCap` 12)
+and `Pickups` (PickupConfig). `Enabled=false` restores free building. An optional `economy` JSON
+block in the arena config overrides any of it; `Validate()` returns the first problem or null.
+
+### EconomyRules
+
+Stateless, shared by server and HUD: `CheckPlacement` returns a PlacementResult in the order
+cooldown, bad request, core, placement verdict, size cap, stock (live) or budget (pre-match).
+`BudgetLeft`, `WouldFailImmediately` (cold-solver before/after comparison under the ship's recent
+forces) and `Describe` (toast text) round it out.
+
+### PlacementResult
+
+Ok, NoShip, NotBuilding, BadRequest, Cooldown, OutOfStock, SizeCap, OverBudget, CoreNotBuildable,
+Disconnected, WouldBuckle, CannotRemove. Only NotBuilding, BadRequest and CannotRemove distrust the peer.
+
+### PlacementResultMessage
+
+Peer-only, unsequenced verdict for every build or deconstruct attempt (action, x, y, type, result,
+detail, cooldown ticks). It consumes no sequence number because the reliable stream is global.
+
+### InventorySnapshot
+
+Peer-only, unsequenced, latest-wins by Tick: per-type counts, pre-match BudgetLeft (-1 live),
+BlockCount, MaxBlocks and CooldownTicks. More than 16 counts fail the reader.
+
+### PickupSpawned
+
+Sequenced broadcast: a pickup appeared. Its position afterwards is origin + velocity * time.
+
+### PickupDespawned
+
+Sequenced broadcast: a pickup is gone, with a PickupRemoval reason and the collecting peer.
+
+### ClientEquipment
+
+`ClientReplica.Economy` (ClientEconomy): `Stock`, `TotalStock`, `BudgetLeft`, `BlockCount`,
+`MaxBlocks`, `CooldownSeconds(nowTick)`, `GetPickups(tick, list)` for the minimap, `LastResult`,
+`TryDequeueResult`, `TryDequeueCollected` and `PreviewPlacement`. Read-only; it never changes server state.
+
+### ServerEconomy
+
+`ServerSimulation` additions: `Economy`, `Pickups`, `StockOf`, `BudgetLeftOf`,
+`BuildCooldownTicksRemaining`, `GrantStock` (test hook), `CheckPlacement` (read-only), `PlaceBlock`
+and `Deconstruct` (both return PlacementResult and notify the owner). `TryPlaceBlock` and
+`TryRemoveBlock` wrap them. `Join` can now return `DesignTooLarge` or `OverBudget`.
+Welded cost is not enforced over the wire (the Welded flag is not carried in snapshots).
