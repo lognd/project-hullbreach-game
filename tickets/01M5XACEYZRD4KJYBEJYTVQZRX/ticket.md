@@ -7,8 +7,16 @@ priority = "high"
 parent = "01M3DG5Y0J805WP05DZV8GWAWA"
 reporter = "mcnairrobotics"
 created = "2026-10-26T23:57:57Z"
-updated = "2026-11-15T12:15:42Z"
+updated = "2026-11-15T12:44:31Z"
 labels = ["game", "owner:mcnairrobotics"]
+
+[[acceptance]]
+text = "A found match becomes a resolvable connect target (ConnectRequest/ConnectTarget, tests)"
+bound = true
+
+[[acceptance]]
+text = "HullbreachQueueConnect dials on Matched and loads the match scene (editor-verified against a local platform with two accounts; no automated test)"
+bound = false
 +++
 
 found while working ~RHV8HRV. Needs the editor: queue screen calls ConnectRequest.FromHandoff on MatchmakingMachine.Handoff, dials Host:Port (name resolution in the transport) and loads the game scene. Engine-free part landed in ConnectRequest.cs.

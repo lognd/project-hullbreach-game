@@ -1,0 +1,6 @@
+kind = "comment"
+subtype = "note"
+body = "Left open after #162: criterion 1 (ConnectRequest/ConnectTarget) is bound to 18 passing tests. Criterion 2 (HullbreachQueueConnect auto-dials on Matched and loads the scene) was verified in the editor against a local platform with two accounts, but no automated test covers the MonoBehaviour (Unity-only assembly; plaincs cannot compile it), so it cannot be bound to evidence. Close with an attestation or a Unity play-mode test."
+at = "2026-11-15T12:54:48Z"
+actor = "lognd"
+rev = 1

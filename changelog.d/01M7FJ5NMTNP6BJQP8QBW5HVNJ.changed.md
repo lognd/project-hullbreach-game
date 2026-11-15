@@ -1,0 +1,1 @@
+- A ship can no longer shoot before the match starts or in its first 5 seconds.

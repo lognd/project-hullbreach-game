@@ -1,0 +1,6 @@
+kind = "comment"
+subtype = "note"
+body = "Left open after #162: children ~YTVQZRX (component dial only editor-verified, no bindable test) and new ~BSEK1EH (skins not carried through MatchHandoff) are open. Criterion 2 works in the editor with two accounts on one machine but not verified on a standalone server build or two machines. Criterion 3 (ranked on end): MatchResultReporter tests exist; bot/guest matches are not reported."
+at = "2026-11-15T12:54:48Z"
+actor = "lognd"
+rev = 1

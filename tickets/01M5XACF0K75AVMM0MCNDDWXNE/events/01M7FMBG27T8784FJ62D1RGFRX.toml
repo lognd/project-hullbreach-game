@@ -1,0 +1,7 @@
+kind = "field"
+field = "acceptance"
+new = ["A client presents the allocated match id in a JoinTicket when joining (wire message round-trips, bad ids rejected)", "A dedicated server takes its expected match id from -hullbreachMatchId and refuses a peer with the wrong or missing ticket"]
+moved = []
+at = "2026-11-15T12:54:12Z"
+actor = "lognd"
+rev = 1
