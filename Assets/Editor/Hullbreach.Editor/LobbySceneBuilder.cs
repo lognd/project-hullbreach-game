@@ -354,24 +354,24 @@ namespace Hullbreach.Editor
             AddOverlayCanvas("TitleCanvas", 0, out GameObject canvasRoot);
             Image backdrop = AddImage(canvasRoot.transform, "TitleRoot", BrandColors.Background);
             Stretch(backdrop.rectTransform);
-            GameObject panel = AddPanel(backdrop.transform, "TitlePanel", new Vector2(520f, 640f), BrandColors.Panel);
+            GameObject panel = AddPanel(backdrop.transform, "TitlePanel", new Vector2(680f, 690f), BrandColors.Panel);
             AddVerticalLayout(panel, 48, 12f);
-            TMP_Text title = AddText(panel.transform, "Title", "HULLBREACH", 52f, TextAlignmentOptions.Center);
+            TMP_Text title = AddText(panel.transform, "Title", "HULLBREACH", 76f, TextAlignmentOptions.Center);
             title.fontStyle = FontStyles.Bold;
-            TMP_Text tagline = AddText(panel.transform, "Tagline", BrandPalette.Tagline, 18f, TextAlignmentOptions.Center);
+            TMP_Text tagline = AddText(panel.transform, "Tagline", BrandPalette.Tagline, 26f, TextAlignmentOptions.Center);
             tagline.color = BrandColors.Cyan;
             AddSpacer(panel.transform, 20f);
-            Button play = AddButton(panel.transform, "PlayButton", "PLAY", 60f, primary: true);
-            Button build = AddButton(panel.transform, "BuildButton", "BUILD", 52f);
-            Button settings = AddButton(panel.transform, "SettingsButton", "SETTINGS", 52f);
-            Button signIn = AddButton(panel.transform, "SignInButton", "SIGN IN", 52f);
-            Button quit = AddButton(panel.transform, "QuitButton", "QUIT", 52f);
+            Button play = AddButton(panel.transform, "PlayButton", "PLAY", 76f, primary: true, labelSize: 30f);
+            Button build = AddButton(panel.transform, "BuildButton", "BUILD", 64f, labelSize: 28f);
+            Button settings = AddButton(panel.transform, "SettingsButton", "SETTINGS", 64f, labelSize: 28f);
+            Button signIn = AddButton(panel.transform, "SignInButton", "SIGN IN", 64f, labelSize: 28f);
+            Button quit = AddButton(panel.transform, "QuitButton", "QUIT", 64f, labelSize: 28f);
 
-            TMP_Text account = AddText(backdrop.transform, "AccountText", string.Empty, 18f, TextAlignmentOptions.Right);
+            TMP_Text account = AddText(backdrop.transform, "AccountText", string.Empty, 24f, TextAlignmentOptions.Right);
             account.color = BrandColors.Muted;
             RectTransform accountRect = account.rectTransform;
             accountRect.anchorMin = accountRect.anchorMax = accountRect.pivot = new Vector2(1f, 1f);
-            accountRect.sizeDelta = new Vector2(520f, 30f);
+            accountRect.sizeDelta = new Vector2(640f, 36f);
             accountRect.anchoredPosition = new Vector2(-24f, -20f);
 
             HullbreachTitleView view = canvasRoot.AddComponent<HullbreachTitleView>();
@@ -749,7 +749,7 @@ namespace Hullbreach.Editor
 
         // Primary buttons are signal orange with dark text; every other button is raised with a cyan label.
         // frob:ticket 01M6WV5HP3KVSZNJT6H99MFS3Z
-        static Button AddButton(Transform parent, string name, string text, float height, bool primary = false)
+        static Button AddButton(Transform parent, string name, string text, float height, bool primary = false, float labelSize = 20f)
         {
             GameObject root = AddUiObject(parent, name);
             Image image = root.AddComponent<Image>();
@@ -765,7 +765,7 @@ namespace Hullbreach.Editor
             button.colors = colors;
             LayoutElement layout = root.AddComponent<LayoutElement>();
             layout.preferredHeight = height;
-            TMP_Text label = AddText(root.transform, "Label", text, 17f, TextAlignmentOptions.Center);
+            TMP_Text label = AddText(root.transform, "Label", text, labelSize, TextAlignmentOptions.Center);
             label.fontStyle = FontStyles.Bold;
             label.color = primary ? BrandColors.Background : BrandColors.Cyan;
             Stretch(label.rectTransform);
