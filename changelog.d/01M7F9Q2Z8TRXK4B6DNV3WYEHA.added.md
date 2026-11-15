@@ -1,0 +1,1 @@
+Added a block economy: a pre-match build budget, per-peer stock spent on mid-match building, deterministic crate and salvage pickups, deconstruct refunds and a comeback trickle, with new PlacementResult, InventorySnapshot and pickup messages.

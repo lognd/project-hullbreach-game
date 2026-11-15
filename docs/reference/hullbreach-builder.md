@@ -222,3 +222,15 @@ so BuilderSession.Undo/Redo do not fire Changed.
 <!-- describes: Assets/Scripts/Hullbreach.Builder/UndoStack.cs::UndoStack.RecordRemove -->
 <!-- describes: Assets/Scripts/Hullbreach.Builder/UndoStack.cs::UndoStack.TryUndo -->
 <!-- describes: Assets/Scripts/Hullbreach.Builder/UndoStack.cs::UndoStack.TryRedo -->
+
+### BlockCosts
+
+Price table and limits for the block economy: per-type cost (core 0, hull 1, armor 3, thruster 4,
+cannon 5, fin 2, retro 3), `Budget` 60, `MaxBlocks` 40, `WeldedSurcharge` 2. `CostOf(type, welded)`,
+`CostOf(grid)`, `WithCost`, `WithLimits`, `Validate`. `BlockPalette` reads its costs from here.
+
+### Inventory
+
+Per-type spare-block counts with a shelf cap (default 30). `TryAdd` and `TryTake` are all-or-nothing,
+the core is never stock, and `AddRefundCredit(type, percent)` accumulates fractional refunds so two
+50% refunds make one block.

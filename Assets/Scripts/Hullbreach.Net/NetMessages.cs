@@ -34,6 +34,10 @@ namespace Hullbreach.Net
         ProjectileState = 14,
         JoinTicket = 15,
         StormStarted = 16,
+        PickupSpawned = 17,
+        PickupDespawned = 18,
+        InventorySnapshot = 19,
+        PlacementResult = 20,
     }
 
     // Client -> server, unreliable: this tick's intent. Latest-wins on drop.

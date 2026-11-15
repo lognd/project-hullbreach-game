@@ -72,6 +72,7 @@ bounce with when it hits the surface.
 <!-- describes: Assets/Scripts/Hullbreach.World/GravityField.cs::GravityField -->
 <!-- describes: Assets/Scripts/Hullbreach.World/GravityField.cs::GravityField.MaxAcceleration -->
 <!-- describes: Assets/Scripts/Hullbreach.World/GravityField.cs::GravityField.Count -->
+<!-- describes: Assets/Scripts/Hullbreach.World/GravityField.cs::GravityField.PermanentCount -->
 <!-- describes: Assets/Scripts/Hullbreach.World/GravityField.cs::GravityField.Add -->
 <!-- describes: Assets/Scripts/Hullbreach.World/GravityField.cs::GravityField.Remove -->
 <!-- describes: Assets/Scripts/Hullbreach.World/GravityField.cs::GravityField.TryGetPermanent -->
@@ -141,6 +142,83 @@ return to) a stable pass without hand-tuning a velocity.
   there, not the un-softened `Mu / r^2`). Returns false (velocity zero)
   if the index is out of range, `position` coincides with the body, or the
   body's `Mu <= 0` (a repeller has no circular orbit); callers log and skip.
+
+### PlanetCrashConfig
+
+<!-- describes: Assets/Scripts/Hullbreach.World/PlanetCrashConfig.cs::PlanetCrashConfig -->
+<!-- describes: Assets/Scripts/Hullbreach.World/PlanetCrashConfig.cs::PlanetCrashConfig.SafeLandingSpeed -->
+<!-- describes: Assets/Scripts/Hullbreach.World/PlanetCrashConfig.cs::PlanetCrashConfig.CatastrophicSpeed -->
+<!-- describes: Assets/Scripts/Hullbreach.World/PlanetCrashConfig.cs::PlanetCrashConfig.DamagePerSpeed -->
+<!-- describes: Assets/Scripts/Hullbreach.World/PlanetCrashConfig.cs::PlanetCrashConfig.CoreDamageScale -->
+<!-- describes: Assets/Scripts/Hullbreach.World/PlanetCrashConfig.cs::PlanetCrashConfig.CoreMaxDamagePerImpact -->
+<!-- describes: Assets/Scripts/Hullbreach.World/PlanetCrashConfig.cs::PlanetCrashConfig.RestSpeed -->
+<!-- describes: Assets/Scripts/Hullbreach.World/PlanetCrashConfig.cs::PlanetCrashConfig.MaxRestitution -->
+<!-- describes: Assets/Scripts/Hullbreach.World/PlanetCrashConfig.cs::PlanetCrashConfig.SweepStep -->
+<!-- describes: Assets/Scripts/Hullbreach.World/PlanetCrashConfig.cs::PlanetCrashConfig.MaxSubsteps -->
+<!-- describes: Assets/Scripts/Hullbreach.World/PlanetCrashConfig.cs::PlanetCrashConfig.AtmosphereDepthFactor -->
+<!-- describes: Assets/Scripts/Hullbreach.World/PlanetCrashConfig.cs::PlanetCrashConfig.AtmosphereMinDepth -->
+<!-- describes: Assets/Scripts/Hullbreach.World/PlanetCrashConfig.cs::PlanetCrashConfig.AtmosphereSafeSpeed -->
+<!-- describes: Assets/Scripts/Hullbreach.World/PlanetCrashConfig.cs::PlanetCrashConfig.AtmosphereDrag -->
+<!-- describes: Assets/Scripts/Hullbreach.World/PlanetCrashConfig.cs::PlanetCrashConfig.HeatSpeed -->
+<!-- describes: Assets/Scripts/Hullbreach.World/PlanetCrashConfig.cs::PlanetCrashConfig.HeatDamagePerSecond -->
+<!-- describes: Assets/Scripts/Hullbreach.World/PlanetCrashConfig.cs::PlanetCrashConfig.HeatMaxDamagePerSecond -->
+<!-- describes: Assets/Scripts/Hullbreach.World/PlanetCrashConfig.cs::PlanetCrashConfig.WarningSeconds -->
+<!-- describes: Assets/Scripts/Hullbreach.World/PlanetCrashConfig.cs::PlanetCrashConfig.Default -->
+<!-- describes: Assets/Scripts/Hullbreach.World/PlanetCrashConfig.cs::PlanetCrashConfig.Validate -->
+<!-- describes: Assets/Scripts/Hullbreach.World/PlanetCrashConfig.cs::PlanetCrashConfig.AtmosphereDepth -->
+<!-- describes: Assets/Scripts/Hullbreach.World/PlanetCrashConfig.cs::PlanetCrashConfig.AtmosphereDensity -->
+<!-- describes: Assets/Scripts/Hullbreach.World/PlanetCrashConfig.cs::PlanetCrashConfig.ImpactDamage -->
+
+Every tunable of planet crashes and the thin atmosphere, in one struct with
+`Default()` and `Validate()` (null when valid). The server reads an optional
+`planets` block from the arena JSON (see `ArenaConfig`). Rules:
+
+- Touching a planet at or below `SafeLandingSpeed` (relative normal speed)
+  costs nothing. Above it, each touching block takes
+  `(speed - SafeLandingSpeed) * DamagePerSpeed / sqrt(touchingBlocks)`, so a
+  wide landing spreads the hit.
+- The core takes `CoreDamageScale` of that, capped at
+  `CoreMaxDamagePerImpact` (below 255), so a graze or an ordinary hard landing
+  can never breach it. Only a hit at or above `CatastrophicSpeed` applies the
+  full, uncapped amount and can kill a core that is on the contact side.
+- Bounces are clamped to `MaxRestitution` and are zero below `RestSpeed`, so
+  a resting ship does not jitter and a bounce never adds energy.
+- `SweepStep` and `MaxSubsteps` bound the per-tick substepping that stops a
+  fast ship tunnelling through the surface.
+- The atmosphere is a band above the surface (`AtmosphereDepth`, at least
+  `AtmosphereMinDepth`) with density 1 at the surface falling quadratically to
+  0 at the top. Below `AtmosphereSafeSpeed` it does nothing, so orbits are free.
+  Faster ships feel drag (`AtmosphereDrag`); above `HeatSpeed` the leading
+  blocks heat for `HeatDamagePerSecond` (up to `HeatMaxDamagePerSecond`). The
+  core is never heated.
+
+### PlanetProximity
+
+<!-- describes: Assets/Scripts/Hullbreach.World/PlanetProximity.cs::ImpactSeverity -->
+<!-- describes: Assets/Scripts/Hullbreach.World/PlanetProximity.cs::PlanetProximity -->
+<!-- describes: Assets/Scripts/Hullbreach.World/PlanetProximity.cs::PlanetProximity.HasBody -->
+<!-- describes: Assets/Scripts/Hullbreach.World/PlanetProximity.cs::PlanetProximity.BodyIndex -->
+<!-- describes: Assets/Scripts/Hullbreach.World/PlanetProximity.cs::PlanetProximity.SurfaceNormal -->
+<!-- describes: Assets/Scripts/Hullbreach.World/PlanetProximity.cs::PlanetProximity.Altitude -->
+<!-- describes: Assets/Scripts/Hullbreach.World/PlanetProximity.cs::PlanetProximity.ClosingSpeed -->
+<!-- describes: Assets/Scripts/Hullbreach.World/PlanetProximity.cs::PlanetProximity.TangentialSpeed -->
+<!-- describes: Assets/Scripts/Hullbreach.World/PlanetProximity.cs::PlanetProximity.TimeToImpact -->
+<!-- describes: Assets/Scripts/Hullbreach.World/PlanetProximity.cs::PlanetProximity.PredictedImpactSpeed -->
+<!-- describes: Assets/Scripts/Hullbreach.World/PlanetProximity.cs::PlanetProximity.AtmosphereDensity -->
+<!-- describes: Assets/Scripts/Hullbreach.World/PlanetProximity.cs::PlanetProximity.StopDistance -->
+<!-- describes: Assets/Scripts/Hullbreach.World/PlanetProximity.cs::PlanetProximity.MustBrake -->
+<!-- describes: Assets/Scripts/Hullbreach.World/PlanetProximity.cs::PlanetProximity.Heating -->
+<!-- describes: Assets/Scripts/Hullbreach.World/PlanetProximity.cs::PlanetProximity.Severity -->
+<!-- describes: Assets/Scripts/Hullbreach.World/PlanetProximity.cs::PlanetProximity.IsSafe -->
+<!-- describes: Assets/Scripts/Hullbreach.World/PlanetProximity.cs::PlanetProximity.Classify -->
+<!-- describes: Assets/Scripts/Hullbreach.World/PlanetProximity.cs::PlanetProximity.TimeToCover -->
+
+Read-only picture of the nearest planet for the HUD, filled by
+`ShipBody.QueryPlanetProximity()`: altitude of the lowest block, closing and
+tangential speed, time to impact (gravity included), the predicted impact
+speed, atmosphere density, whether the ship is heating, the stop distance of
+full thrust and `MustBrake`, plus an `ImpactSeverity` (None, Safe, Caution,
+Danger, Catastrophic) and `IsSafe`. It never changes the ship.
 
 ### StormZone
 
@@ -219,3 +297,12 @@ server applies the damage and despawns projectiles; see
 [ServerSimulation](hullbreach-net.md#arenaconfig) and
 [StormStarted](hullbreach-net.md#stormstarted).
 
+
+### PickupField
+
+Deterministic pickups for the block economy: crates (a pure function of seed and wave index: a
+planet crate, a storm-edge rare pair, or an open-field mirrored pair; first at 20 s, then every
+12 s, 75 s lifetime) and salvage dropped from wrecks (40 s lifetime, cap 96, oldest culled).
+Pickups despawn on expiry, planet contact or the storm hard limit. `Reach` decides whether a ship
+can grab one (arm delay 1.5 s, relative speed at most 4, within the 2.0 magnet of a block centre,
+no planet in between). Planet crates are asymmetric unless the arena is.

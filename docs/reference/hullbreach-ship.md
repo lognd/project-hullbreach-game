@@ -157,6 +157,8 @@ in a restitution impulse is not worth an OBB test.
 <!-- describes: Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.ThrustPerBlock -->
 <!-- describes: Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.RetroThrustPerBlock -->
 <!-- describes: Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.FinForce -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.PlanetCrash -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.QueryPlanetProximity -->
 <!-- describes: Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.CannonCooldown -->
 <!-- describes: Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.Projectile -->
 <!-- describes: Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.Gravity -->

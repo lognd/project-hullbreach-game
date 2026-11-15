@@ -25,11 +25,15 @@ namespace Hullbreach.Net
         InvalidDesign,
         // RequireJoinTicket is on and the peer has not presented the allocated match id.
         TicketRejected,
+        // The economy is on and the design has more blocks than the size cap.
+        DesignTooLarge,
+        // The economy is on and the design costs more than the build budget.
+        OverBudget,
     }
 
     // The authoritative, plain-C# server loop; see the reference page.
     // frob:doc docs/reference/hullbreach-net.md#serversimulation
-    public sealed class ServerSimulation
+    public sealed partial class ServerSimulation
     {
         // Only used to derive Dt and the input timeout in ticks;
         // ServerSimulation never sleeps or measures wall-clock time itself.
@@ -173,7 +177,7 @@ namespace Hullbreach.Net
         // frob:doc docs/reference/hullbreach-net.md#serversimulation
         public const float InputHoldSeconds = 0.25f;
 
-        sealed class PeerState
+        sealed partial class PeerState
         {
             public ushort NetId;
             public ShipBody Ship;
@@ -183,6 +187,8 @@ namespace Hullbreach.Net
             public bool IsBuilding;
             public bool HasInput;
             public bool PendingFire;
+            // Block damage at the start of this tick step; see SnapshotDamage.
+            public readonly Dictionary<int, byte> DamageBeforeStep = new Dictionary<int, byte>();
             public uint NextBuildTick;
             public bool InPushZone;
             public readonly TrustLevel Trust = new TrustLevel();
@@ -325,6 +331,10 @@ namespace Hullbreach.Net
         // frob:doc docs/reference/hullbreach-net.md#serversimulation
         public ArenaBounds Bounds { get; private set; } = ArenaConfig.DefaultBounds;
 
+        // Crash, atmosphere and warning tunables every ship on this server uses; replaced by ConfigureDemoArena.
+        // frob:doc docs/reference/hullbreach-net.md#serversimulation
+        public PlanetCrashConfig PlanetCrash { get; private set; } = PlanetCrashConfig.Default();
+
         // Diagnostics sink for arena edge events; defaults to a no-op.
         // frob:doc docs/reference/hullbreach-net.md#serversimulation
         public IPlatformLog Log { get; set; } = NullPlatformLog.Instance;
@@ -340,6 +350,9 @@ namespace Hullbreach.Net
             _gravity.Clear();
             Bounds = config.Bounds;
             Storm = config.Storm;
+            PlanetCrash = config.Crash;
+            foreach (var peerState in _peers.Values) peerState.Ship.PlanetCrash = PlanetCrash;
+            Economy = config.Economy;
             _stormCandidates = new float2[config.Bodies.Count];
             for (int i = 0; i < _stormCandidates.Length; i++)
                 _stormCandidates[i] = new float2(config.Bodies[i].X, config.Bodies[i].Y);
@@ -390,54 +403,11 @@ namespace Hullbreach.Net
         // A placement refused for cooldown is not distrusted: a client can legitimately press twice.
         // frob:ticket 01M3DG5Y25YGZ3DV7JSDB4BNMF
         public bool TryPlaceBlock(int peer, int x, int y, byte typeId, byte modifiers)
-        {
-            if (!_peers.TryGetValue(peer, out var state) || state.Trust.AtFloor) return false;
-            if (!state.IsBuilding) { Distrust(peer, state, TrustEventKind.BuildOutsideBuildMode); return false; }
-            if (BuildCooldownSeconds > 0f && MatchIsRunning && _tickIndex < state.NextBuildTick) return false;
-            if (typeId >= BlockTypes.Count || !BlockKey.InRange(x, y) ||
-                state.Ship.Grid.Count >= ShipSnapshot.MaxBlocks)
-            { Distrust(peer, state, TrustEventKind.RejectedBuild); return false; }
+            => PlaceBlock(peer, x, y, typeId, modifiers) == PlacementResult.Ok;
 
-            int key = BlockKey.Pack(x, y);
-            if (!PlacementRules.CanPlace(state.Ship.Grid, key, typeId, modifiers, out _))
-            { Distrust(peer, state, TrustEventKind.RejectedBuild); return false; }
-            if (!state.Ship.Grid.TryAdd(key, new Block(typeId, modifiers))) return false;
-
-            if (BuildCooldownSeconds > 0f && MatchIsRunning)
-                state.NextBuildTick = _tickIndex + (uint)Math.Ceiling(BuildCooldownSeconds * TickRate);
-            state.Ship.RebuildDerivedViews();
-            state.Solver.MarkTopologyChanged();
-            Tally(peer, 0, 0, 1);
-            BroadcastReliable(new BlockPlaced(NextSequence(), state.NetId, (sbyte)x, (sbyte)y, typeId, modifiers));
-            return true;
-        }
-
+        // Same as Deconstruct; kept under its old name for the NetCode server system.
         public bool TryRemoveBlock(int peer, int x, int y)
-        {
-            if (!_peers.TryGetValue(peer, out var state) || state.Trust.AtFloor) return false;
-            if (!state.IsBuilding) { Distrust(peer, state, TrustEventKind.BuildOutsideBuildMode); return false; }
-            if (!BlockKey.InRange(x, y)) { Distrust(peer, state, TrustEventKind.RejectedBuild); return false; }
-
-            int key = BlockKey.Pack(x, y);
-            if (!PlacementRules.CanRemove(state.Ship.Grid, key))
-            { Distrust(peer, state, TrustEventKind.RejectedBuild); return false; }
-
-            var before = new HashSet<int>();
-            foreach (int existingKey in state.Ship.Grid.SortedKeys) before.Add(existingKey);
-            var removed = new List<int>();
-            if (!PlacementRules.Detach(state.Ship.Grid, key, removed)) return false;
-            removed.Sort();
-            foreach (int removedKey in removed)
-            {
-                if (!before.Contains(removedKey)) continue;
-                BlockKey.Unpack(removedKey, out int rx, out int ry);
-                BroadcastReliable(new BlockDestroyed(NextSequence(), state.NetId, (sbyte)rx, (sbyte)ry));
-                state.Failing.Remove(removedKey);
-            }
-            state.Ship.RebuildDerivedViews();
-            state.Solver.MarkTopologyChanged();
-            return true;
-        }
+            => Deconstruct(peer, x, y) == PlacementResult.Ok;
 
         // Validates the untrusted design, then re-broadcasts the new snapshot
         // to every other peer; see reference page. Rejections change nothing.
@@ -449,6 +419,8 @@ namespace Hullbreach.Net
             if (_peers.ContainsKey(peer)) return JoinResult.AlreadyJoined;
             if (RequireJoinTicket && !_ticketed.Contains(peer)) return JoinResult.TicketRejected;
             if (DesignValidator.ValidateDesign(initialDesign) != DesignVerdict.Ok) return JoinResult.InvalidDesign;
+            JoinResult? tooBig = CheckDesignAgainstEconomy(initialDesign);
+            if (tooBig.HasValue) return tooBig.Value;
 
             // Runs before adding the newcomer to _peers; see reference page.
             // Stamped with the current sequence, not a fresh one: only the
@@ -461,6 +433,7 @@ namespace Hullbreach.Net
             {
                 Gravity = _gravity,
                 World = _sink,
+                PlanetCrash = PlanetCrash,
             };
 
             foreach (var b in initialDesign.Blocks)
@@ -521,6 +494,7 @@ namespace Hullbreach.Net
             if (!Match.Start()) return;
             if (RequireReady) AnnounceMatchStart(ids[0], ids[1]);
             StartStorm();
+            StartEconomy();
         }
 
         // Builds the ring from the match id and tells every peer how to rebuild it.
@@ -684,7 +658,9 @@ namespace Hullbreach.Net
 
                 if (state.IsBuilding) continue;
 
+                SnapshotDamage(state);
                 state.Ship.Step(input, dt);
+                ReportBodyDamage(peer, state);
                 ApplyArenaPush(peer, state, dt);
                 DrainShots(peer, state.Ship);
             }
@@ -704,6 +680,7 @@ namespace Hullbreach.Net
             }
 
             ApplyStorm(peerIds);
+            TickEconomy(peerIds);
 
             foreach (int peer in peerIds)
             {
@@ -767,6 +744,36 @@ namespace Hullbreach.Net
                 foreach (int key in destroyed) state.StormCarry.Remove(key);
                 if (destroyed.Count > 0) DestroyAndDetach(peer, state, destroyed);
             }
+        }
+
+        // Remembers every block damage before a ship steps, so crash and heating damage done inside the
+        // step can be told to the clients afterwards.
+        static void SnapshotDamage(PeerState state)
+        {
+            state.DamageBeforeStep.Clear();
+            foreach (var block in state.Ship.Grid.All) state.DamageBeforeStep[block.Key] = block.Value.Damage;
+        }
+
+        // Broadcasts what a planet did to the ship this step and removes blocks it wore down to 255; the
+        // core is only ever damaged, never removed, so the match rules decide the loss.
+        // frob:doc docs/reference/hullbreach-net.md#serversimulation
+        void ReportBodyDamage(int peer, PeerState state)
+        {
+            var grid = state.Ship.Grid;
+            int coreKey = grid.CoreKeyOrDefault();
+            List<int> destroyed = null;
+            var keys = new List<int>();
+            foreach (int k in grid.SortedKeys) keys.Add(k);
+            foreach (int key in keys)
+            {
+                if (!grid.TryGet(key, out Block block)) continue;
+                state.DamageBeforeStep.TryGetValue(key, out byte before);
+                if (block.Damage == before) continue;
+                if (block.Damage >= Connectivity.DestroyedDamage && key != coreKey) { (destroyed ??= new List<int>()).Add(key); continue; }
+                BlockKey.Unpack(key, out int x, out int y);
+                BroadcastReliable(new BlockDamaged(NextSequence(), state.NetId, (sbyte)x, (sbyte)y, block.Damage));
+            }
+            if (destroyed != null) DestroyAndDetach(peer, state, destroyed);
         }
 
         // Nudges a ship back toward the arena; a velocity change only, so no force reaches the
@@ -945,6 +952,8 @@ namespace Hullbreach.Net
             if (destroyed)
             {
                 grid.TryRemove(key);
+                state.Construction.Remove(key);
+                DropSalvage(state, key, block);
                 BlockKey.Unpack(key, out int x, out int y);
                 var evt = new BlockDestroyed(NextSequence(), state.NetId, (sbyte)x, (sbyte)y);
                 BroadcastReliable(evt);
@@ -1017,8 +1026,11 @@ namespace Hullbreach.Net
             var grid = state.Ship.Grid;
             foreach (int key in keys)
             {
+                grid.TryGet(key, out Block lost);
                 if (!grid.TryRemove(key)) continue;
                 state.Failing.Remove(key);
+                state.Construction.Remove(key);
+                DropSalvage(state, key, lost);
                 BlockKey.Unpack(key, out int x, out int y);
                 BroadcastReliable(new BlockDestroyed(NextSequence(), state.NetId, (sbyte)x, (sbyte)y));
             }
@@ -1054,7 +1066,12 @@ namespace Hullbreach.Net
                 float2 localCentroid = sum / component.Count;
                 float2 worldCentroid = state.Ship.LocalToWorld(localCentroid);
 
-                foreach (int key in component) grid.TryRemove(key);
+                foreach (int key in component)
+                {
+                    if (grid.TryGet(key, out Block stranded0)) DropSalvage(state, key, stranded0);
+                    grid.TryRemove(key);
+                    state.Construction.Remove(key);
+                }
 
                 ushort fragmentId = AllocateFragmentId();
                 var evt = new FragmentSpawned(
@@ -1087,8 +1104,11 @@ namespace Hullbreach.Net
         {
             if (!_peers.TryGetValue(peer, out var state)) return;
             int key = BlockKey.Pack(x, y);
+            state.Ship.Grid.TryGet(key, out Block lost);
             if (!state.Ship.Grid.TryRemove(key)) return;
             state.Failing.Remove(key);
+            state.Construction.Remove(key);
+            DropSalvage(state, key, lost);
             BroadcastReliable(new BlockDestroyed(NextSequence(), state.NetId, (sbyte)x, (sbyte)y));
             state.Solver.MarkTopologyChanged();
             ResolveDetachAfterDestruction(peer, state);
@@ -1183,6 +1203,8 @@ namespace Hullbreach.Net
                 case BlockPlaced m: m.Write(ref w); break;
                 case FragmentSpawned m: m.Write(ref w); break;
                 case PowerupApplied m: m.Write(ref w); break;
+                case PickupSpawned m: m.Write(ref w); break;
+                case PickupDespawned m: m.Write(ref w); break;
                 case GravityWellSpawned m: m.Write(ref w); break;
                 case ShipRemoved m: m.Write(ref w); break;
                 default: throw new InvalidOperationException("Unhandled reliable message type " + typeof(T));
