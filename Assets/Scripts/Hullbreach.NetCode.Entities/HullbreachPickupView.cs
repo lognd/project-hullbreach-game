@@ -100,6 +100,7 @@ namespace Hullbreach.NetCode.Entities
                 bool mine = msg.Collector == local;
                 Burst(new Vector2(last.Position.x, last.Position.y), mine ? 3.2f : 1.6f, mine ? new Color(0.4f, 1f, 0.6f, 1f) : new Color(1f, 1f, 1f, 0.6f));
                 if (!mine) continue;
+                if (last.Kind == PickupKind.Crate) HullbreachTrialProbe.CratesCollected++;
                 FeelFx.PlayClick();
                 string what = last.Kind == PickupKind.Crate ? "Supply crate" : BlockTypes.Get(last.Type).Name;
                 HullbreachNetworkGameplayController.Toasts.Push($"+{Mathf.Max(1, (int)last.Count)} {what}", Time.unscaledTime);
