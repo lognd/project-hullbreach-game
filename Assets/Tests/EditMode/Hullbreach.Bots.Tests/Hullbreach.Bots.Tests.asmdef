@@ -1,0 +1,33 @@
+{
+    "name": "Hullbreach.Bots.Tests",
+    "rootNamespace": "Hullbreach.Bots.Tests",
+    "references": [
+        "Hullbreach.Core",
+        "Hullbreach.Match",
+        "Hullbreach.Platform",
+        "Hullbreach.Builder",
+        "Hullbreach.Ship",
+        "Hullbreach.World",
+        "Hullbreach.Structure",
+        "Hullbreach.Net",
+        "Hullbreach.Bots",
+        "Unity.Mathematics",
+        "UnityEngine.TestRunner",
+        "UnityEditor.TestRunner"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
