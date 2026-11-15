@@ -8,7 +8,7 @@ points = 1
 parent = "01M3DG5Y114RNPPMJWHSPVHVQC"
 reporter = "human"
 created = "2026-09-26T00:00:00Z"
-updated = "2026-11-15T04:36:51Z"
+updated = "2026-11-15T04:37:13Z"
 aliases = ["T-0097"]
 labels = ["jira:SCRUM-206", "owner:stevendangkhoi", "game", "physics", "milestone:0.3.0"]
 +++
