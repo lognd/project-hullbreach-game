@@ -177,6 +177,17 @@ namespace Hullbreach.Ship.Tests
         }
 
         [Test]
+        public void Brake_FromTwentyUnitsPerSecond_StopsInAboutTwoSeconds()
+        {
+            var ship = Starter(FlightTuning.Default());
+            ship.Velocity = new float2(20f, 0f);
+            int ticks = TicksUntil(ship, new ShipInput(-1f, 0f, false), s => s.Velocity.x <= 0.2f, 2000);
+            TestContext.Out.WriteLine($"full brake from 20 u/s: {ticks * Dt:F2} s to stop");
+            Assert.Greater(ticks, 0);
+            Assert.LessOrEqual(ticks * Dt, 2.5f, "a full brake from 20 u/s stops in about 2 s");
+        }
+
+        [Test]
         public void Brake_StopsTheShipWithoutReversingIt()
         {
             // Sliding sideways: the retro thruster pushes along the nose, so only the assist acts on x.
