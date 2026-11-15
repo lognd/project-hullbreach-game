@@ -1,0 +1,1 @@
+Queue: the bot offer now lets you pick Easy, Normal or Hard (the suggested one is starred, from rating or Cadet Trial progress), stays available when the search times out, fails or the platform is unreachable, and is offered when you are not signed in.
