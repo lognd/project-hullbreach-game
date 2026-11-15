@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using Hullbreach.Builder;
 using Hullbreach.Core;
+using Hullbreach.Game;
 using Hullbreach.Hud;
 using Hullbreach.Net;
 using Hullbreach.Ship;
@@ -182,6 +183,7 @@ namespace Hullbreach.NetCode.Entities
         void LateUpdate()
         {
             if (gameplayCamera == null || !TryGetLocalShip(out ShipBody ship)) return;
+            FeelFx.UndoShake(gameplayCamera.transform);
             float speed = math.length(ship.Velocity);
             float2 lead = speed > 0f
                 ? ship.Velocity / speed * CameraRigModel.LeadDistance(speed, leadSeconds, maxOrthographicSize * 0.5f)
@@ -194,6 +196,7 @@ namespace Hullbreach.NetCode.Entities
                 float size = CameraRigModel.ZoomSize(speed, _baseOrthographicSize, maxOrthographicSize, fullSpeed);
                 gameplayCamera.orthographicSize = Mathf.Lerp(gameplayCamera.orthographicSize, size, t * 0.5f);
             }
+            FeelFx.ApplyShake(gameplayCamera.transform);
         }
 
         bool TryGetHoveredKey(ShipBody ship, out int key)

@@ -26,6 +26,9 @@ namespace Hullbreach.NetCode.Entities
         EntityQuery _buildQuery;
         uint _nextMessageId = 1;
         bool _arenaConfigured;
+        bool _sparringJoined;
+        uint _sparringTick;
+        uint _simTick; // counts _simulation.Tick() calls, the same clock as StormStarted.StartTick
 
         protected override void OnCreate()
         {
@@ -54,7 +57,9 @@ namespace Hullbreach.NetCode.Entities
             if (!_arenaConfigured) return;
             ConsumeInputs();
             ConsumeBuildRequests();
+            ManageSparringPartner();
             _simulation.Tick();
+            _simTick++;
             DropTimedOutPeers();
             SynchronizeGhosts();
             FlushOutbox();
@@ -75,6 +80,28 @@ namespace Hullbreach.NetCode.Entities
                 if (EntityManager.HasComponent<HullbreachPlatformAdmitted>(connection) &&
                     !EntityManager.HasComponent<NetworkStreamInGame>(connection))
                     EntityManager.AddComponent<NetworkStreamInGame>(connection);
+        }
+
+        // A passive stand-in opponent so one person can start a match, learn to fly and shoot (Cadet Trial) or test the
+        // storm and economy alone. It is a virtual peer with no connection: it sends neutral input every tick and
+        // leaves as soon as a real second player joins. HOOK: the queue's "fight a bot" offer (P0-5) sets
+        // HullbreachSparring.Requested; Hullbreach.Bots can replace the neutral input with a pilot here.
+        void ManageSparringPartner()
+        {
+            int peer = HullbreachSparring.PeerId;
+            if (_sparringJoined && (_joinedPeers.Count != 1 || !HullbreachSparring.Requested))
+            {
+                _sparringJoined = false;
+                _simulation.Leave(peer);
+                Debug.Log("Hullbreach server: sparring partner left.");
+            }
+            else if (!_sparringJoined && HullbreachSparring.Requested && _joinedPeers.Count == 1)
+            {
+                _sparringJoined = _simulation.Join(peer, CreateStarterShip(peer)) == JoinResult.Joined;
+                if (_sparringJoined) Debug.Log("Hullbreach server: sparring partner joined (passive opponent).");
+            }
+            if (_sparringJoined)
+                _simulation.SetInput(peer, new InputMessage((ushort)peer, ++_sparringTick, 0, 0, 0));
         }
 
         void SynchronizeConnections()
@@ -164,10 +191,15 @@ namespace Hullbreach.NetCode.Entities
                 if (!EntityManager.HasComponent<NetworkId>(source)) continue;
                 int peer = EntityManager.GetComponentData<NetworkId>(source).Value;
                 HullbreachBuildRpc request = requests[i];
-                if (request.Action == (byte)HullbreachBuildAction.Place)
-                    _simulation.TryPlaceBlock(peer, request.X, request.Y, request.TypeId, request.Modifiers);
-                else if (request.Action == (byte)HullbreachBuildAction.Remove)
-                    _simulation.TryRemoveBlock(peer, request.X, request.Y);
+                // The economy decides: stock, budget, cooldown and rules. The owner gets a PlacementResult
+                // message either way (ClientReplica.Economy), so the client can say why a block was refused.
+                PlacementResult result = request.Action == (byte)HullbreachBuildAction.Place
+                    ? _simulation.PlaceBlock(peer, request.X, request.Y, request.TypeId, request.Modifiers)
+                    : request.Action == (byte)HullbreachBuildAction.Remove
+                        ? _simulation.Deconstruct(peer, request.X, request.Y)
+                        : PlacementResult.BadRequest;
+                if (result != PlacementResult.Ok && result != PlacementResult.Cooldown)
+                    Debug.Log($"Hullbreach server: peer #{peer} build refused: {result}.");
             }
 
             if (entities.Length > 0) EntityManager.DestroyEntity(entities);
@@ -195,6 +227,7 @@ namespace Hullbreach.NetCode.Entities
                     Kind = (byte)HullbreachGhostKind.Ship,
                     NetId = (ushort)pair.Key,
                     SimulationId = (uint)pair.Key,
+                    SimTick = _simTick,
                     Position = ship.Position,
                     Rotation = ship.Rotation,
                     Velocity = ship.Velocity,
@@ -231,6 +264,7 @@ namespace Hullbreach.NetCode.Entities
                     Kind = (byte)HullbreachGhostKind.Projectile,
                     NetId = (ushort)math.max(0, projectile.OwnerPeer),
                     SimulationId = projectile.Id,
+                    SimTick = _simTick,
                     Position = projectile.Position,
                     Rotation = math.atan2(projectile.Velocity.y, projectile.Velocity.x),
                     Velocity = projectile.Velocity,

@@ -203,6 +203,9 @@ namespace Hullbreach.Net
                 return false;
 
             var replica = new ReplicaShip();
+            // The replica body is never stepped, but the HUD asks it where the planets are (altitude, impact warning).
+            replica.Body.Gravity = PredictionGravity;
+            replica.Body.PlanetCrash = PredictionPlanetCrash;
             foreach (var b in snapshot.Blocks)
             {
                 int key = BlockKey.Pack(b.X, b.Y);
@@ -298,6 +301,15 @@ namespace Hullbreach.Net
         // Gravity the predicted body feels; set it to the server's field so prediction matches.
         // frob:doc docs/reference/hullbreach-net.md#clientreplica
         public GravityField PredictionGravity { get; set; }
+
+        // Gives the replica the arena the server was configured with (planets for the HUD, crash rules for prediction).
+        public void UseArena(ArenaConfig arena)
+        {
+            var field = new GravityField();
+            foreach (ArenaBodyConfig body in arena.Bodies) field.Add(body.ToGravityBody());
+            PredictionGravity = field;
+            PredictionPlanetCrash = arena.Crash;
+        }
 
         // Must equal the server PlanetCrash or the predicted ship drifts at every atmosphere and touchdown.
         // frob:doc docs/reference/hullbreach-net.md#clientreplica
@@ -426,6 +438,16 @@ namespace Hullbreach.Net
         // frob:ticket 01M5VP8KEQGKSSKWC0NFXE2KNB
         // frob:doc docs/reference/hullbreach-net.md#clientreplica
         public uint LatestServerTick { get; private set; }
+
+        // The server simulation's tick as best the client knows it: the newest ShipState tick, or the tick the
+        // ghost poses carried (the NetCode path sends no ShipState). Storm countdown and pickups run on this clock.
+        public uint SimulationTick => _observedTick > LatestServerTick ? _observedTick : LatestServerTick;
+        uint _observedTick;
+
+        public void ObserveSimulationTick(uint tick)
+        {
+            if (tick > _observedTick) _observedTick = tick;
+        }
 
         // How many ticks behind the newest state a view should render so it always
         // has two real samples to blend (S48-2). frob:doc docs/reference/hullbreach-net.md#clientreplica

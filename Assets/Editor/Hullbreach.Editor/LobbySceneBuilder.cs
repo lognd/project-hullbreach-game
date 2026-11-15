@@ -120,7 +120,14 @@ namespace Hullbreach.Editor
             actionLayout.childForceExpandHeight = false;
             actionLayout.childForceExpandWidth = true;
 
-            AddSectionTitle(actions.transform, "HOST A LOBBY");
+            // LAN play needs no Unity Services; see docs/netcode.md#lan-host-and-join-from-the-lobby.
+            AddSectionTitle(actions.transform, "PLAY ON LAN (NO ACCOUNT NEEDED)");
+            Button lanHostButton = AddButton(actions.transform, "LanHostButton", "HOST LAN", 52f, primary: true);
+            TMP_InputField lanAddress = AddInput(actions.transform, "LanAddressInput", "Host IP, e.g. 192.168.1.23", false);
+            Button lanJoinButton = AddButton(actions.transform, "LanJoinButton", "JOIN ADDRESS", 44f);
+
+            AddSpacer(actions.transform, 14f);
+            AddSectionTitle(actions.transform, "HOST ONLINE (RELAY)");
             AddText(actions.transform, "LobbyNameLabel", "Lobby name", 16f);
             TMP_InputField lobbyName = AddInput(actions.transform, "LobbyNameInput", "Hullbreach Lobby", false);
             AddText(actions.transform, "MaxPlayersLabel", "Maximum players", 16f);
@@ -129,20 +136,13 @@ namespace Hullbreach.Editor
             Toggle privateToggle = AddToggle(actions.transform, "PrivateToggle", "Private (join code only)");
             AddText(actions.transform, "HostPasswordLabel", "Password (optional, 8-64 characters)", 16f);
             TMP_InputField hostPassword = AddInput(actions.transform, "HostPasswordInput", string.Empty, true);
-            Button hostButton = AddButton(actions.transform, "HostButton", "HOST WITH RELAY", 46f, primary: true);
+            Button hostButton = AddButton(actions.transform, "HostButton", "HOST WITH RELAY", 44f);
 
             AddSpacer(actions.transform, 10f);
             AddSectionTitle(actions.transform, "JOIN BY CODE");
             TMP_InputField joinCode = AddInput(actions.transform, "JoinCodeInput", "Lobby code", false);
             TMP_InputField joinPassword = AddInput(actions.transform, "JoinPasswordInput", "Password if required", true);
             Button joinButton = AddButton(actions.transform, "JoinCodeButton", "JOIN CODE", 44f);
-
-            // LAN play needs no Unity Services; see docs/netcode.md#lan-host-and-join-from-the-lobby.
-            AddSpacer(actions.transform, 10f);
-            AddSectionTitle(actions.transform, "PLAY ON LAN");
-            Button lanHostButton = AddButton(actions.transform, "LanHostButton", "HOST LAN", 44f);
-            TMP_InputField lanAddress = AddInput(actions.transform, "LanAddressInput", "Host IP, e.g. 192.168.1.23", false);
-            Button lanJoinButton = AddButton(actions.transform, "LanJoinButton", "JOIN ADDRESS", 44f);
 
             GameObject publicPanel = AddPanel(browser.transform, "PublicLobbies", Vector2.zero, BrandColors.Raised);
             VerticalLayoutGroup publicLayout = publicPanel.AddComponent<VerticalLayoutGroup>();

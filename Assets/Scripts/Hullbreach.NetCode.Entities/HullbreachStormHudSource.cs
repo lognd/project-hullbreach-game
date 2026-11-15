@@ -30,7 +30,7 @@ namespace Hullbreach.NetCode.Entities
             var start = replica.StormStart;
             if (zone != null && start.HasValue)
             {
-                long tick = (long)replica.LatestServerTick - start.Value.StartTick;
+                long tick = (long)replica.SimulationTick - start.Value.StartTick;
                 frame.HasStorm = true;
                 frame.Storm = zone.At((int)Math.Max(0L, Math.Min(int.MaxValue, tick)));
                 frame.TickRate = zone.Config.TickRate;
@@ -53,7 +53,7 @@ namespace Hullbreach.NetCode.Entities
             }
 
             if (_pickupViews == null) _pickupViews = new System.Collections.Generic.List<Hullbreach.Net.PickupView>(32);
-            replica.Economy.GetPickups(replica.LatestServerTick, _pickupViews);
+            replica.Economy.GetPickups(replica.SimulationTick, _pickupViews);
             int pc = Math.Min(_pickupViews.Count, 24);
             if (_pickupPos.Length < pc) _pickupPos = new Vector2[24];
             for (int i = 0; i < pc; i++) _pickupPos[i] = new Vector2(_pickupViews[i].Position.x, _pickupViews[i].Position.y);

@@ -41,9 +41,34 @@ namespace Hullbreach.NetCode.Entities
             SceneManager.LoadScene(DirectLaunchPlan.GameScene, LoadSceneMode.Single);
         }
 
+        // Opening MultiplayerGame straight from the editor has no lobby to host it, so it would wait for a connection
+        // forever. Host it on loopback instead (editor only; a player build always starts from the lobby or a direct role).
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+        static void HostWhenOpenedDirectly()
+        {
+#if UNITY_EDITOR
+            if (Plan.IsDirect || SceneManager.GetActiveScene().name != DirectLaunchPlan.GameScene) return;
+            if (HullbreachLanLobby.TryHostHere(DirectLaunchPlan.DefaultPort, out string error))
+                Debug.Log("Hullbreach: MultiplayerGame opened directly; hosting on loopback.");
+            else
+                Debug.LogWarning("Hullbreach: MultiplayerGame opened directly but cannot host: " + error);
+#endif
+        }
+
         // Statics survive play-mode restarts when domain reload is off; start clean each run.
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        static void ResetStatics() => s_plan = null;
+        static void ResetStatics() { s_plan = null; HullbreachSparring.Reset(); }
+    }
+
+    // Asks the server for a passive stand-in opponent while only one player is connected (-hullbreachSparring, or the
+    // queue's bot offer). The server system owns the virtual peer.
+    public static class HullbreachSparring
+    {
+        public const int PeerId = ServerSimulation.MaxPeerId - 1;
+        public static bool Requested;
+
+        public static void Reset() =>
+            Requested = Array.IndexOf(Environment.GetCommandLineArgs(), "-hullbreachSparring") >= 0;
     }
 
     // Creates the Netcode worlds the launch plan asks for: lobby keeps the stock
@@ -91,6 +116,10 @@ namespace Hullbreach.NetCode.Entities
                 {
                     SimulationTickRate = HullbreachNetCodeConstants.SimulationTickRate,
                     NetworkTickRate = HullbreachNetCodeConstants.SimulationTickRate,
+                    MaxSimulationStepsPerFrame = 4,
+                    MaxSimulationStepBatchSize = 1,
+                    // Catch up with several real ticks instead of batching them into one long tick (which logs the
+                    // 'Server Tick Batching' warning every time a throttled editor frame runs long, and loses input).
                 };
                 tickRate.ResolveDefaults();
                 world.EntityManager.CreateSingleton(tickRate, "Hullbreach NetCode Tick Rate");

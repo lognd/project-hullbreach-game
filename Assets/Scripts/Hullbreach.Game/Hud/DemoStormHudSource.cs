@@ -38,6 +38,22 @@ namespace Hullbreach.Game
         void FixedUpdate()
         {
             if (demoMode == null || demoMode.State == DemoState.Fly) _tick++;
+            PushBackIntoArena();
+        }
+
+        // Same soft edge the online server applies (ArenaBounds: a velocity change only), sized to the storm's
+        // starting ring, so the offline ship cannot fly away into an empty void (it used to reach y=1000).
+        void PushBackIntoArena()
+        {
+            if (demoMode == null || demoMode.State != DemoState.Fly || demoMode.PlayerShip == null) return;
+            var body = demoMode.PlayerShip.GetComponent<Rigidbody2D>();
+            if (body == null) return;
+            EnsureZone();
+            var bounds = new ArenaBounds(_arenaCenter, _zone.Config.StartRadius, 20f, 8f);
+            float2 position = new float2(body.position.x, body.position.y);
+            if (!bounds.InPushZone(position)) return;
+            float2 push = bounds.PushAcceleration(position) * Time.fixedDeltaTime;
+            body.linearVelocity += new Vector2(push.x, push.y);
         }
 
         void EnsureZone()

@@ -32,6 +32,8 @@ namespace Hullbreach.NetCode.Entities
         public static ClientReplica Replica { get; internal set; }
         public static ushort LocalNetworkId { get; internal set; }
         public static IReadOnlyDictionary<uint, ProjectileVisual> Projectiles { get; internal set; }
+        // Test hook (Play Mode scripts): replaces the keyboard while flying. Null = real input.
+        public static ShipInput? ScriptedInput;
         public static bool IsConnected => Replica != null && LocalNetworkId != 0;
     }
 
@@ -65,6 +67,8 @@ namespace Hullbreach.NetCode.Entities
                 ComponentType.ReadOnly<ReceiveRpcCommandRequest>());
             _ghostQuery = GetEntityQuery(ComponentType.ReadOnly<HullbreachGhostPose>());
             _replica = new ClientReplica();
+            // The server runs ArenaConfig.Defaults() (ConfigureDemoArena); mirror it so planets exist client side.
+            _replica.UseArena(ArenaConfig.Defaults());
             // Remote clients never see the server's feed, so the replicated match end feeds the results screen.
             if (!World.IsThinClient()) _replica.MatchFeed = Hullbreach.Platform.MatchEndFeed.Shared;
             if (!World.IsThinClient())
@@ -122,7 +126,9 @@ namespace Hullbreach.NetCode.Entities
             // Unfocused windows send neutral input so no key is stuck; fire is an edge, as offline.
             // frob:ticket 01M6WV815GYEJ58MTM4HSS4Z6K
             bool live = !building && Application.isFocused;
-            ShipInput shaped = live
+            ShipInput shaped = live && HullbreachNetCodeClient.ScriptedInput.HasValue
+                ? HullbreachNetCodeClient.ScriptedInput.Value
+                : live
                 ? ShipInputShaper.Shape(
                     Input.GetAxisRaw("Vertical"),
                     Input.GetAxisRaw("Horizontal"),
@@ -177,6 +183,7 @@ namespace Hullbreach.NetCode.Entities
                 HullbreachGhostPose pose = poses[i];
                 if (pose.Kind == (byte)HullbreachGhostKind.Ship)
                 {
+                    _replica.ObserveSimulationTick(pose.SimTick);
                     _replica.ApplyGhostPose(pose.NetId, pose.Position, pose.Rotation,
                         pose.Velocity, pose.AngularVelocity, _clientTick);
                 }
