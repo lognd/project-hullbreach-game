@@ -169,13 +169,16 @@ namespace Hullbreach.Builder
             return false;
         }
 
-        // Present and not the core. DECISION: a removal that strands other
-        // blocks is ALLOWED (see Detach), not refused.
+        // Present, not the core, not welded (S44: an enemy-welded thruster
+        // is unremovable). DECISION: a removal that strands other blocks is
+        // ALLOWED (see Detach), not refused; a welded block it strands is
+        // carried off with the rest, since the cut is the victim's own choice.
         // frob:doc docs/reference/hullbreach-builder.md#placementrules
         public static bool CanRemove(BlockGrid grid, int key)
         {
             if (!grid.Contains(key)) return false;
             if (grid.CoreKey.HasValue && key == grid.CoreKey.Value) return false;
+            if (grid.TryGet(key, out Block block) && block.IsWelded) return false;
             return true;
         }
 

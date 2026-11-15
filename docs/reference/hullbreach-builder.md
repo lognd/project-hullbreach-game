@@ -172,6 +172,10 @@ other blocks is ALLOWED, not refused: the stranded blocks detach along
 with it (see Detach). This keeps single-click removal always available
 instead of silently failing near a bottleneck.
 
+S44: `CanRemove` also refuses a welded block (`Block.IsWelded`), so the victim
+of a seeking-thruster shot cannot take the thruster off. A welded block that is
+only stranded by removing something else is still carried off by Detach.
+
 `Detach` removes a key and, per the detach rule, anything that becomes
 unreachable from the core as a result; every removed key (the requested
 one plus any stranded ones) is appended to `removed`. Uses Articulation
