@@ -2,7 +2,7 @@
 id = "01M4GTH6T6R4Q370Z8XCYPJRB7"
 title = "NetCode server system ignores timed-out peers (ghost and connection stay)"
 type = "bug"
-category = "todo"
+category = "in-progress"
 priority = "medium"
 points = 2
 reporter = "mcnairrobotics"
