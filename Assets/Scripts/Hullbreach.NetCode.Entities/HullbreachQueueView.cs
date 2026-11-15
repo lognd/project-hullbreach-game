@@ -20,7 +20,9 @@ namespace Hullbreach.NetCode.Entities
         [SerializeField] Button closeButton;
         [SerializeField] TMP_Text statusText;
 
-        Button _botButton;
+        Button[] _botButtons;
+        GameObject _botRow;
+        bool _signInBlocked;
         MatchmakingSession _session;
         MatchmakingState _lastState = MatchmakingState.Idle;
 
@@ -39,36 +41,65 @@ namespace Hullbreach.NetCode.Entities
             cancelButton.onClick.AddListener(Cancel);
             closeButton.onClick.AddListener(Close);
             panelRoot.SetActive(false);
-            _botButton = MakeBotButton();
+            MakeBotRow();
         }
 
-        // "Fight a bot" appears after QueueScreenModel.BotOfferSeconds with no opponent; the match is unranked.
-        Button MakeBotButton()
+        // "Fight a bot" appears after QueueScreenModel.BotOfferSeconds with no opponent, when the search failed or
+        // timed out, or when the player is not signed in. Easy, Normal and Hard; the suggested one is starred.
+        void MakeBotRow()
         {
-            var go = new GameObject("FightBotButton", typeof(RectTransform), typeof(Image), typeof(Button));
-            go.transform.SetParent(panelRoot.transform, false);
-            go.GetComponent<Image>().color = new Color(0.12f, 0.35f, 0.5f, 1f);
-            var rt = (RectTransform)go.transform;
-            rt.anchorMin = rt.anchorMax = rt.pivot = new Vector2(0.5f, 0f);
-            rt.anchoredPosition = new Vector2(0f, 20f);
-            rt.sizeDelta = new Vector2(420f, 52f);
-            var label = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI));
-            label.transform.SetParent(go.transform, false);
-            var t = label.GetComponent<TextMeshProUGUI>();
-            t.text = "No opponent yet - fight a bot (unranked)";
-            t.fontSize = 22; t.alignment = TextAlignmentOptions.Center; t.raycastTarget = false; t.enableWordWrapping = false;
-            t.rectTransform.anchorMin = Vector2.zero; t.rectTransform.anchorMax = Vector2.one;
-            t.rectTransform.offsetMin = t.rectTransform.offsetMax = Vector2.zero;
-            var button = go.GetComponent<Button>();
-            button.onClick.AddListener(FightBot);
-            go.SetActive(false);
-            return button;
+            _botRow = new GameObject("BotOffer", typeof(RectTransform));
+            _botRow.transform.SetParent(panelRoot.transform, false);
+            var rrt = (RectTransform)_botRow.transform;
+            rrt.anchorMin = rrt.anchorMax = rrt.pivot = new Vector2(0.5f, 0f);
+            rrt.anchoredPosition = new Vector2(0f, 16f);
+            rrt.sizeDelta = new Vector2(600f, 90f);
+            var header = new GameObject("Header", typeof(RectTransform), typeof(TextMeshProUGUI)).GetComponent<TextMeshProUGUI>();
+            header.transform.SetParent(rrt, false);
+            header.text = "No opponent yet - fight a bot (unranked)";
+            header.fontSize = 22; header.alignment = TextAlignmentOptions.Center; header.raycastTarget = false; header.enableWordWrapping = false;
+            header.rectTransform.anchorMin = new Vector2(0f, 1f); header.rectTransform.anchorMax = new Vector2(1f, 1f);
+            header.rectTransform.pivot = new Vector2(0.5f, 1f);
+            header.rectTransform.anchoredPosition = Vector2.zero; header.rectTransform.sizeDelta = new Vector2(0f, 30f);
+            _botButtons = new Button[3];
+            for (int tier = 0; tier < 3; tier++)
+            {
+                int captured = tier;
+                var go = new GameObject("Bot" + tier, typeof(RectTransform), typeof(Image), typeof(Button));
+                go.transform.SetParent(rrt, false);
+                go.GetComponent<Image>().color = new Color(0.12f, 0.35f, 0.5f, 1f);
+                var rt = (RectTransform)go.transform;
+                rt.anchorMin = rt.anchorMax = rt.pivot = new Vector2(0.5f, 0f);
+                rt.anchoredPosition = new Vector2((tier - 1) * 200f, 0f);
+                rt.sizeDelta = new Vector2(190f, 48f);
+                var label = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI)).GetComponent<TextMeshProUGUI>();
+                label.transform.SetParent(go.transform, false);
+                label.fontSize = 22; label.alignment = TextAlignmentOptions.Center; label.raycastTarget = false; label.enableWordWrapping = false;
+                label.rectTransform.anchorMin = Vector2.zero; label.rectTransform.anchorMax = Vector2.one;
+                label.rectTransform.offsetMin = label.rectTransform.offsetMax = Vector2.zero;
+                var button = go.GetComponent<Button>();
+                button.onClick.AddListener(() => FightBot(captured));
+                _botButtons[tier] = button;
+            }
+            _botRow.SetActive(false);
         }
 
-        void FightBot()
+        static readonly string[] TierNames = { "EASY", "NORMAL", "HARD" };
+        static readonly Hullbreach.Bots.BotDifficulty[] Tiers =
+            { Hullbreach.Bots.BotDifficulty.Easy, Hullbreach.Bots.BotDifficulty.Normal, Hullbreach.Bots.BotDifficulty.Hard };
+
+        void RefreshBotLabels(MatchmakingMachine machine)
+        {
+            int suggested = QueueScreenModel.SuggestedBotTier(machine.Rating, HullbreachCadetTrialView.EverCompleted);
+            for (int i = 0; i < 3; i++)
+                _botButtons[i].GetComponentInChildren<TextMeshProUGUI>().text = TierNames[i] + (i == suggested ? " *" : string.Empty);
+        }
+
+        void FightBot(int tier)
         {
             if (QueueScreenModel.CanCancel(_session.Machine)) Cancel();
-            if (!HullbreachBotMatch.Start(Hullbreach.Bots.BotDifficulty.Normal, false, out string error))
+            _signInBlocked = false;
+            if (!HullbreachBotMatch.Start(Tiers[tier], false, out string error))
                 statusText.text = FriendlyError.From(error);
         }
 
@@ -83,6 +114,7 @@ namespace Hullbreach.NetCode.Entities
         void Close()
         {
             if (QueueScreenModel.CanCancel(_session.Machine)) Cancel();
+            _signInBlocked = false;
             panelRoot.SetActive(false);
         }
 
@@ -91,10 +123,12 @@ namespace Hullbreach.NetCode.Entities
             if (!PlatformSession.IsSignedIn)
             {
                 Debug.LogWarning("Hullbreach queue: not signed in; cannot search.");
-                statusText.text = "Sign in to find a match.";
+                statusText.text = "Sign in to find a match, or fight a bot below.";
+                _signInBlocked = true;
                 statusText.color = BrandColors.Orange;
                 return;
             }
+            _signInBlocked = false;
             _session.Start(PlatformSession.Token);
         }
 
@@ -113,11 +147,13 @@ namespace Hullbreach.NetCode.Entities
                 if (machine.State == MatchmakingState.Matched) Matched?.Invoke(machine.Handoff);
             }
 
-            statusText.text = QueueScreenModel.Status(machine);
+            if (!(_signInBlocked && machine.State == MatchmakingState.Idle)) statusText.text = QueueScreenModel.Status(machine);
             statusText.color = QueueScreenModel.IsAlert(machine) ? BrandColors.Orange : BrandColors.Ink;
             findButton.interactable = QueueScreenModel.CanSearch(machine);
             cancelButton.interactable = QueueScreenModel.CanCancel(machine);
-            _botButton.gameObject.SetActive(QueueScreenModel.OffersBot(machine));
+            bool offer = QueueScreenModel.OffersBot(machine) || (_signInBlocked && machine.State != MatchmakingState.Queued);
+            if (offer) RefreshBotLabels(machine);
+            _botRow.SetActive(offer);
         }
     }
 }

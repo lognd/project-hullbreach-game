@@ -89,5 +89,35 @@ namespace Hullbreach.Net.Tests
             m.OnError("x", false);
             Assert.IsTrue(QueueScreenModel.IsAlert(m));
         }
+
+        // frob:tests QueueScreenModel.OffersBot
+        [Test]
+        public void BotStaysOfferedWhenTheSearchTimesOutOrFails()
+        {
+            MatchmakingMachine m = Machine();
+            m.Start();
+            _now = 300;   // the real 5 minute timeout from MatchmakingOptions.Defaults
+            Assert.IsTrue(m.CheckTimeout());
+            Assert.AreEqual(MatchmakingState.Failed, m.State);
+            Assert.IsTrue(QueueScreenModel.OffersBot(m), "a timed out search must still offer a bot");
+
+            MatchmakingMachine e = Machine();
+            e.Start();
+            _now = 2;
+            e.OnError("platform unreachable", false);
+            Assert.AreEqual(MatchmakingState.Failed, e.State);
+            Assert.IsTrue(QueueScreenModel.OffersBot(e), "an unreachable platform must not hide the bot");
+        }
+
+        // frob:tests QueueScreenModel.SuggestedBotTier
+        [Test]
+        public void SuggestedBotTierFollowsRatingThenTrial()
+        {
+            Assert.AreEqual(0, QueueScreenModel.SuggestedBotTier(0, false));
+            Assert.AreEqual(1, QueueScreenModel.SuggestedBotTier(0, true));
+            Assert.AreEqual(0, QueueScreenModel.SuggestedBotTier(850, true));
+            Assert.AreEqual(1, QueueScreenModel.SuggestedBotTier(1000, false));
+            Assert.AreEqual(2, QueueScreenModel.SuggestedBotTier(1500, false));
+        }
     }
 }

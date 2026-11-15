@@ -47,7 +47,17 @@ namespace Hullbreach.Net
         // True once a running search has waited BotOfferSeconds.
         // frob:doc docs/reference/hullbreach-net.md#matchmaking
         public static bool OffersBot(MatchmakingMachine machine) =>
-            machine.State == MatchmakingState.Queued && machine.ElapsedSeconds >= BotOfferSeconds;
+            (machine.State == MatchmakingState.Queued && machine.ElapsedSeconds >= BotOfferSeconds)
+            || machine.State == MatchmakingState.Failed;
+
+        // Which bot to put first: 0 easy, 1 normal, 2 hard. A known rating decides (below 900 easy, below 1200 normal,
+        // else hard); with none yet, a player who has not finished the Cadet Trial starts on easy.
+        // frob:doc docs/reference/hullbreach-net.md#matchmaking
+        public static int SuggestedBotTier(double rating, bool cadetTrialDone)
+        {
+            if (rating <= 0.0) return cadetTrialDone ? 1 : 0;
+            return rating < 900.0 ? 0 : rating < 1200.0 ? 1 : 2;
+        }
 
         // Failures are alerts (orange); everything else is plain ink.
         // frob:doc docs/reference/hullbreach-net.md#matchmaking
