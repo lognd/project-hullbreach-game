@@ -91,6 +91,14 @@ namespace Hullbreach.Hud
             return confirming ? "READY ANYWAY?" : Fmt($"READY ({pointsLeft} pts unspent)");
         }
 
+        // As above, but a press that warned the design will snap reads "FLY ANYWAY?" (the view shows "Fix it" beside it).
+        // frob:doc docs/design/ui-port.md#hullbreachhud-module-reference
+        public static string ReadyLabel(ReadyPhase phase, bool opponentPresent, int pointsLeft, bool confirming, bool structureWarned, out bool pressable)
+        {
+            string label = ReadyLabel(phase, opponentPresent, pointsLeft, confirming, out pressable);
+            return phase == ReadyPhase.Building && pressable && confirming && structureWarned ? "FLY ANYWAY?" : label;
+        }
+
         static string Fmt(FormattableString s) => s.ToString(CultureInfo.InvariantCulture);
     }
 

@@ -83,5 +83,16 @@ namespace Hullbreach.Hud.Tests
             q.Push("a", 10f); q.Push("b", 10f); q.Push("c", 10f);
             Assert.AreEqual("b\nc", q.Text(10.5f)); // capacity 2 drops the oldest
         }
+
+        [Test]
+        public void ReadyLabel_StructureWarning_ReadsFlyAnywayOnlyWhileConfirming()
+        {
+            bool press;
+            Assert.AreEqual("FLY ANYWAY?", BuildPanelModel.ReadyLabel(ReadyPhase.Building, true, 0, true, true, out press));
+            Assert.IsTrue(press);
+            Assert.AreEqual("READY", BuildPanelModel.ReadyLabel(ReadyPhase.Building, true, 0, false, true, out press));
+            Assert.AreEqual("READY ANYWAY?", BuildPanelModel.ReadyLabel(ReadyPhase.Building, true, 38, true, false, out press));
+            Assert.AreEqual(string.Empty, BuildPanelModel.ReadyLabel(ReadyPhase.Live, true, 0, true, true, out press));
+        }
     }
 }

@@ -1,0 +1,8 @@
+kind = "create"
+title = "Builder: stress preview tint, status line and READY structure warning"
+type = "task"
+category = "todo"
+priority = "medium"
+at = "2026-11-15T22:54:23Z"
+actor = "lognd"
+rev = 1

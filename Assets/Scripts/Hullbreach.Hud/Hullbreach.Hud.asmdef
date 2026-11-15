@@ -3,7 +3,8 @@
     "rootNamespace": "Hullbreach.Hud",
     "references": [
         "Hullbreach.Core",
-        "Hullbreach.Builder"
+        "Hullbreach.Builder",
+        "Hullbreach.Ship"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

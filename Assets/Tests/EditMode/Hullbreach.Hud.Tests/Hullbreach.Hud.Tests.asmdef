@@ -5,6 +5,8 @@
         "Hullbreach.Core",
         "Hullbreach.Builder",
         "Hullbreach.Hud",
+        "Hullbreach.Ship",
+        "Hullbreach.Structure",
         "Unity.Mathematics",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner"

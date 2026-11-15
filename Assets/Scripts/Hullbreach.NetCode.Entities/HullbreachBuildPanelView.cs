@@ -37,7 +37,8 @@ namespace Hullbreach.NetCode.Entities
         Canvas _canvas;
         Slot[] _slots;
         Bar _budget, _size, _cooldown;
-        TextMeshProUGUI _toast, _hoverLine;
+        TextMeshProUGUI _toast, _hoverLine, _stressLine;
+        Button _fixIt;
         Button _ready;
         Image _readyImage;
         TextMeshProUGUI _readyLabel;
@@ -102,6 +103,11 @@ namespace Hullbreach.NetCode.Entities
             _hoverLine.color = new Color(1f, 0.85f, 0.5f, 1f);
             hrt.anchoredPosition = new Vector2(0f, 150f);
 
+            // One-line structure verdict from the stress preview (green / amber / red), above the refusal line.
+            _stressLine = Label("StressLine", transform, 20, FontStyles.Bold, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), TextAlignmentOptions.Center);
+            var srt = _stressLine.rectTransform;
+            srt.pivot = new Vector2(0.5f, 0f); srt.sizeDelta = new Vector2(900f, 30f); srt.anchoredPosition = new Vector2(0f, 180f);
+
             var readyGo = Box("ReadyButton", transform, Orange);
             var rrt = (RectTransform)readyGo.transform;
             rrt.anchorMin = rrt.anchorMax = rrt.pivot = new Vector2(1f, 0f);
@@ -113,6 +119,20 @@ namespace Hullbreach.NetCode.Entities
             _ready.onClick.AddListener(() => HullbreachNetworkGameplayController.RequestReadyChecked(_pointsLeft));
             _readyLabel = Label("Label", rrt, 22, FontStyles.Bold, Vector2.zero, Vector2.one, TextAlignmentOptions.Center);
             _readyLabel.color = new Color(0.08f, 0.1f, 0.14f, 1f);
+
+            // "Fix it" sits above READY and only shows after READY warned the design will snap; READY itself then reads FLY ANYWAY?.
+            var fixGo = Box("FixItButton", transform, Cyan);
+            var frt = (RectTransform)fixGo.transform;
+            frt.anchorMin = frt.anchorMax = frt.pivot = new Vector2(1f, 0f);
+            frt.sizeDelta = new Vector2(320f, 48f);
+            frt.anchoredPosition = new Vector2(-24f, 84f);
+            _fixIt = fixGo.AddComponent<Button>();
+            _fixIt.targetGraphic = fixGo.GetComponent<Image>();
+            _fixIt.onClick.AddListener(HullbreachNetworkGameplayController.FixStructure);
+            var fixLabel = Label("Label", frt, 20, FontStyles.Bold, Vector2.zero, Vector2.one, TextAlignmentOptions.Center);
+            fixLabel.text = "Fix it";
+            fixLabel.color = new Color(0.08f, 0.1f, 0.14f, 1f);
+            fixGo.SetActive(false);
 
             // Starter ships: one click swaps the whole ship (before READY). Stacked at the lower left, clear of the hotbar.
             _templateRoot = new GameObject("Templates", typeof(RectTransform));
@@ -245,7 +265,16 @@ namespace Hullbreach.NetCode.Entities
 
             ReadyPhase phase = running ? ReadyPhase.Live : HullbreachNetworkGameplayController.ReadySent ? ReadyPhase.Ready : ReadyPhase.Building;
             _pointsLeft = running ? 0 : pointsLeft;
-            string label = BuildPanelModel.ReadyLabel(phase, replica.Ships.Count >= 2, _pointsLeft, HullbreachNetworkGameplayController.ConfirmingReady, out bool pressable);
+            bool structureWarned = HullbreachNetworkGameplayController.StructureWarned;
+            string label = BuildPanelModel.ReadyLabel(phase, replica.Ships.Count >= 2, _pointsLeft, HullbreachNetworkGameplayController.ConfirmingReady, structureWarned, out bool pressable);
+            _fixIt.gameObject.SetActive(build && structureWarned && pressable);
+            var stress = HullbreachNetworkGameplayController.Stress;
+            _stressLine.text = build && !running ? stress.Status : string.Empty;
+            if (stress.Result != null)
+            {
+                var sc = StressTintModel.StatusColor(stress.Result.Verdict, HullbreachNetworkGameplayController.ColorblindPalette);
+                _stressLine.color = new Color(sc.R, sc.G, sc.B, 1f);
+            }
             _ready.gameObject.SetActive(label.Length > 0);
             _ready.interactable = pressable;
             _readyLabel.text = label;

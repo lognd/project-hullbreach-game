@@ -78,6 +78,17 @@ namespace Hullbreach.NetCode.Entities
 
                     Color display = Color.Lerp(typeColor, teamColor, 0.28f);
                     display = ApplySkin(display, netId, block.Key, block.Value.TypeId);
+
+                    // Build phase: tint the local ship by structural risk (green / amber / red) and pulse the weakest block.
+                    if (netId == HullbreachNetCodeClient.LocalNetworkId && HullbreachNetworkGameplayController.StressPreviewActive)
+                    {
+                        var stress = HullbreachNetworkGameplayController.Stress;
+                        var tint = stress.TintFor(block.Key, HullbreachNetworkGameplayController.ColorblindPalette);
+                        if (tint.HasValue)
+                            display = Color.Lerp(display, new Color(tint.Value.R, tint.Value.G, tint.Value.B, 1f), 0.55f);
+                        float pulse = stress.PulseFor(block.Key, Time.unscaledTime);
+                        if (pulse > 0f) display = Color.Lerp(display, Color.white, pulse * 0.6f);
+                    }
                     display = Color.Lerp(
                         display,
                         Color.black,
