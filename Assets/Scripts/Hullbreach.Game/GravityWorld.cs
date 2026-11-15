@@ -59,6 +59,9 @@ namespace Hullbreach.Game
         // frob:doc docs/reference/hullbreach-game.md#gravityworld
         public static GravityField Field { get; private set; }
 
+        // The authored planets of the live GravityWorld (colours for the minimap); empty when none.
+        public static System.Collections.Generic.IReadOnlyList<PlanetSpec> Specs { get; private set; } = Array.Empty<PlanetSpec>();
+
         // The field this instance published; OnDestroy only clears Field if it is still ours.
         GravityField _field;
 
@@ -80,6 +83,7 @@ namespace Hullbreach.Game
             }
             _field = field;
             Field = field;
+            Specs = planets;
         }
 
         // Temporary wells (projectile and gun wells) only expire when ticked;
@@ -93,7 +97,7 @@ namespace Hullbreach.Game
         {
             // Only clear the static if we are the instance that set it,
             // so tearing down an unrelated one cannot blank a live field.
-            if (_field != null && ReferenceEquals(Field, _field)) Field = null;
+            if (_field != null && ReferenceEquals(Field, _field)) { Field = null; Specs = Array.Empty<PlanetSpec>(); }
         }
 
         void SpawnDisc(PlanetSpec planet)

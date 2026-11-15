@@ -227,6 +227,22 @@ so the HUD reads `12.3` on every OS locale (covered by `HudCultureTests`).
   template, grown once and destroyed back down when powerups expire.
 - `HullWarningBanner` -- view over `HullWarningModel`; shown only in Fly.
 
+#### StormHudView
+
+Storm minimap and HUD (`Hullbreach.Game/Hud/StormHudView.cs`). One component builds its own uGUI at
+runtime and draws from an `IStormHudSource` on the same object, so the demo and the online scene share it.
+
+- Radar (top-right): planets, own ship (cyan), enemy (red; pinned to the rim when far), the current storm
+  ring (white), the next ring (green) and the danger side tinted red. `M` toggles an enlarged map.
+- Top-centre: `Shrink in 0:18` (or `Closing 0:07`, `NO SAFE ZONE`) and the stage line (`Storm: ring 2 holding`).
+- Full-screen red tint: faint pulse in the warning band, stronger outside the ring.
+- Edge arrow toward an off-screen enemy; cyan `SAFE ZONE` arrow along `StormState.PullDirection` when outside.
+- Maths (engine-free, tested in `MinimapAndStormHudTests`): `MinimapView`, `MinimapRaster`, `StormHudModel`, `EdgeArrowModel`.
+- Sources: `DemoStormHudSource` (local `StormZone` from the scene's gravity bodies, fixed seed, advanced by
+  physics ticks while flying) and `HullbreachStormHudSource` (online: `ClientReplica.Storm`, `StormStart`,
+  `LatestServerTick`; planets are the storm's candidate points since clients do not know body radii).
+- Wiring: `HudPrefabBuilder.WireDemoScene` adds the `StormHud` object to DemoScene; `LobbySceneBuilder` adds it to MultiplayerGame.
+
 ### Editor (`Assets/Editor/Hullbreach.Editor/`, Editor-only asmdef)
 
 #### HudPrefabBuilder (Editor)

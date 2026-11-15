@@ -11,6 +11,7 @@ or why the ship feels the same offline and online.
 | Steer | A/D or Left/Right |
 | Fire | Space (offline: also Fire1; online: also left click) |
 | Build / fly toggle | Tab |
+| Enlarge / shrink the radar map | M |
 | Cycle overlay (offline only) | O |
 | Reset to start (offline only) | R |
 
