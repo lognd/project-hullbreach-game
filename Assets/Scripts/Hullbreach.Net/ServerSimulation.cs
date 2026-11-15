@@ -44,6 +44,10 @@ namespace Hullbreach.Net
         // ShipState stream enabled by default.
         public bool EmitPoseMessages = true;
 
+        // Benefit of the doubt a shot's target gets on a graze (S49-1); HitTolerance.None disables it.
+        // frob:doc docs/reference/hullbreach-net.md#hittolerance
+        public HitTolerance Tolerance = HitTolerance.Default;
+
         // Match length in seconds of simulated time; 0 or less disables the limit (default 10 minutes).
         // frob:ticket 01M3DG5Y36WE3D2224D54MR2S6
         // frob:doc docs/reference/hullbreach-net.md#serversimulation
@@ -693,7 +697,9 @@ namespace Hullbreach.Net
             foreach (int candidate in peers)
             {
                 if (candidate == p.OwnerPeer) continue;
-                if (ProjectileHitTest.TryHitShipCell(_peers[candidate].Ship, p.Position, p.Spec.Radius, out int k))
+                var defender = _peers[candidate].Ship;
+                float margin = Tolerance.MarginFor(math.length(defender.Velocity));
+                if (ProjectileHitTest.TryHitShipCell(defender, p.Position, p.Spec.Radius, margin, out int k))
                 {
                     peer = candidate;
                     key = k;

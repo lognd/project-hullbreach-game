@@ -822,6 +822,26 @@ known block types, no duplicate cells, exactly one core, and every block
 connected to the core. Returns a `DesignVerdict` naming the first rule
 broken.
 
+### HitTolerance
+
+<!-- describes: Assets/Scripts/Hullbreach.Net/HitTolerance.cs::HitTolerance -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/HitTolerance.cs::HitTolerance.GraceSeconds -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/HitTolerance.cs::HitTolerance.MaxMargin -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/HitTolerance.cs::HitTolerance.Default -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/HitTolerance.cs::HitTolerance.None -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/HitTolerance.cs::HitTolerance.MarginFor -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.Tolerance -->
+
+The documented hit tolerance (S49-1). Clients never claim hits: the server
+decides every impact against its own ship poses, so "the client and the
+server disagree" always resolves server-side, in the defender's favor within
+a bound. A projectile's circle is shrunk by `MarginFor(defenderSpeed)` =
+`min(MaxMargin, speed * GraceSeconds)` world units before the cell test, so a
+graze that overlaps a block by less than the margin is a miss. A shot whose
+centre is inside a block is always a hit, however large the margin. The
+default is 0.1 s of forgiven lag capped at 0.5 units; `HitTolerance.None`
+turns it off. `ServerSimulation.Tolerance` holds the active value.
+
 ### ProjectileHitTest
 
 <!-- describes: Assets/Scripts/Hullbreach.Net/ProjectileHitTest.cs::ProjectileHitTest -->

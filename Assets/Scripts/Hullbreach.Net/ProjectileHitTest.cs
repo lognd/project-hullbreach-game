@@ -13,9 +13,15 @@ namespace Hullbreach.Net
         // that the circle overlaps (a zero radius is the point test).
         // frob:doc docs/reference/hullbreach-net.md#projectilehittest
         public static bool TryHitShipCell(ShipBody ship, float2 worldPoint, float radius, out int hitKey)
+            => TryHitShipCell(ship, worldPoint, radius, 0f, out hitKey);
+
+        // Same test with the defender's benefit of the doubt: the circle shrinks by `margin`, so a
+        // graze inside the margin misses while a centre inside a cell always hits.
+        // frob:doc docs/reference/hullbreach-net.md#projectilehittest
+        public static bool TryHitShipCell(ShipBody ship, float2 worldPoint, float radius, float margin, out int hitKey)
         {
             float2 local = ship.WorldToLocal(worldPoint);
-            float reach = math.max(0f, radius);
+            float reach = math.max(0f, radius - math.max(0f, margin));
             int minX = (int)math.floor(local.x - reach);
             int maxX = (int)math.floor(local.x + reach);
             int minY = (int)math.floor(local.y - reach);
