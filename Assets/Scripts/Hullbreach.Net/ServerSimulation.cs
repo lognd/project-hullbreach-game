@@ -326,11 +326,14 @@ namespace Hullbreach.Net
             }
         }
 
+        // Shared with the client HUD so its countdown matches the server rule.
+        public const float DefaultBuildCooldownSeconds = 1.5f;
+
         // Seconds a peer must wait between block placements while a match is running, so building
         // mid-fight is a trade-off (S34-3). Zero or less disables it; pre-match building is never limited.
         // frob:ticket 01M3DG5Y25YGZ3DV7JSDB4BNMF
         // frob:doc docs/reference/hullbreach-net.md#serversimulation
-        public float BuildCooldownSeconds = 1.5f;
+        public float BuildCooldownSeconds = DefaultBuildCooldownSeconds;
 
         // Seconds until the peer may place again during a live match; 0 when ready or unknown.
         // frob:ticket 01M3DG5Y25YGZ3DV7JSDB4BNMF
