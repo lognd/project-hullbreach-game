@@ -14,7 +14,7 @@ labels = ["jira:SCRUM-202", "owner:mcnairrobotics", "game", "netcode", "mileston
 
 [[acceptance]]
 text = "Given a client and server that disagree about a hit, when the shot grazes within the documented speed*grace tolerance of a block edge, then the server resolves it as a miss, while a centre hit still hits (HitToleranceTests)"
-bound = false
+bound = true
 +++
 
 Defender-favored hit resolution within a documented tolerance
