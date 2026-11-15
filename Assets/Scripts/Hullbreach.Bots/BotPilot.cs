@@ -245,7 +245,7 @@ namespace Hullbreach.Bots
             float horizon = _profile.PlanetLookahead;
             const float h = 0.1f;
             float2 pos = self.Position, vel = self.Velocity;
-            float margin = 8f;
+            float margin = 6f;
             for (float t = 0f; t < horizon; t += h)
             {
                 vel += _gravity.AccelerationAt(pos) * h;
@@ -399,6 +399,10 @@ namespace Hullbreach.Bots
 
         // ---- per-tick control ---------------------------------------------------------------
 
+        public float LastErr, LastSteer;
+        const float AssistGain = 6f;
+        const float AssistSign = 1f;
+
         ShipInput Control(BotObservation obs)
         {
             SelfView self = obs.Self;
@@ -406,12 +410,24 @@ namespace Hullbreach.Bots
             float err = Wrap(targetRot - self.Rotation);
             float alpha = math.max(0.05f, self.MaxAngularAccel);
 
-            // Bang-coast-bang: command the spin rate that brakes to zero exactly at the target.
-            float wMax = math.min(2.5f, math.sqrt(alpha * 4f));
-            float wDes = math.sign(err) * math.min(wMax, math.sqrt(2f * alpha * 0.55f * math.max(0f, math.abs(err) - 0.012f)));
-            float cmd = (wDes - self.AngularVelocity) / (alpha * 0.45f);
-            // Positive steer drives the fins to a clockwise torque, so the sign is flipped here.
-            float steer = self.MaxAngularAccel > 0f ? -math.clamp(cmd, -1f, 1f) : 0f;
+            LastErr = err;
+            float steer;
+            if (self.MaxTurnRate > 0f)
+            {
+                // Flight assist: steer is a spin-rate command and the gyro holds it, so a proportional rate
+                // toward the target heading is enough and stopping is free.
+                float wDes = math.clamp(AssistGain * err, -self.MaxTurnRate, self.MaxTurnRate);
+                steer = AssistSign * math.clamp(wDes / self.MaxTurnRate, -1f, 1f);
+            }
+            else
+            {
+                // Bang-coast-bang: command the spin rate that brakes to zero exactly at the target.
+                float wMax = math.min(2.5f, math.sqrt(alpha * 4f));
+                float wDes = math.sign(err) * math.min(wMax, math.sqrt(2f * alpha * 0.55f * math.max(0f, math.abs(err) - 0.012f)));
+                float cmd = (wDes - self.AngularVelocity) / (alpha * 0.45f);
+                // Positive steer drives the fins to a clockwise torque, so the sign is flipped here.
+                steer = self.MaxAngularAccel > 0f ? -math.clamp(cmd, -1f, 1f) : 0f;
+            }
 
             float thrust = 0f;
             if (_accelWanted)
@@ -424,6 +440,7 @@ namespace Hullbreach.Bots
 
             bool fire = ShouldFire(obs);
             if (fire) FireRequests++;
+            LastSteer = steer;
             return new ShipInput(thrust, steer, fire);
         }
 
@@ -432,7 +449,7 @@ namespace Hullbreach.Bots
             SelfView self = obs.Self;
             if (!self.HasCannon || !_aimValid || !_lastEnemy.Visible) return false;
             if (obs.Tick < _nextFireTick) return false;
-            if (_mode == BotMode.AvoidPlanet || _mode == BotMode.ReturnToRing || _mode == BotMode.Idle) return false;
+            if (_mode == BotMode.Idle) return false;
             if (_aimFlight > self.Projectile.LifetimeSeconds * 0.9f) return false;
 
             float2 axisWorld = Rotate(self.AimLocal, self.Rotation);

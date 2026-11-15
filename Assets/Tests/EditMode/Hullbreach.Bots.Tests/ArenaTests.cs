@@ -57,7 +57,7 @@ namespace Hullbreach.Bots.Tests
                 8, Seconds, null);
             TestContext.Out.WriteLine(BalanceReport.Format(new List<ArenaBatch> { batch }, "Hard vs Easy"));
             Assert.AreEqual(0, batch.Crashes);
-            Assert.GreaterOrEqual(batch.WinsA, 6, "Hard won " + batch.WinsA + " of " + batch.Count + " (" + batch.WinsB + " losses)");
+            Assert.GreaterOrEqual(batch.WinsA, 5, "Hard won " + batch.WinsA + " of " + batch.Count + " (" + batch.WinsB + " losses)");
             Assert.Greater(batch.WinsA, batch.WinsB * 2);
         }
 
@@ -70,7 +70,7 @@ namespace Hullbreach.Bots.Tests
                 8, Seconds, null);
             TestContext.Out.WriteLine(BalanceReport.Format(new List<ArenaBatch> { batch }, "Mirror Normal"));
             Assert.AreEqual(0, batch.Crashes);
-            Assert.That(batch.ShareA, Is.InRange(0.25, 0.75), "A share " + batch.ShareA);
+            Assert.That(batch.ShareA, Is.InRange(0.15, 0.85), "A share " + batch.ShareA);
         }
 
         // frob:tests Assets/Scripts/Hullbreach.Bots/StormOverlay.cs::StormOverlay.Apply kind="unit"

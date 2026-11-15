@@ -89,12 +89,17 @@ namespace Hullbreach.Bots
 
         // frob:doc docs/reference/hullbreach-bots.md#botbuilder
         public static BotShip Build(ulong seed, BotDifficulty difficulty, BotPersonality personality)
+            => Build(seed, difficulty, personality, BlockCosts.Default());
+
+        // Same, but inside an explicit economy: total cost (welds pay the surcharge) and block count are capped.
+        // frob:doc docs/reference/hullbreach-bots.md#botbuilder
+        public static BotShip Build(ulong seed, BotDifficulty difficulty, BotPersonality personality, BlockCosts costs)
         {
             var master = new BotRng(seed * 0x9E3779B97F4A7C15UL + 0x1234567UL);
             for (int attempt = 0; attempt < 24; attempt++)
             {
-                BotShip ship = Generate(master.Fork((ulong)attempt + 1), difficulty, personality);
-                if (Validate(ship, out _)) return ship;
+                BotShip ship = Generate(master.Fork((ulong)attempt + 1), difficulty, personality, costs);
+                if (Validate(ship, out _, costs)) return ship;
             }
             return Fallback();
         }
@@ -102,10 +107,14 @@ namespace Hullbreach.Bots
         // Replays the order through the real placement rules, runs the net design validator, and
         // checks stress under a burst of full thrust, full steer and fire. Null reason when valid.
         // frob:doc docs/reference/hullbreach-bots.md#botbuilder
-        public static bool Validate(BotShip ship, out string reason)
+        public static bool Validate(BotShip ship, out string reason) => Validate(ship, out reason, BlockCosts.Default());
+
+        // frob:doc docs/reference/hullbreach-bots.md#botbuilder
+        public static bool Validate(BotShip ship, out string reason, BlockCosts costs)
         {
             reason = null;
-            if (ship.BlockCount > BlockBudget) { reason = "over budget"; return false; }
+            if (ship.BlockCount > BlockBudget || ship.BlockCount > costs.MaxBlocks) { reason = "too many blocks"; return false; }
+            if (costs.CostOf(ship.Grid) > costs.Budget) { reason = "over budget"; return false; }
 
             // 1. Placement order is legal block by block.
             var replay = new BlockGrid();
@@ -185,17 +194,29 @@ namespace Hullbreach.Bots
             public bool WeldSpine;
         }
 
-        static BotShip Generate(BotRng rng, BotDifficulty difficulty, BotPersonality personality)
+        static BotShip Generate(BotRng rng, BotDifficulty difficulty, BotPersonality personality, BlockCosts costs)
         {
             Plan plan = MakePlan(rng, difficulty, personality);
+            int spent = 0;
+            // Money kept back for fins, guns and engines so hull cannot starve them.
+            int reserve = plan.FinPairs * 2 * costs.CostOf(BlockTypes.Fin)
+                + (plan.CannonPairs * 2 + (plan.CenterCannon ? 1 : 0)) * costs.CostOf(BlockTypes.Cannon)
+                + plan.ThrusterPairs * 2 * costs.CostOf(BlockTypes.Thruster)
+                + (plan.Retro ? costs.CostOf(BlockTypes.RetroThruster) : 0);
             var grid = new BlockGrid();
             var order = new List<BotPlacement>();
 
             bool Place(int x, int y, byte type, byte mods = 0, bool welded = false)
             {
-                if (grid.Count >= BlockBudget) return false;
+                bool essential = type == BlockTypes.Fin || type == BlockTypes.Cannon || type == BlockTypes.Thruster || type == BlockTypes.RetroThruster;
+                int price = costs.CostOf(type, welded);
+                if (grid.Count >= BlockBudget || grid.Count >= costs.MaxBlocks) return false;
+                if (essential) reserve = Math.Max(0, reserve - price);
+                int held = essential ? 0 : reserve;
+                if (spent + price + held > costs.Budget) return false;
                 int key = BlockKey.Pack(x, y);
                 if (!PlacementRules.CanPlace(grid, key, type, mods, out _)) return false;
+                spent += price;
                 grid.TryAdd(key, new Block(type, mods, 0, welded ? Block.FlagWelded : (byte)0));
                 order.Add(new BotPlacement(x, y, type, mods, welded));
                 return true;
@@ -283,11 +304,11 @@ namespace Hullbreach.Bots
                     plan.Front = rng.Range(0, 2);
                     plan.Rear = 0;
                     plan.ThrusterPairs = 2;
-                    plan.CannonPairs = rng.Chance(0.6f) ? 2 : 1;
+                    plan.CannonPairs = rng.Chance(0.2f) ? 2 : 1;
                     plan.CenterCannon = rng.Chance(0.3f);
                     plan.FinPairs = 2;
                     plan.Retro = false;
-                    plan.ArmorChance = rng.Range(0.2f, 0.5f);
+                    plan.ArmorChance = rng.Range(0.2f, 0.4f);
                     plan.WeldSpine = rng.Chance(0.5f);
                     break;
             }

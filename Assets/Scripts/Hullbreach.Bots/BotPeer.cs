@@ -128,6 +128,7 @@ namespace Hullbreach.Bots
                 MaxForwardAccel = _caps.MaxForwardAccel,
                 MaxRetroAccel = _caps.MaxRetroAccel,
                 MaxAngularAccel = _caps.MaxAngularAccel,
+                MaxTurnRate = _caps.MaxTurnRate,
                 AimLocal = _caps.AimLocal,
                 HasCannon = _caps.HasCannon,
                 CannonCooldownSeconds = me.CannonCooldown,

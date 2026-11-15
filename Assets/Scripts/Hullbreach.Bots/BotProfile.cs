@@ -79,13 +79,13 @@ namespace Hullbreach.Bots
                     break;
                 case BotDifficulty.Normal:
                     p.ReactionTicks = 14; p.DecisionTicks = 9; p.AimSigma = 0.03f; p.LeadQuality = 0.85f;
-                    p.GravityAwareLead = true; p.TriggerDiscipline = 0.85f; p.FireToleranceScale = 1.4f;
-                    p.DodgeSkill = 0.5f; p.PlanetLookahead = 5f; p.StrafePeriod = 7f; p.RangeSlack = 0.3f;
+                    p.GravityAwareLead = true; p.TriggerDiscipline = 0.85f; p.FireToleranceScale = 1.6f;
+                    p.DodgeSkill = 0.2f; p.PlanetLookahead = 4f; p.StrafePeriod = 0f; p.RangeSlack = 0.3f;
                     break;
                 default:
-                    p.ReactionTicks = 9; p.DecisionTicks = 5; p.AimSigma = 0.012f; p.LeadQuality = 1f;
-                    p.GravityAwareLead = true; p.TriggerDiscipline = 1f; p.FireToleranceScale = 1f;
-                    p.DodgeSkill = 0.9f; p.PlanetLookahead = 6f; p.StrafePeriod = 4.5f; p.RangeSlack = 0.2f;
+                    p.ReactionTicks = 9; p.DecisionTicks = 9; p.AimSigma = 0.012f; p.LeadQuality = 1f;
+                    p.GravityAwareLead = true; p.TriggerDiscipline = 0.95f; p.FireToleranceScale = 2.0f;
+                    p.DodgeSkill = 0.3f; p.PlanetLookahead = 4f; p.StrafePeriod = 0f; p.RangeSlack = 0.3f;
                     break;
             }
             switch (personality)

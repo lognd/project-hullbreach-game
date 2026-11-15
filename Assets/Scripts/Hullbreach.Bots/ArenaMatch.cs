@@ -71,12 +71,13 @@ namespace Hullbreach.Bots
         // 0 = A, 1 = B, -1 = no winner.
         public int Winner = -1;
 
-        // Who won on damage dealt when the match itself had no winner: 0 = A, 1 = B, -1 = too close to call
+        // Who won on damage dealt when the match was not decided by a core breach: 0 = A, 1 = B, -1 = too close to call
         // (under a 15 percent lead or 50 points). A tied core-health time limit is a Draw to the server.
         public int PointsWinner = -1;
 
-        // The match winner, else the points winner.
-        public int Verdict => Winner >= 0 ? Winner : PointsWinner;
+        // A core breach decides the match; otherwise the damage lead does. A time-limit core-health tiebreak
+        // is left out of the verdict because a single lucky core hit is a noisy measure of skill.
+        public int Verdict => Ending == ArenaEnding.CoreBreached || Ending == ArenaEnding.Storm ? Winner : PointsWinner;
         public ArenaEnding Ending = ArenaEnding.Unfinished;
         public float Seconds;
         public int Ticks;
@@ -90,6 +91,9 @@ namespace Hullbreach.Bots
 
         // Wall time spent in ServerSimulation.Tick versus in the bots, in milliseconds.
         public double SimMs, BotMs;
+
+        // Ticks each pilot spent in each BotMode, for tuning.
+        public readonly int[] ModeTicksA = new int[16], ModeTicksB = new int[16];
     }
 
     // Runs one bot-vs-bot match through the real ServerSimulation: same join validation, same input path,
@@ -176,6 +180,8 @@ namespace Hullbreach.Bots
                 result.BotMs += (t1 - t0) * 1000.0 / System.Diagnostics.Stopwatch.Frequency;
                 result.SimMs += (t2 - t1) * 1000.0 / System.Diagnostics.Stopwatch.Frequency;
 
+                result.ModeTicksA[(int)pilotA.Mode]++;
+                result.ModeTicksB[(int)pilotB.Mode]++;
                 foreach (var shot in sim.Projectiles)
                 {
                     if (!seenShots.Add(shot.Id)) continue;
@@ -197,7 +203,7 @@ namespace Hullbreach.Bots
             result.Stalled = result.LongestQuietSeconds >= config.StallSeconds;
 
             ClassifyEnding(sim, result, peerA, peerB, overlay);
-            if (result.Winner < 0)
+            if (result.Ending != ArenaEnding.CoreBreached && result.Ending != ArenaEnding.Storm)
             {
                 int hi = Math.Max(result.DamageA, result.DamageB), lo = Math.Min(result.DamageA, result.DamageB);
                 if (hi - lo >= 50 && hi > lo * 1.15f) result.PointsWinner = result.DamageA > result.DamageB ? 0 : 1;
@@ -213,10 +219,10 @@ namespace Hullbreach.Bots
         {
             ShipBody a = sim.Ships[peerA], b = sim.Ships[peerB];
             return string.Format(System.Globalization.CultureInfo.InvariantCulture,
-                "t={0,5:0.0} A({1,6:0.0},{2,6:0.0}) v{3,5:0.0} {4,-11} B({5,6:0.0},{6,6:0.0}) v{7,5:0.0} {8,-11} range {9,5:0.0} blocks {10}/{11} accA {12:0.0}/{13:0.0} rot {14:0}",
+                "t={0,5:0.0} A({1,6:0.0},{2,6:0.0}) v{3,5:0.0} {4,-11} B({5,6:0.0},{6,6:0.0}) v{7,5:0.0} {8,-11} range {9,5:0.0} blocks {10}/{11} accA {12:0.0}/{13:0.0} rot {14:0} req {15}/{16} cd {17:0.00} proj {18} err {19:0.00} st {20:0.00} w {21:0.00}",
                 tick / 50f, a.Position.x, a.Position.y, math.length(a.Velocity), pa.Mode, b.Position.x, b.Position.y,
                 math.length(b.Velocity), pb.Mode, math.distance(a.Position, b.Position), a.Grid.Count, b.Grid.Count,
-                ShipCapabilities.Measure(a).MaxForwardAccel, ShipCapabilities.Measure(a).MaxAngularAccel, math.degrees(a.Rotation));
+                ShipCapabilities.Measure(a).MaxForwardAccel, ShipCapabilities.Measure(a).MaxAngularAccel, math.degrees(a.Rotation), pa.FireRequests, pb.FireRequests, a.CannonCooldown, sim.Projectiles.Count, pa.LastErr, pa.LastSteer, a.AngularVelocity);
         }
 
         static void ClassifyEnding(ServerSimulation sim, ArenaMatchResult result, int peerA, int peerB, StormOverlay overlay)

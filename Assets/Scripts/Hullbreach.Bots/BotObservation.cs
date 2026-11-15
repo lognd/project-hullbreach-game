@@ -24,6 +24,7 @@ namespace Hullbreach.Bots
         public float MaxForwardAccel;
         public float MaxRetroAccel;
         public float MaxAngularAccel;
+        public float MaxTurnRate;
 
         // Ship-local unit vector the cannons fire along; HasCannon is false when there are none.
         public float2 AimLocal;

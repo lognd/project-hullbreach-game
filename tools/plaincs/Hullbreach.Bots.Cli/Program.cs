@@ -1,3 +1,4 @@
+using System.Linq;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -58,6 +59,7 @@ static class Program
             Console.WriteLine($"{r.LabelA} vs {r.LabelB} seed {r.Seed}: winner={r.Winner} ending={r.Ending} {r.Seconds:0.0}s " +
                 $"shots {r.ShotsA}/{r.ShotsB} dmg {r.DamageA}/{r.DamageB} core {r.CoreHealthA:0.00}/{r.CoreHealthB:0.00} " +
                 $"blocks {r.BlocksA}/{r.BlocksB} quiet {r.LongestQuietSeconds:0.0}s err={r.Error} simMs={r.SimMs:0} botMs={r.BotMs:0}");
+            if (trace) Console.WriteLine("modes A " + string.Join(" ", Enumerable.Range(0, 8).Select(i => ((BotMode)i) + "=" + r.ModeTicksA[i])) + " | B " + string.Join(" ", Enumerable.Range(0, 8).Select(i => ((BotMode)i) + "=" + r.ModeTicksB[i])));
             return r.Ending == ArenaEnding.Crash ? 1 : 0;
         }
 

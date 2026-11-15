@@ -13,12 +13,15 @@ namespace Hullbreach.Bots
         public readonly float MaxForwardAccel;
         public readonly float MaxRetroAccel;
         public readonly float MaxAngularAccel;
+        // Full-steer spin rate under flight assist (steer commands a rate); 0 when assist is off.
+        public readonly float MaxTurnRate;
         public readonly float2 AimLocal;
         public readonly bool HasCannon;
         public readonly float Radius;
 
-        ShipCapabilities(float fwd, float retro, float ang, float2 aim, bool hasCannon, float radius)
+        ShipCapabilities(float fwd, float retro, float ang, float2 aim, bool hasCannon, float radius, float turnRate = 0f)
         {
+            MaxTurnRate = turnRate;
             MaxForwardAccel = fwd; MaxRetroAccel = retro; MaxAngularAccel = ang;
             AimLocal = aim; HasCannon = hasCannon; Radius = radius;
         }
@@ -58,7 +61,8 @@ namespace Hullbreach.Bots
             foreach (var kv in ship.Grid.All)
                 radius = math.max(radius, math.length(BlockGrid.CenterOf(kv.Key) - com) + 0.5f);
 
-            return new ShipCapabilities(fwd, retro, ang, aim, hasCannon, radius);
+            float turnRate = ship.Tuning.AssistEnabled && inertia > 0f ? ship.Tuning.MaxRateFor(inertia) : 0f;
+            return new ShipCapabilities(fwd, retro, ang, aim, hasCannon, radius, turnRate);
         }
     }
 }

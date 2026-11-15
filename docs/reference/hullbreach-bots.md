@@ -95,7 +95,7 @@ The layered pilot. Layers, highest priority first:
    grazes; turn back at the arena edge; stay inside the storm ring (and pre-position for the next
    one) when a storm is present. With no storm the layer is simply inactive.
 2. Retreat when the core is badly hurt and losing.
-3. Dodge a shot whose closest approach is inside the ship's width, strafe on a timer.
+3. Dodge a shot whose closest approach is inside the ship's width (Easy never, Normal and Hard lightly; they do not strafe, because turning away from the target costs shots).
 4. Hold the preferred range with a closing-speed controller.
 5. Aim and fire: an iterative gravity-aware lead solution against a delayed, noisy copy of the
    enemy, fire discipline (a per-cooldown roll, a tolerance cone, no shot into a planet).
@@ -112,7 +112,7 @@ The layered pilot. Layers, highest priority first:
 Generates a ship for a seed, difficulty and personality: a symmetric hull around a welded core,
 fins on the flanks, guns on the nose, engines on the stern. `Validate` replays the placement order through
 `PlacementRules.CanPlace`, runs `DesignValidator`, checks thrust, turn rate and weapons, and runs the
-structural solver for 150 ticks. A design that fails is retried with the next derived seed and, after
+structural solver for 150 ticks. `Build` takes an optional `BlockCosts` (default `BlockCosts.Default()`: 60 points, 40 blocks, welds surcharged) so a bot ship always passes the server's economy check in `Join`. A design that fails is retried with the next derived seed and, after
 24 failures, replaced by a known-good dart. Easy ships are slow and light on guns; Normal and Hard
 get the same competent build, so the gap between them is the pilot.
 

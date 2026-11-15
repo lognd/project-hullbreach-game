@@ -81,6 +81,7 @@ namespace Hullbreach.Bots.Tests
                         string tag = d + "/" + p + "/" + seed;
                         Assert.IsTrue(BotBuilder.Validate(ship, out string why), tag + ": " + why);
                         Assert.LessOrEqual(ship.BlockCount, BotBuilder.BlockBudget, tag);
+                        Assert.LessOrEqual(BlockCosts.Default().CostOf(ship.Grid), BlockCosts.Default().Budget, tag + " cost");
                         Assert.AreEqual(DesignVerdict.Ok, DesignValidator.ValidateDesign(ship.ToSnapshot(1, float2.zero, 0f, float2.zero)), tag);
                     }
         }
