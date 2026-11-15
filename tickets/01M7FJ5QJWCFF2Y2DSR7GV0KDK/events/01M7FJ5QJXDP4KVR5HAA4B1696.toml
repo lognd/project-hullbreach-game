@@ -1,0 +1,11 @@
+kind = "create"
+title = "Real-hardware mouse and Left Shift check"
+type = "chore"
+category = "todo"
+priority = "low"
+points = 1
+labels = ["game"]
+acceptance = ["A person confirms mouse placement/right-click and Left Shift flight-assist-off on real input hardware and records it as an attestation"]
+at = "2026-11-15T12:16:06Z"
+actor = "lognd"
+rev = 1
