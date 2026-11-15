@@ -14,7 +14,7 @@ labels = ["jira:SCRUM-173", "owner:stevendangkhoi", "game", "milestone:0.2.0"]
 
 [[acceptance]]
 text = "Given a running match, when a player places a block, then a second placement inside the cooldown is refused and one after it succeeds; pre-match building is unlimited"
-bound = false
+bound = true
 +++
 
 Build cooldown or cost so mid-match building is a trade-off
