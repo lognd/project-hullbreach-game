@@ -166,7 +166,7 @@ namespace Hullbreach.NetCode.Entities
             go.transform.SetParent(parent, false);
             var t = go.GetComponent<TextMeshProUGUI>();
             t.fontSize = size; t.fontStyle = style; t.alignment = align; t.raycastTarget = false;
-            t.enableWordWrapping = false; t.overflowMode = TextOverflowModes.Overflow;
+            t.textWrappingMode = TMPro.TextWrappingModes.NoWrap; t.overflowMode = TextOverflowModes.Overflow;
             var rt = t.rectTransform; rt.anchorMin = min; rt.anchorMax = max; rt.offsetMin = rt.offsetMax = Vector2.zero;
             return t;
         }

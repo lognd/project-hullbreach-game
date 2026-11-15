@@ -215,7 +215,7 @@ namespace Hullbreach.NetCode.Entities
             var go = new GameObject("Text", typeof(RectTransform), typeof(TextMeshProUGUI));
             go.transform.SetParent(parent, false);
             var t = go.GetComponent<TextMeshProUGUI>();
-            t.fontSize = size; t.alignment = align; t.fontStyle = style; t.raycastTarget = false; t.enableWordWrapping = false;
+            t.fontSize = size; t.alignment = align; t.fontStyle = style; t.raycastTarget = false; t.textWrappingMode = TMPro.TextWrappingModes.NoWrap;
             var rt = t.rectTransform;
             rt.anchorMin = rt.anchorMax = rt.pivot = new Vector2(0f, 1f);
             rt.anchoredPosition = pos; rt.sizeDelta = box;

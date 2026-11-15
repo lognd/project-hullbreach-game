@@ -57,7 +57,7 @@ namespace Hullbreach.NetCode.Entities
             var header = new GameObject("Header", typeof(RectTransform), typeof(TextMeshProUGUI)).GetComponent<TextMeshProUGUI>();
             header.transform.SetParent(rrt, false);
             header.text = "No opponent yet - fight a bot (unranked)";
-            header.fontSize = 22; header.alignment = TextAlignmentOptions.Center; header.raycastTarget = false; header.enableWordWrapping = false;
+            header.fontSize = 22; header.alignment = TextAlignmentOptions.Center; header.raycastTarget = false; header.textWrappingMode = TMPro.TextWrappingModes.NoWrap;
             header.rectTransform.anchorMin = new Vector2(0f, 1f); header.rectTransform.anchorMax = new Vector2(1f, 1f);
             header.rectTransform.pivot = new Vector2(0.5f, 1f);
             header.rectTransform.anchoredPosition = Vector2.zero; header.rectTransform.sizeDelta = new Vector2(0f, 30f);
@@ -74,7 +74,7 @@ namespace Hullbreach.NetCode.Entities
                 rt.sizeDelta = new Vector2(190f, 48f);
                 var label = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI)).GetComponent<TextMeshProUGUI>();
                 label.transform.SetParent(go.transform, false);
-                label.fontSize = 22; label.alignment = TextAlignmentOptions.Center; label.raycastTarget = false; label.enableWordWrapping = false;
+                label.fontSize = 22; label.alignment = TextAlignmentOptions.Center; label.raycastTarget = false; label.textWrappingMode = TMPro.TextWrappingModes.NoWrap;
                 label.rectTransform.anchorMin = Vector2.zero; label.rectTransform.anchorMax = Vector2.one;
                 label.rectTransform.offsetMin = label.rectTransform.offsetMax = Vector2.zero;
                 var button = go.GetComponent<Button>();

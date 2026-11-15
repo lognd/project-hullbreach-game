@@ -65,7 +65,7 @@ namespace Hullbreach.NetCode.Entities
             go.transform.SetParent(prt, false);
             _list = go.GetComponent<TextMeshProUGUI>();
             _list.fontSize = 20; _list.alignment = TextAlignmentOptions.TopLeft; _list.raycastTarget = false;
-            _list.enableWordWrapping = false; _list.richText = true;
+            _list.textWrappingMode = TMPro.TextWrappingModes.NoWrap; _list.richText = true;
             var lrt = _list.rectTransform;
             lrt.anchorMin = Vector2.zero; lrt.anchorMax = Vector2.one;
             lrt.offsetMin = new Vector2(14f, 10f); lrt.offsetMax = new Vector2(-10f, -10f);
