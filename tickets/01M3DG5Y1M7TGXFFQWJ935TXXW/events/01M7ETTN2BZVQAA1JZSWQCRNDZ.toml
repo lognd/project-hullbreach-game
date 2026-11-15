@@ -1,0 +1,6 @@
+kind = "comment"
+subtype = "note"
+body = "Audit: the engine-free logic (LanEndpoint, DirectLaunchPlan) and HullbreachLanLobby/HullbreachLobbyView LAN code are in main with passing evidence for criterion 1. Criterion 2 (HOST LAN / JOIN ADDRESS buttons exist) is only in LobbySceneBuilder.cs: Assets/Prefabs/UI/LobbyCanvas.prefab still has none of lanHostButton/lanAddressInput/lanJoinButton. It needs the editor menu 'Hullbreach > Online > Rebuild lobby and multiplayer scenes' to regenerate the prefab (hand-editing 9000 lines of prefab YAML was judged unsafe). Not closed."
+at = "2026-11-15T05:28:06Z"
+actor = "lognd"
+rev = 1
