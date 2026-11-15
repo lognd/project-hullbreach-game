@@ -146,6 +146,11 @@ namespace Hullbreach.Ship
                 if (kv.Value >= DamageModel.FailRatio) result.OverloadedCount++;
                 if (kv.Value > result.PeakRisk || result.WeakestKey < 0) { result.PeakRisk = kv.Value; result.WeakestKey = kv.Key; }
             }
+            // Mirror-image blocks tie to within solver noise; pick the lowest key among them so the pulsed block
+            // never flips between two equal candidates from one evaluation to the next.
+            float tieFloor = result.PeakRisk * 0.995f;
+            foreach (var kv in result.Risk)
+                if (result.PeakRisk > 0f && kv.Value >= tieFloor && kv.Key < result.WeakestKey) result.WeakestKey = kv.Key;
 
             result.Verdict = result.PeakRisk >= DamageModel.FailRatio ? StressVerdict.WillBreak
                 : result.PeakRisk >= DamageModel.CreakRatio ? StressVerdict.Marginal
