@@ -331,6 +331,11 @@ namespace Hullbreach.Net
         // frob:doc docs/reference/hullbreach-net.md#serversimulation
         public PlanetCrashConfig PlanetCrash { get; private set; } = PlanetCrashConfig.Default();
 
+        // How every joining ship flies: flight assist, ramps, brake, fire buffer. The client prediction uses the
+        // same values (ClientReplica.PredictionFlightTuning) so both agree.
+        // frob:doc docs/reference/hullbreach-net.md#serversimulation
+        public FlightTuning FlightTuning { get; set; } = FlightTuning.Default();
+
         // Diagnostics sink for arena edge events; defaults to a no-op.
         // frob:doc docs/reference/hullbreach-net.md#serversimulation
         public IPlatformLog Log { get; set; } = NullPlatformLog.Instance;
@@ -470,6 +475,7 @@ namespace Hullbreach.Net
                 Gravity = _gravity,
                 World = _sink,
                 PlanetCrash = PlanetCrash,
+                Tuning = FlightTuning,
             };
 
             foreach (var b in initialDesign.Blocks)
@@ -655,7 +661,7 @@ namespace Hullbreach.Net
             if (!_peers.TryGetValue(peer, out var state)) return;
             // An older tick is honest reordering or lag, never a trust event.
             if (state.HasInput && unchecked((int)(input.Tick - state.LatestInput.Tick)) < 0) return;
-            if ((input.Flags & ~(InputMessage.FireBit | InputMessage.BuildModeBit)) != 0)
+            if ((input.Flags & ~(InputMessage.FireBit | InputMessage.BuildModeBit | InputMessage.AssistOffBit)) != 0)
                 Distrust(peer, state, TrustEventKind.ReservedInputBits);
             state.LatestInput = input;
             state.HasInput = true;
@@ -687,7 +693,7 @@ namespace Hullbreach.Net
                 // Less trust, shorter hold: a flaky-but-honest peer keeps most of it, a distrusted one little.
                 bool held = state.HasInput && state.SecondsSinceInput <= InputHoldSeconds * (0.2f + 0.8f * state.Trust.Value);
                 var input = held
-                    ? new ShipInput(state.LatestInput.ThrustAxisFloat, state.LatestInput.SteerFloat, state.PendingFire)
+                    ? new ShipInput(state.LatestInput.ThrustAxisFloat, state.LatestInput.SteerFloat, state.PendingFire, state.LatestInput.AssistOff)
                     : new ShipInput(0f, 0f, false);
                 state.PendingFire = false;
 

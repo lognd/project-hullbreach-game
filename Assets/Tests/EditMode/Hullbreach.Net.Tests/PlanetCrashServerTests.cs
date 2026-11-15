@@ -105,7 +105,7 @@ namespace Hullbreach.Net.Tests
             server.Ships[1].Velocity = new float2(6f, -16f);
 
             // The prediction body uses the same shared ShipBody code with the same config.
-            var predicted = new Hullbreach.Ship.ShipBody { Gravity = server.Gravity, PlanetCrash = server.PlanetCrash };
+            var predicted = new Hullbreach.Ship.ShipBody { Gravity = server.Gravity, PlanetCrash = server.PlanetCrash, Tuning = server.FlightTuning };
             foreach (var kv in server.Ships[1].Grid.All) predicted.Grid.TryAdd(kv.Key, kv.Value);
             predicted.RebuildDerivedViews();
             predicted.Position = server.Ships[1].Position;

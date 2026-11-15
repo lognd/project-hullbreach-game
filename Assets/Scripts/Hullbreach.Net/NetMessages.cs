@@ -61,6 +61,9 @@ namespace Hullbreach.Net
         // frob:doc docs/reference/hullbreach-net.md#inputmessage
         public const byte FireBit = 0x01;
         public const byte BuildModeBit = 0x02;
+        // Hold-to-disable flight assist.
+        // frob:doc docs/reference/hullbreach-net.md#inputmessage
+        public const byte AssistOffBit = 0x04;
 
         // frob:doc docs/reference/hullbreach-net.md#inputmessage
         public InputMessage(ushort netId, uint tick, sbyte thrustAxis, sbyte steer, byte flags)
@@ -73,7 +76,7 @@ namespace Hullbreach.Net
         }
 
         // frob:doc docs/reference/hullbreach-net.md#inputmessage
-        public static InputMessage FromFloats(ushort netId, uint tick, float thrustAxis, float steer, bool firePressed)
+        public static InputMessage FromFloats(ushort netId, uint tick, float thrustAxis, float steer, bool firePressed, bool assistOff = false)
         {
             sbyte QuantizeAxis(float v)
             {
@@ -81,6 +84,7 @@ namespace Hullbreach.Net
                 return (sbyte)Math.Round(clamped * 127f, MidpointRounding.AwayFromZero);
             }
             byte flags = firePressed ? FireBit : (byte)0;
+            if (assistOff) flags |= AssistOffBit;
             return new InputMessage(netId, tick, QuantizeAxis(thrustAxis), QuantizeAxis(steer), flags);
         }
 
@@ -94,6 +98,10 @@ namespace Hullbreach.Net
         public bool FirePressed => (Flags & FireBit) != 0;
 
         public bool BuildMode => (Flags & BuildModeBit) != 0;
+
+        // True while the player holds the flight-assist-off key.
+        // frob:doc docs/reference/hullbreach-net.md#inputmessage
+        public bool AssistOff => (Flags & AssistOffBit) != 0;
 
         // frob:doc docs/reference/hullbreach-net.md#inputmessage
         public void Write(ref ByteWriter w)

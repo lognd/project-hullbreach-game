@@ -47,6 +47,10 @@ namespace Hullbreach.Ship.Behaviours
         // frob:doc docs/reference/hullbreach-ship.md#blockcontext
         public float Throttle(float target) => Ship.RampThrottleFor(Key, Block.Modifiers, target, Dt);
 
+        // The fin channel: same as Throttle but on the fin ramp tuning.
+        // frob:doc docs/reference/hullbreach-ship.md#blockcontext
+        public float FinThrottle(float target) => Ship.RampFinThrottleFor(Key, Block.Modifiers, target, Dt);
+
         // frob:doc docs/reference/hullbreach-ship.md#blockcontext
         public float TickCooldown() => Ship.TickCooldownFor(Key, Dt);
 
