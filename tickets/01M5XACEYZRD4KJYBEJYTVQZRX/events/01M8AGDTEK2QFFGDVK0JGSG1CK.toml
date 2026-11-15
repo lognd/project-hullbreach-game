@@ -1,0 +1,6 @@
+kind = "comment"
+subtype = "note"
+body = "Queue handoff wired: HullbreachQueueConnect now bootstraps itself on LobbyScene (no scene edit needed), subscribes to HullbreachQueueView.Matched, and dials via HullbreachLanLobby.TryConnect. Verified in the editor on 2026-11-15 against a locally run platform (two test accounts): matched, dialed 127.0.0.1:7979, loaded MultiplayerGame, joined. Not verified: a standalone dedicated build or two machines. Close with frob once the PR merges (frob is not installed on the agent machine)."
+at = "2026-11-15T12:44:31Z"
+actor = "mcnairrobotics"
+rev = 1

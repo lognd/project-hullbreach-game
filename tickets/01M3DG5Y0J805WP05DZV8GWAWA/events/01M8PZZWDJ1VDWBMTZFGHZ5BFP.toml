@@ -1,0 +1,6 @@
+kind = "comment"
+subtype = "note"
+body = "S29 status 2026-11-15: queue handoff (S29-3b) and match-id ticket plus allocation channel (S29-3c parts 1-2) now work end to end in the editor against a local platform; skins (part 3) and a real dedicated build/orchestrator launch remain. RequireJoinTicket stays off by default and is only turned on by the queue-server launch flags."
+at = "2026-11-15T12:44:31Z"
+actor = "mcnairrobotics"
+rev = 1

@@ -1,0 +1,6 @@
+kind = "comment"
+subtype = "note"
+body = "(1) Done: HullbreachJoinTicketRpc presents the match id after connect. (2) Done, smallest channel: server args -hullbreachMatchId <uuid> (DirectLaunchPlan.MatchId -> AssignQueueMatch) or -hullbreachQueueServer (first valid ticket names the match, ServerSimulation.AdoptFirstTicket); either turns RequireJoinTicket on, neither leaves the server open. (3) NOT done: equipped skins. The platform queue returns skin and opponent_skin slugs but MatchHandoff drops them and no ship renders a skin, so every match uses the default skin; a follow-up must carry the slugs in MatchHandoff, send them with the join, and render them. Verified in the editor: ticket accepted, second client with the same id joined as peer 2, wrong id refused. Leave open for (3) or split it."
+at = "2026-11-15T12:44:31Z"
+actor = "mcnairrobotics"
+rev = 1

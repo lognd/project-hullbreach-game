@@ -157,9 +157,28 @@ When the queue finds a match, `HullbreachQueueConnect` (listening to `Hullbreach
 builds a [`ConnectRequest`](reference/hullbreach-net.md#connectrequest), resolves its host with
 [`ConnectTarget`](reference/hullbreach-net.md#connecttarget), dials it from the client world
 (`HullbreachLanLobby.TryConnect`) and loads `MultiplayerGame`. Log line:
-`Hullbreach connect: server=... match_id=... resolved=...`. This Unity code was written without running
-the editor and has not been exercised in play mode; the JoinTicket is not yet sent as a Netcode RPC, so a
-server with `RequireJoinTicket` on will refuse the client until that is wired.
+`Hullbreach connect: server=... match_id=... resolved=...`.
+
+The match id travels as a Netcode RPC: `HullbreachQueueConnect` stores it in `HullbreachQueueTicket` before dialing,
+and `HullbreachJoinTicketClientSystem` sends one `HullbreachJoinTicketRpc` per connection
+(`Hullbreach connect: presenting join ticket for match ...`). The server system hands it to
+`ServerSimulation.PresentTicket` and does not let that peer join until it is accepted
+(`Hullbreach server: peer #N join ticket accepted|refused.`).
+
+Allocation channel (how a dedicated server learns its match; the platform only returns an id and one static address):
+
+- `-hullbreachMatchId <uuid>`: an orchestrator started this server for that match (`DirectLaunchPlan.MatchId` ->
+  `AssignQueueMatch`). Tickets are required.
+- `-hullbreachQueueServer`: nobody told it; the first valid ticket names the match (`AdoptFirstTicket`), and a ticket for
+  any other match is refused. Tickets are required. `HullbreachNetCodeServerSystem.QueueServerRequested` does the same
+  inside the editor.
+- Neither flag: the server stays open (`RequireJoinTicket` off), as LAN hosting and bot play need.
+
+Verified in the editor on 2026-11-15 against a locally run platform (two accounts): the queue matched, the client dialed
+the assigned address, the ticket was accepted, a second client world presenting the same id joined as peer 2, and a
+wrong id was refused and timed out. Not verified: a standalone dedicated build (none was built, to save disk), two
+separate machines, equipped skins (the platform returns skin slugs in the match, but `MatchHandoff` drops them and no ship
+renders a skin, so every match uses the default skin), and the platform choosing a different address per match.
 
 ### Online clock, sparring partner and effects
 

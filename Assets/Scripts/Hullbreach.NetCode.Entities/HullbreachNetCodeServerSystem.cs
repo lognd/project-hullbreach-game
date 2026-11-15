@@ -26,6 +26,7 @@ namespace Hullbreach.NetCode.Entities
         EntityQuery _connectionQuery;
         EntityQuery _inputQuery;
         EntityQuery _buildQuery;
+        EntityQuery _ticketQuery;
         uint _nextMessageId = 1;
         bool _arenaConfigured;
         bool _sparringJoined;
@@ -51,11 +52,67 @@ namespace Hullbreach.NetCode.Entities
             _buildQuery = GetEntityQuery(
                 ComponentType.ReadOnly<HullbreachBuildRpc>(),
                 ComponentType.ReadOnly<ReceiveRpcCommandRequest>());
+            _ticketQuery = GetEntityQuery(
+                ComponentType.ReadOnly<HullbreachJoinTicketRpc>(),
+                ComponentType.ReadOnly<ReceiveRpcCommandRequest>());
+            ConfigureQueueServer();
             RequireForUpdate<NetworkStreamDriver>();
+        }
+
+        // Allocation channel for a dedicated queue server (S29-3c). The platform routes only hand out a match id and an
+        // address to the two players, so the server learns the id one of two ways:
+        //   -hullbreachMatchId <uuid>  an orchestrator allocated this server to that match (AssignQueueMatch).
+        //   -hullbreachQueueServer     nobody told it: the first valid JoinTicket names the match (AdoptFirstTicket).
+        // Either flag turns RequireJoinTicket on; without them the server stays open for LAN and bot play.
+        // frob:ticket 01M5XACF0K75AVMM0MCNDDWXNE
+        // frob:doc docs/netcode.md#queue-connect-flow
+        /// <summary>Same as -hullbreachQueueServer, for a server hosted inside the editor (may be set while it runs).</summary>
+        public static bool QueueServerRequested;
+
+        void ConfigureQueueServer()
+        {
+            string[] args = Environment.GetCommandLineArgs();
+            string matchId = HullbreachDirectLaunch.Plan.MatchId; // DirectLaunchPlan parses -hullbreachMatchId for servers
+            if (matchId == null)
+            {
+                int idIndex = Array.IndexOf(args, DirectLaunchPlan.MatchIdArg);
+                if (idIndex >= 0 && idIndex + 1 < args.Length) matchId = args[idIndex + 1];
+            }
+            bool queueServer = QueueServerRequested || Array.IndexOf(args, "-hullbreachQueueServer") >= 0;
+            if (matchId != null)
+            {
+                _simulation.RequireJoinTicket = true;
+                if (!_simulation.AssignQueueMatch(matchId))
+                    Debug.LogWarning("Hullbreach server: -hullbreachMatchId was not a valid match id; no match is allocated.");
+            }
+            else if (queueServer)
+            {
+                _simulation.RequireJoinTicket = true;
+                _simulation.AdoptFirstTicket = true;
+            }
+            if (_simulation.RequireJoinTicket) Debug.Log("Hullbreach server: join tickets are required.");
+        }
+
+        void ConsumeJoinTickets()
+        {
+            using var entities = _ticketQuery.ToEntityArray(Allocator.Temp);
+            using var tickets = _ticketQuery.ToComponentDataArray<HullbreachJoinTicketRpc>(Allocator.Temp);
+            using var sources = _ticketQuery.ToComponentDataArray<ReceiveRpcCommandRequest>(Allocator.Temp);
+            for (int i = 0; i < entities.Length; i++)
+            {
+                Entity source = sources[i].SourceConnection;
+                if (!EntityManager.HasComponent<NetworkId>(source)) continue;
+                int peer = EntityManager.GetComponentData<NetworkId>(source).Value;
+                bool ok = _simulation.PresentTicket(peer, tickets[i].MatchId.ToString());
+                Debug.Log($"Hullbreach server: peer #{peer} join ticket {(ok ? "accepted" : "refused")}.");
+            }
+            if (entities.Length > 0) EntityManager.DestroyEntity(entities);
         }
 
         protected override void OnUpdate()
         {
+            if (QueueServerRequested && !_simulation.RequireJoinTicket) ConfigureQueueServer();
+            ConsumeJoinTickets();
             SynchronizeConnections();
             PrepareGameplayIfLoaded();
             if (!_arenaConfigured) return;
@@ -137,7 +194,8 @@ namespace Hullbreach.NetCode.Entities
                 active.Add(peer);
                 _connections[peer] = entities[i];
                 bool admitted = EntityManager.HasComponent<HullbreachPlatformAdmitted>(entities[i]);
-                if (gameplayLoaded && admitted && _joinedPeers.Add(peer))
+                bool ticketed = !_simulation.RequireJoinTicket || _simulation.IsTicketed(peer);
+                if (gameplayLoaded && admitted && ticketed && _joinedPeers.Add(peer))
                 {
                     _simulation.Join(peer, CreateStarterShip(peer));
                     Debug.Log($"Hullbreach server: peer #{peer} joined the match ({_joinedPeers.Count} in match).");

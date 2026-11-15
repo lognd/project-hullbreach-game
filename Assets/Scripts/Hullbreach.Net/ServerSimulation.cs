@@ -149,6 +149,17 @@ namespace Hullbreach.Net
         // frob:doc docs/reference/hullbreach-net.md#serversimulation
         public bool RequireJoinTicket;
 
+        /// <summary>
+        /// Queue servers without an allocation channel: when no match id was assigned, the first valid JoinTicket names the
+        /// match (see PresentTicket). Default false.
+        /// </summary>
+        // frob:ticket 01M5XACF0K75AVMM0MCNDDWXNE
+        public bool AdoptFirstTicket;
+
+        /// <summary>True when the peer's JoinTicket matched the allocated match id (the host joins only such peers when RequireJoinTicket is on).</summary>
+        // frob:ticket 01M5XACF0K75AVMM0MCNDDWXNE
+        public bool IsTicketed(int peer) => _ticketed.Contains(peer);
+
         // Peers whose JoinTicket matched the allocated id; cleared when they leave.
         readonly HashSet<int> _ticketed = new HashSet<int>();
 
@@ -160,6 +171,9 @@ namespace Hullbreach.Net
         public bool PresentTicket(int peer, string matchId)
         {
             ConfigResult<string> presented = QueueMatchId.Normalize(matchId);
+            // No orchestrator told this server the match id: the first well-formed ticket names the match, and the
+            // opponent's ticket must then carry the same id (the platform hands both players one match_id).
+            if (AdoptFirstTicket && presented.IsOk && _queueMatchId == null) AssignQueueMatch(presented.Value);
             if (!RequireJoinTicket && _queueMatchId == null) return presented.IsOk;
             if (presented.IsOk && _queueMatchId != null && presented.Value == _queueMatchId)
             {

@@ -77,7 +77,7 @@ namespace Hullbreach.NetCode.Entities
         }
 
         // Dials a queue server whose name was already resolved to IPv4 (S29-3b), then loads the match.
-        // Not run in the editor yet; the JoinTicket RPC (S29-3c) is not wired, so a ticket-requiring server will refuse.
+        // Sets HullbreachQueueTicket first (see HullbreachQueueConnect); verified in the editor.
         // frob:ticket 01M5XACEYZRD4KJYBEJYTVQZRX
         // frob:doc docs/netcode.md#queue-connect-flow
         public static bool TryConnect(ConnectTarget target, out string error)

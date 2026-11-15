@@ -106,6 +106,31 @@ namespace Hullbreach.Net.Tests
         }
 
         [Test]
+        public void AdoptFirstTicket_FirstValidTicketNamesTheMatch()
+        {
+            // frob:tests Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::Hullbreach.Net.ServerSimulation.PresentTicket kind="unit"
+            ServerSimulation server = Server();
+            server.AdoptFirstTicket = true;
+            Assert.IsFalse(server.IsTicketed(1));
+            Assert.IsTrue(server.PresentTicket(1, Id));
+            Assert.IsTrue(server.IsTicketed(1));
+            Assert.IsTrue(server.PresentTicket(2, Id), "the opponent presents the same id");
+            Assert.AreEqual(JoinResult.Joined, server.Join(2, Ship()));
+            Assert.IsFalse(server.PresentTicket(3, Other), "a different match is refused once one is named");
+            Assert.IsFalse(server.IsTicketed(3));
+            Assert.AreEqual(JoinResult.TicketRejected, server.Join(3, Ship()));
+        }
+
+        [Test]
+        public void AdoptFirstTicket_Off_NoAllocationStillAcceptsNobody()
+        {
+            // frob:tests Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::Hullbreach.Net.ServerSimulation.PresentTicket kind="unit"
+            ServerSimulation server = Server();
+            Assert.IsFalse(server.PresentTicket(1, Id));
+            Assert.IsFalse(server.IsTicketed(1));
+        }
+
+        [Test]
         public void ServerArgs_ReadTheAllocatedMatchId()
         {
             // frob:tests Assets/Scripts/Hullbreach.Net/DirectLaunchPlan.cs::Hullbreach.Net.DirectLaunchPlan.Parse kind="unit"
