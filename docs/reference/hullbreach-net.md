@@ -314,6 +314,37 @@ Client -> server, reliable (`MessageKind.ReadyUp` = 12): the peer is ready
 (0 or 1; `Read` fails the reader on anything else or a truncated body).
 The server only acts on it when `ServerSimulation.RequireReady` is on.
 
+### StormStarted
+
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::StormStarted -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::StormStarted.MaxPhases -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::StormStarted.MaxCandidates -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::StormStarted.MaxByteSize -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::StormStarted.Sequence -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::StormStarted.Seed -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::StormStarted.StartTick -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::StormStarted.ArenaCenter -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::StormStarted.Candidates -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::StormStarted.Config -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::StormStarted.StormStarted -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::StormStarted.BuildZone -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::StormStarted.TryWrite -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::StormStarted.Read -->
+
+Server -> client, reliable ordered (`MessageKind.StormStarted` = 16), sent to
+every peer when a match starts (ready-up or not) unless `StormEnabled` is
+off. It is everything a client needs to rebuild the match `StormZone`, since
+the ring is a pure function of it plus the tick. Layout: kind u8, sequence
+u32, seed u32, start tick u32, arena centre f32 x2, candidate count u8 and
+that many f32 x2 planet centres (max 16), six config floats (tick rate,
+start radius, grace, warning fraction, hard-limit margin, sudden-death DPS),
+phase count u8 and that many phases of four f32 (hold, shrink, target radius,
+damage per second; max 16). `Seed` is `ServerSimulation.StormSeedFor(matchId)`.
+`BuildZone()` returns the same `StormZone` the server runs; the storm tick is
+`ShipState.ServerTick - StartTick`. `Read` fails the reader on a truncated
+body, counts over the caps, non-finite centres or a config that fails
+`StormConfig.Validate`; `TryWrite` refuses an invalid config.
+
 ### MatchStarted
 
 <!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::MatchStarted -->
@@ -548,6 +579,8 @@ and to which ship, without re-parsing wire bytes.
 <!-- describes: Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ClientReplica.TryDequeueEvent -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ClientReplica.BuildInput -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ClientReplica.MatchStartedPeers -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ClientReplica.Storm -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ClientReplica.cs::ClientReplica.StormStart -->
 
 The non-authoritative twin of `ServerSimulation`: applies `ShipSnapshot`/
 `ShipState`/reliable events received over an `ITransport` (or fed directly
@@ -623,6 +656,9 @@ cannot stall the stream. Sequence comparison is wrap-safe.
 
 `MatchStartedPeers` is null until a `MatchStarted` arrives, then holds the
 two peer ids the server announced (a lobby can switch to the match view).
+`Storm` and `StormStart` stay null until a `StormStarted` arrives; then `Storm`
+is the rebuilt `StormZone` (same schedule as the server) and `StormStart`
+carries `StartTick` for mapping a server tick to the storm tick.
 
 ### ReplicaApplyResult
 
@@ -697,6 +733,10 @@ state never reads it.
 <!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.FirstFragmentId -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.ConfigureDemoArena -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.Bounds -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.Storm -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.StormEnabled -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.ActiveStorm -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.StormSeedFor -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.Log -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.Join -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.Leave -->
@@ -1040,6 +1080,7 @@ Launch scripts and log checks grep for both.
 <!-- describes: Assets/Scripts/Hullbreach.Net/ArenaConfig.cs::ArenaConfig.SpawnVertical -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ArenaConfig.cs::ArenaConfig.SpawnAngleStep -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ArenaConfig.cs::ArenaConfig.Bounds -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ArenaConfig.cs::ArenaConfig.Storm -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ArenaConfig.cs::ArenaConfig.DefaultBounds -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ArenaConfig.cs::ArenaConfig.ArenaConfig -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ArenaConfig.cs::ArenaConfig.Defaults -->
@@ -1077,6 +1118,25 @@ and `strength` (>= 0); omitted keys keep the defaults.
 `ServerSimulation.Bounds` holds the active edge and `ServerSimulation.Log`
 receives its enter/leave events; each tick a ship in the push zone gets an
 inward velocity change after its step, never a solver force.
+
+`Storm` (S41) is the optional JSON `storm` block: scalar keys `tickRate`,
+`startRadius`, `graceSeconds`, `warningFraction`, `hardLimitMargin` and
+`suddenDeathDamagePerSecond` override the `StormConfig.Default()` values, and
+a `phases` array of `{hold, shrink, radius, damage}` (all four required)
+replaces the default phases. The result goes through `StormConfig.Validate`,
+and a failure comes back as an error prefixed `storm:`; absent means defaults.
+
+Server wiring: when a match starts the server builds the `StormZone` (its
+`TickRate` replaces the config rate, planet centres come from the arena
+bodies, the arena centre from `Bounds`, the seed from the match id) and sends
+`StormStarted`. Each tick it reads `At(serverTick - startTick)` and applies
+`DamageFor` to every block of every ship through `ApplyDamageAtWorldPoint`,
+after the structural pass and before `MatchStateMachine.Tick`. Damage under
+one point is carried per block to the next tick, so slow phases are not
+rounded away. A non-core block reaching 255 is destroyed and detached like
+any other kill; a core at 255 is a breach, so sudden death ends the match
+through the normal core-breach rule. Projectiles outside `WithinHardLimit`
+are removed (the server holds no free debris; fragments are client events).
 
 ### BlockGridDesign
 

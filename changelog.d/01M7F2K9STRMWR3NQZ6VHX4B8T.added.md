@@ -1,0 +1,1 @@
+Wired StormZone into the match: the server damages blocks outside the shrinking ring (core spared until sudden death), despawns projectiles past the hard limit, announces it with a new StormStarted message, and reads an optional `storm` block from the arena config.

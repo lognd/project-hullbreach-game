@@ -242,6 +242,7 @@ too, even though the original design note only called it out for
 | `ReadyUp` | client->server, reliable | `u8 ready` | 2 B |
 | `MatchStarted` | server->client, reliable ordered | `u32 seq, i32 peerA, i32 peerB` | 13 B |
 | `JoinTicket` | client->server, reliable | `u8[16] matchId` (UUID bytes) | 17 B |
+| `StormStarted` | server->client, reliable ordered | `u32 seq, u32 seed, u32 startTick, f32x2 arenaCenter, u8 n, n*f32x2 candidates, 6*f32 config, u8 m, m*4*f32 phases` | up to 431 B |
 
 ### Ready-up
 
