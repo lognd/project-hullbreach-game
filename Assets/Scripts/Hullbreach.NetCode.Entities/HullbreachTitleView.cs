@@ -33,7 +33,7 @@ namespace Hullbreach.NetCode.Entities
             Bind(playButton, items[0], () => Load(playScene));
             Bind(buildButton, items[1], () => Load(buildScene));
             Bind(settingsButton, items[2], settings.Open);
-            Bind(signInButton, items[3], () => Load(signInScene));
+            Bind(signInButton, items[3], () => { HullbreachHubView.OpenOnSignIn = true; Load(signInScene); });
             Bind(quitButton, items[4], Quit);
             accountText.text = TitleMenuModel.AccountLine(PlatformSession.IsSignedIn, PlatformSession.IsOffline,
                 PlatformSession.Username);

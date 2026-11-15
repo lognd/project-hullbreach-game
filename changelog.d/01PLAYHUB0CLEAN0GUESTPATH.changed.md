@@ -1,0 +1,1 @@
+Play is now a clean hub: Play vs Bot (Easy/Normal/Hard), Cadet Trial, Online queue, LAN host/join and Back to title. Only the online queue needs sign-in; guests go straight to bots and LAN. A '< Play menu' button returns to the hub from the lobby.
