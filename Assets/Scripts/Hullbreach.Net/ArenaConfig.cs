@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using Unity.Mathematics;
+using Hullbreach.Builder;
 using Hullbreach.Platform;
 using Hullbreach.World;
 
@@ -61,15 +62,21 @@ namespace Hullbreach.Net
         // Planet crash, atmosphere and warning tunables; PlanetCrashConfig.Default() unless the JSON has a planets block.
         // frob:doc docs/reference/hullbreach-net.md#arenaconfig
         public PlanetCrashConfig Crash { get; }
+        // Block-economy tunables; EconomyConfig.Default() unless the JSON has an economy block.
+        // frob:ticket 01M7EYG4KH9BT32Q4ERZVBQ3M4
+        // frob:doc docs/reference/hullbreach-net.md#arenaconfig
+        public EconomyConfig Economy { get; }
+
 
         // frob:doc docs/reference/hullbreach-net.md#arenaconfig
         public ArenaConfig(IReadOnlyList<ArenaBodyConfig> bodies, float lateral, float altitude,
             float vertical, float angleStep, ArenaBounds? bounds = null, StormConfig? storm = null,
-            PlanetCrashConfig? crash = null)
+            PlanetCrashConfig? crash = null, EconomyConfig? economy = null)
         {
             Bounds = bounds ?? DefaultBounds;
             Storm = storm ?? StormConfig.Default();
             Crash = crash ?? PlanetCrashConfig.Default();
+            Economy = economy ?? EconomyConfig.Default();
             Bodies = bodies;
             SpawnLateral = lateral;
             SpawnAltitude = altitude;
@@ -185,7 +192,14 @@ namespace Hullbreach.Net
                 if (!pl.IsOk) return ConfigResult<ArenaConfig>.Fail(pl.Error);
                 crash = pl.Value;
             }
-            return ConfigResult<ArenaConfig>.Ok(new ArenaConfig(bodies, lateral, altitude, vertical, step, bounds, storm, crash));
+            EconomyConfig economy = d.Economy;
+            if (root.TryGetValue("economy", out object rawEconomy))
+            {
+                var ec = ParseEconomy(rawEconomy as Dictionary<string, object>, economy);
+                if (!ec.IsOk) return ConfigResult<ArenaConfig>.Fail(ec.Error);
+                economy = ec.Value;
+            }
+            return ConfigResult<ArenaConfig>.Ok(new ArenaConfig(bodies, lateral, altitude, vertical, step, bounds, storm, crash, economy));
         }
 
         // Reads a file and parses it; an unreadable file is an error, not an exception.
@@ -272,6 +286,85 @@ namespace Hullbreach.Net
             return problem == null
                 ? ConfigResult<StormConfig>.Ok(config)
                 : ConfigResult<StormConfig>.Fail("storm: " + problem);
+        }
+
+        static readonly string[] TypeKeys = { "core", "hull", "armor", "thruster", "cannon", "fin", "retroThruster" };
+
+        // Economy block: scalar keys override the defaults; "costs" and "startingStock" are objects keyed by
+        // block name (hull, armor, thruster, cannon, fin, retroThruster); EconomyConfig.Validate has the last word.
+        // frob:ticket 01M7EYG4KH9BT32Q4ERZVBQ3M4
+        static ConfigResult<EconomyConfig> ParseEconomy(Dictionary<string, object> o, EconomyConfig d)
+        {
+            if (o == null) return ConfigResult<EconomyConfig>.Fail("economy must be an object");
+            bool enabled = d.Enabled;
+            if (o.TryGetValue("enabled", out object rawEnabled))
+            {
+                if (!(rawEnabled is bool b)) return ConfigResult<EconomyConfig>.Fail("economy.enabled must be true or false");
+                enabled = b;
+            }
+            float budget = d.Costs.Budget, maxBlocks = d.Costs.MaxBlocks, weld = d.Costs.WeldedSurcharge;
+            float maxStock = d.MaxStockPerType, conSec = d.ConstructionSeconds, conDmg = d.ConstructionDamage;
+            float salvage = d.SalvagePercent, spread = d.SalvageSpread, refund = d.RefundPercent;
+            float trickle = d.TrickleSeconds, tStep = d.TrickleDeficitStep, tMax = d.TrickleMaxMultiplier;
+            float tStock = d.TrickleStockCap, tMatch = d.TrickleMatchCap;
+            string err = Read(o, "economy", "budget", ref budget) ?? Read(o, "economy", "maxBlocks", ref maxBlocks)
+                ?? Read(o, "economy", "weldedSurcharge", ref weld) ?? Read(o, "economy", "maxStockPerType", ref maxStock)
+                ?? Read(o, "economy", "constructionSeconds", ref conSec) ?? Read(o, "economy", "constructionDamage", ref conDmg)
+                ?? Read(o, "economy", "salvagePercent", ref salvage) ?? Read(o, "economy", "salvageSpread", ref spread)
+                ?? Read(o, "economy", "refundPercent", ref refund) ?? Read(o, "economy", "trickleSeconds", ref trickle)
+                ?? Read(o, "economy", "trickleDeficitStep", ref tStep) ?? Read(o, "economy", "trickleMaxMultiplier", ref tMax)
+                ?? Read(o, "economy", "trickleStockCap", ref tStock) ?? Read(o, "economy", "trickleMatchCap", ref tMatch);
+            if (err != null) return ConfigResult<EconomyConfig>.Fail(err);
+            if (conDmg < 0f || conDmg > 254f) return ConfigResult<EconomyConfig>.Fail("economy.constructionDamage must be within 0..254");
+
+            BlockCosts costs = d.Costs.WithLimits((int)budget, (int)maxBlocks, (int)weld);
+            int[] stock = (int[])d.StartingStock.Clone();
+            string tableErr = ReadTable(o, "costs", ref costs, stock, false)
+                ?? ReadTable(o, "startingStock", ref costs, stock, true);
+            if (tableErr != null) return ConfigResult<EconomyConfig>.Fail(tableErr);
+
+            var pickups = d.Pickups;
+            if (o.TryGetValue("pickups", out object rawPickups))
+            {
+                var po = rawPickups as Dictionary<string, object>;
+                if (po == null) return ConfigResult<EconomyConfig>.Fail("economy.pickups must be an object");
+                float mag = pickups.MagnetRadius, rel = pickups.MaxRelativeSpeed, first = pickups.CrateFirstSeconds;
+                float every = pickups.CrateIntervalSeconds, life = pickups.CrateLifetimeSeconds, drift = pickups.CrateDriftSpeed;
+                float salLife = pickups.SalvageLifetimeSeconds, salMax = pickups.MaxSalvage, arm = pickups.ArmSeconds;
+                err = Read(po, "economy.pickups", "magnetRadius", ref mag) ?? Read(po, "economy.pickups", "maxRelativeSpeed", ref rel)
+                    ?? Read(po, "economy.pickups", "crateFirstSeconds", ref first) ?? Read(po, "economy.pickups", "crateIntervalSeconds", ref every)
+                    ?? Read(po, "economy.pickups", "crateLifetimeSeconds", ref life) ?? Read(po, "economy.pickups", "crateDriftSpeed", ref drift)
+                    ?? Read(po, "economy.pickups", "salvageLifetimeSeconds", ref salLife) ?? Read(po, "economy.pickups", "maxSalvage", ref salMax) ?? Read(po, "economy.pickups", "armSeconds", ref arm);
+                if (err != null) return ConfigResult<EconomyConfig>.Fail(err);
+                pickups = new PickupConfig(mag, rel, first, every, life, drift, salLife, (int)salMax, arm);
+            }
+
+            var config = new EconomyConfig(enabled, costs, stock, (int)maxStock, conSec, (byte)conDmg, (int)salvage, spread,
+                (int)refund, trickle, tStep, tMax, (int)tStock, (int)tMatch, pickups);
+            string problem = config.Validate();
+            return problem == null
+                ? ConfigResult<EconomyConfig>.Ok(config)
+                : ConfigResult<EconomyConfig>.Fail("economy: " + problem);
+        }
+
+        // Reads economy.costs (stock == false) or economy.startingStock (stock == true) in place.
+        static string ReadTable(Dictionary<string, object> o, string name, ref BlockCosts costs,
+            int[] stock, bool isStock)
+        {
+            if (!o.TryGetValue(name, out object raw)) return null;
+            var table = raw as Dictionary<string, object>;
+            if (table == null) return "economy." + name + " must be an object";
+            foreach (var kv in table)
+            {
+                int type = System.Array.IndexOf(TypeKeys, kv.Key);
+                if (type < 0) return "economy." + name + "." + kv.Key + " is not a block name";
+                float value = 0f;
+                string err = Read(table, "economy." + name, kv.Key, ref value);
+                if (err != null) return err;
+                if (value < 0f || value != System.Math.Floor(value)) return "economy." + name + "." + kv.Key + " must be a whole number >= 0";
+                if (isStock) stock[type] = (int)value; else costs = costs.WithCost((byte)type, (int)value);
+            }
+            return null;
         }
 
         static ConfigResult<ArenaBodyConfig> ParseBody(Dictionary<string, object> o, int index)
