@@ -1,0 +1,6 @@
+kind = "comment"
+subtype = "note"
+body = "Landed engine-free: (1) JoinTicket wire message (MessageKind 15) with HostInbox dispatch and ServerSimulation.RequireJoinTicket/PresentTicket gating Join; (2) allocation argument -hullbreachMatchId parsed into DirectLaunchPlan.MatchId. Still open: send JoinTicket as a Netcode RPC from the client, have the Entities server bootstrap call AssignQueueMatch(plan.MatchId) and set RequireJoinTicket, and a skin data source (none exists). Needs the editor, so not closed."
+at = "2026-11-15T05:28:06Z"
+actor = "lognd"
+rev = 1
