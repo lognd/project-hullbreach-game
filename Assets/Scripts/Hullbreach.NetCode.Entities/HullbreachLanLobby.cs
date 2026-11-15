@@ -26,12 +26,28 @@ namespace Hullbreach.NetCode.Entities
                 return false;
             }
 
-            Request(server, new NetworkStreamRequestListen { Endpoint = NetworkEndpoint.AnyIpv4.WithPort(port) });
-            Request(client, new NetworkStreamRequestConnect { Endpoint = NetworkEndpoint.LoopbackIpv4.WithPort(port) });
+            Listen(server, client, port);
             Debug.Log($"Hullbreach LAN: hosting on 0.0.0.0:{port}, loading {DirectLaunchPlan.GameScene}.");
             error = null;
             LoadMatch();
             return true;
+        }
+
+        // Same as TryHost without loading the match scene: the caller is already in it.
+        public static bool TryHostHere(ushort port, out string error)
+        {
+            World server = ClientServerBootstrap.ServerWorld;
+            World client = ClientServerBootstrap.ClientWorld;
+            if (server == null || client == null) { error = "no server or client world is running"; return false; }
+            Listen(server, client, port);
+            error = null;
+            return true;
+        }
+
+        static void Listen(World server, World client, ushort port)
+        {
+            Request(server, new NetworkStreamRequestListen { Endpoint = NetworkEndpoint.AnyIpv4.WithPort(port) });
+            Request(client, new NetworkStreamRequestConnect { Endpoint = NetworkEndpoint.LoopbackIpv4.WithPort(port) });
         }
 
         // Dials the typed address; the endpoint was already validated by LanEndpoint.

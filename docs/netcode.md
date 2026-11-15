@@ -161,6 +161,21 @@ builds a [`ConnectRequest`](reference/hullbreach-net.md#connectrequest), resolve
 the editor and has not been exercised in play mode; the JoinTicket is not yet sent as a Netcode RPC, so a
 server with `RequireJoinTicket` on will refuse the client until that is wired.
 
+### Online clock, sparring partner and effects
+
+- The NetCode path sends no `ShipState`, so `ClientReplica.LatestServerTick` stays 0. Every ship and projectile ghost pose carries
+  `SimTick` (the server system's count of `ServerSimulation.Tick()` calls, the clock `StormStarted.StartTick` uses) and the client
+  feeds it to `ClientReplica.ObserveSimulationTick`; storm countdown and pickups read `ClientReplica.SimulationTick`.
+- `ClientReplica.UseArena(ArenaConfig.Defaults())` gives replica ships the planets, so the HUD can ask `QueryPlanetProximity`.
+- `-hullbreachSparring` (or `HullbreachSparring.Requested = true`) makes the server join a passive virtual peer while only one
+  human is connected; it leaves when a second player joins. It is the hook for the queue's "fight a bot" offer.
+- `HullbreachOnlineFeel` turns applied replica events and new projectiles into `FeelFx` impacts, muzzle flashes and shake.
+- Opening `MultiplayerGame` directly in the editor hosts on loopback instead of waiting for a connection forever.
+- Server tick batching is off (`MaxSimulationStepBatchSize = 1`, up to 4 catch-up steps per frame), so a long editor frame
+  no longer logs the "Server Tick Batching" warning or drops input.
+- Build requests go through `ServerSimulation.PlaceBlock` / `Deconstruct`, so stock, budget and cooldown apply online and the owner
+  receives a `PlacementResult` for every refusal.
+
 ### Lobby keyboard flow
 
 <!-- describes: Assets/Scripts/Hullbreach.Platform/LobbyForm.cs::LobbyForm -->

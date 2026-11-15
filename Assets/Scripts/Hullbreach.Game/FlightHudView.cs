@@ -10,14 +10,24 @@ namespace Hullbreach.Game
     // frob:doc docs/design/ui-port.md#feel-layer
     public sealed class FlightHudView : MonoBehaviour
     {
-        ShipController _ship;
+        System.Func<Hullbreach.Ship.ShipBody> _body;
+        System.Func<bool> _assistOn;
         TextMeshProUGUI _warn, _assist, _hint;
 
         public static void Ensure(ShipController ship)
         {
             var v = FindFirstObjectByType<FlightHudView>();
             if (v == null) v = new GameObject("FlightHud").AddComponent<FlightHudView>();
-            v._ship = ship;
+            v._body = () => ship != null ? ship.Ship : null;
+            v._assistOn = () => ship != null && ship.Ship != null && ship.Ship.AssistActive;
+        }
+
+        // Online: the body is the replicated local ship; assist state comes from the input (Left Shift = off).
+        public static void Ensure(System.Func<Hullbreach.Ship.ShipBody> body, System.Func<bool> assistOn)
+        {
+            var v = FindFirstObjectByType<FlightHudView>();
+            if (v == null) v = new GameObject("FlightHud").AddComponent<FlightHudView>();
+            v._body = body; v._assistOn = assistOn;
         }
 
         void Awake()
@@ -43,8 +53,9 @@ namespace Hullbreach.Game
 
         void Update()
         {
-            if (_ship == null || _ship.Ship == null) { _warn.text = _assist.text = string.Empty; return; }
-            var p = _ship.Ship.QueryPlanetProximity();
+            var ship = _body?.Invoke();
+            if (ship == null) { _warn.text = _assist.text = string.Empty; return; }
+            var p = ship.QueryPlanetProximity();
             string msg = p.HasBody ? FlightWarningModel.Text((int)p.Severity, p.MustBrake, p.Heating, p.TimeToImpact) : string.Empty;
             _warn.text = msg;
             if (msg.Length > 0)
@@ -54,7 +65,7 @@ namespace Hullbreach.Game
                 float a = hz <= 0f ? 1f : 0.55f + 0.45f * (0.5f + 0.5f * Mathf.Sin(Time.unscaledTime * hz * 2f * Mathf.PI));
                 _warn.color = new Color(r, g, b, a);
             }
-            bool on = _ship.Ship.AssistActive;
+            bool on = _assistOn != null && _assistOn();
             _assist.text = FlightWarningModel.AssistText(on);
             _assist.color = on ? new Color(0.5f, 0.9f, 1f, 0.8f) : new Color(1f, 0.75f, 0.3f, 1f);
         }
