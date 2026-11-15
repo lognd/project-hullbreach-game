@@ -1,0 +1,6 @@
+kind = "comment"
+subtype = "note"
+body = "Merged in #168: stress preview tint, status line, READY structure warning. Tests merged: StressPreviewPresenterTests, BuildPanelModelTests additions. Left open: no acceptance criteria on the ticket and no evidence run in this pass; editor verification of the tint and READY warning pending. Next: add criteria, bind those test classes, close."
+at = "2026-11-15T23:32:09Z"
+actor = "lognd"
+rev = 1
