@@ -106,5 +106,22 @@ namespace Hullbreach.Hud.Tests
             Assert.AreEqual(2, raised);
             Assert.AreEqual(string.Empty, m.Message);
         }
+
+        // frob:tests SettingsScreenModel.SetShake
+        // frob:tests SettingsScreenModel.SetHitEffects
+        // frob:tests SettingsScreenModel.SetSoundEffects
+        [Test]
+        public void FeelSwitchesAreSavedAndLoadedBack()
+        {
+            SettingsScreenModel m = Make();
+            m.SetShake(false);
+            m.SetHitEffects(false);
+            m.SetSoundEffects(false);
+            Assert.IsTrue(m.Apply());
+            GameSettings loaded = new GameSettingsStore(_path).Load();
+            Assert.IsFalse(loaded.ScreenShake);
+            Assert.IsFalse(loaded.HitEffects);
+            Assert.IsFalse(loaded.SoundEffects);
+        }
     }
 }

@@ -83,6 +83,14 @@ namespace Hullbreach.Game
             var f = I; if (f != null) { f._stormActive = active; f._stormSigned = signedDistance; f._band = band; }
         }
 
+        // Called by the settings screen after Apply so the changes take hold without a restart.
+        public static void ApplySettings(GameSettings settings)
+        {
+            if (_inst == null || settings == null) return;
+            _inst._s = settings;
+            if (settings.SoundEffects && _inst._click == null) _inst.BuildAudio();
+        }
+
         public static void PlayClick()
         {
             var f = I; if (f != null) f.Play(f._click, 0.6f, 1f);
