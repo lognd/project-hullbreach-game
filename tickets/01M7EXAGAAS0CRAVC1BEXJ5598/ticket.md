@@ -6,11 +6,11 @@ category = "todo"
 priority = "medium"
 reporter = "lognd"
 created = "2026-11-15T06:11:42Z"
-updated = "2026-11-15T12:10:44Z"
+updated = "2026-11-15T12:10:50Z"
 
 [[acceptance]]
 text = "The storm schedule shrinks the safe radius on a fixed timetable and damages blocks outside it (StormZone, headless tests)"
-bound = false
+bound = true
 
 [[acceptance]]
 text = "The server builds the storm at match start, applies it each tick and tells both peers (StormStarted), covered by StormWiringTests"
