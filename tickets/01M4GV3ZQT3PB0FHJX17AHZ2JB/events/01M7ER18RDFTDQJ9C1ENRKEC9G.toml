@@ -1,0 +1,15 @@
+kind = "evidence"
+accepts = [1]
+captured_at = "2026-11-15T04:39:14Z"
+digest = "1371d6a580d0a4edef5caf6caddad24eff7395dfa1c5297d61bf8f2ab2c8ed60"
+exit_code = 1
+head = "0607b026a8f9ab8391def3ee92b78805e1419b27"
+passed = false
+provider = "command"
+ref = "dotnet test tools/plaincs/Hullbreach.Plain.Tests/Hullbreach.Plain.Tests.csproj -c Release --filter TestCategory!=Slow"
+size = 35128
+status = "measured"
+uri = "dir:.git/frob/artifacts/1371d6a580d0a4edef5caf6caddad24eff7395dfa1c5297d61bf8f2ab2c8ed60"
+at = "2026-11-15T04:39:14Z"
+actor = "lognd"
+rev = 1

@@ -39,6 +39,7 @@ namespace Hullbreach.Structure.Tests
             return s;
         }
 
+        // frob:tests Assets/Scripts/Hullbreach.Structure/Fem/LoadVector.cs::LoadVector.AddPointForce
         [Test]
         public void AddPointForce_OnAbsentBlock_ConservesForceOverPresentNodes()
         {
@@ -55,6 +56,7 @@ namespace Hullbreach.Structure.Tests
             Assert.AreEqual(-3f, Sum(f).y, 1e-3f);
         }
 
+        // frob:tests Assets/Scripts/Hullbreach.Structure/Fem/LoadVector.cs::LoadVector.AddPointForce
         [Test]
         public void AddPointForce_OffStructureOrNonFinite_IsRejectedAndLeavesTargetUntouched()
         {

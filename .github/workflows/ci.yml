@@ -4,7 +4,8 @@ name: CI
 # is no Unity license in CI yet, so the gate checks what can be checked
 # without an editor: the committed tree is consistent, the editor version
 # is pinned, and nothing generated or secret slipped in. Editor tests and
-# a headless build are tracked in the backlog.
+# a headless build are tracked in the backlog (the Linux server build job
+# below runs once a Unity license secret exists).
 
 on:
   pull_request:
@@ -68,11 +69,67 @@ jobs:
       - name: rule gate
         run: frob check --text
 
+  # S47-4: a headless Linux dedicated-server player, built by the project's own
+  # HullbreachBuild entry point inside the game-ci editor image. Needs a Unity
+  # license, which this repo does not have yet (TODO.md); until the UNITY_LICENSE
+  # secret exists (and always on fork pull requests, which get no secrets) the
+  # job reports success with a notice instead of failing the gate. Mono, not
+  # IL2CPP, so the plain editor image is enough; this is a build check, not a
+  # release build. NOT YET RUN: this workflow was written without a Unity
+  # license to try it on; the first run with the secret set is its real test.
+  server-build:
+    name: linux server build
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - name: check for a Unity license
+        id: license
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+        run: |
+          if [ -n "$UNITY_LICENSE" ]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::UNITY_LICENSE is not set (or this is a fork pull request): skipping the Linux server build."
+          fi
+      - uses: actions/cache@v4
+        if: steps.license.outputs.present == 'true'
+        with:
+          path: Library
+          key: Library-linux-server-${{ hashFiles('Packages/packages-lock.json', 'ProjectSettings/ProjectVersion.txt') }}
+          restore-keys: Library-linux-server-
+      - uses: game-ci/unity-builder@v4
+        if: steps.license.outputs.present == 'true'
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          unityVersion: 6000.0.43f1
+          targetPlatform: StandaloneLinux64
+          buildMethod: Hullbreach.Editor.HullbreachBuild.BuildFromCommandLine
+          customParameters: -hullbreachBuildTarget linux -hullbreachBuildKind server -hullbreachBuildBackend mono -hullbreachBuildOutput Builds/linux-server -hullbreachBuildCommit ${{ github.sha }}
+          allowDirtyBuild: true
+      - name: check the server binary exists
+        if: steps.license.outputs.present == 'true'
+        run: |
+          test -f Builds/linux-server/HullbreachServer.x86_64
+          test -f Builds/linux-server/hullbreach-build.json
+          ls -la Builds/linux-server
+      - uses: actions/upload-artifact@v4
+        if: steps.license.outputs.present == 'true'
+        with:
+          name: hullbreach-linux-server
+          path: Builds/linux-server
+          retention-days: 7
+
   # The one status check branch protection requires.
   gate:
     name: All checks pass
     runs-on: ubuntu-latest
-    needs: [tree, plaincs, frob]
+    needs: [tree, plaincs, frob, server-build]
     if: always()
     steps:
       - name: verify every job succeeded
@@ -80,7 +137,8 @@ jobs:
           echo "tree: ${{ needs.tree.result }}"
           echo "plaincs: ${{ needs.plaincs.result }}"
           echo "frob: ${{ needs.frob.result }}"
-          if [ "${{ needs.tree.result }}" != "success" ] || [ "${{ needs.plaincs.result }}" != "success" ] || [ "${{ needs.frob.result }}" != "success" ]; then
+          echo "server-build: ${{ needs.server-build.result }}"
+          if [ "${{ needs.tree.result }}" != "success" ] || [ "${{ needs.plaincs.result }}" != "success" ] || [ "${{ needs.frob.result }}" != "success" ] || [ "${{ needs.server-build.result }}" != "success" ]; then
             echo "::error::at least one required job did not succeed"
             exit 1
           fi
