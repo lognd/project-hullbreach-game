@@ -1,0 +1,7 @@
+kind = "field"
+field = "acceptance"
+new = ["A found match becomes a resolvable connect target (ConnectRequest/ConnectTarget, tests)", "HullbreachQueueConnect dials on Matched and loads the match scene (editor-verified against a local platform with two accounts; no automated test)"]
+moved = []
+at = "2026-11-15T12:54:25Z"
+actor = "lognd"
+rev = 1
