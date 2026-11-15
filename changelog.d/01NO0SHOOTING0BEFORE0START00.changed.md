@@ -1,0 +1,1 @@
+- Nobody can shoot before the match starts, or for the first 5 seconds after it (ServerSimulation.ShotGraceSeconds), so a player who just pressed READY is not shot while still building.

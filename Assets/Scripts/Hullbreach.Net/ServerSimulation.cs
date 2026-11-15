@@ -91,6 +91,13 @@ namespace Hullbreach.Net
         // frob:doc docs/reference/hullbreach-net.md#serversimulation
         public bool RequireReady;
 
+        /// <summary>
+        /// With RequireReady, nobody can shoot for this long after the match starts, so a player who just pressed READY can
+        /// finish building or switch to flight before the opponent (a bot included) opens fire. 0 turns the grace off.
+        /// </summary>
+        public float ShotGraceSeconds = 5f;
+        uint _matchStartTick;
+
         // Where a finished match is announced; defaults to the shared feed the platform reporter watches.
         // frob:doc docs/reference/hullbreach-net.md#serversimulation
         public MatchEndFeed MatchFeed = MatchEndFeed.Shared;
@@ -491,6 +498,7 @@ namespace Hullbreach.Net
             ids.Sort();
             _tallies.Clear();
             foreach (int id in ids) _tallies[id] = new MatchTally { StartTick = _tickIndex };
+            _matchStartTick = _tickIndex;
             string queueId = _queueMatchId;
             _queueMatchId = null;
             Match = new MatchStateMachine(
@@ -866,7 +874,11 @@ namespace Hullbreach.Net
 
         void DrainShots(int peer, ShipBody ship)
         {
-            foreach (var shot in ship.PendingShots) SpawnProjectile(peer, ship, shot);
+            // frob:ticket 01M7FJ5NMTNP6BJQP8QBW5HVNJ
+            // With a ready-up gate the build phase lasts until both sides are ready: a ship that has readied and is
+            // already flying (or a bot) must not be able to shoot a peer who is still building.
+            bool grace = RequireReady && (!MatchIsRunning || _tickIndex < _matchStartTick + (uint)System.Math.Ceiling(ShotGraceSeconds * TickRate));
+            if (!grace) foreach (var shot in ship.PendingShots) SpawnProjectile(peer, ship, shot);
             ship.PendingShots.Clear();
         }
 
