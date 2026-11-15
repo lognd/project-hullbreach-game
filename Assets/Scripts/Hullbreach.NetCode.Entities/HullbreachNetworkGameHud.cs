@@ -14,7 +14,17 @@ namespace Hullbreach.NetCode.Entities
         [SerializeField] TMP_Text statusText;
         [SerializeField] Button leaveButton;
 
-        void OnEnable() => leaveButton.onClick.AddListener(Leave);
+        // Width kept free on the right for the Leave button, so the controls line wraps instead of running under it.
+        const float LeaveButtonReserve = 120f;
+
+        void OnEnable()
+        {
+            leaveButton.onClick.AddListener(Leave);
+            var rect = statusText.rectTransform;
+            if (rect.anchorMax.x >= 0.99f) rect.offsetMax = new Vector2(-LeaveButtonReserve, rect.offsetMax.y);
+            statusText.textWrappingMode = TextWrappingModes.Normal;
+        }
+
         void OnDisable() => leaveButton.onClick.RemoveListener(Leave);
 
         void Update()

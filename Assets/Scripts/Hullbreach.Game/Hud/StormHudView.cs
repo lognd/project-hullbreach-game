@@ -157,6 +157,10 @@ namespace Hullbreach.Game
             ((RectTransform)dot.transform).anchoredPosition = new Vector2(mx * k, my * k);
         }
 
+        const float EnemyArrowBottomClearance = 110f;
+        // Below the storm timer, stage line and core bars.
+        const float EnemyArrowTopClearance = 230f;
+
         void DrawArrows(StormHudFrame f, Camera cam, bool storm, float signed)
         {
             _enemyArrow.gameObject.SetActive(false);
@@ -173,7 +177,15 @@ namespace Hullbreach.Game
             {
                 Vector3 sp = cam.WorldToScreenPoint(new Vector3(f.EnemyPosition.x, f.EnemyPosition.y, 0f)) - centre;
                 EdgeArrow arrow = EdgeArrowModel.ToTarget(halfW, halfH, 60f, sp.x / scale, sp.y / scale);
-                if (arrow.Visible) PlaceArrow(_enemyArrow, arrow);
+                if (arrow.Visible)
+                {
+                    // Keep the arrow between the top HUD (timer, core bars) and the bottom hint line, instead of sitting on top of them.
+                    float minY = -halfH + EnemyArrowBottomClearance;
+                    float maxY = halfH - EnemyArrowTopClearance;
+                    if (arrow.Y < minY) arrow = new EdgeArrow(true, arrow.X, minY, arrow.AngleDegrees);
+                    else if (arrow.Y > maxY) arrow = new EdgeArrow(true, arrow.X, maxY, arrow.AngleDegrees);
+                    PlaceArrow(_enemyArrow, arrow);
+                }
             }
 
             if (StormHudModel.ShowPullArrow(storm, signed))
