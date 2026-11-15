@@ -2,7 +2,7 @@
 id = "01M3DG5Y31PY0644PP1AYDPSFS"
 title = "S44-2: Builder rule preventing removal of a welded thruster"
 type = "task"
-category = "todo"
+category = "in-progress"
 priority = "medium"
 points = 1
 parent = "01M3DG5Y114RNPPMJWHSPVHVQC"
