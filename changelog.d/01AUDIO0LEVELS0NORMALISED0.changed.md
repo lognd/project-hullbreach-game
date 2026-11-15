@@ -1,0 +1,1 @@
+- Sound effects are levelled: alarm, cannon, hit, thruster loop, beep and click are all quieter and closer together (the alarm and cannon were the loudest). The master volume slider already lives in Settings.
