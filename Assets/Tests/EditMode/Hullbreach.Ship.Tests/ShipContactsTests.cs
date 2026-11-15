@@ -134,6 +134,7 @@ namespace Hullbreach.Ship.Tests
             Assert.IsFalse(ShipContacts.Resolve(a, a, 0.02f), "a ship collided with itself");
         }
 
+        // frob:tests Assets/Scripts/Hullbreach.Ship/ShipContacts.cs::ShipContacts.Resolve
         [Test]
         public void SeparatingOverlap_DealsNoDamage()
         {
@@ -148,6 +149,7 @@ namespace Hullbreach.Ship.Tests
             Assert.AreEqual(0, blockB.Damage, "a separating ship must not take impact damage");
         }
 
+        // frob:tests Assets/Scripts/Hullbreach.Ship/ShipContacts.cs::ShipContacts.Resolve
         [Test]
         public void ContactDamage_IsIndependentOfArgumentOrder_AndUsesEachShipsThreshold()
         {

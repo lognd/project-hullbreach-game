@@ -7,7 +7,7 @@ priority = "low"
 points = 1
 reporter = "GingerVHS"
 created = "2026-10-09T17:24:35Z"
-updated = "2026-11-15T04:38:35Z"
+updated = "2026-11-15T04:39:14Z"
 labels = ["owner:GingerVHS", "game"]
 
 [[acceptance]]

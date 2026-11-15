@@ -17,6 +17,7 @@ namespace Hullbreach.Demo.Tests
             return sum;
         }
 
+        // frob:tests Assets/Scripts/Hullbreach.Game/ShipStructure.cs::ShipStructure
         [UnityTest]
         public IEnumerator HighLoadShip_TakesNoDamageWhileInBuildMode()
         {
