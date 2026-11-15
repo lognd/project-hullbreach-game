@@ -1,0 +1,7 @@
+kind = "field"
+field = "acceptance"
+new = ["Given a running match, when a player places a block, then a second placement inside the cooldown is refused and one after it succeeds; pre-match building is unlimited"]
+moved = []
+at = "2026-11-15T05:29:40Z"
+actor = "lognd"
+rev = 1
