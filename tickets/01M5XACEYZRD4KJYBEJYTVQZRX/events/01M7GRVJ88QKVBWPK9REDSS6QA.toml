@@ -1,0 +1,6 @@
+kind = "comment"
+subtype = "note"
+body = "Left open. QueueConnectPlayTests (Assets/Tests/PlayMode/Hullbreach.Demo.Tests, PR #164) exercises criterion 2 but is a Unity PlayMode test: frob 0.532.0 has no unity evidence provider (docs/frob.md, ~VPQPZJ0) and the command provider only allows dotnet/run_tests.sh, which cannot run it. Not bound, since I did not run it. To close: a person runs it in the editor and records an attestation (needs a terminal and a listed attester), or frob gains the unity provider."
+at = "2026-11-15T23:32:07Z"
+actor = "lognd"
+rev = 1

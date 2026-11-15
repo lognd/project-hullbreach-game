@@ -1,0 +1,6 @@
+kind = "comment"
+subtype = "note"
+body = "Code and tests merged in #164 (MatchHandoff keeps skin/opponent_skin, join carries the skin). Real-platform-account check (two accounts with different equipped skins, both rendered) is still pending, so left open. Not bound to evidence yet: no acceptance run done in this bookkeeping pass."
+at = "2026-11-15T23:32:08Z"
+actor = "lognd"
+rev = 1
