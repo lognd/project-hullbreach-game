@@ -47,7 +47,9 @@ namespace Hullbreach.Ship.Tests
             Assert.Greater(r.PeakRisk, 1.5f);
             Assert.Greater(r.OverloadedCount, 1);
             Assert.IsTrue(r.Risk.ContainsKey(r.WeakestKey));
-            Assert.AreEqual(r.PeakRisk, r.Risk[r.WeakestKey], 1e-6f);
+            // WeakestKey is the lowest key among blocks within 0.5% of the peak
+            // (mirror-image blocks tie within solver noise), so allow that band.
+            Assert.AreEqual(r.PeakRisk, r.Risk[r.WeakestKey], 0.005f * r.PeakRisk);
             // It must fail slowly enough to see, not instantly.
             Assert.Greater(r.SecondsToFail, 0.5f);
             Assert.Less(r.SecondsToFail, 10f);
