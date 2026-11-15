@@ -46,5 +46,6 @@
   [hullbreach-ship.md](reference/hullbreach-ship.md),
   [hullbreach-builder.md](reference/hullbreach-builder.md),
   [hullbreach-net.md](reference/hullbreach-net.md),
+  [hullbreach-bots.md](reference/hullbreach-bots.md),
   [hullbreach-game.md](reference/hullbreach-game.md),
   [hullbreach-editor.md](reference/hullbreach-editor.md).
