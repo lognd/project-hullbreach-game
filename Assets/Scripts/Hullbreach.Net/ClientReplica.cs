@@ -167,6 +167,11 @@ namespace Hullbreach.Net
         // frob:doc docs/reference/hullbreach-net.md#clientreplica
         public StormStarted? StormStart { get; private set; }
 
+        // Stock, pickups and build verdicts the server told this client about (S45); read-only for the HUD.
+        // frob:ticket 01M7EYG4KH9BT32Q4ERZVBQ3M4
+        // frob:doc docs/reference/hullbreach-net.md#clientreplica
+        public ClientEconomy Economy { get; } = new ClientEconomy();
+
         uint _lastAppliedSequence;
         bool _haveBaseline;
 
@@ -599,6 +604,20 @@ namespace Hullbreach.Net
                     ApplyGravityWellSpawned(well);
                     return ReplicaApplyResult.Applied;
                 }
+                case MessageKind.InventorySnapshot:
+                {
+                    var inventory = InventorySnapshot.Read(ref r);
+                    if (r.Failed) return ReplicaApplyResult.Malformed;
+                    Economy.ApplySnapshot(inventory);
+                    return ReplicaApplyResult.Applied;
+                }
+                case MessageKind.PlacementResult:
+                {
+                    var placement = PlacementResultMessage.Read(ref r);
+                    if (r.Failed) return ReplicaApplyResult.Malformed;
+                    Economy.ApplyResult(placement);
+                    return ReplicaApplyResult.Applied;
+                }
                 case MessageKind.BlockPlaced:
                 case MessageKind.BlockDestroyed:
                 case MessageKind.FragmentSpawned:
@@ -608,6 +627,8 @@ namespace Hullbreach.Net
                 case MessageKind.MatchEnded:
                 case MessageKind.MatchStarted:
                 case MessageKind.StormStarted:
+                case MessageKind.PickupSpawned:
+                case MessageKind.PickupDespawned:
                 {
                     // u32 sequence number right after the kind byte; a body that
                     // turns out short is skipped in order by ApplyOne.
@@ -765,6 +786,20 @@ namespace Hullbreach.Net
                     var m = MatchStarted.Read(ref r);
                     if (r.Failed) return false;
                     MatchStartedPeers = (m.PeerA, m.PeerB);
+                    return true;
+                }
+                case MessageKind.PickupSpawned:
+                {
+                    var m = PickupSpawned.Read(ref r);
+                    if (r.Failed) return false;
+                    Economy.ApplySpawn(m);
+                    return true;
+                }
+                case MessageKind.PickupDespawned:
+                {
+                    var m = PickupDespawned.Read(ref r);
+                    if (r.Failed) return false;
+                    Economy.ApplyDespawn(m);
                     return true;
                 }
                 case MessageKind.StormStarted:

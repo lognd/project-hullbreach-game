@@ -1,0 +1,8 @@
+kind = "create"
+title = "Block economy: build budget, stock, pickups, salvage"
+type = "task"
+category = "todo"
+priority = "medium"
+at = "2026-11-15T06:32:15Z"
+actor = "lognd"
+rev = 1

@@ -297,3 +297,12 @@ server applies the damage and despawns projectiles; see
 [ServerSimulation](hullbreach-net.md#arenaconfig) and
 [StormStarted](hullbreach-net.md#stormstarted).
 
+
+### PickupField
+
+Deterministic pickups for the block economy: crates (a pure function of seed and wave index: a
+planet crate, a storm-edge rare pair, or an open-field mirrored pair; first at 20 s, then every
+12 s, 75 s lifetime) and salvage dropped from wrecks (40 s lifetime, cap 96, oldest culled).
+Pickups despawn on expiry, planet contact or the storm hard limit. `Reach` decides whether a ship
+can grab one (arm delay 1.5 s, relative speed at most 4, within the 2.0 magnet of a block centre,
+no planet in between). Planet crates are asymmetric unless the arena is.

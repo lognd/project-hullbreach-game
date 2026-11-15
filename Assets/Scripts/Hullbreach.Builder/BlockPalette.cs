@@ -43,17 +43,8 @@ namespace Hullbreach.Builder
     // frob:doc docs/reference/hullbreach-builder.md#blockpalette
     public static class BlockPalette
     {
-        // Kept here, not in Core: cost is build economy, not physics.
-        static readonly int[] Cost =
-        {
-            0, // Core
-            1, // Hull
-            3, // Armor
-            4, // Thruster
-            5, // Cannon
-            2, // Fin
-            3, // RetroThruster
-        };
+        // Kept in Builder, not Core: cost is build economy, not physics (see BlockCosts).
+        static readonly BlockCosts Costs = BlockCosts.Default();
 
         // Thruster/RetroThruster push a fixed ship-local direction, so
         // only Cannon and Fin need the second (orienting) click.
@@ -64,14 +55,14 @@ namespace Hullbreach.Builder
         // frob:doc docs/reference/hullbreach-builder.md#blockpalette
         public static IEnumerable<PaletteEntry> All()
         {
-            // Adding a BlockTypes entry without a Cost row must fail loudly, not index past the table.
-            if (Cost.Length != BlockTypes.Count)
-                throw new System.InvalidOperationException("BlockPalette.Cost must have one entry per BlockTypes entry");
+            // Adding a BlockTypes entry without a cost row must fail loudly, not index past the table.
+            if (Costs.Validate() != null)
+                throw new System.InvalidOperationException("BlockCosts must have one entry per BlockTypes entry");
 
             for (byte typeId = 0; typeId < BlockTypes.Count; typeId++)
             {
                 var type = BlockTypes.Get(typeId);
-                yield return new PaletteEntry(typeId, type.Name, type.Mass, Cost[typeId], IsSymmetric(typeId));
+                yield return new PaletteEntry(typeId, type.Name, type.Mass, Costs.CostOf(typeId), IsSymmetric(typeId));
             }
         }
     }
