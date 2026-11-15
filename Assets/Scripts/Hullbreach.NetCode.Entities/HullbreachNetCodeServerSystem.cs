@@ -104,8 +104,7 @@ namespace Hullbreach.NetCode.Entities
                 BotDifficulty difficulty = HullbreachSparring.Difficulty;
                 ulong seed = (ulong)(Environment.TickCount & 0xFFFFFF) + 1;
                 BotShip design = BotBuilder.Build(seed, difficulty, BotPersonality.Balanced);
-                float x = ((peer & 1) == 0 ? 1f : -1f) * (3f + (peer % 4) * 2f);
-                ShipSnapshot snapshot = design.ToSnapshot((ushort)peer, new float2(x, 0f), 0f, float2.zero);
+                ShipSnapshot snapshot = design.ToSnapshot((ushort)peer, new float2(SpawnX(peer), 0f), 0f, float2.zero);
                 _sparringJoined = _simulation.Join(peer, snapshot) == JoinResult.Joined;
                 if (_sparringJoined)
                 {
@@ -341,9 +340,11 @@ namespace Hullbreach.NetCode.Entities
             }
         }
 
+        static float SpawnX(int peer) => ((peer & 1) == 0 ? 1f : -1f) * (3f + (peer % 4) * 2f);
+
         static ShipSnapshot CreateStarterShip(int peer)
         {
-            float x = ((peer & 1) == 0 ? 1f : -1f) * (3f + (peer % 4) * 2f);
+            float x = SpawnX(peer);
             var blocks = new[]
             {
                 new SnapshotBlock(0, 0, BlockTypes.Core, 0, 0),
