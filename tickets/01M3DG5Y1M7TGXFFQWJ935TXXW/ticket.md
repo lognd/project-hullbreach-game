@@ -2,7 +2,8 @@
 id = "01M3DG5Y1M7TGXFFQWJ935TXXW"
 title = "S28-2: Host and join-by-address lobby screen"
 type = "task"
-category = "todo"
+category = "done"
+outcome = "fixed"
 priority = "critical"
 points = 3
 parent = "01M3DG5Y0HT0GE1F2YVQY24SSN"
