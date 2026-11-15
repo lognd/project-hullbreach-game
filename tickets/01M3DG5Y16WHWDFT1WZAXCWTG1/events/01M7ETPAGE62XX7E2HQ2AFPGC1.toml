@@ -1,0 +1,6 @@
+kind = "comment"
+subtype = "note"
+body = "Criteria 1 and 2 are met by ~ANTM71X and ~0GMV7S1 (merged, closed). Criterion 3 (trust events visible to administrators on the platform) is not met: the game server only logs and queues trust events (TrustLevel), and no platform-side endpoint or admin view exists yet. Leaving the story open until that lands."
+at = "2026-11-15T05:25:44Z"
+actor = "lognd"
+rev = 1

@@ -2,17 +2,18 @@
 id = "01M4GV3ZQT3PB0FHJX17AHZ2JB"
 title = "Restore C# frob:tests bindings for the physics audit tests after the frob 0.533.0 pin"
 type = "task"
-category = "in-progress"
+category = "done"
+outcome = "fixed"
 priority = "low"
 points = 1
 reporter = "GingerVHS"
 created = "2026-10-09T17:24:35Z"
-updated = "2026-11-15T04:39:14Z"
+updated = "2026-11-15T05:24:38Z"
 labels = ["owner:GingerVHS", "game"]
 
 [[acceptance]]
 text = "Every binding listed in the body is back on its test and frob check passes on the pinned release."
-bound = false
+bound = true
 +++
 
 The GingerVHS audit-fix tests carried these C# frob:tests bindings. They were removed in 48d4714 because frob 0.532.0 (the CI pin) cannot resolve C# test functions (TEST001). frob-v2 ~HT9HBY2 adds C# test_items; re-add the bindings once the pin moves to 0.533.0 or newer:
