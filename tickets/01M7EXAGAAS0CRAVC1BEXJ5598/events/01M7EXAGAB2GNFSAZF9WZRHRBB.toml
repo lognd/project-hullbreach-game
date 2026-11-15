@@ -1,0 +1,8 @@
+kind = "create"
+title = "S41: shrinking storm zone (headless simulation: StormZone schedule, damage, HUD queries)"
+type = "story"
+category = "todo"
+priority = "medium"
+at = "2026-11-15T06:11:42Z"
+actor = "lognd"
+rev = 1

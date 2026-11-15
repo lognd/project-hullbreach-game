@@ -141,3 +141,78 @@ return to) a stable pass without hand-tuning a velocity.
   there, not the un-softened `Mu / r^2`). Returns false (velocity zero)
   if the index is out of range, `position` coincides with the body, or the
   body's `Mu <= 0` (a repeller has no circular orbit); callers log and skip.
+
+### StormZone
+
+<!-- describes: Assets/Scripts/Hullbreach.World/StormZone.cs::StormPhase -->
+<!-- describes: Assets/Scripts/Hullbreach.World/StormZone.cs::StormPhase.HoldSeconds -->
+<!-- describes: Assets/Scripts/Hullbreach.World/StormZone.cs::StormPhase.ShrinkSeconds -->
+<!-- describes: Assets/Scripts/Hullbreach.World/StormZone.cs::StormPhase.TargetRadius -->
+<!-- describes: Assets/Scripts/Hullbreach.World/StormZone.cs::StormPhase.DamagePerSecond -->
+<!-- describes: Assets/Scripts/Hullbreach.World/StormZone.cs::StormPhase.StormPhase -->
+<!-- describes: Assets/Scripts/Hullbreach.World/StormZone.cs::StormConfig -->
+<!-- describes: Assets/Scripts/Hullbreach.World/StormZone.cs::StormConfig.MinWarningSeconds -->
+<!-- describes: Assets/Scripts/Hullbreach.World/StormZone.cs::StormConfig.TickRate -->
+<!-- describes: Assets/Scripts/Hullbreach.World/StormZone.cs::StormConfig.StartRadius -->
+<!-- describes: Assets/Scripts/Hullbreach.World/StormZone.cs::StormConfig.GraceSeconds -->
+<!-- describes: Assets/Scripts/Hullbreach.World/StormZone.cs::StormConfig.WarningFraction -->
+<!-- describes: Assets/Scripts/Hullbreach.World/StormZone.cs::StormConfig.HardLimitMargin -->
+<!-- describes: Assets/Scripts/Hullbreach.World/StormZone.cs::StormConfig.SuddenDeathDamagePerSecond -->
+<!-- describes: Assets/Scripts/Hullbreach.World/StormZone.cs::StormConfig.Phases -->
+<!-- describes: Assets/Scripts/Hullbreach.World/StormZone.cs::StormConfig.StormConfig -->
+<!-- describes: Assets/Scripts/Hullbreach.World/StormZone.cs::StormConfig.Default -->
+<!-- describes: Assets/Scripts/Hullbreach.World/StormZone.cs::StormConfig.TotalSeconds -->
+<!-- describes: Assets/Scripts/Hullbreach.World/StormZone.cs::StormConfig.Validate -->
+<!-- describes: Assets/Scripts/Hullbreach.World/StormZone.cs::StormStage -->
+<!-- describes: Assets/Scripts/Hullbreach.World/StormZone.cs::StormState -->
+<!-- describes: Assets/Scripts/Hullbreach.World/StormZone.cs::StormState.Stage -->
+<!-- describes: Assets/Scripts/Hullbreach.World/StormZone.cs::StormState.PhaseIndex -->
+<!-- describes: Assets/Scripts/Hullbreach.World/StormZone.cs::StormState.Center -->
+<!-- describes: Assets/Scripts/Hullbreach.World/StormZone.cs::StormState.Radius -->
+<!-- describes: Assets/Scripts/Hullbreach.World/StormZone.cs::StormState.NextCenter -->
+<!-- describes: Assets/Scripts/Hullbreach.World/StormZone.cs::StormState.NextRadius -->
+<!-- describes: Assets/Scripts/Hullbreach.World/StormZone.cs::StormState.TicksUntilNextStage -->
+<!-- describes: Assets/Scripts/Hullbreach.World/StormZone.cs::StormState.TicksUntilShrink -->
+<!-- describes: Assets/Scripts/Hullbreach.World/StormZone.cs::StormState.DamagePerTick -->
+<!-- describes: Assets/Scripts/Hullbreach.World/StormZone.cs::StormState.WarningFraction -->
+<!-- describes: Assets/Scripts/Hullbreach.World/StormZone.cs::StormState.HardLimitCenter -->
+<!-- describes: Assets/Scripts/Hullbreach.World/StormZone.cs::StormState.HardLimitRadius -->
+<!-- describes: Assets/Scripts/Hullbreach.World/StormZone.cs::StormState.StormState -->
+<!-- describes: Assets/Scripts/Hullbreach.World/StormZone.cs::StormState.IsSuddenDeath -->
+<!-- describes: Assets/Scripts/Hullbreach.World/StormZone.cs::StormState.StageName -->
+<!-- describes: Assets/Scripts/Hullbreach.World/StormZone.cs::StormState.Contains -->
+<!-- describes: Assets/Scripts/Hullbreach.World/StormZone.cs::StormState.SignedDistance -->
+<!-- describes: Assets/Scripts/Hullbreach.World/StormZone.cs::StormState.InWarningBand -->
+<!-- describes: Assets/Scripts/Hullbreach.World/StormZone.cs::StormState.PullDirection -->
+<!-- describes: Assets/Scripts/Hullbreach.World/StormZone.cs::StormState.WithinHardLimit -->
+<!-- describes: Assets/Scripts/Hullbreach.World/StormZone.cs::StormState.DamageFor -->
+<!-- describes: Assets/Scripts/Hullbreach.World/StormZone.cs::StormZone -->
+<!-- describes: Assets/Scripts/Hullbreach.World/StormZone.cs::StormZone.Config -->
+<!-- describes: Assets/Scripts/Hullbreach.World/StormZone.cs::StormZone.FinalCenter -->
+<!-- describes: Assets/Scripts/Hullbreach.World/StormZone.cs::StormZone.SuddenDeathTick -->
+<!-- describes: Assets/Scripts/Hullbreach.World/StormZone.cs::StormZone.StormZone -->
+<!-- describes: Assets/Scripts/Hullbreach.World/StormZone.cs::StormZone.At -->
+
+Shrinking safe ring for the 1v1 duel (S41). It exists to stop kiting and force
+engagement, not to kill: a fight should end by core breach, and the storm only
+decides stalemates. `StormZone.At(tick)` is a pure function of
+(`StormConfig`, arena centre, seed, match tick), so the server and clients
+agree with no extra traffic. Schedule: Grace (no storm) -> [Hold -> Shrink]*
+-> SuddenDeath. Each Hold warns at least 20 s before its shrink. The ring
+drifts toward a seed-chosen candidate centre (a planet) for a gravity-well
+finale, and each ring is clamped inside the previous one.
+
+`StormState` is the read-only HUD/minimap view: `Center`/`Radius`,
+`NextCenter`/`NextRadius`, `PhaseIndex`, `Stage`/`StageName`,
+`TicksUntilNextStage`, `TicksUntilShrink`, `Contains`, `SignedDistance`
+(positive inside), `InWarningBand` (inside, no damage), `PullDirection`
+(unit vector to the safe centre) and `WithinHardLimit` (fixed disc of
+`StartRadius + HardLimitMargin`; projectiles/debris outside it despawn).
+`DamageFor(point, isCore)` is HP this tick for a block at that point: zero
+inside, `DamagePerSecond / TickRate` outside, escalating per phase; the core
+is spared until sudden death, when the ring is closed and the core takes
+`SuddenDeathDamagePerSecond`, so a match always ends. All durations, radii and
+damage rates live in `StormConfig` (`Default()` ends at 284 s, under the
+600 s server time limit). The server wiring (applying damage, despawning) is
+not part of this type.
+
