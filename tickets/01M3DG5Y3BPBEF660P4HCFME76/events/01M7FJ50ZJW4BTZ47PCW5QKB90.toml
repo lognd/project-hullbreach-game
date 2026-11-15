@@ -1,0 +1,6 @@
+kind = "comment"
+subtype = "note"
+body = "Reviewed 2026-11-15, left open: the ci.yml server-build job is on main but skips without the UNITY_LICENSE repo secret, so it has never run. Needs the repo owner to add the secret and observe one green run. Tracked in a new chore ticket."
+at = "2026-11-15T12:15:43Z"
+actor = "lognd"
+rev = 1
