@@ -88,6 +88,14 @@ namespace Hullbreach.NetCode.Entities
             scaler.matchWidthOrHeight = 0.5f;
             gameObject.AddComponent<GraphicRaycaster>();
 
+            // A full-screen opaque backdrop: the storm tint, shrink timer and combat HUD sit under it, so none of them bleed past the panel.
+            _backdrop = new GameObject("Backdrop", typeof(RectTransform), typeof(Image));
+            _backdrop.transform.SetParent(transform, false);
+            var brt = (RectTransform)_backdrop.transform;
+            brt.anchorMin = Vector2.zero; brt.anchorMax = Vector2.one; brt.offsetMin = brt.offsetMax = Vector2.zero;
+            _backdrop.GetComponent<Image>().color = new Color(0.02f, 0.04f, 0.08f, 1f);
+            _backdrop.SetActive(false);
+
             _root = new GameObject("Panel", typeof(RectTransform), typeof(Image));
             _root.transform.SetParent(transform, false);
             var rt = (RectTransform)_root.transform;
@@ -116,6 +124,8 @@ namespace Hullbreach.NetCode.Entities
 
         void OnDestroy() { if (Instance == this) Instance = null; }
 
+        GameObject _backdrop;
+
         public bool IsShowing => _root != null && _root.activeSelf;
 
         public void Show(ResultsScreenModel model)
@@ -130,8 +140,11 @@ namespace Hullbreach.NetCode.Entities
                 : new Color(1f, 0.8f, 0.3f);
             _reason.text = model.Reason;
             _duration.text = "Duration " + model.Duration + (HullbreachSparring.Requested ? "   (" + HullbreachSparring.UnrankedLabel + ")" : string.Empty);
-            _left.text = Lines(model.PlayerA);
-            _right.text = Lines(model.PlayerB);
+            // The server does not count placements yet, so an all-zero row would only mislead: hide it until it is real.
+            bool showPlaced = model.PlayerA.BlocksPlaced != "0" || model.PlayerB.BlocksPlaced != "0";
+            _left.text = Lines(model.PlayerA, showPlaced);
+            _right.text = Lines(model.PlayerB, showPlaced);
+            _backdrop.SetActive(true);
             _root.SetActive(true);
             EnsureEventSystem();
             EventSystem.current.SetSelectedGameObject(_rematch.gameObject);
@@ -140,6 +153,7 @@ namespace Hullbreach.NetCode.Entities
         public void Hide()
         {
             Unbind();
+            _backdrop.SetActive(false);
             _root.SetActive(false);
         }
 
@@ -166,7 +180,7 @@ namespace Hullbreach.NetCode.Entities
             return p.IsWinner ? who + "  (winner)" : who;
         }
 
-        static string Lines(ResultsPlayerRow p) =>
+        static string Lines(ResultsPlayerRow p, bool showPlaced) =>
             NameOf(p)
             + "\nDamage dealt: " + p.DamageDealt
             + "\nBlocks destroyed: " + p.BlocksDestroyed
