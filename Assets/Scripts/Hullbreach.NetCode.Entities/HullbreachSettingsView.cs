@@ -1,4 +1,5 @@
 using System.IO;
+using Hullbreach.Game;
 using Hullbreach.Hud;
 using TMPro;
 using UnityEngine;
@@ -30,6 +31,7 @@ namespace Hullbreach.NetCode.Entities
         [SerializeField] Button closeButton;
         [SerializeField] TMP_Text messageText;
 
+        Toggle _shakeToggle, _hitToggle, _sfxToggle;
         SettingsScreenModel _model;
         bool _loading;
 
@@ -68,6 +70,9 @@ namespace Hullbreach.NetCode.Entities
             resolutionNext.onClick.AddListener(() => _model.StepResolution(1));
             fullscreenToggle.onValueChanged.AddListener(v => { if (!_loading) _model.SetFullscreen(v); });
             colorblindToggle.onValueChanged.AddListener(v => { if (!_loading) _model.SetColorblind(v); });
+            _shakeToggle = CloneToggle("Screen shake", 1, v => _model.SetShake(v));
+            _hitToggle = CloneToggle("Hit effects", 2, v => _model.SetHitEffects(v));
+            _sfxToggle = CloneToggle("Sound effects", 3, v => _model.SetSoundEffects(v));
             applyButton.onClick.AddListener(Apply);
             closeButton.onClick.AddListener(Close);
             root.SetActive(false);
@@ -79,6 +84,21 @@ namespace Hullbreach.NetCode.Entities
             if (!_model.Apply()) return;
             GameSettings s = _model.Settings;
             Screen.SetResolution(s.ResolutionWidth, s.ResolutionHeight, s.Fullscreen);
+            FeelFx.ApplySettings(s);
+        }
+
+        // The prefab only carries the colorblind toggle; the feel switches are copies of it stacked below.
+        Toggle CloneToggle(string label, int row, UnityEngine.Events.UnityAction<bool> onChange)
+        {
+            GameObject go = Instantiate(colorblindToggle.gameObject, colorblindToggle.transform.parent);
+            go.name = label + " Toggle";
+            var rt = (RectTransform)go.transform;
+            go.transform.SetSiblingIndex(colorblindToggle.transform.GetSiblingIndex() + row);
+            foreach (TMP_Text t in go.GetComponentsInChildren<TMP_Text>(true)) t.text = label;
+            var toggle = go.GetComponent<Toggle>();
+            toggle.onValueChanged.RemoveAllListeners();
+            toggle.onValueChanged.AddListener(v => { if (!_loading) onChange(v); });
+            return toggle;
         }
 
         void Refresh()
@@ -94,6 +114,9 @@ namespace Hullbreach.NetCode.Entities
             resolutionText.text = _model.ResolutionLabel;
             fullscreenToggle.isOn = s.Fullscreen;
             colorblindToggle.isOn = s.ColorblindPalette;
+            _shakeToggle.isOn = s.ScreenShake;
+            _hitToggle.isOn = s.HitEffects;
+            _sfxToggle.isOn = s.SoundEffects;
             messageText.text = _model.Message;
             messageText.color = _model.IsError ? BrandColors.Orange : BrandColors.Ink;
             _loading = false;

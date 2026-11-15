@@ -92,6 +92,16 @@ namespace Hullbreach.Hud
             Touch();
         }
 
+        // Game-feel switches: camera shake, hit flashes and numbers, synthesised sound.
+        // frob:doc docs/design/ui-port.md#settings-screen
+        public void SetShake(bool on) { Settings.ScreenShake = on; _log("Hullbreach settings: screen shake " + (on ? "on" : "off") + "."); Touch(); }
+
+        // frob:doc docs/design/ui-port.md#settings-screen
+        public void SetHitEffects(bool on) { Settings.HitEffects = on; _log("Hullbreach settings: hit effects " + (on ? "on" : "off") + "."); Touch(); }
+
+        // frob:doc docs/design/ui-port.md#settings-screen
+        public void SetSoundEffects(bool on) { Settings.SoundEffects = on; _log("Hullbreach settings: sound effects " + (on ? "on" : "off") + "."); Touch(); }
+
         // Steps to the next (+1) or previous (-1) preset, wrapping; a custom size starts at the ends.
         // frob:doc docs/design/ui-port.md#settings-screen
         public void StepResolution(int direction)
