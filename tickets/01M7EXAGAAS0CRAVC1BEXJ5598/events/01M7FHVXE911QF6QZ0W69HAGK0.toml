@@ -1,0 +1,7 @@
+kind = "field"
+field = "acceptance"
+new = ["The storm schedule shrinks the safe radius on a fixed timetable and damages blocks outside it (StormZone, headless tests)", "The server builds the storm at match start, applies it each tick and tells both peers (StormStarted), covered by StormWiringTests", "HUD and minimap queries expose the storm state to the player (MinimapAndStormHudTests)"]
+moved = []
+at = "2026-11-15T12:10:44Z"
+actor = "lognd"
+rev = 1
