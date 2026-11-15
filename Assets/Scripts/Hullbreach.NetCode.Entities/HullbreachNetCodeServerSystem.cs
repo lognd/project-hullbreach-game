@@ -37,6 +37,7 @@ namespace Hullbreach.NetCode.Entities
             {
                 TickRate = HullbreachNetCodeConstants.SimulationTickRate,
                 EmitPoseMessages = false,
+                RequireReady = true, // a real build phase: the match starts when both players press READY
             };
             _connectionQuery = GetEntityQuery(
                 ComponentType.ReadOnly<NetworkId>(),
@@ -98,7 +99,11 @@ namespace Hullbreach.NetCode.Entities
             else if (!_sparringJoined && HullbreachSparring.Requested && _joinedPeers.Count == 1)
             {
                 _sparringJoined = _simulation.Join(peer, CreateStarterShip(peer)) == JoinResult.Joined;
-                if (_sparringJoined) Debug.Log("Hullbreach server: sparring partner joined (passive opponent).");
+                if (_sparringJoined)
+                {
+                    _simulation.SetReady(peer, true); // the dummy is always ready; the human's READY starts the match
+                    Debug.Log("Hullbreach server: sparring partner joined (passive opponent).");
+                }
             }
             if (_sparringJoined)
                 _simulation.SetInput(peer, new InputMessage((ushort)peer, ++_sparringTick, 0, 0, 0));
@@ -193,6 +198,11 @@ namespace Hullbreach.NetCode.Entities
                 HullbreachBuildRpc request = requests[i];
                 // The economy decides: stock, budget, cooldown and rules. The owner gets a PlacementResult
                 // message either way (ClientReplica.Economy), so the client can say why a block was refused.
+                if (request.Action == (byte)HullbreachBuildAction.Ready)
+                {
+                    _simulation.SetReady(peer, true);
+                    continue;
+                }
                 PlacementResult result = request.Action == (byte)HullbreachBuildAction.Place
                     ? _simulation.PlaceBlock(peer, request.X, request.Y, request.TypeId, request.Modifiers)
                     : request.Action == (byte)HullbreachBuildAction.Remove

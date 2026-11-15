@@ -1,0 +1,1 @@
+Online build panel: hotbar with stock or cost, budget/size/cooldown bars, refusal toasts, facing arrow, X to deconstruct, READY button and a real build phase (match starts when both are ready), pickups drawn in the world with collect feedback. Number keys now match block ids (1-6).

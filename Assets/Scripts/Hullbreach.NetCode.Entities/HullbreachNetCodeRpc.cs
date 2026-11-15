@@ -16,6 +16,8 @@ namespace Hullbreach.NetCode.Entities
     {
         Place = 1,
         Remove = 2,
+        // Ready for the match to start (the build phase ends once both players are ready).
+        Ready = 3,
     }
 
     /// <summary>Server-validated edit request for the caller's own ship.</summary>
