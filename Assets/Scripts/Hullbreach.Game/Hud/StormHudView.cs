@@ -159,7 +159,7 @@ namespace Hullbreach.Game
 
         const float EnemyArrowBottomClearance = 110f;
         // Below the storm timer, stage line and core bars.
-        const float EnemyArrowTopClearance = 150f;
+        const float EnemyArrowTopClearance = 230f;
 
         void DrawArrows(StormHudFrame f, Camera cam, bool storm, float signed)
         {
