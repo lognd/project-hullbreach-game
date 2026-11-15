@@ -1,0 +1,6 @@
+kind = "comment"
+subtype = "note"
+body = "Reviewed 2026-11-15, left open. Engine-free parts exist (JoinTicket message, HostInbox decode, ServerSimulation.RequireJoinTicket and AssignQueueMatch, tests). Not wired in Unity: no NetCode RPC sends JoinTicket from the client, nothing in Hullbreach.NetCode.Entities calls AssignQueueMatch or sets RequireJoinTicket (grep), no allocation channel tells a dedicated server its match id, no skin source. A queue match therefore cannot reach a ticket-requiring server."
+at = "2026-11-15T12:15:42Z"
+actor = "lognd"
+rev = 1
