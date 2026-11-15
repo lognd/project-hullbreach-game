@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Hullbreach.Bots;
 using Hullbreach.Core;
 using Hullbreach.Net;
 using Unity.Collections;
@@ -27,7 +28,7 @@ namespace Hullbreach.NetCode.Entities
         uint _nextMessageId = 1;
         bool _arenaConfigured;
         bool _sparringJoined;
-        uint _sparringTick;
+        BotPeer _bot;
         uint _simTick; // counts _simulation.Tick() calls, the same clock as StormStarted.StartTick
 
         protected override void OnCreate()
@@ -83,30 +84,37 @@ namespace Hullbreach.NetCode.Entities
                     EntityManager.AddComponent<NetworkStreamInGame>(connection);
         }
 
-        // A passive stand-in opponent so one person can start a match, learn to fly and shoot (Cadet Trial) or test the
-        // storm and economy alone. It is a virtual peer with no connection: it sends neutral input every tick and
-        // leaves as soon as a real second player joins. HOOK: the queue's "fight a bot" offer (P0-5) sets
-        // HullbreachSparring.Requested; Hullbreach.Bots can replace the neutral input with a pilot here.
+        // A bot opponent so one person can play alone: Play vs Bot, the queue's "fight a bot" offer (P0-5) and Cadet Trial
+        // (P0-4) all set HullbreachSparring. It is a virtual peer with no connection that joins with a BotBuilder ship, is
+        // always ready, is driven by BotPeer every server tick, and leaves as soon as a real second player joins.
         void ManageSparringPartner()
         {
             int peer = HullbreachSparring.PeerId;
             if (_sparringJoined && (_joinedPeers.Count != 1 || !HullbreachSparring.Requested))
             {
                 _sparringJoined = false;
+                _bot = null;
                 _simulation.Leave(peer);
-                Debug.Log("Hullbreach server: sparring partner left.");
+                Debug.Log("Hullbreach server: bot opponent left.");
             }
             else if (!_sparringJoined && HullbreachSparring.Requested && _joinedPeers.Count == 1)
             {
-                _sparringJoined = _simulation.Join(peer, CreateStarterShip(peer)) == JoinResult.Joined;
+                int human = -1;
+                foreach (int p in _joinedPeers) human = p;
+                BotDifficulty difficulty = HullbreachSparring.Difficulty;
+                ulong seed = (ulong)(Environment.TickCount & 0xFFFFFF) + 1;
+                BotShip design = BotBuilder.Build(seed, difficulty, BotPersonality.Balanced);
+                ShipSnapshot snapshot = design.ToSnapshot((ushort)peer, new float2(SpawnX(peer), 0f), 0f, float2.zero);
+                _sparringJoined = _simulation.Join(peer, snapshot) == JoinResult.Joined;
                 if (_sparringJoined)
                 {
-                    _simulation.SetReady(peer, true); // the dummy is always ready; the human's READY starts the match
-                    Debug.Log("Hullbreach server: sparring partner joined (passive opponent).");
+                    _simulation.SetReady(peer, true); // the bot is always ready; the human's READY starts the match
+                    _bot = new BotPeer(peer, human, new BotPilot(BotProfile.For(difficulty, BotPersonality.Balanced), new BotRng(seed)));
+                    Debug.Log($"Hullbreach server: bot opponent joined ({difficulty}, {design.BlockCount} blocks).");
                 }
             }
-            if (_sparringJoined)
-                _simulation.SetInput(peer, new InputMessage((ushort)peer, ++_sparringTick, 0, 0, 0));
+            if (_sparringJoined && _bot != null)
+                _bot.Drive(_simulation, _simTick);
         }
 
         void SynchronizeConnections()
@@ -332,9 +340,11 @@ namespace Hullbreach.NetCode.Entities
             }
         }
 
+        static float SpawnX(int peer) => ((peer & 1) == 0 ? 1f : -1f) * (3f + (peer % 4) * 2f);
+
         static ShipSnapshot CreateStarterShip(int peer)
         {
-            float x = ((peer & 1) == 0 ? 1f : -1f) * (3f + (peer % 4) * 2f);
+            float x = SpawnX(peer);
             var blocks = new[]
             {
                 new SnapshotBlock(0, 0, BlockTypes.Core, 0, 0),

@@ -132,11 +132,11 @@ namespace Hullbreach.NetCode.Entities
                 if (pair.Key != HullbreachNetCodeClient.LocalNetworkId) { enemy = pair.Value; break; }
 
             bool running = HullbreachNetworkGameplayController.MatchRunning;
-            if (running && !_announced) { _announced = true; Feed.Push("MATCH STARTED  -  breach their core", HudColor.SteerWhite, Time.unscaledTime); }
+            if (running && !_announced) { _announced = true; Feed.Push("MATCH STARTED  -  breach their core", HudColor.SteerWhite, Time.unscaledTime); if (HullbreachSparring.Requested) Feed.Push("vs " + HullbreachSparring.DisplayName + "  -  " + HullbreachSparring.UnrankedLabel, HudColor.SteerWhite, Time.unscaledTime); if (HullbreachSparring.Trial) Feed.Push("CADET TRIAL: W/S thrust, A/D steer, Space fire, Shift assist", HudColor.SteerWhite, Time.unscaledTime); }
             if (!running) _announced = false;
 
             DrawBar(_own, "YOUR", mine != null, CoreHealth(mine), new HudColor(0.3f, 0.85f, 1f));
-            DrawBar(_enemy, "ENEMY", enemy != null, CoreHealth(enemy), new HudColor(1f, 0.45f, 0.35f));
+            DrawBar(_enemy, HullbreachSparring.Requested ? "BOT" : "ENEMY", enemy != null, CoreHealth(enemy), new HudColor(1f, 0.45f, 0.35f));
 
             // Banner: only when your own core is in real trouble.
             float health = CoreHealth(mine);

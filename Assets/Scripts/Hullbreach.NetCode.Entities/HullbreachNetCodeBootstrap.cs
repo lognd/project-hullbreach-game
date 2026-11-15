@@ -66,9 +66,21 @@ namespace Hullbreach.NetCode.Entities
     {
         public const int PeerId = ServerSimulation.MaxPeerId - 1;
         public static bool Requested;
+        public static bool Trial; // Cadet Trial: an Easy bot plus the controls spelled out in the feed
+        public static Hullbreach.Bots.BotDifficulty Difficulty = Hullbreach.Bots.BotDifficulty.Normal;
 
-        public static void Reset() =>
+        // Shown wherever the opponent is named; a bot match never counts for ranking.
+        public static string DisplayName => $"BOT ({Difficulty.ToString().ToUpperInvariant()})";
+        public const string UnrankedLabel = "Bot match - unranked";
+
+        public static void Request(Hullbreach.Bots.BotDifficulty difficulty) { Difficulty = difficulty; Requested = true; }
+
+        public static void Reset()
+        {
             Requested = Array.IndexOf(Environment.GetCommandLineArgs(), "-hullbreachSparring") >= 0;
+            Difficulty = Hullbreach.Bots.BotDifficulty.Normal;
+            Trial = false;
+        }
     }
 
     // Creates the Netcode worlds the launch plan asks for: lobby keeps the stock

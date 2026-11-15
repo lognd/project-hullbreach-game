@@ -9,7 +9,7 @@ namespace Hullbreach.Net.Tests
     {
         double _now;
 
-        MatchmakingMachine Machine() => new MatchmakingMachine(() => _now, MatchmakingOptions.Defaults());
+        MatchmakingMachine Machine() { _now = 0; return new MatchmakingMachine(() => _now, MatchmakingOptions.Defaults()); }
 
         // frob:tests QueueScreenModel.Elapsed
         [Test]
@@ -43,6 +43,21 @@ namespace Hullbreach.Net.Tests
             Assert.AreEqual("Searching for an opponent... 1:05", QueueScreenModel.Status(m));
             Assert.IsTrue(QueueScreenModel.CanCancel(m));
             Assert.IsFalse(QueueScreenModel.CanSearch(m));
+        }
+
+        // frob:tests QueueScreenModel.OffersBot
+        [Test]
+        public void BotIsOfferedOnlyAfterTheWait()
+        {
+            MatchmakingMachine m = Machine();
+            Assert.IsFalse(QueueScreenModel.OffersBot(m));
+            m.Start();
+            _now = 14;
+            Assert.IsFalse(QueueScreenModel.OffersBot(m));
+            _now = 15;
+            Assert.IsTrue(QueueScreenModel.OffersBot(m));
+            m.Cancel();
+            Assert.IsFalse(QueueScreenModel.OffersBot(m));
         }
 
         // frob:tests QueueScreenModel.Status
