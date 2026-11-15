@@ -24,8 +24,11 @@ namespace Hullbreach.NetCode.Entities
         public static bool IsLocalMatch => HullbreachLobbyService.Instance.Session == null;
 
         /// <summary>Disposes and recreates the client and server worlds (one frame later, outside any system update).</summary>
+        public static bool Restarting { get; private set; }
+
         public static IEnumerator RestartWorlds()
         {
+            Restarting = true;
             yield return null;
             var old = new List<World>();
             foreach (World w in World.All)
@@ -44,6 +47,7 @@ namespace Hullbreach.NetCode.Entities
             tickRate.ResolveDefaults();
             server.EntityManager.CreateSingleton(tickRate, "Hullbreach NetCode Tick Rate");
             HullbreachNetCodeClient.LocalNetworkId = 0;
+            Restarting = false;
         }
     }
 
