@@ -133,6 +133,34 @@ namespace Hullbreach.Structure.Tests
         }
 
         [Test]
+        public void ThrusterEnd_CarriesMoreStressThanTheFarEnd()
+        {
+            // frob:ticket 01M3DG5Y0SP70ASKR1VP80X976
+            // An 8-block bar pushed at one end by a thruster: inertia relief spreads the
+            // reaction along the bar, so the push is carried hardest right at the thruster
+            // and fades toward the free end.
+            var grid = new BlockGrid();
+            grid.TryAdd(BlockKey.Pack(0, 0), new Block(BlockTypes.Thruster));
+            for (int x = 1; x < 7; x++) grid.TryAdd(BlockKey.Pack(x, 0), new Block(BlockTypes.Hull));
+            grid.TryAdd(BlockKey.Pack(7, 0), new Block(BlockTypes.Core));
+
+            var solver = new StructuralSolver();
+            var forces = new List<(float2, float2)>
+            {
+                (new float2(0.05f, 0.05f), new float2(5f, 0f)),
+                (new float2(0.05f, 0.95f), new float2(5f, 0f)),
+            };
+            solver.Tick(grid, forces, 1f / 60f);
+
+            float near = solver.BlockStresses[BlockKey.Pack(1, 0)].VonMises;
+            float mid = solver.BlockStresses[BlockKey.Pack(4, 0)].VonMises;
+            float far = solver.BlockStresses[BlockKey.Pack(6, 0)].VonMises;
+            TestContext.Out.WriteLine($"THRUSTSTRESS near={near:F4} mid={mid:F4} far={far:F4}");
+            Assert.Greater(near, mid, "stress must fall away from the thruster");
+            Assert.Greater(mid, far);
+        }
+
+        [Test]
         public void AddingABrace_LowersStressInTheBracedArms()
         {
             // U-shaped ship, arm tips pulled apart: a bridge block across the
