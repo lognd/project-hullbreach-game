@@ -1,0 +1,6 @@
+kind = "comment"
+subtype = "note"
+body = "Children status 2026-11-15: ~2K5FAKG done (queue screen + cancel); ~RHV8HRV done (allocation + handoff); ~NDDWXNE done (JoinTicket RPC, match id on server); ~YTVQZRX open (QueueConnectPlayTests exists but cannot be bound as evidence, needs attestation); ~BSEK1EH open (skins merged in #164, real-account check pending). Story stays open until both close."
+at = "2026-11-15T23:32:09Z"
+actor = "lognd"
+rev = 1
