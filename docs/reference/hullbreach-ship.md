@@ -651,3 +651,54 @@ the hit point (via `IWorldSink.AddTemporaryGravity`).
 Cannon variant 2: fires a shot flagged GravityWell with a negative-Mu
 `WellSpec`, so on impact the game drops a short-lived REPULSING well at
 the hit point.
+
+### ShipStressPreview
+
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ShipStressPreview.cs::StressVerdict -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ShipStressPreview.cs::StressPreviewResult -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ShipStressPreview.cs::StressPreviewResult.Verdict -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ShipStressPreview.cs::StressPreviewResult.PeakRisk -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ShipStressPreview.cs::StressPreviewResult.WeakestKey -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ShipStressPreview.cs::StressPreviewResult.OverloadedCount -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ShipStressPreview.cs::StressPreviewResult.SecondsToFail -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ShipStressPreview.cs::StressPreviewResult.Risk -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ShipStressPreview.cs::StressPreviewResult.Warning -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ShipStressPreview.cs::ShipStressPreview -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ShipStressPreview.cs::ShipStressPreview.SolveDt -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ShipStressPreview.cs::ShipStressPreview.IncludeBuckling -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ShipStressPreview.cs::ShipStressPreview.Evaluate -->
+
+Engine-free build-time check: "will this design hold under full thrust?"
+It copies the grid into a throwaway `ShipBody` with instant throttle ramps,
+steps it once per load case (full forward, forward + steer left, forward +
+steer right, full reverse), solves the REAL `StructuralSolver` (same
+`LoadScale` / `MaterialStiffnessScale` as the server) and keeps the worst
+`DamageModel.DamageRatio` per block across the cases. Nothing is written to
+the grid.
+
+- `Evaluate(grid)` returns a `StressPreviewResult`: `Risk` (per BlockKey,
+  1.0 = at the failure line), `PeakRisk`, `WeakestKey`, `OverloadedCount`,
+  `SecondsToFail` (infinity unless WillBreak) and `Verdict`:
+  `Safe` (< 0.8, `DamageModel.CreakRatio`), `Marginal` (0.8 to 1.0),
+  `WillBreak` (>= 1.0). `Warning` is a ready-made HUD line, empty when Safe.
+- `IncludeBuckling` adds one subspace buckling pass to the forward case (and
+  forces buckled blocks to risk 1). It is the expensive part; leave it off
+  while the player is dragging blocks and turn it on for the READY check.
+- Cost on a 49-block ship (Release, one core): about 35 ms without buckling,
+  about 70 ms with it. Debounce edits (evaluate when the cursor rests, not on
+  every pointer move). Keep one instance per builder: it reuses its solver.
+- Reference numbers: the starter templates peak at about 0.5 (Safe); the
+  22-block wide wing with tip thrusters peaks at 2.7 at its root armor
+  (WillBreak, about 1.0 s to fail); the same blocks with the thrusters at
+  x = +-2,3 peak at 0.74 (Safe).
+
+**Unity follow-up (build UI).** Hold one `ShipStressPreview` in the builder
+controller. After each place/remove (debounced about 150 ms) call
+`Evaluate(grid)` and: (1) tint each block from `result.Risk[key]` (green
+below 0.8, amber to 1.0, red above, same ramp as the Stress overlay);
+(2) pulse the block `result.WeakestKey` when the verdict is not Safe;
+(3) on READY, run once with `IncludeBuckling = true` and, if
+`Verdict == WillBreak`, show `result.Warning` ("This design will snap under
+full thrust") with Fix / Fly anyway. It must be a warning, never a blocker,
+as with the unspent-points confirm. The server stays authoritative.
+
