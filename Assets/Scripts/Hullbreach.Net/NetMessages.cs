@@ -1026,15 +1026,15 @@ namespace Hullbreach.Net
         {
             r.ReadU8();
             uint tick = r.ReadU32();
-            int count = r.ReadU8();
-            if (count > MaxEntries || count * EntryByteSize > r.Remaining)
+            int entryCount = r.ReadU8();
+            if (entryCount > MaxEntries || entryCount * EntryByteSize > r.Remaining)
             {
                 r.Fail();
                 return new ProjectileState(tick, Array.Empty<ProjectileEntry>());
             }
 
-            var entries = new ProjectileEntry[count];
-            for (int i = 0; i < count; i++)
+            var entries = new ProjectileEntry[entryCount];
+            for (int i = 0; i < entryCount; i++)
                 entries[i] = new ProjectileEntry(r.ReadU32(), r.ReadI16(), r.ReadI16(), r.ReadI16(), r.ReadI16());
             return new ProjectileState(tick, entries);
         }
