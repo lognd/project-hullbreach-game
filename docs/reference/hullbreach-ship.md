@@ -167,6 +167,11 @@ in a restitution impulse is not worth an OBB test.
 <!-- describes: Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.ContactDamagePerSpeed -->
 <!-- describes: Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.Friction -->
 <!-- describes: Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.AngularDamping -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.Tuning -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.BrakeReferenceVelocity -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.FireBufferRemaining -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.AssistActive -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.RampFinThrottleFor -->
 <!-- describes: Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.ContactClearance -->
 <!-- describes: Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.ContactsThisStep -->
 <!-- describes: Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipBody.ThrusterKeys -->
@@ -350,12 +355,58 @@ holding lifecycle and Inspector wiring, and nothing else.
   the grid key checked (valid even on a miss, -1 only if the point falls
   outside the packable grid range).
 
+### FlightTuning
+
+<!-- describes: Assets/Scripts/Hullbreach.Ship/FlightTuning.cs::FlightTuning -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/FlightTuning.cs::FlightTuning.AssistEnabled -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/FlightTuning.cs::FlightTuning.MaxRateAtReference -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/FlightTuning.cs::FlightTuning.MinRate -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/FlightTuning.cs::FlightTuning.MaxRate -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/FlightTuning.cs::FlightTuning.ReferenceInertia -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/FlightTuning.cs::FlightTuning.GyroTorquePerMass -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/FlightTuning.cs::FlightTuning.GyroErrorSaturation -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/FlightTuning.cs::FlightTuning.ThrusterRampUpScale -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/FlightTuning.cs::FlightTuning.ThrusterRampDownScale -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/FlightTuning.cs::FlightTuning.FinRampUpSeconds -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/FlightTuning.cs::FlightTuning.FinRampDownSeconds -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/FlightTuning.cs::FlightTuning.BrakeGain -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/FlightTuning.cs::FlightTuning.BrakeStopSpeed -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/FlightTuning.cs::FlightTuning.FireBufferSeconds -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/FlightTuning.cs::FlightTuning.Legacy -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/FlightTuning.cs::FlightTuning.Default -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/FlightTuning.cs::FlightTuning.Validate -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/FlightTuning.cs::FlightTuning.MaxRateFor -->
+
+How the ship feels to fly, in one struct. The server (`ServerSimulation.FlightTuning`),
+the client prediction (`ClientReplica.PredictionFlightTuning`) and the offline
+`ShipController` all assign `FlightTuning.Default()` to `ShipBody.Tuning`, so the three
+run the same code with the same numbers. A bare `ShipBody` uses `Legacy()` (raw physics)
+so pure physics tests stay pure.
+
+- Flight assist: steer commands a spin RATE, not a torque. The full-steer rate is
+  `MaxRateAtReference * sqrt(ReferenceInertia / inertia)` clamped to `MinRate..MaxRate`,
+  so a big ship turns slower than a small one. A gyro torque (`GyroTorquePerMass` times
+  ship mass, proportional inside `GyroErrorSaturation`) tracks that rate and is limited so
+  it never overshoots the target inside one tick, so it is stable at any tick rate.
+  Releasing steer commands zero spin, so the ship holds its heading. While assist is on
+  `AngularDamping` is ignored. Holding the assist-off key (`ShipInput.AssistOff`) gives raw
+  fin physics.
+- Ramps: thrusters ramp up `ThrusterRampUpScale` times faster than the upgrade-level table
+  says and down `ThrusterRampDownScale` times faster, so thrust bites fast and tails off
+  about 1.4 times slower. Fins use `FinRampUpSeconds` and `FinRampDownSeconds`.
+- Brake: with a retro thruster, holding S adds `BrakeGain` times the retro acceleration
+  against the velocity relative to `ShipBody.BrakeReferenceVelocity` (the dominant body;
+  planets are static so it is zero). It stops the ship and never reverses it.
+- Fire buffer: a fire press that lands during cooldown is remembered for
+  `FireBufferSeconds` and fires the moment the cannon is ready; a shot clears it.
+
 ### ShipInput
 
 <!-- describes: Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipInput -->
 <!-- describes: Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipInput.ThrustAxis -->
 <!-- describes: Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipInput.Steer -->
 <!-- describes: Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipInput.FirePressed -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipInput.AssistOff -->
 <!-- describes: Assets/Scripts/Hullbreach.Ship/ShipBody.cs::ShipInput.ShipInput -->
 
 One tick of player intent. A value type, so it is trivially serializable
@@ -365,6 +416,7 @@ for the netcode and trivially constructible in tests.
   negative fires retro thrusters, zero fires neither.
 - `Steer`: steering axis, -1..+1.
 - `FirePressed`: fire was PRESSED this tick (edge, not level).
+- `AssistOff`: the flight-assist-off key is held (see `FlightTuning`).
 
 ### ShipInputShaper
 
@@ -394,6 +446,7 @@ at full deflection. NaN shapes to 0. `Shape(thrust, steer, fire)` returns a
 <!-- describes: Assets/Scripts/Hullbreach.Ship/Behaviours/BlockContext.cs::BlockContext.World -->
 <!-- describes: Assets/Scripts/Hullbreach.Ship/Behaviours/BlockContext.cs::BlockContext.AddForceLocal -->
 <!-- describes: Assets/Scripts/Hullbreach.Ship/Behaviours/BlockContext.cs::BlockContext.Throttle -->
+<!-- describes: Assets/Scripts/Hullbreach.Ship/Behaviours/BlockContext.cs::BlockContext.FinThrottle -->
 <!-- describes: Assets/Scripts/Hullbreach.Ship/Behaviours/BlockContext.cs::BlockContext.TickCooldown -->
 <!-- describes: Assets/Scripts/Hullbreach.Ship/Behaviours/BlockContext.cs::BlockContext.ResetCooldown -->
 <!-- describes: Assets/Scripts/Hullbreach.Ship/Behaviours/BlockContext.cs::BlockContext.Fire -->

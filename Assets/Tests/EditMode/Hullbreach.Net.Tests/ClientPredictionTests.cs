@@ -158,7 +158,7 @@ namespace Hullbreach.Net.Tests
             var replica = LocalReplica();
             replica.PredictionTickRate = 50f;
 
-            var truth = new Hullbreach.Ship.ShipBody();
+            var truth = new Hullbreach.Ship.ShipBody { Tuning = Hullbreach.Ship.FlightTuning.Default() };
             foreach (var b in ShipBlocks()) truth.Grid.TryAdd(BlockKey.Pack(b.X, b.Y), new Block(b.TypeId));
             truth.RebuildDerivedViews();
 

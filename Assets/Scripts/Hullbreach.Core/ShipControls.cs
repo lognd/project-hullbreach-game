@@ -12,5 +12,9 @@ namespace Hullbreach.Core
         // Online fire and mode switch: fire is Space or left click, Tab toggles build.
         // frob:doc docs/controls.md
         public const string OnlineFireBuildLine = "Space/click: fire   Tab: build";
+
+        // Brake and the flight-assist override.
+        // frob:doc docs/controls.md
+        public const string AssistLine = "S: brake   Hold Left Shift: flight assist off";
     }
 }
