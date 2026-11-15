@@ -12,7 +12,7 @@ labels = ["game", "owner:mcnairrobotics"]
 
 [[acceptance]]
 text = "A client presents the allocated match id in a JoinTicket when joining (wire message round-trips, bad ids rejected)"
-bound = false
+bound = true
 
 [[acceptance]]
 text = "A dedicated server takes its expected match id from -hullbreachMatchId and refuses a peer with the wrong or missing ticket"
