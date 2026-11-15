@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Hullbreach.Bots;
+using Hullbreach.Builder;
 using Hullbreach.Core;
 using Hullbreach.Match;
 using Hullbreach.Net;
@@ -26,6 +27,7 @@ namespace Hullbreach.NetCode.Entities
         EntityQuery _connectionQuery;
         EntityQuery _inputQuery;
         EntityQuery _buildQuery;
+        EntityQuery _designQuery;
         EntityQuery _ticketQuery;
         uint _nextMessageId = 1;
         bool _arenaConfigured;
@@ -51,6 +53,9 @@ namespace Hullbreach.NetCode.Entities
                 ComponentType.ReadOnly<ReceiveRpcCommandRequest>());
             _buildQuery = GetEntityQuery(
                 ComponentType.ReadOnly<HullbreachBuildRpc>(),
+                ComponentType.ReadOnly<ReceiveRpcCommandRequest>());
+            _designQuery = GetEntityQuery(
+                ComponentType.ReadOnly<HullbreachDesignRpc>(),
                 ComponentType.ReadOnly<ReceiveRpcCommandRequest>());
             _ticketQuery = GetEntityQuery(
                 ComponentType.ReadOnly<HullbreachJoinTicketRpc>(),
@@ -118,6 +123,7 @@ namespace Hullbreach.NetCode.Entities
             if (!_arenaConfigured) return;
             ConsumeInputs();
             ConsumeBuildRequests();
+            ConsumeDesignRequests();
             ManageSparringPartner();
             _simulation.Tick();
             _simTick++;
@@ -254,6 +260,26 @@ namespace Hullbreach.NetCode.Entities
             }
 
             if (entities.Length > 0) EntityManager.DestroyEntity(entities);
+        }
+
+        // One-click starter ships and the remembered last design: the whole ship is replaced before the match starts.
+        void ConsumeDesignRequests()
+        {
+            using var entities = _designQuery.ToEntityArray(Allocator.Temp);
+            if (entities.Length == 0) return;
+            using var requests = _designQuery.ToComponentDataArray<HullbreachDesignRpc>(Allocator.Temp);
+            using var sources = _designQuery.ToComponentDataArray<ReceiveRpcCommandRequest>(Allocator.Temp);
+            for (int i = 0; i < entities.Length; i++)
+            {
+                Entity source = sources[i].SourceConnection;
+                if (!EntityManager.HasComponent<NetworkId>(source)) continue;
+                int peer = EntityManager.GetComponentData<NetworkId>(source).Value;
+                PlacementResult result = ShipDesignCodec.TryDecode(requests[i].Design.ToString(), out var design)
+                    ? _simulation.ApplyDesign(peer, design)
+                    : PlacementResult.BadRequest;
+                if (result != PlacementResult.Ok) Debug.Log($"Hullbreach server: peer #{peer} design refused: {result}.");
+            }
+            EntityManager.DestroyEntity(entities);
         }
 
         void ConsumeBuildRequests()
@@ -410,18 +436,12 @@ namespace Hullbreach.NetCode.Entities
         static ShipSnapshot CreateStarterShip(int peer)
         {
             float x = SpawnX(peer);
-            var blocks = new[]
-            {
-                new SnapshotBlock(0, 0, BlockTypes.Core, 0, 0),
-                new SnapshotBlock(0, 1, BlockTypes.Hull, 0, 0),
-                new SnapshotBlock(0, -1, BlockTypes.Hull, 0, 0),
-                new SnapshotBlock(-1, -1, BlockTypes.Thruster, 0, 0),
-                new SnapshotBlock(1, -1, BlockTypes.Thruster, 0, 0),
-                new SnapshotBlock(0, -2, BlockTypes.RetroThruster, 0, 0),
-                new SnapshotBlock(0, 2, BlockTypes.Cannon, 0, 0),
-                new SnapshotBlock(-1, 1, BlockTypes.Fin, 3, 0),
-                new SnapshotBlock(1, 1, BlockTypes.Fin, 1, 0),
-            };
+            // The balanced starter: a legal, stable ship worth the whole point budget (ShipTemplates), so a fresh player
+            // is not outgunned by a bot. The build phase can swap it for another template in one click.
+            var design = ShipTemplates.Default.Blocks;
+            var blocks = new SnapshotBlock[design.Count];
+            for (int i = 0; i < blocks.Length; i++)
+                blocks[i] = new SnapshotBlock((sbyte)design[i].X, (sbyte)design[i].Y, design[i].TypeId, design[i].Modifiers, 0);
             return new ShipSnapshot(0, (ushort)peer, blocks,
                 Quantization.PackPosition(x), 0, 0, 0, 0, 0);
         }

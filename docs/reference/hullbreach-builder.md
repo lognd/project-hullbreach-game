@@ -234,3 +234,28 @@ cannon 5, fin 2, retro 3), `Budget` 60, `MaxBlocks` 40, `WeldedSurcharge` 2. `Co
 Per-type spare-block counts with a shelf cap (default 30). `TryAdd` and `TryTake` are all-or-nothing,
 the core is never stock, and `AddRefundCredit(type, percent)` accumulates fractional refunds so two
 50% refunds make one block.
+
+### ShipTemplates
+
+<!-- describes: Assets/Scripts/Hullbreach.Builder/ShipTemplates.cs::ShipTemplates -->
+<!-- describes: Assets/Scripts/Hullbreach.Builder/ShipTemplates.cs::ShipTemplates.All -->
+<!-- describes: Assets/Scripts/Hullbreach.Builder/ShipTemplates.cs::ShipTemplates.Default -->
+<!-- describes: Assets/Scripts/Hullbreach.Builder/ShipTemplates.cs::ShipTemplates.ById -->
+<!-- describes: Assets/Scripts/Hullbreach.Builder/ShipTemplates.cs::ShipTemplate -->
+<!-- describes: Assets/Scripts/Hullbreach.Builder/ShipTemplates.cs::DesignBlock -->
+<!-- describes: Assets/Scripts/Hullbreach.Builder/ShipTemplates.cs::ShipDesignCodec -->
+<!-- describes: Assets/Scripts/Hullbreach.Builder/ShipTemplates.cs::ShipDesignCodec.Encode -->
+<!-- describes: Assets/Scripts/Hullbreach.Builder/ShipTemplates.cs::ShipDesignCodec.TryDecode -->
+<!-- describes: Assets/Scripts/Hullbreach.Builder/ShipTemplates.cs::ShipDesignCodec.TryBuildGrid -->
+
+The starter ships offered in the build phase: Balanced (the default for a fresh player and the Cadet
+Trial), Brawler, Skirmisher and Tank, each 57-60 of the 60 points. Templates are authored as text rows
+(`C` core, `H` hull, `A` armor, `T` thruster, `K` cannon, `R` retro, `<` `>` fins) so they read like the
+ship. Tests check that every one is legal under `PlacementRules`, inside the budget and block cap, passes
+`DesignValidator`, survives the bot stress test (no buckling under full thrust, steer and fire) and flies
+straight under full thrust.
+
+`ShipDesignCodec` is the text form ("x,y,type,mods;...") that carries a template, or the player's last
+design, to the server (`ServerSimulation.ApplyDesign`) and into PlayerPrefs. `TryDecode` is strict and
+bounded because the server reads it from the wire; `TryBuildGrid` replays a design through the real
+placement rules in any order that works.

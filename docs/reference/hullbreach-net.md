@@ -1476,6 +1476,8 @@ Sequenced broadcast: a pickup is gone, with a PickupRemoval reason and the colle
 
 `ServerSimulation` additions: `Economy`, `Pickups`, `StockOf`, `BudgetLeftOf`,
 `BuildCooldownTicksRemaining`, `GrantStock` (test hook), `CheckPlacement` (read-only), `PlaceBlock`
-and `Deconstruct` (both return PlacementResult and notify the owner). `TryPlaceBlock` and
+and `Deconstruct` (both return PlacementResult and notify the owner). `ApplyDesign` replaces a peer's whole
+ship with a validated design before the match starts (starter templates, the remembered last design); it
+refuses, changing nothing, for an illegal or over-budget design. `TryPlaceBlock` and
 `TryRemoveBlock` wrap them. `Join` can now return `DesignTooLarge` or `OverBudget`.
 Welded cost is not enforced over the wire (the Welded flag is not carried in snapshots).
