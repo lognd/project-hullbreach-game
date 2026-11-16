@@ -1,0 +1,6 @@
+kind = "comment"
+subtype = "note"
+body = "Left open. Criterion 2 bound: ReconnectGraceTests 8 pass (#173 server grace; #171 ReconnectPolicy tests in Hud.Tests; #174 Leave message). Criterion 1 (client retries and rejoins the same match without the lobby) lacks evidence: ReconnectPolicy is a model only, and two-client LAN leave/kill-rejoin was NOT verified (needs a second client process). Unity PlayMode/editor evidence cannot be bound by frob (no unity provider)."
+at = "2026-11-16T01:37:47Z"
+actor = "lognd"
+rev = 1
