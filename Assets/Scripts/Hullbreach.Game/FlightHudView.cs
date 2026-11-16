@@ -15,6 +15,7 @@ namespace Hullbreach.Game
         TextMeshProUGUI _warn, _assist, _hint;
         Image _edge, _arrow;
         float _nextBeep;
+        readonly PlanetTrapTracker _trap = new PlanetTrapTracker();
         static Sprite _arrowSprite;
 
         public static void Ensure(ShipController ship)
@@ -96,9 +97,11 @@ namespace Hullbreach.Game
             }
             _hint.text = FlightWarningModel.ControlsHint;
             var p = ship.QueryPlanetProximity();
+            if (!p.HasBody) _trap.Reset();
+            bool trapAllowed = p.HasBody && _trap.Update(Time.unscaledDeltaTime, p.Altitude, p.ClosingSpeed, p.TangentialSpeed, p.NetClimbAccel);
             PlanetWarning w = p.HasBody
                 ? PlanetWarningModel.Evaluate(p.Altitude, p.ClosingSpeed, p.TangentialSpeed, p.TimeToImpact, p.PredictedImpactSpeed,
-                    ship.PlanetCrash.SafeLandingSpeed, p.StopDistance, p.NetClimbAccel, (int)p.Severity, p.MustBrake, p.Heating)
+                    ship.PlanetCrash.SafeLandingSpeed, p.StopDistance, p.NetClimbAccel, (int)p.Severity, p.MustBrake, p.Heating, trapAllowed)
                 : new PlanetWarning(0, string.Empty, false, false, 0f, 0f);
             string msg = w.Text;
             _warn.text = msg;
