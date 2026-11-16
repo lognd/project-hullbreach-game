@@ -7,7 +7,7 @@ outcome = "fixed"
 priority = "medium"
 reporter = "lognd"
 created = "2026-11-15T22:54:23Z"
-updated = "2026-11-16T01:37:45Z"
+updated = "2026-11-16T01:37:47Z"
 
 [[acceptance]]
 text = "The builder presenter turns the stress preview into a tint, a status line and a READY structure warning (StressPreviewPresenterTests, BuildPanelModelTests)"
