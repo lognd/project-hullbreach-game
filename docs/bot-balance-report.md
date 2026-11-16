@@ -101,3 +101,44 @@ Mirror matches: 7 of 18 A wins before, 8 of 18 after (slots alternate, so a 6-se
 Six seeds cannot separate Hard from Normal (Hard won 1 of 6 before and 2 of 6 after), so, as before, that ordering is not
 established at this size; Hard and Normal both beat Easy 4 of 6. The ordering the change does guarantee is in the storm
 skill itself (`StormAwarenessTests`): Hard reads the ring 12 s ahead, Normal 8 s, Easy 2 s.
+
+## Update: deterministic re-sweep on current main
+
+`ArenaMatch` is now deterministic per seed (PR #181; it used a random match id before, so the earlier before/after
+tables above carry run-to-run noise and are not exactly reproducible). This sweep is the first reproducible one:
+default storm (180 s grace, closes at 550 s), storm-aware bots, 600 s limit, 12 seeds per scenario (seeds 1 to 12, slots
+alternate on every other seed), 72 matches, zero crashes. Rerun with
+`tools/plaincs/bot_report.sh --storm --seeds 12 --seconds 600 --only "<scenario>"`; the same seeds give the same rows.
+
+| Scenario | A wins | B wins | even | A share | Core breach | Sudden death | Draw | Median length | p10 / p90 |
+|---|---|---|---|---|---|---|---|---|---|
+| Hard vs Easy | 9 | 3 | 0 | 75% | 7 | 5 | 0 | 299 s | 155 / 552 s |
+| Hard vs Normal | 7 | 5 | 0 | 58% | 9 | 3 | 0 | 214 s | 138 / 550 s |
+| Normal vs Easy | 12 | 0 | 0 | 100% | 7 | 5 | 0 | 347 s | 167 / 552 s |
+| Mirror Easy | 5 | 5 | 2 | 50% | 0 | 4 | 8 | 552 s | 551 / 552 s |
+| Mirror Normal | 7 | 4 | 1 | 64% | 8 | 3 | 1 | 294 s | 102 / 552 s |
+| Mirror Hard | 7 | 5 | 0 | 58% | 8 | 4 | 0 | 165 s | 80 / 552 s |
+| All 72 | 47 | 22 | 3 | | 39 (54%) | 24 (33%) | 9 (13%) | 341 s | 114 / 552 s |
+
+Core breaches take a median of 202 s overall. The storm decided 8 of the 24 sudden-death matches for the side the pilot
+was not supposed to favour (16 to 8), so it is not just a coin flip but it is a weak signal of skill.
+
+Reading it:
+
+- Most matches end by core breach (54%), in about 3 to 4 minutes (median 202 s; per scenario 135 to 262 s). Sudden death
+  at about 552 s decides a third; the storm is a backstop and not the main ending, as intended by the 180 s grace.
+- Ladder: Normal beat Easy 12 of 12, Hard beat Easy 9 of 12 (it has 3 sudden-death losses, all in matches where
+  Easy kept its core alive until the ring closed). Hard over Normal is 7 to 5, still inside the noise at n=12 (a 95%
+  interval is roughly 30 to 83%), so Hard over Normal is visible in direction only. Hard mirrors end fastest (median
+  165 s), so Hard is the most aggressive tier.
+- Mirrors: Easy 50%, Normal 64%, Hard 58% of the decided matches, all consistent with 50% at this size.
+- Draws: 9 of 72, 8 of them in Mirror Easy. Two Easy bots rarely reach each other's core (0 breaches in 12), so the
+  match sits until the storm closes and both die or time out. That is passivity, but only of the Easy tier, which is
+  meant to be weak; Normal and Hard mirrors have 1 draw in 24.
+- No tuning was made: the evidence (small samples, Hard over Normal within noise, draws confined to Easy mirrors) is not
+  clear enough for a change. A candidate if it is wanted later: make Easy attack when its target is in range during the
+  grace period, which would turn Easy mirror draws into core breaches; it needs its own before/after run.
+
+Compared with the earlier tables: breach share is 54% (the 6-seed run had 47%, the 30-match schedule C run 73%), and
+Hard vs Normal remains close to even in every run so far. The earlier numbers should be read with the randomised match
+id in mind.
