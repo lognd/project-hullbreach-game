@@ -19,6 +19,8 @@ namespace Hullbreach.Bots
         // 0 (pristine) to 1 (breached).
         public float CoreDamage;
         public bool Alive;
+        // Distance from the centre of mass to the outermost block (blocks), the ship's storm footprint.
+        public float Radius;
 
         // Handling, from the bot's own block layout.
         public float MaxForwardAccel;

@@ -96,7 +96,7 @@ namespace Hullbreach.Bots
             return batch;
         }
 
-        static ArenaSide Clone(ArenaSide s) => new ArenaSide { Difficulty = s.Difficulty, Personality = s.Personality, Ship = s.Ship };
+        static ArenaSide Clone(ArenaSide s) => new ArenaSide { Difficulty = s.Difficulty, Personality = s.Personality, Ship = s.Ship, IgnoreStorm = s.IgnoreStorm };
 
         // The standard scenario set: skill ladder, mirror, personality round robin.
         // frob:doc docs/reference/hullbreach-bots.md#balancereport

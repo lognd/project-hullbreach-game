@@ -149,7 +149,20 @@ namespace Hullbreach.Bots
                 return;
             }
 
-            if (TryScavenge(obs, enemy, out float2 pickupDir))
+            // Storm: outside the ring now, or about to be, within the profile's lead time. A ship that is merely about
+            // to be caught and has the enemy in range keeps fighting and gives ground toward the centre (below).
+            bool suddenDeath = obs.HasStorm && obs.Storm.IsSuddenDeath;
+            StormNeed storm = StormCheck(obs, out float2 stormPull);
+            bool enemyInRange = enemy.Visible && math.distance(enemy.Position, self.Position) < _profile.EngageRange * 1.5f;
+            if (storm == StormNeed.Outside || (storm == StormNeed.Soon && !enemyInRange))
+            {
+                _mode = BotMode.ReturnToRing;
+                DriveToward(self, stormPull, storm == StormNeed.Outside);
+                if (enemy.Visible) SolveAim(obs, enemy);
+                return;
+            }
+
+            if (!suddenDeath && TryScavenge(obs, enemy, out float2 pickupDir))
             {
                 _mode = BotMode.Scavenge;
                 _accelDir = pickupDir;
@@ -175,7 +188,8 @@ namespace Hullbreach.Bots
             SolveAim(obs, enemy);
 
             // Hysteresis on retreat: leave at the threshold, return once the fight has turned or range is safe.
-            bool hurt = self.CoreDamage >= _profile.RetreatCoreDamage && self.CoreDamage > enemy.CoreDamage + 0.05f;
+            // Sudden death takes both cores, so nobody runs: press the attack.
+            bool hurt = !suddenDeath && self.CoreDamage >= _profile.RetreatCoreDamage && self.CoreDamage > enemy.CoreDamage + 0.05f;
             if (hurt) _retreating = true;
             else if (_retreating && (self.CoreDamage < _profile.RetreatCoreDamage * 0.6f || range > _profile.EngageRange * 2.2f)) _retreating = false;
 
@@ -229,6 +243,23 @@ namespace Hullbreach.Bots
 
             // Hold range: a closing-speed controller toward the preferred distance, closer once the core looks hurt.
             float engageRange = _profile.EngageRange * (1f - _profile.Pressure * math.saturate(enemy.CoreDamage * 2f - 0.5f));
+            if (suddenDeath) engageRange = math.max(8f, engageRange * 0.5f);
+            if (storm == StormNeed.Soon)
+            {
+                // Fight on, drifting toward the safe centre: close in if the enemy lies that way, back off if it lies
+                // the other, otherwise burn sideways toward the centre.
+                float along = math.dot(stormPull, u);
+                if (along > 0.5f) engageRange *= 0.6f;
+                else if (along < -0.5f) engageRange *= 1.5f;
+                else
+                {
+                    _mode = BotMode.Strafe;
+                    _modeUntilTick = obs.Tick + 30;
+                    _strafeSign = math.dot(stormPull, new float2(-u.y, u.x)) >= 0f ? 1f : -1f;
+                    ApplyLateral(u, BotMode.Strafe);
+                    return;
+                }
+            }
             _mode = BotMode.Engage;
             _headDir = _aimValid ? _aimDir : u;
             _headAxisLocal = self.HasCannon ? self.AimLocal : new float2(0f, 1f);
@@ -381,7 +412,7 @@ namespace Hullbreach.Bots
             return false;
         }
 
-        // The arena edge and, when there is one, the shrinking storm ring.
+        // The arena edge (the storm ring is StormCheck).
         bool RingReturn(BotObservation obs, out float2 back)
         {
             back = float2.zero;
@@ -391,19 +422,45 @@ namespace Hullbreach.Bots
                 back = math.normalizesafe(obs.Bounds.Center - self.Position);
                 return true;
             }
-            if (!obs.HasStorm) return false;
+            return false;
+        }
+
+        enum StormNeed { None = 0, Soon = 1, Outside = 2 }
+
+        // Reads the ring the way a player would: where the edge is now and, within the profile's lead time, where it is
+        // about to be. Outside means blocks are taking damage now; Soon means they will within the lead time. The pull is
+        // the heading to the safe centre, with a per-skill steering error (Easy is sloppy, Hard is exact).
+        StormNeed StormCheck(BotObservation obs, out float2 pull)
+        {
+            pull = float2.zero;
+            if (!obs.HasStorm) return StormNeed.None;
             StormState storm = obs.Storm;
-            if (storm.IsSuddenDeath || storm.Radius <= 0f) return false;
-            float margin = 9f + 0.6f * math.length(self.Velocity);
-            float signed = storm.SignedDistance(self.Position);
-            bool preposition = storm.Stage == StormStage.Hold && storm.TicksUntilShrink < 450;
-            // Pre-position for the next ring a little before the shrink starts.
-            if (preposition) signed = math.min(signed, storm.NextRadius - math.length(self.Position - storm.NextCenter));
-            if (signed >= margin) return false;
-            float2 pull = storm.PullDirection(self.Position);
-            if (preposition) pull = math.normalizesafe(storm.NextCenter - self.Position, pull);
-            back = pull;
-            return true;
+            if (storm.IsSuddenDeath || storm.Radius <= 0f) return StormNeed.None;
+            SelfView self = obs.Self;
+            float leadTicks = _profile.StormLeadSeconds / math.max(1e-3f, obs.Dt);
+            float2 center = storm.Center;
+            float radius = storm.Radius;
+            if (storm.Stage == StormStage.Shrink && storm.TicksUntilNextStage > 0)
+            {
+                float f = math.min(1f, leadTicks / storm.TicksUntilNextStage);
+                center = math.lerp(storm.Center, storm.NextCenter, f);
+                radius = math.lerp(storm.Radius, storm.NextRadius, f);
+            }
+            else if (storm.TicksUntilShrink >= 0 && storm.TicksUntilShrink <= leadTicks)
+            {
+                center = storm.NextCenter;
+                radius = storm.NextRadius;
+            }
+            float footprint = _profile.StormExtentFactor * self.Radius;
+            float room = footprint + _profile.StormMargin + 0.6f * _profile.StormExtentFactor * math.length(self.Velocity);
+            bool outsideNow = storm.DamagePerTick > 0f && storm.SignedDistance(self.Position) < 0.5f * footprint;
+            bool outsideSoon = radius - math.length(self.Position - center) < room;
+            if (!outsideNow && !outsideSoon) return StormNeed.None;
+            float2 dir = math.normalizesafe(center - self.Position, new float2(0f, 1f));
+            float err = _rng.Gaussian() * _profile.StormSteerSigma;
+            float cs = math.cos(err), sn = math.sin(err);
+            pull = new float2(dir.x * cs - dir.y * sn, dir.x * sn + dir.y * cs);
+            return outsideNow ? StormNeed.Outside : StormNeed.Soon;
         }
 
         // Closest approach analysis for every hostile shot; true when one will pass within a ship's width.

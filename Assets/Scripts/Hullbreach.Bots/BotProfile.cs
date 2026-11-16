@@ -76,6 +76,19 @@ namespace Hullbreach.Bots
         // Extra range-keeping slack as a fraction of EngageRange.
         public float RangeSlack { get; private set; }
 
+        // Storm awareness. How far ahead (seconds) the bot reads the ring: a shrink that starts inside this window is
+        // already treated as the new edge. Easy only sees the ring about when it moves; Hard pre-positions early.
+        public float StormLeadSeconds { get; private set; }
+
+        // Spare room (blocks) kept inside the edge beyond the ship's own extent.
+        public float StormMargin { get; private set; }
+
+        // How much of the ship's radius (and coasting speed) the bot keeps inside the edge; Easy counts mostly its centre.
+        public float StormExtentFactor { get; private set; }
+
+        // Heading error (radians) on the way back to the safe centre, redrawn per decision.
+        public float StormSteerSigma { get; private set; }
+
         public static BotProfile For(BotDifficulty difficulty, BotPersonality personality)
         {
             var p = new BotProfile { Difficulty = difficulty, Personality = personality };
@@ -86,18 +99,21 @@ namespace Hullbreach.Bots
                     p.GravityAwareLead = false; p.TriggerDiscipline = 0.55f; p.FireToleranceScale = 2.2f;
                     p.DodgeSkill = 0f; p.PlanetLookahead = 3f; p.StrafePeriod = 0f; p.RangeSlack = 0.5f;
                     p.FlankPeriod = 0f; p.Pressure = 0f; p.ScavengeRange = 0f;
+                    p.StormLeadSeconds = 2f; p.StormMargin = 0f; p.StormExtentFactor = 0.3f; p.StormSteerSigma = 0.4f;
                     break;
                 case BotDifficulty.Normal:
                     p.ReactionTicks = 14; p.DecisionTicks = 9; p.AimSigma = 0.03f; p.LeadQuality = 0.85f;
                     p.GravityAwareLead = true; p.TriggerDiscipline = 0.85f; p.FireToleranceScale = 1.6f;
                     p.DodgeSkill = 0.2f; p.PlanetLookahead = 4f; p.StrafePeriod = 0f; p.RangeSlack = 0.3f;
                     p.FlankPeriod = 9f; p.Pressure = 0.25f; p.ScavengeRange = 22f;
+                    p.StormLeadSeconds = 8f; p.StormMargin = 2f; p.StormExtentFactor = 0.8f; p.StormSteerSigma = 0.12f;
                     break;
                 default:
                     p.ReactionTicks = 9; p.DecisionTicks = 9; p.AimSigma = 0.012f; p.LeadQuality = 1f;
                     p.GravityAwareLead = true; p.TriggerDiscipline = 0.95f; p.FireToleranceScale = 2.0f;
                     p.DodgeSkill = 0.3f; p.PlanetLookahead = 4f; p.StrafePeriod = 0f; p.RangeSlack = 0.3f;
                     p.FlankPeriod = 6f; p.Pressure = 0.4f; p.ScavengeRange = 30f;
+                    p.StormLeadSeconds = 12f; p.StormMargin = 3f; p.StormExtentFactor = 1f; p.StormSteerSigma = 0.04f;
                     break;
             }
             switch (personality)

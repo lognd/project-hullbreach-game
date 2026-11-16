@@ -138,6 +138,7 @@ namespace Hullbreach.Bots
                 Velocity = me.Velocity,
                 AngularVelocity = me.AngularVelocity,
                 CoreDamage = CoreDamage(me.Grid),
+                Radius = _caps.Radius,
                 Alive = Connectivity.ClassifyCore(me.Grid) != CoreState.Destroyed && me.Grid.Count > 0,
                 MaxForwardAccel = _caps.MaxForwardAccel,
                 MaxRetroAccel = _caps.MaxRetroAccel,

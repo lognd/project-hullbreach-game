@@ -33,6 +33,9 @@ namespace Hullbreach.Bots
         // Null means "build one from the seed, difficulty and personality".
         public BotShip Ship;
 
+        // True blinds the pilot to the storm (it still takes the damage); the baseline for measuring what awareness is worth.
+        public bool IgnoreStorm;
+
         public string Label => Difficulty + "/" + Personality;
     }
 
@@ -96,6 +99,8 @@ namespace Hullbreach.Bots
         public int DamageA, DamageB;
         public float CoreHealthA, CoreHealthB;
         public int BlocksA, BlocksB;
+        // Ticks each ship's centre of mass spent outside a damaging ring (sudden death not counted).
+        public int OutsideTicksA, OutsideTicksB;
         public string Error;
 
         // Wall time spent in ServerSimulation.Tick versus in the bots, in milliseconds.
@@ -180,14 +185,23 @@ namespace Hullbreach.Bots
             {
                 tick = (uint)i;
                 long t0 = System.Diagnostics.Stopwatch.GetTimestamp();
-                driverA.Drive(sim, tick, stormSource);
-                driverB.Drive(sim, tick, stormSource);
+                driverA.Drive(sim, tick, config.A.IgnoreStorm ? null : stormSource);
+                driverB.Drive(sim, tick, config.B.IgnoreStorm ? null : stormSource);
                 long t1 = System.Diagnostics.Stopwatch.GetTimestamp();
                 sim.Tick();
                 long t2 = System.Diagnostics.Stopwatch.GetTimestamp();
                 result.BotMs += (t1 - t0) * 1000.0 / System.Diagnostics.Stopwatch.Frequency;
                 result.SimMs += (t2 - t1) * 1000.0 / System.Diagnostics.Stopwatch.Frequency;
 
+                if (sim.ActiveStorm != null)
+                {
+                    StormState ring = sim.ActiveStorm.At(i);
+                    if (ring.DamagePerTick > 0f && !ring.IsSuddenDeath)
+                    {
+                        if (!ring.Contains(CenterOfMass(sim.Ships[peerA]))) result.OutsideTicksA++;
+                        if (!ring.Contains(CenterOfMass(sim.Ships[peerB]))) result.OutsideTicksB++;
+                    }
+                }
                 result.ModeTicksA[(int)pilotA.Mode]++;
                 result.ModeTicksB[(int)pilotB.Mode]++;
                 foreach (var shot in sim.Projectiles)
@@ -222,6 +236,8 @@ namespace Hullbreach.Bots
             result.CoreHealthA = CoreHealth(ships[peerA].Grid);
             result.CoreHealthB = CoreHealth(ships[peerB].Grid);
         }
+
+        static float2 CenterOfMass(ShipBody ship) => ship.LocalToWorld(ship.Grid.Mass.CenterOfMass);
 
         static string TraceLine(ServerSimulation sim, int tick, int peerA, int peerB, BotPilot pa, BotPilot pb)
         {
