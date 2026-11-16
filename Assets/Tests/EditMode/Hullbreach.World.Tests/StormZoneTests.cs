@@ -19,7 +19,9 @@ namespace Hullbreach.World.Tests
             // frob:tests Assets/Scripts/Hullbreach.World/StormZone.cs::Hullbreach.World.StormConfig.Validate kind="unit"
             StormConfig c = StormConfig.Default();
             Assert.IsNull(c.Validate());
-            Assert.LessOrEqual(c.TotalSeconds(), 300f);
+            // Fights end in about two to five minutes (docs/bot-balance-report.md): the ring closes late, inside the limit.
+            Assert.GreaterOrEqual(c.TotalSeconds(), 400f, "the storm must not cut fights short");
+            Assert.LessOrEqual(c.TotalSeconds(), 560f);
             Assert.Less(c.TotalSeconds(), 600f, "server MatchTimeLimitSeconds");
             Assert.AreEqual((int)(c.TotalSeconds() * c.TickRate), Make().SuddenDeathTick);
         }
@@ -54,8 +56,8 @@ namespace Hullbreach.World.Tests
             Assert.AreEqual(StormStage.Grace, s.Stage);
             Assert.AreEqual(100f, s.Radius);
             Assert.AreEqual(0f, s.DamageFor(new float2(500f, 0f)));
-            Assert.AreEqual(30 * 50, s.TicksUntilNextStage);
-            Assert.AreEqual(55 * 50, s.TicksUntilShrink);
+            Assert.AreEqual(180 * 50, s.TicksUntilNextStage);
+            Assert.AreEqual(230 * 50, s.TicksUntilShrink);
         }
 
         [Test]
@@ -63,13 +65,13 @@ namespace Hullbreach.World.Tests
         {
             // frob:tests Assets/Scripts/Hullbreach.World/StormZone.cs::Hullbreach.World.StormZone.At kind="unit"
             StormZone z = Make();
-            Assert.AreEqual(StormStage.Grace, z.At(1499).Stage);
-            Assert.AreEqual(StormStage.Hold, z.At(1500).Stage);
-            Assert.AreEqual(0, z.At(1500).PhaseIndex);
-            Assert.AreEqual(StormStage.Hold, z.At(2749).Stage);
-            Assert.AreEqual(StormStage.Shrink, z.At(2750).Stage);
-            Assert.AreEqual(1, z.At(1500 + 55 * 50).PhaseIndex, "phase 1 holds right after phase 0 shrink");
-            Assert.AreEqual(StormStage.Hold, z.At(1500 + 55 * 50).Stage);
+            Assert.AreEqual(StormStage.Grace, z.At(8999).Stage);
+            Assert.AreEqual(StormStage.Hold, z.At(9000).Stage);
+            Assert.AreEqual(0, z.At(9000).PhaseIndex);
+            Assert.AreEqual(StormStage.Hold, z.At(11499).Stage);
+            Assert.AreEqual(StormStage.Shrink, z.At(11500).Stage);
+            Assert.AreEqual(1, z.At(9000 + 80 * 50).PhaseIndex, "phase 1 holds right after phase 0 shrink");
+            Assert.AreEqual(StormStage.Hold, z.At(9000 + 80 * 50).Stage);
             Assert.AreEqual(StormStage.Shrink, z.At(z.SuddenDeathTick - 1).Stage);
             Assert.AreEqual(StormStage.SuddenDeath, z.At(z.SuddenDeathTick).Stage);
         }
@@ -79,7 +81,7 @@ namespace Hullbreach.World.Tests
         {
             // frob:tests Assets/Scripts/Hullbreach.World/StormZone.cs::Hullbreach.World.StormZone.At kind="unit"
             StormZone z = Make();
-            int start = 2750, len = 30 * 50;
+            int start = 11500, len = 30 * 50;
             Assert.AreEqual(100f, z.At(start).Radius, 1e-4f);
             Assert.AreEqual(85f, z.At(start + len / 2).Radius, 1e-3f);
             Assert.AreEqual(70f, z.At(start + len).Radius, 1e-4f);
@@ -93,12 +95,12 @@ namespace Hullbreach.World.Tests
         public void Hold_ReportsNextExtentsAndCountdown()
         {
             // frob:tests Assets/Scripts/Hullbreach.World/StormZone.cs::Hullbreach.World.StormState.TicksUntilShrink kind="unit"
-            StormState s = Make().At(1500 + 100);
+            StormState s = Make().At(9000 + 100);
             Assert.AreEqual(StormStage.Hold, s.Stage);
             Assert.AreEqual(100f, s.Radius);
             Assert.AreEqual(70f, s.NextRadius);
             Assert.AreEqual(s.TicksUntilNextStage, s.TicksUntilShrink);
-            Assert.AreEqual(25 * 50 - 100, s.TicksUntilShrink);
+            Assert.AreEqual(50 * 50 - 100, s.TicksUntilShrink);
         }
 
         [Test]
@@ -107,11 +109,11 @@ namespace Hullbreach.World.Tests
             // frob:tests Assets/Scripts/Hullbreach.World/StormZone.cs::Hullbreach.World.StormState.DamageFor kind="unit"
             // frob:tests Assets/Scripts/Hullbreach.World/StormZone.cs::Hullbreach.World.StormState.InWarningBand kind="unit"
             StormZone z = Make();
-            StormState p0 = z.At(1600), p1 = z.At(1500 + 55 * 50 + 10);
+            StormState p0 = z.At(9100), p1 = z.At(9000 + 80 * 50 + 10);
             float2 inside = new float2(10f, 0f), outside = new float2(150f, 0f), band = new float2(95f, 0f);
             Assert.AreEqual(0f, p0.DamageFor(inside));
-            Assert.AreEqual(8f / 50f, p0.DamageFor(outside), 1e-6f);
-            Assert.AreEqual(16f / 50f, p1.DamageFor(new float2(500f, 0f)), 1e-6f);
+            Assert.AreEqual(1f / 50f, p0.DamageFor(outside), 1e-6f);
+            Assert.AreEqual(2f / 50f, p1.DamageFor(new float2(500f, 0f)), 1e-6f);
             Assert.IsTrue(p0.InWarningBand(band));
             Assert.AreEqual(0f, p0.DamageFor(band));
             Assert.IsFalse(p0.InWarningBand(inside));
@@ -127,8 +129,8 @@ namespace Hullbreach.World.Tests
             Assert.AreEqual(0f, z.At(z.SuddenDeathTick - 1).DamageFor(far, isCore: true));
             StormState sd = z.At(z.SuddenDeathTick);
             Assert.IsTrue(sd.IsSuddenDeath);
-            Assert.AreEqual(200f / 50f, sd.DamageFor(far, isCore: true), 1e-6f);
-            Assert.AreEqual(200f / 50f, sd.DamageFor(z.FinalCenter, isCore: true), 1e-6f,
+            Assert.AreEqual(100f / 50f, sd.DamageFor(far, isCore: true), 1e-6f);
+            Assert.AreEqual(100f / 50f, sd.DamageFor(z.FinalCenter, isCore: true), 1e-6f,
                 "a closed ring has no safe point");
             Assert.AreEqual(-1, sd.TicksUntilShrink);
             Assert.AreEqual(-1, sd.TicksUntilNextStage);

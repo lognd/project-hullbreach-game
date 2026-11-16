@@ -52,3 +52,30 @@ join. (Before this fix the default storm ran in every match, including the ones 
 Scripted held thrust, held steer, both together, tap and alternating inputs, and a real bot match with firing
 off, never push a bot design past 0.64 of its stress limit, so no flight-model change was needed. With the
 default storm, sudden death (at 284 s) decides most matches, so the storm schedule is the next thing to tune.
+
+## Storm tuning
+
+Goal: most default matches end by core breach in about two to five minutes, and the storm only breaks genuine
+stalemates. With no storm at 600 s (the server time limit) 72% of 120 matches end by core breach, median 313 s,
+so the ring must not close before about 500 s and must not strip blocks early enough to disarm the ships.
+
+Three schedules, all with the 20 s minimum warning kept (every hold is at least 25 s). Sample sizes differ, so
+read the trends: the first two are 20 seeds per scenario over all six scenarios (120 matches), the third is 10
+seeds in three scenarios (30 matches), because the machine was short of memory. 600 s limit.
+
+| Schedule (grace, damage per phase, sudden death, closes at) | Matches | Core breach | Storm sudden death | Draw | Stall | Median length |
+|---|---|---|---|---|---|---|
+| Old: 30 s, 8/16/32/64/128, 200 dps, 284 s (300 s limit, 240 matches) | 240 | 14% | 70% | 17% | 78% | 285 s |
+| A: 90 s, 4/8/16/32/64, 150 dps, 460 s | 120 | 38% | 48% | 14% | 59% | 460 s |
+| B: 120 s, 2/4/8/16/32, 120 dps, 490 s (Hard vs Normal, Mirror Normal, Hard vs Easy) | 30 | 47% | 50% | 3% | 40% | 490 s |
+| C (chosen): 180 s, 1/2/4/8/16, 100 dps, 550 s (same three scenarios) | 30 | 73% | 27% | 0% | 27% | 217 s |
+| No storm, 600 s (reference) | 120 | 72% | n/a | 12% | 24% | 313 s |
+
+C per scenario (10 seeds): Hard vs Easy 70% breach, Hard vs Normal 80%, Mirror Normal 70%; the rest ended by
+sudden death at 552 s. Gentle early damage matters as much as the late ring: early block loss disarms both ships
+and turns fights into stalemates.
+
+Not fixed here, to be honest about it: Hard vs Normal is close to even (Hard won 4 of 10 here, 5 of 10 in
+the 600 s no-storm run, 8 of 20 in the earlier one), so the Hard over Normal ordering is not established at
+these sample sizes. Mirror matches sit near 50%. Bots spend about half of all ticks in the planet-avoidance
+layer; shrinking its margin from 6 to 3 made no clear difference and was not kept.
