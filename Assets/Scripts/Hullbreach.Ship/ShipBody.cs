@@ -651,6 +651,9 @@ namespace Hullbreach.Ship
             result.Heating = result.AtmosphereDensity > 0f && speed > cfg.HeatSpeed;
 
             float inward = -math.dot(Gravity.AccelerationAt(bestCenter), normal);
+            float thrust = ThrusterKeys.Length * ThrustPerBlock / Grid.Mass.Total;
+            float net = thrust - inward;
+            result.NetClimbAccel = net;
             const float MinClosing = 0.25f;
             if (closing > MinClosing)
             {
@@ -659,8 +662,6 @@ namespace Hullbreach.Ship
                 if (result.TimeToImpact <= cfg.WarningSeconds)
                     result.Severity = PlanetProximity.Classify(cfg, impact);
 
-                float thrust = ThrusterKeys.Length * ThrustPerBlock / Grid.Mass.Total;
-                float net = thrust - inward;
                 result.StopDistance = net > 1e-3f ? closing * closing / (2f * net) : float.PositiveInfinity;
                 result.MustBrake = result.Severity >= ImpactSeverity.Caution && result.StopDistance * 1.3f >= result.Altitude;
             }

@@ -13,6 +13,9 @@ namespace Hullbreach.Game
         System.Func<Hullbreach.Ship.ShipBody> _body;
         System.Func<bool> _assistOn;
         TextMeshProUGUI _warn, _assist, _hint;
+        Image _edge, _arrow;
+        float _nextBeep;
+        static Sprite _arrowSprite;
 
         public static void Ensure(ShipController ship)
         {
@@ -39,6 +42,36 @@ namespace Hullbreach.Game
             _hint = Text("Hint", 18, FontStyles.Normal, new Vector2(0.5f, 0.025f));
             _hint.text = FlightWarningModel.ControlsHint;
             _hint.color = new Color(0.78f, 0.84f, 0.94f, 0.85f);
+            _warn.rectTransform.sizeDelta = new Vector2(1100f, 62f);
+
+            // Orange-red edge tint and an arrow pointing away from the planet (PlanetWarningModel decides both).
+            _edge = EdgeVignette.Create(transform, "PlanetEdge");
+            _edge.transform.SetAsFirstSibling();
+            var ago = new GameObject("PullAwayArrow", typeof(RectTransform), typeof(Image));
+            ago.transform.SetParent(transform, false);
+            _arrow = ago.GetComponent<Image>();
+            _arrow.sprite = ArrowSprite(); _arrow.raycastTarget = false; _arrow.enabled = false;
+            var art = (RectTransform)ago.transform;
+            art.anchorMin = art.anchorMax = new Vector2(0.5f, 0.64f);
+            art.pivot = new Vector2(0.5f, 0.5f);
+            art.sizeDelta = new Vector2(64f, 64f);
+        }
+
+        // A white upward triangle (tip at the top), drawn once.
+        static Sprite ArrowSprite()
+        {
+            if (_arrowSprite != null) return _arrowSprite;
+            const int N = 32;
+            var tex = new Texture2D(N, N, TextureFormat.RGBA32, false) { wrapMode = TextureWrapMode.Clamp, name = "PullAwayArrow" };
+            for (int y = 0; y < N; y++)
+            {
+                float half = (1f - (y + 0.5f) / N) * 0.5f * N; // wide at the bottom, a point at the top
+                for (int x = 0; x < N; x++)
+                    tex.SetPixel(x, y, new Color(1f, 1f, 1f, Mathf.Abs(x + 0.5f - N * 0.5f) <= half ? 1f : 0f));
+            }
+            tex.Apply();
+            _arrowSprite = Sprite.Create(tex, new Rect(0, 0, N, N), new Vector2(0.5f, 0.5f), 100f);
+            return _arrowSprite;
         }
 
         TextMeshProUGUI Text(string name, float size, FontStyles style, Vector2 anchor)
@@ -55,17 +88,45 @@ namespace Hullbreach.Game
         {
             var ship = _body?.Invoke();
             // No ship to fly (the build phase, or between rounds): no flight controls hint either.
-            if (ship == null) { _warn.text = _assist.text = _hint.text = string.Empty; return; }
+            if (ship == null)
+            {
+                _warn.text = _assist.text = _hint.text = string.Empty;
+                _edge.color = new Color(1f, 0.35f, 0.1f, 0f); _arrow.enabled = false;
+                return;
+            }
             _hint.text = FlightWarningModel.ControlsHint;
             var p = ship.QueryPlanetProximity();
-            string msg = p.HasBody ? FlightWarningModel.Text((int)p.Severity, p.MustBrake, p.Heating, p.TimeToImpact) : string.Empty;
+            PlanetWarning w = p.HasBody
+                ? PlanetWarningModel.Evaluate(p.Altitude, p.ClosingSpeed, p.TangentialSpeed, p.TimeToImpact, p.PredictedImpactSpeed,
+                    ship.PlanetCrash.SafeLandingSpeed, p.StopDistance, p.NetClimbAccel, (int)p.Severity, p.MustBrake, p.Heating)
+                : new PlanetWarning(0, string.Empty, false, false, 0f, 0f);
+            string msg = w.Text;
             _warn.text = msg;
+            float pulse = 1f;
             if (msg.Length > 0)
             {
-                FlightWarningModel.Colour((int)p.Severity, out float r, out float g, out float b);
-                float hz = FlightWarningModel.BlinkHz((int)p.Severity);
-                float a = hz <= 0f ? 1f : 0.55f + 0.45f * (0.5f + 0.5f * Mathf.Sin(Time.unscaledTime * hz * 2f * Mathf.PI));
-                _warn.color = new Color(r, g, b, a);
+                int level = w.Level;
+                FlightWarningModel.Colour(level, out float r, out float g, out float b);
+                float hz = FlightWarningModel.BlinkHz(level);
+                pulse = hz <= 0f ? 1f : 0.55f + 0.45f * (0.5f + 0.5f * Mathf.Sin(Time.unscaledTime * hz * 2f * Mathf.PI));
+                _warn.color = new Color(r, g, b, pulse);
+            }
+
+            // Edge tint (breathes with the text) and the arrow away from the planet.
+            _edge.color = new Color(1f, 0.35f, 0.1f, w.EdgeAlpha * pulse);
+            _arrow.enabled = w.ShowArrow;
+            if (w.ShowArrow)
+            {
+                float roll = Camera.main != null ? Camera.main.transform.eulerAngles.z : 0f;
+                _arrow.rectTransform.localRotation = Quaternion.Euler(0f, 0f, PlanetWarningModel.ArrowAngleDegrees(p.SurfaceNormal.x, p.SurfaceNormal.y, roll));
+                _arrow.color = new Color(1f, 0.55f, 0.2f, 0.4f + 0.6f * pulse);
+            }
+
+            // A beep that quickens with the danger (silent below the danger level).
+            if (w.BeepInterval > 0f && Time.unscaledTime >= _nextBeep)
+            {
+                _nextBeep = Time.unscaledTime + w.BeepInterval;
+                FeelFx.PlayWarningBeep(w.Level >= 4 ? 1f : 0.5f);
             }
             bool on = _assistOn != null && _assistOn();
             _assist.text = FlightWarningModel.AssistText(on);

@@ -132,6 +132,7 @@ namespace Hullbreach.NetCode.Entities
         {
             Unbind();
             _model = model;
+            HullbreachBotPrefs.NoteMatchCompleted();
             _rematch.onClick.AddListener(model.Rematch);
             _lobby.onClick.AddListener(model.ReturnToLobby);
             _headline.text = model.Headline;
