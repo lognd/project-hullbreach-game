@@ -460,6 +460,98 @@ Convert the P0 items to tickets once those land.
 | P2-6 | Pause menu (offline) and ping/connection indicator | Pause freezes sim; ping turns amber at > 120 ms | S | yes | stevendangkhoi, mcnairrobotics |
 | P2-7 | Opponent ship copy as view-only silhouette/design import | Import button creates a valid design from results | S | no | stevendangkhoi |
 
+## 4. Newcomer feedback pass (editor playtest)
+
+A real-keystroke playtest (60-point template against the Normal bot) found: the
+player lost the 6-minute fight, core damage arrived in unannounced bursts
+(49% to 8% in about 9 s), floating damage numbers clumped when several hits
+landed together, and the ship repeatedly came to rest on a planet. These are the
+engine-free rules and the thin views that draw them.
+
+### Newcomer defaults
+
+`HubMenuModel.DefaultBotTier(remembered, anyMatchCompleted, fallbackTier)`: the
+last difficulty the player started wins; with none stored, a player with no
+completed match starts on EASY; otherwise the rating suggestion
+(`QueueScreenModel.SuggestedBotTier`) is used. `HullbreachBotPrefs`
+(PlayerPrefs `hullbreach.bot_tier`, `hullbreach.matches_completed`) stores the
+tier when a non-trial bot match starts and counts a match when the results
+screen shows. The Play hub and the queue bot offer star the default and label
+each button with its one-liner from `HubMenuModel.BotTierDescriptions`:
+"Easy: forgiving practice", "Normal: a fair fight", "Hard: expert". The Cadet
+Trial is unchanged.
+
+<!-- describes: Assets/Scripts/Hullbreach.Hud/HubMenuModel.cs::HubMenuModel.DefaultBotTier -->
+<!-- describes: Assets/Scripts/Hullbreach.Hud/HubMenuModel.cs::HubMenuModel.BotTierDescriptions -->
+<!-- describes: Assets/Scripts/Hullbreach.Hud/HubMenuModel.cs::HubMenuModel.TierLabel -->
+<!-- describes: Assets/Scripts/Hullbreach.Hud/HubMenuModel.cs::HubMenuModel.TierLabelWithHint -->
+<!-- describes: Assets/Scripts/Hullbreach.Hud/HubMenuModel.cs::HubMenuModel.TierDescription -->
+
+### Core-hit feedback
+
+`CoreAlertModel` is fed the local core health (0..1) each frame by
+`HullbreachMatchHudView`. A drop of at least 0.4% is a hit: the red screen-edge
+vignette flashes (stronger for bigger hits, 0.7 s fade), "CORE HIT" shows under
+the core bar, and the core alarm plays at most once per second
+(`AlarmCooldown`). At or below 35% (`LowThreshold`) the edge keeps a slow pulse,
+the banner reads "CORE LOW" (the older "CORE CRITICAL" still wins at 25%) and a
+quieter beep repeats every 2 s. The first reading is only a baseline and a rise
+(repair, new match) re-baselines without alerting.
+
+<!-- describes: Assets/Scripts/Hullbreach.Hud/CoreAlertModel.cs::CoreAlertModel -->
+<!-- describes: Assets/Scripts/Hullbreach.Hud/CoreAlertModel.cs::CoreAlertModel.IsLow -->
+<!-- describes: Assets/Scripts/Hullbreach.Hud/CoreAlertModel.cs::CoreAlertModel.LastHit -->
+<!-- describes: Assets/Scripts/Hullbreach.Hud/CoreAlertModel.cs::CoreAlertModel.Reset -->
+<!-- describes: Assets/Scripts/Hullbreach.Hud/CoreAlertModel.cs::CoreAlertModel.Observe -->
+<!-- describes: Assets/Scripts/Hullbreach.Hud/CoreAlertModel.cs::CoreAlertModel.TakeAlarm -->
+<!-- describes: Assets/Scripts/Hullbreach.Hud/CoreAlertModel.cs::CoreAlertModel.TakeLowBeep -->
+<!-- describes: Assets/Scripts/Hullbreach.Hud/CoreAlertModel.cs::CoreAlertModel.FlashAlpha -->
+<!-- describes: Assets/Scripts/Hullbreach.Hud/CoreAlertModel.cs::CoreAlertModel.HitTextVisible -->
+<!-- describes: Assets/Scripts/Hullbreach.Hud/CoreAlertModel.cs::CoreAlertModel.LowPulse -->
+<!-- describes: Assets/Scripts/Hullbreach.Game/EdgeVignette.cs::EdgeVignette -->
+
+### Damage-number declutter
+
+`DamageNumberAggregator` merges a hit into a live number when it lands within
+0.25 s of that number's latest hit and 1.5 world units of it (the number shows
+the running sum and restarts its fade; it stops absorbing 0.9 s after birth).
+Other numbers born within 0.4 s of each other fan out by a deterministic
+horizontal step pattern 0, +1, -1, +2, -2 (0.7 units each); the random sideways
+drift is gone. `FeelFx.DoImpact` calls it.
+
+<!-- describes: Assets/Scripts/Hullbreach.Hud/DamageNumberAggregator.cs::DamageNumberAggregator -->
+<!-- describes: Assets/Scripts/Hullbreach.Hud/DamageNumberAggregator.cs::DamageNumberAggregator.Result -->
+<!-- describes: Assets/Scripts/Hullbreach.Hud/DamageNumberAggregator.cs::DamageNumberAggregator.LiveCount -->
+<!-- describes: Assets/Scripts/Hullbreach.Hud/DamageNumberAggregator.cs::DamageNumberAggregator.Clear -->
+<!-- describes: Assets/Scripts/Hullbreach.Hud/DamageNumberAggregator.cs::DamageNumberAggregator.Add -->
+
+### Planet warning
+
+Review of the existing warning (PR #133/#136): it fired only when the ship was
+closing and the predicted touchdown was within `PlanetCrashConfig.WarningSeconds`
+(6 s), so a heavy or fast ship could be past the point of no return before it
+spoke, a ship resting on or hovering over a surface (closing about 0) got no
+message at all (the gravity trap the playtest hit), and there was no sound.
+`PlanetWarningModel.Evaluate` now adds: a "Terrain" notice up to 10 s out (or as
+soon as the stop distance with a 1.5x margin reaches the gap) for any
+touchdown above the safe landing speed, "BRAKE" once the stop distance with a
+1.3x margin reaches the gap, a "GRAVITY TRAP - THRUST AWAY" state when the ship
+is within 12 units of the surface, not climbing away and its thrusters cannot
+beat gravity (`PlanetProximity.NetClimbAccel` of 0.5 or less), and a silent
+"on the surface" hint when landed. `FlightHudView` draws an orange edge tint
+(0.15 to 0.45 by level), an arrow pointing away from the planet (the surface
+normal, corrected for camera roll), and plays the warning beep every 0.35 s
+(level 4) or 0.7 s (level 3 and the trap).
+
+<!-- describes: Assets/Scripts/Hullbreach.Hud/PlanetWarningModel.cs::PlanetWarning -->
+<!-- describes: Assets/Scripts/Hullbreach.Hud/PlanetWarningModel.cs::PlanetWarningModel -->
+<!-- describes: Assets/Scripts/Hullbreach.Hud/PlanetWarningModel.cs::PlanetWarningModel.Evaluate -->
+<!-- describes: Assets/Scripts/Hullbreach.Hud/PlanetWarningModel.cs::PlanetWarningModel.ArrowAngleDegrees -->
+
+Needs editor verification: the vignette and arrow look and size, the "CORE HIT"
+position beside the banner, two-line difficulty buttons fitting, alarm and beep
+loudness, and that the trap warning does not nag on an intended landing.
+
 ## What this pass could not assess
 
 Without playing the game I could not judge: how handling actually feels

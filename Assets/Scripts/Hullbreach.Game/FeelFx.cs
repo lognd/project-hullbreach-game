@@ -91,6 +91,18 @@ namespace Hullbreach.Game
             if (settings.SoundEffects && _inst._click == null) _inst.BuildAudio();
         }
 
+        // Core-hit alarm (low = the quieter, lower repeat used while the core stays low).
+        public static void PlayCoreAlarm(bool low)
+        {
+            var f = I; if (f != null) f.Play(f._alarm, low ? 0.3f : 0.5f, low ? 0.8f : 1f);
+        }
+
+        // Short beep for the planet warning; `urgency` 0..1 raises the pitch.
+        public static void PlayWarningBeep(float urgency)
+        {
+            var f = I; if (f != null) f.Play(f._beep, 0.5f, 1.1f + 0.4f * Mathf.Clamp01(urgency));
+        }
+
         public static void PlayClick()
         {
             var f = I; if (f != null) f.Play(f._click, 0.45f, 1f);
@@ -110,12 +122,13 @@ namespace Hullbreach.Game
         struct Fx
         {
             public Transform T; public SpriteRenderer Sr; public TextMesh Text;
-            public Vector2 Vel; public float Age, Life, Scale0, Scale1; public Color Color; public bool Alive; public float Drag;
+            public Vector2 Vel; public float Age, Life, Scale0, Scale1; public Color Color; public bool Alive; public float Drag; public int NumId;
         }
         readonly List<Fx> _fx = new List<Fx>(MaxFx);
         readonly Stack<Transform> _freeSprites = new Stack<Transform>();
         readonly Stack<Transform> _freeTexts = new Stack<Transform>();
         Font _font;
+        readonly DamageNumberAggregator _numbers = new DamageNumberAggregator();
 
         AudioSource[] _voices; int _nextVoice;
         AudioSource _thrust; float _thrustVol;
@@ -279,14 +292,28 @@ namespace Hullbreach.Game
                 Spark(pos, v, Random.Range(0.2f, 0.45f), Random.Range(0.1f, 0.22f), i % 3 == 0 ? new Color(1f, 1f, 0.8f) : new Color(1f, 0.6f, 0.2f));
             }
 
-            // Damage number floats up.
+            // Damage number floats up. Hits landing together at the same spot are summed into one number; the rest
+            // fan out sideways by a deterministic offset (DamageNumberAggregator).
+            var num = _numbers.Add(pos.x, pos.y, damage, false, Time.unscaledTime);
+            if (num.Merged)
+            {
+                for (int i = 0; i < _fx.Count; i++)
+                {
+                    if (_fx[i].NumId != num.Id || _fx[i].Text == null) continue;
+                    var m = _fx[i];
+                    m.Age = 0f;
+                    m.Text.text = FeelModel.DamageText(num.Sum, num.Destroyed);
+                    _fx[i] = m;
+                    return;
+                }
+            }
             var tt = GetText();
-            tt.position = pos + Vector2.up * 0.6f;
+            tt.position = pos + Vector2.up * 0.6f + Vector2.right * num.OffsetX;
             var tm = tt.GetComponent<TextMesh>();
-            tm.text = FeelModel.DamageText(damage, false);
+            tm.text = FeelModel.DamageText(num.Sum, num.Destroyed);
             tm.color = onPlayer ? new Color(1f, 0.4f, 0.35f) : new Color(1f, 0.95f, 0.5f);
             tt.localScale = Vector3.one;
-            if (!Spawn(new Fx { T = tt, Text = tm, Vel = new Vector2(Random.Range(-0.6f, 0.6f), 3.2f), Life = 0.8f, Scale0 = 1f, Scale1 = 1f, Color = tm.color, Alive = true, Drag = 2f }))
+            if (!Spawn(new Fx { T = tt, Text = tm, Vel = new Vector2(0f, 3.2f), Life = 0.8f, Scale0 = 1f, Scale1 = 1f, Color = tm.color, Alive = true, Drag = 2f, NumId = num.Id }))
             { tt.gameObject.SetActive(false); _freeTexts.Push(tt); }
         }
 
