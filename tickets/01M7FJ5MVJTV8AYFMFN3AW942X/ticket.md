@@ -2,12 +2,13 @@
 id = "01M7FJ5MVJTV8AYFMFN3AW942X"
 title = "Bot storm awareness (pilot flies back inside the zone)"
 type = "task"
-category = "todo"
+category = "done"
+outcome = "fixed"
 priority = "medium"
 points = 3
 reporter = "lognd"
 created = "2026-11-15T12:16:03Z"
-updated = "2026-11-16T01:35:35Z"
+updated = "2026-11-16T01:37:44Z"
 labels = ["game"]
 
 [[acceptance]]
