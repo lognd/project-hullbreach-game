@@ -7,12 +7,12 @@ priority = "medium"
 points = 3
 reporter = "lognd"
 created = "2026-11-15T12:16:03Z"
-updated = "2026-11-15T12:16:03Z"
+updated = "2026-11-16T01:34:48Z"
 labels = ["game"]
 
 [[acceptance]]
 text = "A client that connects mid-match receives the current crates and salvage as a snapshot"
-bound = false
+bound = true
 
 [[acceptance]]
 text = "A ServerSimulation test covers the snapshot"
