@@ -120,8 +120,8 @@ alternate on every other seed), 72 matches, zero crashes. Rerun with
 | Mirror Hard | 7 | 5 | 0 | 58% | 8 | 4 | 0 | 165 s | 80 / 552 s |
 | All 72 | 47 | 22 | 3 | | 39 (54%) | 24 (33%) | 9 (13%) | 341 s | 114 / 552 s |
 
-Core breaches take a median of 202 s overall. The storm decided 8 of the 24 sudden-death matches for the side the pilot
-was not supposed to favour (16 to 8), so it is not just a coin flip but it is a weak signal of skill.
+Core breaches take a median of 202 s overall. Of the 24 sudden-death matches the first-listed (higher-skill or A) side won 16 and the other 8, so sudden death
+is a weak signal of skill, not a coin flip.
 
 Reading it:
 
