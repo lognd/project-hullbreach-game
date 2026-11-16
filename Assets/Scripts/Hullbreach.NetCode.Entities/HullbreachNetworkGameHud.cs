@@ -48,6 +48,7 @@ namespace Hullbreach.NetCode.Entities
         async void Leave()
         {
             leaveButton.interactable = false;
+            HullbreachNetCodeClient.SendLeave(); // a deliberate leave: the server frees the ship at once
             if (HullbreachMatchExit.IsLocalMatch && !HullbreachDirectLaunch.Plan.IsDirect && HullbreachResultsOverlay.Instance != null)
             {
                 HullbreachResultsOverlay.Instance.LeaveLocalToLobby(); // a bot or LAN match: rebuild the worlds, then the lobby

@@ -193,6 +193,21 @@ namespace Hullbreach.Net
         }
 
         readonly Dictionary<int, string> _identities = new Dictionary<int, string>();
+        readonly Dictionary<int, string> _addresses = new Dictionary<int, string>();
+
+        /// <summary>
+        /// Records the remote host (IP only, no port: the port changes on every reconnect) of a peer's connection. It is the
+        /// fallback identity guard for a held ship whose owner is unknown (a LAN, where no platform user id exists): when
+        /// either side has no identity and both addresses are known, only the same address may reclaim the ship. Residual
+        /// limit: a third player behind the same NAT or on the same machine shares the address and can still take it.
+        /// Null or empty clears it; a peer with no address is not constrained.
+        /// </summary>
+        // frob:doc docs/reference/hullbreach-net.md#serversimulation
+        public void SetRemoteAddress(int peer, string address)
+        {
+            if (string.IsNullOrEmpty(address)) _addresses.Remove(peer);
+            else _addresses[peer] = address;
+        }
 
         // The skin id (ShipSkins) a peer presented with its ticket; 0 (default) when none, unknown, or a bot.
         // frob:ticket 01M5XACF0K75AVMM0MCNDDWXNE
@@ -733,6 +748,7 @@ namespace Hullbreach.Net
             heldPeer = -1;
             int heldCount = 0, anonymous = -1;
             _identities.TryGetValue(peer, out string mine);
+            _addresses.TryGetValue(peer, out string myAddress);
             var ids = new List<int>(_peers.Keys);
             ids.Sort();
             foreach (int id in ids)
@@ -745,6 +761,12 @@ namespace Hullbreach.Net
                     if (mine != theirs) continue;
                     heldPeer = id;
                     return true;
+                }
+                // Identity unknown on at least one side: fall back to the remote address when both are known.
+                if (myAddress != null && _addresses.TryGetValue(id, out string theirAddress) && myAddress != theirAddress)
+                {
+                    heldCount--; // not a candidate for this joiner
+                    continue;
                 }
                 anonymous = id;
             }
@@ -759,6 +781,7 @@ namespace Hullbreach.Net
             PeerState state = _peers[oldPeer];
             _peers.Remove(oldPeer);
             _identities.Remove(oldPeer);
+            _addresses.Remove(oldPeer);
             _skins.Remove(oldPeer);
             _ticketed.Remove(oldPeer);
             state.Held = false;
@@ -806,6 +829,7 @@ namespace Hullbreach.Net
                 _ticketed.Remove(peer);
                 _skins.Remove(peer);
                 _identities.Remove(peer);
+                _addresses.Remove(peer);
             }
         }
 
@@ -825,6 +849,7 @@ namespace Hullbreach.Net
             _ticketed.Remove(peer);
             _skins.Remove(peer);
             _identities.Remove(peer);
+            _addresses.Remove(peer);
             _gate.RemovePeer(peer);
             Match?.Disconnect(peer);
             AnnounceMatchEnd();

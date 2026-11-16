@@ -210,7 +210,11 @@ namespace Hullbreach.NetCode.Entities
         }
 
         // A LAN or direct match: rebuild the worlds and go back to the lobby, where hosting again is one click.
-        public void LeaveLocalToLobby() => StartCoroutine(LocalRematch());
+        public void LeaveLocalToLobby()
+        {
+            HullbreachNetCodeClient.SendLeave();
+            StartCoroutine(LocalRematch());
+        }
 
         IEnumerator LocalRematch()
         {
@@ -220,6 +224,7 @@ namespace Hullbreach.NetCode.Entities
 
         void ToLobby()
         {
+            HullbreachNetCodeClient.SendLeave(); // results-screen exit is a deliberate leave
             if (HullbreachMatchExit.IsLocalMatch) StartCoroutine(LocalRematch());
             else _ = HullbreachLobbyService.Instance.LeaveAndReturnToLobbyAsync();
         }

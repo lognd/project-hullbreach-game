@@ -847,6 +847,9 @@ true when held, and otherwise (no match, grace 0, unknown peer) acts as
 `TryDequeueDroppedPeer` so the host can close its connection. When the window
 ends, or the match ends, the held ship goes through the normal removal
 (`ShipRemoved`, forfeit). `IsHeld(peer)` reports a held ship.
+`SetRemoteAddress(peer, host)` records the connection's remote host (no port, see `RemoteAddress.HostOf`) as the
+fallback identity guard: when the held ship's owner or the joiner has no identity and both addresses are known, only
+the same address may reclaim it. Residual limit: someone behind the same NAT or on the same machine shares the address.
 `SetIdentity(peer, id)` (or the optional `identity` argument of
 `PresentTicket`) names the player; a later `Join` re-attaches to the ship held
 for the same identity, or to the only held ship when either side has none, and
@@ -877,7 +880,7 @@ host decodes incoming `ReadyUp` through `HostInbox.Dispatch` (below).
 
 `HostInbox.Dispatch(server, peer, buffer, length)` reads the `MessageKind`
 byte of one datagram from a peer and calls `SetInput` (`Input`) or
-`SetReady` (`ReadyUp`). It returns false, applying nothing, for an empty
+`SetReady` (`ReadyUp`), or `Leave` (`Leave`, a deliberate leave: no hold). It returns false, applying nothing, for an empty
 datagram, a truncated or malformed message, or a kind a client must not send.
 The peer is always the transport's sender id. `NetDemo` calls it for every
 datagram its server transport receives. A `JoinTicket` datagram goes to
@@ -1404,6 +1407,31 @@ endpoint (S29-3b). A numeric host is used as is; a name must be letters, digits,
 hyphens and goes through the injected `resolve` function (first IPv4 answer wins). A
 throwing resolver, no IPv4 answer or an odd name is an error value. `Ticket` is the
 `JoinTicket` the client sends after connecting.
+
+### LeaveMessage
+
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::LeaveMessage -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::LeaveMessage.ByteSize -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::LeaveMessage.Write -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/NetMessages.cs::LeaveMessage.Read -->
+
+Client -> server, reliable (`MessageKind.Leave` = 21): the player is leaving on purpose (Back to lobby, Quit, the
+results-screen exit), sent just before the client closes its connection. Layout: the kind byte alone. `Read` fails the
+reader on any other kind or an empty datagram and ignores bytes after the kind, so a later version can append fields.
+`HostInbox.Dispatch` answers it with `ServerSimulation.Leave(peer)`: the ship goes at once (`ShipRemoved`, forfeit to the
+opponent), even while it is held after an earlier drop. A bare transport drop sends no such message and still goes
+through `Disconnect` (the hold). Backward safe: a server that predates kind 21 returns false from `Dispatch` and falls
+back to the hold, and an old client simply never sends it. On the Unity NetCode path the same signal is the empty
+`HullbreachLeaveRpc`, sent by `HullbreachNetCodeClient.SendLeave`.
+
+### RemoteAddress
+
+<!-- describes: Assets/Scripts/Hullbreach.Net/RemoteAddress.cs::RemoteAddress -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/RemoteAddress.cs::RemoteAddress.HostOf -->
+
+`HostOf(endpoint)` reduces `"1.2.3.4:7979"` or `"[::1]:7979"` to the host so a reconnecting player, who gets a new source
+port each time, compares equal. Null or empty input, or one with no host, gives null (unknown). It feeds
+`ServerSimulation.SetRemoteAddress`.
 
 ### JoinTicket
 

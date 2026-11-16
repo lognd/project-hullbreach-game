@@ -210,21 +210,31 @@ A client whose link drops redials the same host by itself and rejoins the runnin
   `TimeoutSeconds` is held the same way (the host is still told to close the connection). The match treats a held
   ship as alive: an opponent who breaches its core still ends the match normally. When the window runs out the ship
   is removed through the normal path (`ShipRemoved`, forfeit to the opponent); a match that ends frees it at once.
-  A deliberate `Leave`, no grace (0) or no running match removes immediately, as before. There is no new wire message:
-  clients see the dropped ship stop answering, which is all the notice there is.
+  A deliberate `Leave`, no grace (0) or no running match removes immediately, as before. Opponents see the ship
+  disappear (`ShipRemoved`) either way.
 - Reattach: a `Join` while a ship is held claims it. The new connection has a new peer id, so the ship is re-keyed
   (`ShipRemoved` for the old NetId, then a fresh `ShipSnapshot` under the new one, then `SendLateJoinState`); the
   submitted design is ignored, and match slot, tally, projectile ownership and stock follow. Identity: the claimer
-  must match `SetIdentity` (the intended source is the platform user id from the join ticket, or address plus nick on
-  a LAN) when both sides have one; with no identity on either side it claims the only held ship, which in a two-player
-  match is the dropped player. The JoinTicket wire message carries no user id yet and the Unity host sets no identity,
-  so today the anonymous rule is what applies: on a queue server the ticket match id already limits who can join,
-  but on a LAN a third player arriving during the window could take the held ship.
+  must match `SetIdentity` (the intended source is the platform user id from the join ticket) when both sides have one.
+  When either side has none (the JoinTicket wire message carries no user id yet, so today that is always), the remote
+  address is the guard: if both addresses are known (`SetRemoteAddress`, host only, the Unity host fills it from the
+  connection's remote endpoint) only the same address may claim the ship; with no address either, it claims the only
+  held ship, which in a two-player match is the dropped player. Residual limit: a third player on the same address
+  (same NAT, same PC) can still take a held ship on a LAN, and an owner whose address changed mid-window (roaming)
+  loses it to the grace expiry.
+- Deliberate leave (`LeaveMessage`, wire kind 21, Unity `HullbreachLeaveRpc`): the client sends it right before it
+  closes the connection, from Back to lobby (`HullbreachConnectionView`), the in-match Leave button, the results
+  screen exits, and `Application.quitting` (best effort: the world may not update again). The server calls `Leave`
+  immediately, even if the ship is already held, so the opponent is not kept waiting out the window; the later close
+  finds nothing to hold. `ReconnectPolicy.NoteDeliberateLeave` is called alongside so the client never redials. An
+  old server ignores the unknown kind and holds as before. `NetworkStreamDisconnected.Reason` was not used as a
+  fallback: it cannot be verified without the editor, and a close that the client requests but never delivers (a
+  force-quit, a pulled cable) is indistinguishable from a drop anyway, so the explicit message is the dependable
+  signal. Reading it in `SynchronizeConnections` is a possible later addition.
 - Unity wiring: `HullbreachNetCodeServerSystem` calls `Disconnect` instead of `Leave` when a connection vanishes and
-  keeps the held ship's ghost. NetCode cannot tell a deliberate Back to lobby from a drop on the server (both just
-  close the connection), so a player who leaves on purpose also leaves their ship drifting for the window before the
-  forfeit; a leave message or reading `NetworkStreamDisconnected.Reason` would fix that. Unverified in the editor.
-  `ReconnectGraceTests` pins the simulation side.
+  keeps the held ship's ghost; a `HullbreachLeaveRpc` goes through `ConsumeLeaves` (before `SynchronizeConnections`)
+  to `Leave` and destroys the ghost. Unverified in the editor. `ReconnectGraceTests` and `LeaveMessageTests` pin the
+  simulation side.
 
 ### Online clock, sparring partner and effects
 
@@ -320,6 +330,7 @@ too, even though the original design note only called it out for
 | `GravityWellSpawned` | server->client, reliable | `i16 px, i16 py, i16 mu, u8 radius, u16 seconds10` | 10 B |
 | `ShipRemoved` | server->client, reliable ordered | `u32 seq, u16 netId` | 7 B |
 | `ReadyUp` | client->server, reliable | `u8 ready` | 2 B |
+| `Leave` | client->server, reliable | none | 1 B |
 | `MatchStarted` | server->client, reliable ordered | `u32 seq, i32 peerA, i32 peerB` | 13 B |
 | `JoinTicket` | client->server, reliable | `u8[16] matchId` (UUID bytes) | 17 B |
 | `StormStarted` | server->client, reliable ordered | `u32 seq, u32 seed, u32 startTick, f32x2 arenaCenter, u8 n, n*f32x2 candidates, 6*f32 config, u8 m, m*4*f32 phases` | up to 431 B |

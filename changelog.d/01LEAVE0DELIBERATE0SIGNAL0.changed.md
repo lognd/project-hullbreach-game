@@ -1,0 +1,1 @@
+Leaving a match on purpose (Back to lobby, Quit, results exit) now frees your ship at once instead of leaving it drifting for 20 seconds, so your opponent no longer waits; a dropped connection still gets the reconnect grace, and on a LAN only the same address can reclaim a held ship.

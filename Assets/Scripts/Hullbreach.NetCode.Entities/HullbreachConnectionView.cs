@@ -141,6 +141,7 @@ namespace Hullbreach.NetCode.Entities
         void BackToLobby()
         {
             _policy.NoteDeliberateLeave();
+            HullbreachNetCodeClient.SendLeave(); // free the ship now, not after the reconnect hold
             if (HullbreachResultsOverlay.Instance != null) HullbreachResultsOverlay.Instance.LeaveLocalToLobby();
             else SceneManager.LoadScene(HullbreachLobbyService.DefaultLobbyScene);
         }
