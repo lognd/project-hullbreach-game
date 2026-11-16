@@ -143,6 +143,42 @@ Compared with the earlier tables: breach share is 54% (the 6-seed run had 47%, t
 Hard vs Normal remains close to even in every run so far. The earlier numbers should be read with the randomised match
 id in mind.
 
+## Update: Easy engages (planet clearance and closer range)
+
+Cause of the Easy mirror draws (8 of 12 with 0 core breaches in the PR #183 sweep). It was not passivity in the fight
+logic. The Easy ship has two thruster pairs (acceleration about 0.8 against about 2.0 for Normal), and the main planet
+(radius 18, mu 900) pulls harder than that near its surface. With a 3 s, 6-block planet check an Easy ship grazed the
+planet late, crash-landed or fell into plunging orbits, and then spent about 65% of its ticks in avoid-planet (Normal:
+25 to 30%) with 70 to 130 shots in a whole match. Easy also held 22 blocks, where its loose aim (0.075 rad, lead 0.35)
+scatters over the hull instead of the core.
+
+Change (Easy profile only): planet clearance 12 blocks (was 6) over a 6 s coast (was 3), and an engage range scale of 0.6
+(13 blocks for Balanced instead of 22). New profile fields `PlanetMargin` and `EngageScale`; Normal and Hard keep their
+values (6 and 1).
+
+Measured on top of the fight-pacing change (new spawns, core hit scale), seeds 1 to 12, 600 s, default storm:
+
+| Scenario | main, before | this change |
+|---|---|---|
+| Mirror Easy | 0 breaches, 6 draws, 6 storm | 1 breach, 3 draws, 8 storm |
+| Normal vs Easy (Normal wins) | 6 of 12 (6 breaches) | 7 of 12 (5 breaches, 2 draws) |
+| Hard vs Easy (Hard wins) | not re-run | 8 of 12 (4 breaches) |
+| Mirror Normal | 6 breaches (fight pacing section) | 6 breaches, same code path |
+
+(On the older arena, before the pacing change, the same Easy change measured: Mirror Easy 0 -> 2 breaches and 8 -> 3
+draws, Normal beats Easy 12 -> 10 of 12, Hard beats Easy 9 of 12 both before and after.)
+
+Honest reading: Easy mirror draws are halved (6 to 3) and Easy no longer sits landed on a planet, but "most Easy mirrors
+end by core breach" is not reached (1 of 12). Easy shots mostly land on outer blocks and Easy never flanks, so a match
+still usually runs to the ring. After the pacing change Easy is closer to Normal than the ladder wants (Normal wins only
+7 of 12, Hard 8 of 12), and this change does not widen that gap; the pacing change did that, not this one. Normal and
+Hard code paths are unchanged (Mirror Normal is the sanity check).
+
+Tried and rejected on the older arena: Easy trigger discipline 0.7 plus pressure 0.3 gave 5 of 12 mirror breaches but
+Normal beat Easy only 8 of 12 (Easy too strong); a range scale of 0.45 gave 1 of 12; a clearance of 1 to 3 blocks made
+the landing trap worse (up to 96% of ticks in avoid-planet). Next candidates: give the Easy ship one more thruster pair,
+let Easy flank slowly, or lower Easy fire discipline less than 0.7, each with its own sweep.
+
 ## Fight pacing (spawn separation and core hit scale)
 
 Playtest: a 60-point Balanced ship lost its core in about 20 s and the match lasted 0:55 against a Normal bot.

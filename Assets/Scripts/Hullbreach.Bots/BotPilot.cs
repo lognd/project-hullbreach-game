@@ -388,7 +388,7 @@ namespace Hullbreach.Bots
             float horizon = _profile.PlanetLookahead;
             const float h = 0.1f;
             float2 pos = self.Position, vel = self.Velocity;
-            float margin = 6f;
+            float margin = _profile.PlanetMargin;
             for (float t = 0f; t < horizon; t += h)
             {
                 vel += _gravity.AccelerationAt(pos) * h;
