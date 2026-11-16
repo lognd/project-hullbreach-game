@@ -6,5 +6,13 @@ category = "todo"
 priority = "medium"
 reporter = "lognd"
 created = "2026-11-15T22:41:06Z"
-updated = "2026-11-15T23:32:09Z"
+updated = "2026-11-16T01:36:53Z"
+
+[[acceptance]]
+text = "A wide wing under full thrust no longer snaps instantly: failure is damage-driven (WingStressTests, DamageModelTests)"
+bound = false
+
+[[acceptance]]
+text = "The build phase can preview stress and the weakest block's time to fail (ShipStressPreviewTests)"
+bound = false
 +++

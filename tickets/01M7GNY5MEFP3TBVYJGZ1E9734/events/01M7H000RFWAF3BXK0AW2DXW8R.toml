@@ -1,0 +1,7 @@
+kind = "field"
+field = "acceptance"
+new = ["A wide wing under full thrust no longer snaps instantly: failure is damage-driven (WingStressTests, DamageModelTests)", "The build phase can preview stress and the weakest block's time to fail (ShipStressPreviewTests)"]
+moved = []
+at = "2026-11-16T01:36:53Z"
+actor = "lognd"
+rev = 1
