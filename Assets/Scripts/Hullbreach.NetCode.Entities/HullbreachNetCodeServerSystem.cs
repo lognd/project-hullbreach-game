@@ -230,7 +230,7 @@ namespace Hullbreach.NetCode.Entities
                 {
                     // The remote host (no port) is the fallback identity guard for a held-ship reclaim on a LAN.
                     _simulation.SetRemoteAddress(peer, RemoteAddress.HostOf(
-                        SystemAPI.GetSingleton<NetworkStreamDriver>().GetRemoteEndpoint(entities[i]).ToString()));
+                        SystemAPI.GetSingleton<NetworkStreamDriver>().GetRemoteEndPoint(EntityManager.GetComponentData<NetworkStreamConnection>(entities[i])).ToString()));
                     _simulation.Join(peer, CreateStarterShip(peer));
                     Debug.Log($"Hullbreach server: peer #{peer} joined the match ({_joinedPeers.Count} in match).");
                 }
