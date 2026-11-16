@@ -345,6 +345,14 @@ namespace Hullbreach.Net
         // Server tick the storm clock counts from (the tick the match started on).
         uint _stormStartTick;
 
+        // What the live storm was announced with, kept so a peer who joins mid-match can be told again.
+        // frob:ticket 01M7FJ5MGNZ0RSXJ5AWKZEE3R4
+        uint _stormSeed;
+        StormConfig _stormConfig;
+
+        // The two peers the running match was announced for (RequireReady only); resent to a mid-match joiner.
+        int _matchPeerA, _matchPeerB;
+
         // Planet centres the final ring may drift toward, from the arena config.
         float2[] _stormCandidates = new float2[0];
 
@@ -508,6 +516,7 @@ namespace Hullbreach.Net
             var snapshot = BuildSnapshot(state, NextSequence());
             foreach (var kv in _peers) EmitReliable(kv.Key, snapshot);
             if (RequireReady) TrackForReady(peer);
+            SendLateJoinState(peer);
             StartMatchIfReady();
             return JoinResult.Joined;
         }
@@ -533,6 +542,7 @@ namespace Hullbreach.Net
                 () => _tickIndex * (double)Dt, MatchFeed, queueId == null ? (Func<string>)null : () => queueId,
                 MatchLog, MatchTimeLimitSeconds);
             if (!Match.Start()) return;
+            _matchPeerA = ids[0]; _matchPeerB = ids[1];
             if (RequireReady) AnnounceMatchStart(ids[0], ids[1]);
             StartStorm();
             StartEconomy();
@@ -554,13 +564,42 @@ namespace Hullbreach.Net
             uint seed = StormSeedFor(Match.MatchId);
             _stormStartTick = _tickIndex;
             ActiveStorm = new StormZone(config, Bounds.Center, _stormCandidates, seed);
-            var message = new StormStarted(NextSequence(), seed, _stormStartTick, Bounds.Center, _stormCandidates, config);
+            _stormSeed = seed;
+            _stormConfig = config;
+            BroadcastStormStarted();
+        }
+
+        // Sends the live storm's announcement to every peer; the same seed and start tick rebuild the same ring.
+        void BroadcastStormStarted()
+        {
+            var message = new StormStarted(NextSequence(), _stormSeed, _stormStartTick, Bounds.Center, _stormCandidates, _stormConfig);
             foreach (int peer in _peers.Keys)
             {
                 var buffer = new byte[StormStarted.MaxByteSize];
                 var w = new ByteWriter(buffer);
                 if (!message.TryWrite(ref w)) return;
                 _outbox.Send(peer, reliable: true, buffer, w.Position);
+            }
+        }
+
+        // A peer joining a match that is already running (a reconnect included) missed the one-shot announcements, so
+        // it is told the current state: match phase, storm, every pickup in the field and its own stock. The messages are
+        // sequenced like any other, so they go to everyone; each is idempotent on a client that already knows it.
+        // Nothing is sent before a match starts, when the normal start-of-match announcements cover everyone.
+        // frob:ticket 01M7FJ5MGNZ0RSXJ5AWKZEE3R4
+        // frob:doc docs/reference/hullbreach-net.md#serversimulation
+        void SendLateJoinState(int peer)
+        {
+            if (!MatchIsRunning) return;
+            if (RequireReady) AnnounceMatchStart(_matchPeerA, _matchPeerB);
+            if (ActiveStorm != null) BroadcastStormStarted();
+            if (_pickups != null)
+                foreach (Pickup p in _pickups.Active)
+                    BroadcastReliable(new PickupSpawned(NextSequence(), p));
+            if (Economy.Enabled && _peers.TryGetValue(peer, out PeerState state))
+            {
+                state.InventoryDirty = false;
+                SendInventory(peer, state);
             }
         }
 

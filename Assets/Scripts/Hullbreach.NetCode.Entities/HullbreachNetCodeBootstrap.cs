@@ -146,6 +146,7 @@ namespace Hullbreach.NetCode.Entities
             NetworkEndpoint.TryParse(plan.ConnectAddress, plan.Port, out NetworkEndpoint endpoint);
             Entity request = client.EntityManager.CreateEntity(typeof(NetworkStreamRequestConnect));
             client.EntityManager.SetComponentData(request, new NetworkStreamRequestConnect { Endpoint = endpoint });
+            HullbreachNetCodeClient.RememberEndpoint(endpoint);
             Debug.Log($"Hullbreach direct: client connecting to {plan.ConnectAddress}:{plan.Port}.");
         }
     }

@@ -187,6 +187,26 @@ blocks (not cannons or thrusters) with that skin's colour, striping alternate bl
 render the default look. The opponent's look comes from the server, not from `opponent_skin`. Verified in the editor by
 screenshot with a crimson skin on the local ship; the platform side was not exercised with an owned and equipped skin.
 
+### Rejoin after a dropped connection
+
+A client whose link drops redials the same host by itself and rejoins the running match, with no trip through the lobby.
+
+- Policy (`Hullbreach.Hud.ReconnectPolicy`, engine-free): only a link that had worked is retried. Attempt n waits
+  `DelayBefore(n)` (1 s doubling to an 8 s cap) and is given 5 s to connect; after 6 attempts it gives up and the banner
+  says so with a way back to the lobby. The banner reads `Reconnecting... (n/6)` (`ConnectionStatusModel`, phase
+  `Reconnecting`). It never retries after Back to lobby (`NoteDeliberateLeave`) or once the results screen is up.
+- Unity side (`HullbreachConnectionView`): feeds the policy each frame and, on `Attempt`, calls
+  `HullbreachNetCodeClient.TryRequestReconnect`, which re-issues a `NetworkStreamRequestConnect` to the endpoint
+  remembered when the client first connected. `HullbreachNetCodeClientSystem` swaps in a fresh `ClientReplica` as soon as
+  the network id disappears, because the rejoin stream restarts far past the old replica's sequence cursor.
+- Server side: `ServerSimulation.Join` into a running match also sends the joiner what it missed (`SendLateJoinState`):
+  the match start (with ready-up), `StormStarted`, a `PickupSpawned` per pickup in the field (crates and salvage) and the
+  peer's `InventorySnapshot`. They are sequenced, so they go to every peer; each is idempotent on a client that already
+  knows it. `RejoinSnapshotTests` pins this.
+- Not done: the server does not yet hold a dropped peer's ship for a grace period (`Leave` still removes it and the
+  match handles the disconnect), so a rejoin gets a new ship and an empty stock. Unity wiring above is unverified
+  in the editor.
+
 ### Online clock, sparring partner and effects
 
 - The NetCode path sends no `ShipState`, so `ClientReplica.LatestServerTick` stays 0. Every ship and projectile ghost pose carries

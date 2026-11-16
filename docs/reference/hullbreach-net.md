@@ -818,6 +818,12 @@ does. The snapshots sent to the joiner for existing ships are stamped
 with the current sequence rather than a fresh one (only the joiner gets
 them, so a fresh number would leave a gap in everyone else's stream).
 
+When a match is already running, `Join` also sends the joiner the state it missed (`SendLateJoinState`, ticket
+KZEE3R4): the `MatchStarted` announcement when ready-up is on, the live `StormStarted`, a `PickupSpawned` for every
+crate and piece of salvage in the field, and the joiner's own `InventorySnapshot`. Messages with sequence numbers
+are broadcast so nobody's ordered stream gets a gap; a client that already knew them applies them again harmlessly
+(same storm seed and start tick, pickup ids are keys). Before a match starts nothing extra is sent.
+
 `Join` returns a `JoinResult` and treats the design as untrusted (INV-003):
 `InvalidPeerId` unless `1 <= peer <= MaxPeerId` (the peer id is the ship's
 `NetId`), `AlreadyJoined` if the peer has a ship (a join never replaces
