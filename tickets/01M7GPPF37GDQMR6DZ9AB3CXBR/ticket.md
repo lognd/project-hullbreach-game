@@ -6,9 +6,9 @@ category = "todo"
 priority = "medium"
 reporter = "lognd"
 created = "2026-11-15T22:54:23Z"
-updated = "2026-11-16T01:37:12Z"
+updated = "2026-11-16T01:37:13Z"
 
 [[acceptance]]
 text = "The builder presenter turns the stress preview into a tint, a status line and a READY structure warning (StressPreviewPresenterTests, BuildPanelModelTests)"
-bound = false
+bound = true
 +++
