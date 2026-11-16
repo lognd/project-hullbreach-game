@@ -7,7 +7,7 @@ namespace Hullbreach.Match.Tests
     // frob:ticket 01M3DG5Y37VGGE65ERV1QQDH8X
     public sealed class ResultsScreenModelTests
     {
-        static readonly PlayerMatchStats A = new PlayerMatchStats("ua", 900, 14, 30, 240);
+        static readonly PlayerMatchStats A = new PlayerMatchStats("ua", 900, 14, 30, 240, 6);
         static readonly PlayerMatchStats B = new PlayerMatchStats("ub", 400, 12, 28, 3725);
 
         static ResultsScreenModel Make(MatchResult r, int winner, int local = -1) =>
@@ -23,6 +23,8 @@ namespace Hullbreach.Match.Tests
             Assert.That(m.PlayerA.IsWinner, Is.True);
             Assert.That(m.PlayerB.IsWinner, Is.False);
             Assert.That(m.PlayerA.DamageDealt, Is.EqualTo("900"));
+            Assert.That(m.PlayerA.BlocksDeconstructed, Is.EqualTo("6"));
+            Assert.That(m.PlayerB.BlocksDeconstructed, Is.EqualTo("0"));
             Assert.That(m.PlayerB.Name, Is.EqualTo("Player 2"));
             Assert.That(m.PlayerB.TimeAlive, Is.EqualTo("1:02:05"));
         }

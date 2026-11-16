@@ -331,7 +331,7 @@ namespace Hullbreach.Net
 
         // Upper bound of the encoded size, for buffer allocation.
         // frob:doc docs/reference/hullbreach-net.md#matchended
-        public const int MaxByteSize = 1 + 4 + 1 + 4 * 4 + 2 * 4 * 4 + 1 + MaxIdLength;
+        public const int MaxByteSize = 1 + 4 + 1 + 4 * 4 + 2 * 5 * 4 + 1 + MaxIdLength;
 
         // frob:doc docs/reference/hullbreach-net.md#matchended
         public readonly uint Sequence;
@@ -397,6 +397,7 @@ namespace Hullbreach.Net
             w.WriteI32(s.BlocksDestroyed);
             w.WriteI32(s.BlocksPlaced);
             w.WriteI32(s.TimeAliveSeconds);
+            w.WriteI32(s.BlocksDeconstructed);
         }
 
         static PlayerMatchStats ReadStats(ref ByteReader r)
@@ -405,7 +406,8 @@ namespace Hullbreach.Net
             int destroyed = r.ReadI32();
             int placed = r.ReadI32();
             int alive = r.ReadI32();
-            return new PlayerMatchStats(string.Empty, damage, destroyed, placed, alive);
+            int deconstructed = r.ReadI32();
+            return new PlayerMatchStats(string.Empty, damage, destroyed, placed, alive, deconstructed);
         }
     }
 

@@ -295,8 +295,8 @@ Server -> client, reliable ordered (`MessageKind.MatchEnded` = 11): the match
 ended, carrying the same `MatchEndedArgs` the server's `MatchEndFeed` got.
 Layout: kind u8, sequence u32, `MatchResult` u8, winner peer i32 (-1 for a
 draw), peer A i32, peer B i32, duration seconds i32, then each side's
-`PlayerMatchStats` (damage, blocks destroyed, blocks placed, time alive; 4 x
-i32), then the match id as a u8 length plus ASCII bytes (cut at
+`PlayerMatchStats` (damage, blocks destroyed, blocks placed, time alive, blocks
+deconstructed; 5 x i32), then the match id as a u8 length plus ASCII bytes (cut at
 `MaxIdLength` = 64). Stats user ids are not sent; the client side has them
 empty. `Read` consumes the kind byte, and fails the reader on a truncated
 body, an id longer than `MaxIdLength` or an unknown result byte. Draws are
@@ -803,7 +803,9 @@ once per match. A forfeit therefore reaches only the remaining peer.
 Per-player stats come from a tally the server keeps for the live match:
 `DamageDealt` (damage applied by the peer's projectiles), `BlocksDestroyed`
 (blocks those projectiles destroyed outright), `BlocksPlaced` (placements
-while the match is running) and `TimeAliveSeconds` (match length). The
+while the match is running), `BlocksDeconstructed` (successful deconstructs
+while the match is running; stranded blocks that turn into salvage are not
+counted) and `TimeAliveSeconds` (match length). The
 tally survives the peer's removal so a forfeit still reports it.
 
 `Join` re-broadcasts the new ship's snapshot (reliable) to every OTHER

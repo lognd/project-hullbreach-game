@@ -185,6 +185,7 @@ namespace Hullbreach.NetCode.Entities
             + "\nDamage dealt: " + p.DamageDealt
             + "\nBlocks destroyed: " + p.BlocksDestroyed
             + "\nBlocks placed: " + p.BlocksPlaced
+            + "\nBlocks deconstructed: " + p.BlocksDeconstructed
             + "\nTime alive: " + p.TimeAlive;
 
         void Rematch()

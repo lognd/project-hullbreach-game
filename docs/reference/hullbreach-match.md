@@ -114,7 +114,7 @@ feed with `WinnerPeer = -1`) and exposes:
   thrown on, so adding a reason needs no change here beyond nicer text.
 - `Duration` (`m:ss`, `h:mm:ss` from an hour) and one `ResultsPlayerRow`
   per side: name (display name from `nameOf`, else `Player 1` / `Player 2`),
-  winner flag, damage dealt, blocks destroyed, blocks placed, time alive.
+  winner flag, damage dealt, blocks destroyed, blocks placed, blocks deconstructed, time alive.
 - `Rematch()` / `ReturnToLobby()`: raise `RematchRequested` /
   `ReturnToLobbyRequested` once; the first pick wins and later ones are
   ignored (`CanChoose` goes false). The owner decides what each means.

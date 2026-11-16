@@ -167,6 +167,6 @@ namespace Hullbreach.Platform
 
         static PlayerMatchStats With(PlayerMatchStats stats, string userId) =>
             new PlayerMatchStats(userId, stats.DamageDealt, stats.BlocksDestroyed, stats.BlocksPlaced,
-                stats.TimeAliveSeconds);
+                stats.TimeAliveSeconds, stats.BlocksDeconstructed);
     }
 }

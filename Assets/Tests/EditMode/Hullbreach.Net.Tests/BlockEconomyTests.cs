@@ -103,6 +103,31 @@ namespace Hullbreach.Net.Tests
             Assert.AreEqual(0, done.Damage, "construction finished");
         }
 
+        // frob:ticket 01M7FJ5N77X89KTJ15ZXKGYEMP
+        [Test]
+        public void Deconstruct_IsCountedInTheMatchEndedStats()
+        {
+            // frob:tests Assets/Scripts/Hullbreach.Net/ServerSimulation.Economy.cs::Hullbreach.Net.ServerSimulation.Deconstruct kind="unit"
+            ServerSimulation s = Server(true);
+            BuildMode(s);
+            int tick = 2, ok = 0;
+            for (int loop = 0; loop < 4; loop++)
+            {
+                s.PlaceBlock(1, 0, 1, BlockTypes.Hull, 0);
+                Pump(s, 12, (uint)tick); tick += 12;
+                if (s.Deconstruct(1, 0, 1) == PlacementResult.Ok) ok++;
+                Pump(s, 12, (uint)tick); tick += 12;
+            }
+            Assert.Greater(ok, 0);
+            s.Leave(2);
+            Assert.IsTrue(s.Match.EndedArgs.HasValue);
+            var e = s.Match.EndedArgs.Value;
+            var mine = e.PeerA == 1 ? e.StatsA : e.StatsB;
+            var theirs = e.PeerA == 1 ? e.StatsB : e.StatsA;
+            Assert.AreEqual(ok, mine.BlocksDeconstructed);
+            Assert.AreEqual(0, theirs.BlocksDeconstructed);
+        }
+
         [Test]
         public void Deconstruct_RefundsHalf_NeverMoreThanWasSpent()
         {

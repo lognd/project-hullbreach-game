@@ -235,8 +235,8 @@ namespace Hullbreach.Net.Tests
 
         static MatchEnded MatchEndedSample(string id = "match-1", MatchResult result = MatchResult.CoreBreached)
             => new MatchEnded(7, new MatchEndedArgs(id, 2, 1,
-                new PlayerMatchStats("a", 10, 2, 3, 40), 2,
-                new PlayerMatchStats("b", 5, 6, 7, 8), 61, result));
+                new PlayerMatchStats("a", 10, 2, 3, 40, 9), 2,
+                new PlayerMatchStats("b", 5, 6, 7, 8, 4), 61, result));
 
         static byte[] EncodeMatchEnded(MatchEnded m)
         {
@@ -263,6 +263,8 @@ namespace Hullbreach.Net.Tests
             Assert.AreEqual(61, m.Args.DurationSeconds);
             Assert.AreEqual(10, m.Args.StatsA.DamageDealt);
             Assert.AreEqual(8, m.Args.StatsB.TimeAliveSeconds);
+            Assert.AreEqual(9, m.Args.StatsA.BlocksDeconstructed);
+            Assert.AreEqual(4, m.Args.StatsB.BlocksDeconstructed);
         }
 
         // frob:ticket 01M5VGS9DWNF85ZAQ0GD5X8A1J
