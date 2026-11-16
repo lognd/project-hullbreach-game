@@ -727,7 +727,7 @@ namespace Hullbreach.Editor
 
             GameObject viewport = AddUiObject(root.transform, "Text Area");
             RectTransform viewportRect = viewport.GetComponent<RectTransform>();
-            Stretch(viewportRect, 12f, 10f);
+            Stretch(viewportRect, 12f, 2f);
             viewport.AddComponent<RectMask2D>();
 
             TMP_Text placeholder = AddText(viewport.transform, "Placeholder", placeholderText, 17f);
