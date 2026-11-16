@@ -1,0 +1,6 @@
+kind = "comment"
+subtype = "note"
+body = "No merged tests yet for Disconnected/WouldBuckle refusals; still open."
+at = "2026-11-16T01:37:48Z"
+actor = "lognd"
+rev = 1
