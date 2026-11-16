@@ -295,7 +295,7 @@ finale, and each ring is clamped inside the previous one.
 inside, `DamagePerSecond / TickRate` outside, escalating per phase; the core
 is spared until sudden death, when the ring is closed and the core takes
 `SuddenDeathDamagePerSecond`, so a match always ends. All durations, radii and
-damage rates live in `StormConfig` (`Default()` ends at 284 s, under the
+damage rates live in `StormConfig` (`Default()` ends at 550 s, under the
 600 s server time limit). `StormConfig.WithTickRate` re-rates a schedule. The
 server applies the damage and despawns projectiles; see
 [ServerSimulation](hullbreach-net.md#arenaconfig) and

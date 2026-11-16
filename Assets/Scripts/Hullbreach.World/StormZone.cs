@@ -27,7 +27,7 @@ namespace Hullbreach.World
         }
     }
 
-    // Every storm tunable in one place. Default() closes the last ring ~284 s in, well inside
+    // Every storm tunable in one place. Default() closes the last ring ~550 s in, inside
     // the server's 600 s time limit, so the storm only ever decides stalemates.
     // frob:doc docs/reference/hullbreach-world.md#stormzone
     public readonly struct StormConfig
@@ -64,15 +64,17 @@ namespace Hullbreach.World
             SuddenDeathDamagePerSecond = suddenDeathDps; Phases = phases;
         }
 
-        // 100 -> 70 -> 45 -> 25 -> 10 -> 0, damage doubling each phase; ends at 284 s.
+        // 100 -> 70 -> 45 -> 25 -> 10 -> 0, damage doubling each phase; ends at 550 s. Bot fights end by core
+        // breach in about two to five minutes (docs/bot-balance-report.md), so the storm waits 180 s before the first
+        // ring and only closes the last one late in the 600 s time limit: it decides stalemates, not fights.
         // frob:doc docs/reference/hullbreach-world.md#stormzone
-        public static StormConfig Default() => new StormConfig(50f, 100f, 30f, 0.1f, 20f, 200f, new[]
+        public static StormConfig Default() => new StormConfig(50f, 100f, 180f, 0.1f, 20f, 100f, new[]
         {
-            new StormPhase(25f, 30f, 70f, 8f),
-            new StormPhase(25f, 30f, 45f, 16f),
-            new StormPhase(22f, 30f, 25f, 32f),
-            new StormPhase(22f, 25f, 10f, 64f),
-            new StormPhase(20f, 25f, 0f, 128f),
+            new StormPhase(50f, 30f, 70f, 1f),
+            new StormPhase(50f, 30f, 45f, 2f),
+            new StormPhase(45f, 30f, 25f, 4f),
+            new StormPhase(40f, 30f, 10f, 8f),
+            new StormPhase(35f, 30f, 0f, 16f),
         });
 
         // Same schedule at another tick rate, so the server's own rate drives the ring.
