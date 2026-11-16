@@ -1,0 +1,6 @@
+kind = "comment"
+subtype = "note"
+body = "Closed: #178 bot storm awareness (StormAwarenessTests 7 pass incl. headless arena comparison; Bots ArenaTests 5 pass). StormOverlay retired earlier (file gone from Hullbreach.Bots)."
+at = "2026-11-16T01:37:46Z"
+actor = "lognd"
+rev = 1
