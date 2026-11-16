@@ -1,0 +1,6 @@
+kind = "comment"
+subtype = "note"
+body = "No merged work yet (nothing forwards TryDequeueTrustEvent to the platform); still open."
+at = "2026-11-16T01:37:48Z"
+actor = "lognd"
+rev = 1
