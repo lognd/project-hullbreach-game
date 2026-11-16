@@ -111,21 +111,23 @@ namespace Hullbreach.NetCode.Entities
             var readyGo = Box("ReadyButton", transform, Orange);
             var rrt = (RectTransform)readyGo.transform;
             rrt.anchorMin = rrt.anchorMax = rrt.pivot = new Vector2(1f, 0f);
-            rrt.sizeDelta = new Vector2(320f, 64f);
-            rrt.anchoredPosition = new Vector2(-24f, 12f);
+            rrt.sizeDelta = new Vector2(280f, 64f);
+            rrt.anchoredPosition = new Vector2(-16f, 12f);
             _readyImage = readyGo.GetComponent<Image>();
             _ready = readyGo.AddComponent<Button>();
             _ready.targetGraphic = _readyImage;
             _ready.onClick.AddListener(() => HullbreachNetworkGameplayController.RequestReadyChecked(_pointsLeft));
             _readyLabel = Label("Label", rrt, 22, FontStyles.Bold, Vector2.zero, Vector2.one, TextAlignmentOptions.Center);
             _readyLabel.color = new Color(0.08f, 0.1f, 0.14f, 1f);
+            // The unspent-points label is long; shrink it to fit the narrower button instead of spilling over the hotbar.
+            _readyLabel.enableAutoSizing = true; _readyLabel.fontSizeMin = 14f; _readyLabel.fontSizeMax = 22f;
 
             // "Fix it" sits above READY and only shows after READY warned the design will snap; READY itself then reads FLY ANYWAY?.
             var fixGo = Box("FixItButton", transform, Cyan);
             var frt = (RectTransform)fixGo.transform;
             frt.anchorMin = frt.anchorMax = frt.pivot = new Vector2(1f, 0f);
-            frt.sizeDelta = new Vector2(320f, 48f);
-            frt.anchoredPosition = new Vector2(-24f, 84f);
+            frt.sizeDelta = new Vector2(280f, 48f);
+            frt.anchoredPosition = new Vector2(-16f, 84f);
             _fixIt = fixGo.AddComponent<Button>();
             _fixIt.targetGraphic = fixGo.GetComponent<Image>();
             _fixIt.onClick.AddListener(HullbreachNetworkGameplayController.FixStructure);
