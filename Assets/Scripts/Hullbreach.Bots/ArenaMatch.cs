@@ -36,6 +36,9 @@ namespace Hullbreach.Bots
         // True blinds the pilot to the storm (it still takes the damage); the baseline for measuring what awareness is worth.
         public bool IgnoreStorm;
 
+        // True sends no input at all: a player who joined and never touched the controls (the idle-player probe).
+        public bool Idle;
+
         public string Label => Difficulty + "/" + Personality;
     }
 
@@ -70,6 +73,10 @@ namespace Hullbreach.Bots
         // True spawns the ships on the old orbit ring a few units apart (the layout before the pacing change), for before/after runs.
         public bool LegacySpawn;
 
+        // Optional overrides of the default spawn line (separation, height above the arena centre) and launch (speed, degrees from
+        // "toward the centre"); null keeps ArenaConfig.Defaults(). A speed of 0 is the at-rest spawn of the pacing change.
+        public float? SpawnSeparation, SpawnLineY, SpawnSpeed, SpawnLaunchDegrees;
+
         // Seconds without any damage that count as a stall.
         public float StallSeconds = 60f;
 
@@ -99,6 +106,8 @@ namespace Hullbreach.Bots
         public float LongestQuietSeconds;
         public bool Stalled;
         public int ShotsA, ShotsB;
+        // Seconds into the match of each side's first shot; -1 when it never fired.
+        public float FirstShotSecondsA = -1f, FirstShotSecondsB = -1f;
         public int DamageA, DamageB;
         public float CoreHealthA, CoreHealthB;
         public int BlocksA, BlocksB;
@@ -148,6 +157,7 @@ namespace Hullbreach.Bots
                 MatchFeed = new MatchEndFeed(),
                 EmitPoseMessages = false,
                 StormEnabled = config.Storm.HasValue,   // before Join: the match can start on the second join
+                TimeoutSeconds = (config.A.Idle || config.B.Idle) ? 1e6f : 5f,   // an idle side sends nothing; keep the server default otherwise
             };
 
             // The match id seeds the storm ring and the pickup field (StormSeedFor). Left alone it is a fresh random uuid per
@@ -161,7 +171,8 @@ namespace Hullbreach.Bots
             ArenaConfig defaults = ArenaConfig.Defaults();
             var arena = new ArenaConfig(defaults.Bodies, defaults.SpawnLateral, defaults.SpawnAltitude,
                 defaults.SpawnVertical, defaults.SpawnAngleStep, defaults.Bounds, config.Storm ?? StormConfig.Default(),
-                config.Crash ?? defaults.Crash, config.Economy ?? defaults.Economy, config.LegacySpawn ? 0f : defaults.SpawnSeparation, config.LegacySpawn ? 0f : defaults.SpawnLineY);
+                config.Crash ?? defaults.Crash, config.Economy ?? defaults.Economy, config.LegacySpawn ? 0f : config.SpawnSeparation ?? defaults.SpawnSeparation, config.LegacySpawn ? 0f : config.SpawnLineY ?? defaults.SpawnLineY,
+                config.LegacySpawn ? 0f : config.SpawnSpeed ?? defaults.SpawnSpeed, config.SpawnLaunchDegrees ?? defaults.SpawnLaunchDegrees);
             sim.ConfigureDemoArena(arena);
 
             // Joined in peer order so slot 1 is always first in the arena's spawn order.
@@ -192,8 +203,8 @@ namespace Hullbreach.Bots
             {
                 tick = (uint)i;
                 long t0 = System.Diagnostics.Stopwatch.GetTimestamp();
-                driverA.Drive(sim, tick, config.A.IgnoreStorm ? null : stormSource);
-                driverB.Drive(sim, tick, config.B.IgnoreStorm ? null : stormSource);
+                if (!config.A.Idle) driverA.Drive(sim, tick, config.A.IgnoreStorm ? null : stormSource);
+                if (!config.B.Idle) driverB.Drive(sim, tick, config.B.IgnoreStorm ? null : stormSource);
                 long t1 = System.Diagnostics.Stopwatch.GetTimestamp();
                 sim.Tick();
                 long t2 = System.Diagnostics.Stopwatch.GetTimestamp();
@@ -214,8 +225,8 @@ namespace Hullbreach.Bots
                 foreach (var shot in sim.Projectiles)
                 {
                     if (!seenShots.Add(shot.Id)) continue;
-                    if (shot.OwnerPeer == peerA) result.ShotsA++;
-                    else if (shot.OwnerPeer == peerB) result.ShotsB++;
+                    if (shot.OwnerPeer == peerA) { if (result.ShotsA++ == 0) result.FirstShotSecondsA = i / sim.TickRate; }
+                    else if (shot.OwnerPeer == peerB) { if (result.ShotsB++ == 0) result.FirstShotSecondsB = i / sim.TickRate; }
                 }
 
                 if (config.Trace != null && i % 100 == 0) config.Trace(TraceLine(sim, i, peerA, peerB, pilotA, pilotB));

@@ -485,7 +485,7 @@ namespace Hullbreach.Net
         // The arena last passed to ConfigureDemoArena; null when none was (tests that place ships themselves).
         ArenaConfig _arena;
 
-        // Sets each listed peer's ship at rest on its own spawn point, far apart and facing each other (ArenaConfig.SpawnPose).
+        // Sets each listed peer's ship on its own spawn point, moving at ArenaConfig.SpawnVelocity (at rest when that is 0), far apart and facing each other (ArenaConfig.SpawnPose).
         // Run when the arena is configured and again as a match starts, because a ship that joined first sat wherever its
         // client put it through the build phase (the demo's joins were at the origin, a few units apart and falling at the planet).
         void PlaceAtMatchSpawns(List<int> sortedPeers)
@@ -497,7 +497,7 @@ namespace Hullbreach.Net
                 ShipBody ship = state.Ship;
                 ship.Position = position;
                 ship.Rotation = rotation;
-                ship.Velocity = float2.zero;
+                ship.Velocity = _arena.SpawnVelocity(i, sortedPeers.Count);
                 ship.AngularVelocity = 0f;
             }
         }

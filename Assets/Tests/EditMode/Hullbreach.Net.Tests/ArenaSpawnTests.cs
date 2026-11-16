@@ -65,7 +65,7 @@ namespace Hullbreach.Net.Tests
         }
 
         [Test]
-        public void ShipsStartTheMatchOnTheirSpawns_AtRest_NotWhereTheClientLeftThem()
+        public void ShipsStartTheMatchOnTheirSpawns_WithTheLaunchVelocity_NotWhereTheClientLeftThem()
         {
             ServerSimulation server = Started(ArenaConfig.Defaults());
             Assert.AreEqual(MatchPhase.Running, server.Match.Phase);
@@ -76,7 +76,10 @@ namespace Hullbreach.Net.Tests
                 Assert.AreEqual(p.x, server.Ships[peer].Position.x, 1e-3f);
                 Assert.AreEqual(p.y, server.Ships[peer].Position.y, 1e-3f);
                 Assert.AreEqual(r, server.Ships[peer].Rotation, 1e-3f);
-                Assert.AreEqual(0f, math.length(server.Ships[peer].Velocity), 1e-4f);
+                float2 v = arena.SpawnVelocity(peer - 1, 2);
+                Assert.AreEqual(v.x, server.Ships[peer].Velocity.x, 1e-4f);
+                Assert.AreEqual(v.y, server.Ships[peer].Velocity.y, 1e-4f);
+                Assert.AreEqual(arena.SpawnSpeed, math.length(server.Ships[peer].Velocity), 1e-3f);
             }
             Assert.GreaterOrEqual(math.distance(server.Ships[1].Position, server.Ships[2].Position), 120f);
         }
@@ -101,15 +104,52 @@ namespace Hullbreach.Net.Tests
         public void SpawnedShips_AreSafeFromThePlanetsForTheWholeOpening()
         {
             ServerSimulation server = Started(ArenaConfig.Defaults());
-            for (int i = 0; i < 50 * 15; i++) server.Tick();   // 15 s drifting under gravity with nobody flying
-            for (int peer = 1; peer <= 2; peer++)
+            // Playtest: an idle ship fell onto the big planet and rested on it by 25 s. The launch velocity arcs it up and over
+            // the arena instead; 90 s of nobody flying must stay out of every atmosphere and at least 12 units off every surface.
+            for (int i = 0; i < 50 * 90; i++)
             {
-                PlanetProximity prox = server.Ships[peer].QueryPlanetProximity();
-                Assert.IsTrue(prox.IsSafe, "peer " + peer + " is in danger from planet " + prox.BodyIndex);
-                Assert.AreEqual(0f, prox.AtmosphereDensity, "peer " + peer + " drifted into an atmosphere");
-                Assert.Greater(prox.Altitude, 12f, "peer " + peer + " drifted close to a surface");
-                foreach (var kv in server.Ships[peer].Grid.All) Assert.AreEqual(0, kv.Value.Damage, "no crash damage in the opening");
+                server.Tick();
+                if (i % 25 != 0) continue;
+                for (int peer = 1; peer <= 2; peer++)
+                {
+                    PlanetProximity prox = server.Ships[peer].QueryPlanetProximity();
+                    Assert.AreEqual(0f, prox.AtmosphereDensity, "peer " + peer + " drifted into an atmosphere at " + i / 50f + " s");
+                    Assert.Greater(prox.Altitude, 12f, "peer " + peer + " drifted close to a surface at " + i / 50f + " s");
+                }
             }
+            for (int peer = 1; peer <= 2; peer++)
+                foreach (var kv in server.Ships[peer].Grid.All) Assert.AreEqual(0, kv.Value.Damage, "no crash damage in the opening");
+        }
+
+        [Test]
+        public void LaunchVelocity_IsMirroredAndLeansAwayFromTheCentre_AndZeroForTheLegacyRing()
+        {
+            ArenaConfig arena = ArenaConfig.Defaults();
+            float2 a = arena.SpawnVelocity(0, 2), b = arena.SpawnVelocity(1, 2);
+            Assert.AreEqual(arena.SpawnSpeed, math.length(a), 1e-3f);
+            Assert.AreEqual(a.x, -b.x, 1e-4f, "mirrored sideways");
+            Assert.AreEqual(a.y, b.y, 1e-4f, "same climb");
+            Assert.Greater(a.y, 0f, "climbs away from the planets");
+            Assert.Less(a.x, 0f, "slot 0 leans away from the centre");
+            var atRest = new ArenaConfig(arena.Bodies, 12f, 30f, 2f, 0.18f, null, null, null, null, 130f, -20f);
+            Assert.AreEqual(0f, math.length(atRest.SpawnVelocity(0, 2)));
+            var legacy = new ArenaConfig(arena.Bodies, 12f, 30f, 2f, 0.18f, null, null, null, null, 0f, 0f, 4f, 112f);
+            Assert.AreEqual(0f, math.length(legacy.SpawnVelocity(0, 2)));
+        }
+
+        [Test]
+        public void RestingSpawnVelocityZero_FallsOntoThePlanetWithin30Seconds_TheProblemTheLaunchFixes()
+        {
+            ArenaConfig d = ArenaConfig.Defaults();
+            var still = new ArenaConfig(d.Bodies, 12f, 30f, 2f, 0.18f, null, null, null, null, 130f, -20f);
+            ServerSimulation server = Started(still);
+            bool reached = false;
+            for (int i = 0; i < 50 * 30 && !reached; i++)
+            {
+                server.Tick();
+                reached = server.Ships[1].QueryPlanetProximity().Altitude < 2f;
+            }
+            Assert.IsTrue(reached, "an idle ship spawned at rest lands on the planet");
         }
 
         [Test]
@@ -127,6 +167,12 @@ namespace Hullbreach.Net.Tests
             Assert.AreEqual(ArenaConfig.DefaultSpawnSeparation, ArenaConfigLoader.Parse("{}").Value.SpawnSeparation);
             Assert.AreEqual(150f, ArenaConfigLoader.Parse("{\"spawn\":{\"separation\":150}}").Value.SpawnSeparation);
             Assert.AreEqual(0f, ArenaConfigLoader.Parse("{\"spawn\":{\"altitude\":40}}").Value.SpawnSeparation);
+            Assert.AreEqual(ArenaConfig.DefaultSpawnSpeed, ArenaConfigLoader.Parse("{}").Value.SpawnSpeed);
+            ArenaConfig tuned = ArenaConfigLoader.Parse("{\"spawn\":{\"speed\":2.5,\"launchDegrees\":90}}").Value;
+            Assert.AreEqual(2.5f, tuned.SpawnSpeed);
+            Assert.AreEqual(90f, tuned.SpawnLaunchDegrees);
+            Assert.AreEqual(ArenaConfig.DefaultSpawnSeparation, tuned.SpawnSeparation, "speed alone keeps the match spawn line");
+            Assert.IsFalse(ArenaConfigLoader.Parse("{\"spawn\":{\"speed\":-1}}").IsOk);
             Assert.IsFalse(ArenaConfigLoader.Parse("{\"spawn\":{\"separation\":-1}}").IsOk);
         }
 

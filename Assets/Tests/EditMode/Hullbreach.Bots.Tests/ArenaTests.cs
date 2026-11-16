@@ -54,7 +54,7 @@ namespace Hullbreach.Bots.Tests
         {
             ArenaBatch batch = BalanceReport.RunBatch("Hard vs Easy",
                 new ArenaSide { Difficulty = BotDifficulty.Hard }, new ArenaSide { Difficulty = BotDifficulty.Easy },
-                8, Seconds, null);
+                8, 45f, null);   // 45 s, not 20: the launch spawn adds an approach, and a 20 s fight is mostly the first volley
             TestContext.Out.WriteLine(BalanceReport.Format(new List<ArenaBatch> { batch }, "Hard vs Easy"));
             Assert.AreEqual(0, batch.Crashes);
             Assert.GreaterOrEqual(batch.WinsA, 5, "Hard won " + batch.WinsA + " of " + batch.Count + " (" + batch.WinsB + " losses)");
@@ -67,7 +67,7 @@ namespace Hullbreach.Bots.Tests
         {
             ArenaBatch batch = BalanceReport.RunBatch("Mirror Normal",
                 new ArenaSide { Difficulty = BotDifficulty.Normal }, new ArenaSide { Difficulty = BotDifficulty.Normal },
-                8, Seconds, null);
+                8, 45f, null);   // 45 s: after the launch spawn the first 20 s are mostly approach, so who lands the first volley is luck
             TestContext.Out.WriteLine(BalanceReport.Format(new List<ArenaBatch> { batch }, "Mirror Normal"));
             Assert.AreEqual(0, batch.Crashes);
             Assert.That(batch.ShareA, Is.InRange(0.15, 0.85), "A share " + batch.ShareA);

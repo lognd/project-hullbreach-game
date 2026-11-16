@@ -16,6 +16,8 @@ static class Program
         float seconds = 150f;
         bool storm = false, personalities = false, trace = false; string only = null; string shipDiff = null;
         string[] one = null; string tmplId = null; bool legacySpawn = false;
+        bool idleB = false;
+        float?[] spawnOv = new float?[4]; float idleSeconds = 0f;
         ulong first = 1; bool noEcon = false, noCrash = false, noQm = false;
         for (int i = 0; i < args.Length; i++)
         {
@@ -39,6 +41,11 @@ static class Program
                 case "--noecon": noEcon = true; break;
                 case "--template": tmplId = args[++i]; break;       // side A flies this starter template (id), e.g. balanced
                 case "--legacy-spawn": legacySpawn = true; break;   // old orbit-ring spawn, a few units apart
+                case "--spawn":   // sep,y,speed,deg (any may be '-' to keep the default), e.g. --spawn -,-,0,0 for the at-rest spawn
+                    { string[] f = args[++i].Split(','); for (int k = 0; k < 4 && k < f.Length; k++) if (f[k] != "-") spawnOv[k] = float.Parse(f[k], System.Globalization.CultureInfo.InvariantCulture); }
+                    break;
+                case "--idle-b": idleB = true; break;   // side B sends no input (a player who never touches the controls)
+                case "--idle": idleSeconds = float.Parse(args[++i], System.Globalization.CultureInfo.InvariantCulture); break;   // two idle ships on the spawns, report planet clearance
                 case "--nocrash": noCrash = true; break;
                 case "--noqm": noQm = true; break;
                 case "--personalities": personalities = true; break;
@@ -49,8 +56,10 @@ static class Program
 
         StormConfig? stormConfig = storm ? StormConfig.Default() : (StormConfig?)null;
         var rules = new ArenaRules { Quartermaster = !noQm };
+        rules.SpawnSeparation = spawnOv[0]; rules.SpawnLineY = spawnOv[1]; rules.SpawnSpeed = spawnOv[2]; rules.SpawnLaunchDegrees = spawnOv[3];
         if (noEcon) rules.Economy = Hullbreach.Net.EconomyConfig.Default().WithEnabled(false);
         if (noCrash) { var pc = PlanetCrashConfig.Default(); pc.DamagePerSpeed = 0f; pc.HeatDamagePerSecond = 0f; pc.HeatMaxDamagePerSecond = 0f; rules.Crash = pc; }
+        if (idleSeconds > 0f) return IdleReport.Run(idleSeconds, spawnOv);
         if (one != null)
         {
             var cfg = new ArenaMatchConfig
@@ -59,7 +68,8 @@ static class Program
                 A = new ArenaSide { Difficulty = (BotDifficulty)Enum.Parse(typeof(BotDifficulty), one[0], true) },
                 B = new ArenaSide { Difficulty = (BotDifficulty)Enum.Parse(typeof(BotDifficulty), one[1], true) },
             };
-            cfg.LegacySpawn = legacySpawn;
+            cfg.LegacySpawn = legacySpawn; cfg.B.Idle = idleB;
+            cfg.SpawnSeparation = spawnOv[0]; cfg.SpawnLineY = spawnOv[1]; cfg.SpawnSpeed = spawnOv[2]; cfg.SpawnLaunchDegrees = spawnOv[3];
             if (tmplId != null) cfg.A.Ship = BotBuilder.FromTemplate(Hullbreach.Builder.ShipTemplates.ById(tmplId) ?? throw new ArgumentException("no template " + tmplId));
             if (shipDiff != null)
             {
@@ -70,7 +80,7 @@ static class Program
             ArenaMatchResult r = ArenaMatch.Run(cfg);
             Console.WriteLine($"{r.LabelA} vs {r.LabelB} seed {r.Seed}: winner={r.Winner} ending={r.Ending} {r.Seconds:0.0}s " +
                 $"shots {r.ShotsA}/{r.ShotsB} dmg {r.DamageA}/{r.DamageB} core {r.CoreHealthA:0.00}/{r.CoreHealthB:0.00} " +
-                $"blocks {r.BlocksA}/{r.BlocksB} quiet {r.LongestQuietSeconds:0.0}s err={r.Error} simMs={r.SimMs:0} botMs={r.BotMs:0}");
+                $"first shot {r.FirstShotSecondsA:0.0}/{r.FirstShotSecondsB:0.0}s blocks {r.BlocksA}/{r.BlocksB} quiet {r.LongestQuietSeconds:0.0}s err={r.Error} simMs={r.SimMs:0} botMs={r.BotMs:0}");
             if (trace) Console.WriteLine("modes A " + string.Join(" ", Enumerable.Range(0, 8).Select(i => ((BotMode)i) + "=" + r.ModeTicksA[i])) + " | B " + string.Join(" ", Enumerable.Range(0, 8).Select(i => ((BotMode)i) + "=" + r.ModeTicksB[i])));
             return r.Ending == ArenaEnding.Crash ? 1 : 0;
         }
@@ -89,6 +99,43 @@ static class Program
         foreach (ArenaBatch b in batches)
             foreach (ArenaMatchResult m in b.Matches)
                 if (m.Ending == ArenaEnding.Crash) Console.WriteLine($"CRASH {b.Name} seed {m.Seed}: {m.Error}");
+        return 0;
+    }
+}
+
+// Two idle ships (no input) on the match spawns for N seconds: when does each one first come within reach of a planet?
+static class IdleReport
+{
+    public static int Run(float seconds, float?[] ov)
+    {
+        var d = Hullbreach.Net.ArenaConfig.Defaults();
+        var arena = new Hullbreach.Net.ArenaConfig(d.Bodies, d.SpawnLateral, d.SpawnAltitude, d.SpawnVertical, d.SpawnAngleStep, d.Bounds, d.Storm, d.Crash, d.Economy,
+            ov[0] ?? d.SpawnSeparation, ov[1] ?? d.SpawnLineY, ov[2] ?? d.SpawnSpeed, ov[3] ?? d.SpawnLaunchDegrees);
+        var server = new Hullbreach.Net.ServerSimulation(new Hullbreach.Net.ServerOutbox()) { TickRate = 50f, MatchFeed = new Hullbreach.Platform.MatchEndFeed(), ReconnectGraceSeconds = 0f, TimeoutSeconds = 1e6f };
+        server.ConfigureDemoArena(arena);
+        var snap = new Hullbreach.Net.ShipSnapshot(0, 0, new[]
+        {
+            new Hullbreach.Net.SnapshotBlock(0, 0, Hullbreach.Core.BlockTypes.Core, 0, 0),
+            new Hullbreach.Net.SnapshotBlock(0, 1, Hullbreach.Core.BlockTypes.Hull, 0, 0),
+            new Hullbreach.Net.SnapshotBlock(0, -1, Hullbreach.Core.BlockTypes.Hull, 0, 0),
+        }, 0, 0, 0, 0, 0, 0);
+        server.Join(1, snap); server.Join(2, snap);
+        var first = new float[3]; var minAlt = new float[3]; minAlt[1] = minAlt[2] = 1e9f; float minSep = 1e9f;
+        int ticks = (int)(seconds * 50f);
+        for (int t = 0; t <= ticks; t++)
+        {
+            for (int peer = 1; peer <= 2; peer++)
+            {
+                var p = server.Ships[peer].QueryPlanetProximity();
+                if (p.Altitude < minAlt[peer]) minAlt[peer] = p.Altitude;
+                if (first[peer] == 0f && (p.Altitude < 12f || p.AtmosphereDensity > 0f)) first[peer] = t / 50f;
+            }
+            minSep = System.Math.Min(minSep, Unity.Mathematics.math.distance(server.Ships[1].Position, server.Ships[2].Position));
+            if (t % 500 == 0)
+                System.Console.WriteLine($"t={t / 50f,5:0} A=({server.Ships[1].Position.x,6:0.0},{server.Ships[1].Position.y,6:0.0}) alt {server.Ships[1].QueryPlanetProximity().Altitude,5:0.0} | B=({server.Ships[2].Position.x,6:0.0},{server.Ships[2].Position.y,6:0.0}) alt {server.Ships[2].QueryPlanetProximity().Altitude,5:0.0} sep {Unity.Mathematics.math.distance(server.Ships[1].Position, server.Ships[2].Position),5:0.0}");
+            server.Tick();
+        }
+        System.Console.WriteLine($"first within 12 of a surface / in atmosphere: A {(first[1] == 0 ? "never" : first[1].ToString("0.0") + "s")}, B {(first[2] == 0 ? "never" : first[2].ToString("0.0") + "s")}; min altitude A {minAlt[1]:0.0} B {minAlt[2]:0.0}; min ship separation {minSep:0.0}");
         return 0;
     }
 }

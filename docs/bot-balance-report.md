@@ -200,3 +200,57 @@ Headless sims, `--storm`, 600 s, seeds 1-12 (new spawns, new hit scale):
 | Mirror Normal (after) | 6/12 | 220 s | 4 | 8 |
 
 Not met: the Balanced template does not yet win 50% against Normal (4/12 after, 2/12 before), and Hard vs Normal was not better than Normal in this 12-seed sample. Fights are now far longer than 55 s (median breach 220-333 s, half run to the storm), so the target 2-4 min is overshot on the slow end. Not run for time: Hard vs Easy, Normal vs Easy, Easy/Hard mirrors. The winner column is the sim's own verdict, which for storm endings depends on remaining damage and may be noisy. Follow-up candidates: soften core scale toward 0.65, or give Normal more lethality; each needs its own sweep.
+
+## Spawn launch velocity (idle ships no longer fall onto the planet)
+
+Playtest (editor, after the pacing change): ships spawned at rest at (-65,-20) and (65,-20), 76 units from the big planet
+at (0,-60) (radius 18, mu 900). An idle ship fell onto it and rested there about 25 s after READY, so a new player felt
+trapped and the fight opened with a planet crash.
+
+Root cause numbers (headless, two idle ships on the real `ServerSimulation`, `bot_report.sh --idle 130 --spawn ...`):
+
+| Spawn | First within 12 units of a surface or in an atmosphere (A / B) | Rests on the planet |
+|---|---|---|
+| Before: at rest, line y -20, 130 apart | 20.9 s / 22.9 s | by 30 s (alt 0.0 from then on) |
+| After: 4 u/s at 100 degrees, line y -22, 140 apart | 100.6 s / 93.2 s | about 100 s, and the arc crosses the arena instead of resting |
+
+Why a velocity and not just a better spawn point: the arena is 100 units in radius with the mu-900 planet 60 below its
+centre, so no resting spawn survives (a ship at the top still falls in about 55 s) and no circular orbit fits (a ring of
+radius 76 about the planet leaves the arena). A search over spawn line, separation, speed and angle with mirrored ships
+(Python point-mass model, then confirmed on the real simulation) found nothing that stays clear for 120 s without ships
+that sweep through each other; the best robust family is "launch nearly straight up at about 4 u/s", which gives
+93 to 100 s and keeps both ships on a clear arc over the top of the arena. Two idle ships still pass close to each other
+near the top of the arc (about 50 s in, closest approach about 5 units in the sim); that needs two players who both sit still.
+
+Bots (Normal mirror, seed 1, trace, first launch parameters 112 degrees / y -26 / 130 apart): range 51 at 10 s with the launch,
+60 at 8 s and 40 at 10 s at rest; by 24 s a Normal bot had spent 495 of 1200 ticks in avoid-planet at rest (the line runs into
+the planet's pull) and 144 with the launch.
+Easy bot against a player who never touches the controls, seeds 1-3, 120 s, storm on:
+
+| Spawn | First shot | Damage dealt in 120 s | Range, 20 s to 60 s |
+|---|---|---|---|
+| At rest (before) | 13.9 / 16.3 / 13.4 s | 400 / 275 / 440 | 9 to 52 (the idle ship sat on the planet) |
+| Launch (after) | 15.0 / 19.5 / 17.5 s | 2430 / 1845 / 2065 | 9 to 58 |
+
+Easy does close to gun range (54) and fires every few seconds throughout, in both cases, so no Easy profile change was made.
+The "orbits 30 to 80 units away and never shoots" report is not reproduced against an idle ship. The low damage at rest is
+consistent with the idle ship sitting on the planet (the lower blocks are shielded by the rock and the bot keeps its 12-unit
+planet margin), which the launch removes. It may still happen against a ship that moves; that needs an editor look.
+
+Fight pacing after the change, seeds 1-12, 600 s, default storm, chunks of 4:
+
+| Scenario | Before (fight pacing section / PR #186) | After |
+|---|---|---|
+| Mirror Normal | 6/12 breaches, median breach 220 s | 6/12 breaches, median breach 193 s (110 to 241 s), 6 storm |
+| Mirror Easy | 1 breach, 3 draws, 8 storm | 0 breaches, 2 draws, 10 storm |
+
+Mirror Easy is no better and no worse than the #186 numbers within noise: Easy lands plenty of damage (490 to 5272 per match)
+but on outer blocks, so cores rarely die before the ring. Not re-run: Hard vs Normal, Template vs Normal (time).
+
+Test windows: in 20 s fights the launch spawn adds about 3 s of approach, so Hard vs Easy (8 seeds) went from 8-0-0 to 4-3-1 and
+Mirror Normal from even to 1-7 at 20 s; at 45 s they are 6-1-1 and 4-4. `Hard_BeatsEasy_ByAClearMajority` and
+`Mirror_IsRoughlyEven_WithSlotsSwapped` now play 45 s, and the storm-awareness test uses 8 seeds (12 seeds: aware 11912 vs blind
+13706 ticks outside the ring; the first launch angle tried, 112 degrees leaning outward, lost the awareness advantage, 100 degrees keeps it).
+
+Reproduce: `tools/plaincs/bot_report.sh --idle 130` (idle ships), `--spawn sep,y,speed,degrees` (use `-` for a default, `--spawn -,-20,0,0`
+is the old at-rest spawn), `--one easy easy 1 --idle-b --trace` (an Easy bot against a ship that sends no input).
