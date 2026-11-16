@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
+using Hullbreach.Builder;
 using Hullbreach.Net;
 using Hullbreach.World;
 
@@ -116,6 +117,11 @@ namespace Hullbreach.Bots
             Add("Mirror Easy", E, E);
             Add("Mirror Normal", N, N);
             Add("Mirror Hard", H, H);
+            // The player proxy: a pilot of the given skill flying the Balanced starter template (what a fresh player owns).
+            BotShip starter = BotBuilder.FromTemplate(ShipTemplates.Default);
+            ArenaSide PlayerN = Side(BotDifficulty.Normal); PlayerN.Ship = starter;
+            Add("Template(N) vs Normal", PlayerN, N);
+            Add("Template(N) vs Hard", PlayerN, H);
             if (includePersonalities)
             {
                 var types = (BotPersonality[])Enum.GetValues(typeof(BotPersonality));

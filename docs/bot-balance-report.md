@@ -142,3 +142,25 @@ Reading it:
 Compared with the earlier tables: breach share is 54% (the 6-seed run had 47%, the 30-match schedule C run 73%), and
 Hard vs Normal remains close to even in every run so far. The earlier numbers should be read with the randomised match
 id in mind.
+
+## Fight pacing (spawn separation and core hit scale)
+
+Playtest: a 60-point Balanced ship lost its core in about 20 s and the match lasted 0:55 against a Normal bot.
+
+Root causes:
+
+- Real-game ships spawned at `SpawnX(peer)` = +-(3 + 2 * (peer % 4)), about 10 units apart at the origin, and fell toward the planet at (0,-60) under 0.25 u/s^2 while idle. The headless harness used an orbit ring about 6 units apart. Either way both ships were inside gun range (54 units) from tick 0.
+- Every block, including the core, had 255 HP and a cannon round does 25. The core died in 10 hits, the same as a hull block; the playtest took 182 hits (4560 damage) in 55 s.
+
+Changes: ships are placed at rest at match start on a line 130 units wide and 20 units below the arena centre, facing each other (76 from the planet, 45 from the moon, outside every atmosphere). Cores take 0.5x and armour 0.6x of a cannon round (core: 20 hits instead of 10). The 5 s no-shoot grace is unchanged. Bot profiles are unchanged (Easy untouched).
+
+Headless sims, `--storm`, 600 s, seeds 1-12 (new spawns, new hit scale):
+
+| Scenario | Core breaches | Median breach | A wins | B wins |
+|---|---|---|---|---|
+| Template(N) vs Normal (before, old code) | 5/12 | 337 s | 2 | 9 (1 draw) |
+| Template(N) vs Normal (after) | 6/12 | 333 s | 4 | 8 |
+| Hard vs Normal (after) | 6/12 | 275 s | 3 | 9 |
+| Mirror Normal (after) | 6/12 | 220 s | 4 | 8 |
+
+Not met: the Balanced template does not yet win 50% against Normal (4/12 after, 2/12 before), and Hard vs Normal was not better than Normal in this 12-seed sample. Fights are now far longer than 55 s (median breach 220-333 s, half run to the storm), so the target 2-4 min is overshot on the slow end. Not run for time: Hard vs Easy, Normal vs Easy, Easy/Hard mirrors. The winner column is the sim's own verdict, which for storm endings depends on remaining damage and may be noisy. Follow-up candidates: soften core scale toward 0.65, or give Normal more lethality; each needs its own sweep.

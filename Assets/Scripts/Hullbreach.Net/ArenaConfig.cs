@@ -59,6 +59,14 @@ namespace Hullbreach.Net
         // frob:ticket 01M7EXAGAAS0CRAVC1BEXJ5598
         // frob:doc docs/reference/hullbreach-net.md#arenaconfig
         public StormConfig Storm { get; }
+        // Distance between the two match spawns, which sit on opposite sides of Bounds.Center on a horizontal line facing
+        // each other, so a fight starts with an approach instead of point-blank range. 0 keeps the legacy orbit ring
+        // (SpawnLateral/SpawnAltitude/...) around Bodies[0]. Defaults() uses DefaultSpawnSeparation.
+        // frob:doc docs/reference/hullbreach-net.md#arenaconfig
+        public float SpawnSeparation { get; }
+        // Height of the spawn line above Bounds.Center (negative is below it); keeps both spawns off the moon's side.
+        // frob:doc docs/reference/hullbreach-net.md#arenaconfig
+        public float SpawnLineY { get; }
         // Planet crash, atmosphere and warning tunables; PlanetCrashConfig.Default() unless the JSON has a planets block.
         // frob:doc docs/reference/hullbreach-net.md#arenaconfig
         public PlanetCrashConfig Crash { get; }
@@ -71,8 +79,10 @@ namespace Hullbreach.Net
         // frob:doc docs/reference/hullbreach-net.md#arenaconfig
         public ArenaConfig(IReadOnlyList<ArenaBodyConfig> bodies, float lateral, float altitude,
             float vertical, float angleStep, ArenaBounds? bounds = null, StormConfig? storm = null,
-            PlanetCrashConfig? crash = null, EconomyConfig? economy = null)
+            PlanetCrashConfig? crash = null, EconomyConfig? economy = null, float spawnSeparation = 0f, float spawnLineY = 0f)
         {
+            SpawnSeparation = spawnSeparation;
+            SpawnLineY = spawnLineY;
             Bounds = bounds ?? DefaultBounds;
             Storm = storm ?? StormConfig.Default();
             Crash = crash ?? PlanetCrashConfig.Default();
@@ -88,6 +98,27 @@ namespace Hullbreach.Net
         // frob:doc docs/reference/hullbreach-net.md#arenaconfig
         public static readonly ArenaBounds DefaultBounds = new ArenaBounds(float2.zero, 100f, 20f, 8f);
 
+        // 130 units: about 12 s of approach for a bot closing at its 8 units/s cap, and both spawns stay more than 80 units
+        // from the primary planet, outside its atmosphere and its worst gravity (see ArenaSpawnTests).
+        // frob:doc docs/reference/hullbreach-net.md#arenaconfig
+        public const float DefaultSpawnSeparation = 130f;
+
+        // 20 units below the arena centre: 45 units from the moon (the centre line passes 28 from it) and 76 from the primary.
+        // frob:doc docs/reference/hullbreach-net.md#arenaconfig
+        public const float DefaultSpawnLineY = -20f;
+
+        // World position and rotation of match spawn `slot` (0-based) out of `count`: slots are spread along a horizontal line
+        // through Bounds.Center, each facing the middle. Only meaningful when SpawnSeparation > 0.
+        // frob:doc docs/reference/hullbreach-net.md#arenaconfig
+        public void SpawnPose(int slot, int count, out float2 position, out float rotation)
+        {
+            int n = math.max(1, count);
+            float offset = (slot - (n - 1) * 0.5f) * SpawnSeparation;
+            position = Bounds.Center + new float2(offset, SpawnLineY);
+            // Ship-local forward is +y rotated counter-clockwise by Rotation: -90 degrees faces +x, +90 faces -x.
+            rotation = offset <= 0f ? -math.PI * 0.5f : math.PI * 0.5f;
+        }
+
         // The constants ConfigureDemoArena used before they became configurable.
         // frob:doc docs/reference/hullbreach-net.md#arenaconfig
         public static ArenaConfig Defaults() => new ArenaConfig(
@@ -96,7 +127,7 @@ namespace Hullbreach.Net
                 new ArenaBodyConfig(0f, -60f, 900f, 18f, 0.2f),
                 new ArenaBodyConfig(45f, 20f, 120f, 6f, 0.2f),
             },
-            12f, 30f, 2f, 0.18f);
+            12f, 30f, 2f, 0.18f, spawnSeparation: DefaultSpawnSeparation, spawnLineY: DefaultSpawnLineY);
     }
 
     // Success value or an error message; the loader never throws on bad input.
@@ -147,7 +178,7 @@ namespace Hullbreach.Net
             }
 
             float lateral = d.SpawnLateral, altitude = d.SpawnAltitude;
-            float vertical = d.SpawnVertical, step = d.SpawnAngleStep;
+            float vertical = d.SpawnVertical, step = d.SpawnAngleStep, separation = d.SpawnSeparation, lineY = d.SpawnLineY;
             if (root.TryGetValue("spawn", out object rawSpawn))
             {
                 var spawn = rawSpawn as Dictionary<string, object>;
@@ -155,9 +186,14 @@ namespace Hullbreach.Net
                 string err = Read(spawn, "spawn", "lateral", ref lateral)
                     ?? Read(spawn, "spawn", "altitude", ref altitude)
                     ?? Read(spawn, "spawn", "vertical", ref vertical)
-                    ?? Read(spawn, "spawn", "angleStep", ref step);
+                    ?? Read(spawn, "spawn", "angleStep", ref step)
+                    ?? Read(spawn, "spawn", "separation", ref separation)
+                    ?? Read(spawn, "spawn", "lineY", ref lineY);
                 if (err != null) return ConfigResult<ArenaConfig>.Fail(err);
                 if (altitude <= 0f) return ConfigResult<ArenaConfig>.Fail("spawn.altitude must be > 0");
+                // Authoring the old ring keys without a separation keeps the old ring.
+                if (!spawn.ContainsKey("separation") && spawn.Count > 0) separation = 0f;
+                if (separation < 0f) return ConfigResult<ArenaConfig>.Fail("spawn.separation must be >= 0");
             }
 
             ArenaBounds bounds = d.Bounds;
@@ -199,7 +235,7 @@ namespace Hullbreach.Net
                 if (!ec.IsOk) return ConfigResult<ArenaConfig>.Fail(ec.Error);
                 economy = ec.Value;
             }
-            return ConfigResult<ArenaConfig>.Ok(new ArenaConfig(bodies, lateral, altitude, vertical, step, bounds, storm, crash, economy));
+            return ConfigResult<ArenaConfig>.Ok(new ArenaConfig(bodies, lateral, altitude, vertical, step, bounds, storm, crash, economy, separation, lineY));
         }
 
         // Reads a file and parses it; an unreadable file is an error, not an exception.
