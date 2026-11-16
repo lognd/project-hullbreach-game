@@ -7,7 +7,7 @@ outcome = "fixed"
 priority = "medium"
 reporter = "lognd"
 created = "2026-11-15T22:41:06Z"
-updated = "2026-11-16T01:37:26Z"
+updated = "2026-11-16T01:37:46Z"
 
 [[acceptance]]
 text = "A wide wing under full thrust no longer snaps instantly: failure is damage-driven (WingStressTests, DamageModelTests)"
