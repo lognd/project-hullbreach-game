@@ -92,6 +92,7 @@ namespace Hullbreach.NetCode.Entities
         static float s_lastPlaceTime = -1000f;
 
         GameObject _hover;
+        bool _wasRunning;
         int _hoverKey;
         bool _hasHover;
         bool _hoverValid;
@@ -259,6 +260,7 @@ namespace Hullbreach.NetCode.Entities
             if (gameplayCamera != null) _baseOrthographicSize = Mathf.Min(gameplayCamera.orthographicSize, DefaultOrthographicSize);
             s_lastPlaceTime = -1000f;
             ReadySent = false;
+            _wasRunning = false;
             s_designApplied = false;
             Designs.Clear();
             Toasts.Clear();
@@ -285,6 +287,10 @@ namespace Hullbreach.NetCode.Entities
         void Update()
         {
             RestoreLastDesign();
+            // The moment the match starts the player is at the controls: WASD must fly without a Tab first.
+            bool running = MatchRunning;
+            if (running && !_wasRunning) { IsBuildMode = false; _pendingKey = null; _buildStatus = "Flight mode"; PublishStatus(); }
+            _wasRunning = running;
             UpdateStress();
             if (Input.GetKeyDown(KeyCode.Tab))
             {
