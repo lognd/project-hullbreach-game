@@ -1,0 +1,1 @@
+- The builder tints blocks by stress, shows a status line and warns about a weak structure when you press READY.

@@ -1,0 +1,1 @@
+- Bots now notice the shrinking storm and fly back inside the safe zone.

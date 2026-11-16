@@ -1,0 +1,1 @@
+- A player who joins or reconnects mid-match now receives the current crates, salvage, storm and stock.
