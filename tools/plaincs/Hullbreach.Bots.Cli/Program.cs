@@ -15,7 +15,7 @@ static class Program
         int seeds = 20;
         float seconds = 150f;
         bool storm = false, personalities = false, trace = false; string only = null; string shipDiff = null;
-        string[] one = null;
+        string[] one = null; string tmplId = null; bool legacySpawn = false;
         ulong first = 1; bool noEcon = false, noCrash = false, noQm = false;
         for (int i = 0; i < args.Length; i++)
         {
@@ -37,6 +37,8 @@ static class Program
                 case "--storm": storm = true; break;
                 case "--first": first = ulong.Parse(args[++i]); break;
                 case "--noecon": noEcon = true; break;
+                case "--template": tmplId = args[++i]; break;       // side A flies this starter template (id), e.g. balanced
+                case "--legacy-spawn": legacySpawn = true; break;   // old orbit-ring spawn, a few units apart
                 case "--nocrash": noCrash = true; break;
                 case "--noqm": noQm = true; break;
                 case "--personalities": personalities = true; break;
@@ -57,6 +59,8 @@ static class Program
                 A = new ArenaSide { Difficulty = (BotDifficulty)Enum.Parse(typeof(BotDifficulty), one[0], true) },
                 B = new ArenaSide { Difficulty = (BotDifficulty)Enum.Parse(typeof(BotDifficulty), one[1], true) },
             };
+            cfg.LegacySpawn = legacySpawn;
+            if (tmplId != null) cfg.A.Ship = BotBuilder.FromTemplate(Hullbreach.Builder.ShipTemplates.ById(tmplId) ?? throw new ArgumentException("no template " + tmplId));
             if (shipDiff != null)
             {
                 var sd = (BotDifficulty)Enum.Parse(typeof(BotDifficulty), shipDiff, true);

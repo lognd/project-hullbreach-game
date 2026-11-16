@@ -67,6 +67,9 @@ namespace Hullbreach.Bots
         // False keeps the bots from placing, deconstructing or scavenging, to measure what the economy play is worth.
         public bool Quartermaster = true;
 
+        // True spawns the ships on the old orbit ring a few units apart (the layout before the pacing change), for before/after runs.
+        public bool LegacySpawn;
+
         // Seconds without any damage that count as a stall.
         public float StallSeconds = 60f;
 
@@ -158,7 +161,7 @@ namespace Hullbreach.Bots
             ArenaConfig defaults = ArenaConfig.Defaults();
             var arena = new ArenaConfig(defaults.Bodies, defaults.SpawnLateral, defaults.SpawnAltitude,
                 defaults.SpawnVertical, defaults.SpawnAngleStep, defaults.Bounds, config.Storm ?? StormConfig.Default(),
-                config.Crash ?? defaults.Crash, config.Economy ?? defaults.Economy);
+                config.Crash ?? defaults.Crash, config.Economy ?? defaults.Economy, config.LegacySpawn ? 0f : defaults.SpawnSeparation, config.LegacySpawn ? 0f : defaults.SpawnLineY);
             sim.ConfigureDemoArena(arena);
 
             // Joined in peer order so slot 1 is always first in the arena's spawn order.

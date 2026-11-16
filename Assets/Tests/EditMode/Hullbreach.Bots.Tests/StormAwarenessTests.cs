@@ -136,14 +136,14 @@ namespace Hullbreach.Bots.Tests
         [Test]
         public void InTheHeadlessArena_AStormAwareBotSpendsLessTimeOutsideTheRingThanABlindOne()
         {
-            // Grace 1 s, then two quick rings with real damage; the match is cut before sudden death.
+            // Grace 1 s, then two quick rings with real damage; the match is cut before sudden death. Four seeds, because the ships now start 130 units apart and one seed is noise.
             var storm = new StormConfig(50f, 100f, 1f, 0.1f, 20f, 100f, new[]
             {
                 new StormPhase(20f, 15f, 40f, 4f),
                 new StormPhase(20f, 15f, 15f, 8f),
             });
             int aware = 0, blind = 0;
-            foreach (ulong seed in new ulong[] { 3, 4 })
+            foreach (ulong seed in new ulong[] { 3, 4, 5, 6 })
             {
                 ArenaMatchResult r = ArenaMatch.Run(new ArenaMatchConfig
                 {

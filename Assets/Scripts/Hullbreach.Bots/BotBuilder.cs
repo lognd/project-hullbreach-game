@@ -104,6 +104,33 @@ namespace Hullbreach.Bots
             return Fallback();
         }
 
+        // A starter template as a bot ship, placed outward from the core so every step is legal. Lets the harness fly the
+        // ship a fresh player starts with (the "competent human" proxy) with a bot pilot.
+        // frob:doc docs/reference/hullbreach-bots.md#botbuilder
+        public static BotShip FromTemplate(ShipTemplate template)
+        {
+            var grid = new BlockGrid();
+            var order = new List<BotPlacement>();
+            var pending = new List<DesignBlock>(template.Blocks);
+            while (pending.Count > 0)
+            {
+                bool progressed = false;
+                for (int i = 0; i < pending.Count; i++)
+                {
+                    DesignBlock b = pending[i];
+                    int key = BlockKey.Pack(b.X, b.Y);
+                    if (!PlacementRules.CanPlace(grid, key, b.TypeId, b.Modifiers, out _)) continue;
+                    grid.TryAdd(key, new Block(b.TypeId, b.Modifiers, 0));
+                    order.Add(new BotPlacement(b.X, b.Y, b.TypeId, b.Modifiers, false));
+                    pending.RemoveAt(i);
+                    progressed = true;
+                    break;
+                }
+                if (!progressed) throw new ArgumentException("template " + template.Id + " has an unplaceable block");
+            }
+            return new BotShip(grid, order);
+        }
+
         // Replays the order through the real placement rules, runs the net design validator, and
         // checks stress under a burst of full thrust, full steer and fire. Null reason when valid.
         // frob:doc docs/reference/hullbreach-bots.md#botbuilder

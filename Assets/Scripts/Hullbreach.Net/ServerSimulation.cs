@@ -457,10 +457,12 @@ namespace Hullbreach.Net
                 + " strength=" + Bounds.Strength);
             foreach (ArenaBodyConfig body in config.Bodies) _gravity.Add(body.ToGravityBody());
 
+            _arena = config;
             ArenaBodyConfig primary = config.Bodies[0];
             var center = new float2(primary.X, primary.Y);
             var peers = new List<int>(_peers.Keys);
             peers.Sort();
+            if (config.SpawnSeparation > 0f) { PlaceAtMatchSpawns(peers); return; }
             for (int i = 0; i < peers.Count; i++)
             {
                 ShipBody ship = _peers[peers[i]].Ship;
@@ -472,6 +474,26 @@ namespace Hullbreach.Net
                 float2 tangent = math.normalizesafe(new float2(-relative.y, relative.x));
                 ship.Velocity = tangent * speed;
                 ship.Rotation = angle;
+                ship.AngularVelocity = 0f;
+            }
+        }
+
+        // The arena last passed to ConfigureDemoArena; null when none was (tests that place ships themselves).
+        ArenaConfig _arena;
+
+        // Sets each listed peer's ship at rest on its own spawn point, far apart and facing each other (ArenaConfig.SpawnPose).
+        // Run when the arena is configured and again as a match starts, because a ship that joined first sat wherever its
+        // client put it through the build phase (the demo's joins were at the origin, a few units apart and falling at the planet).
+        void PlaceAtMatchSpawns(List<int> sortedPeers)
+        {
+            for (int i = 0; i < sortedPeers.Count; i++)
+            {
+                if (!_peers.TryGetValue(sortedPeers[i], out PeerState state)) continue;
+                _arena.SpawnPose(i, sortedPeers.Count, out float2 position, out float rotation);
+                ShipBody ship = state.Ship;
+                ship.Position = position;
+                ship.Rotation = rotation;
+                ship.Velocity = float2.zero;
                 ship.AngularVelocity = 0f;
             }
         }
@@ -587,6 +609,7 @@ namespace Hullbreach.Net
             _tallies.Clear();
             foreach (int id in ids) _tallies[id] = new MatchTally { StartTick = _tickIndex };
             _matchStartTick = _tickIndex;
+            if (_arena != null && _arena.SpawnSeparation > 0f) PlaceAtMatchSpawns(ids);
             string queueId = _queueMatchId;
             _queueMatchId = null;
             Match = new MatchStateMachine(
@@ -1191,6 +1214,28 @@ namespace Hullbreach.Net
             return false;
         }
 
+        // Share of a cannon round's damage the core absorbs: its 255 damage points stretch over twice as many hits. Before
+        // this the core fell to the same ten hits as a hull block, so a lane through two blocks killed a ship in seconds.
+        // frob:doc docs/reference/hullbreach-net.md#serversimulation
+        public const float DefaultCoreHitScale = 0.5f;
+
+        // Same for armour, which only helped the stress solver before and was no tougher than hull against shots.
+        // frob:doc docs/reference/hullbreach-net.md#serversimulation
+        public const float DefaultArmorHitScale = 0.6f;
+
+        // frob:doc docs/reference/hullbreach-net.md#serversimulation
+        public float CoreHitScale = DefaultCoreHitScale;
+        // frob:doc docs/reference/hullbreach-net.md#serversimulation
+        public float ArmorHitScale = DefaultArmorHitScale;
+
+        // Damage a round of `raw` points does to a block of this type: at least 1, rounded to the nearest point.
+        // frob:doc docs/reference/hullbreach-net.md#serversimulation
+        public int ScaledImpactDamage(byte typeId, int raw)
+        {
+            float scale = typeId == BlockTypes.Core ? CoreHitScale : typeId == BlockTypes.Armor ? ArmorHitScale : 1f;
+            return raw <= 0 ? 0 : math.max(1, (int)math.floor(raw * scale + 0.5f));
+        }
+
         void ApplyProjectileImpact(int peer, int key, ProjectileBody p)
         {
             var state = _peers[peer];
@@ -1202,7 +1247,8 @@ namespace Hullbreach.Net
             if (speed > 1e-6f)
                 state.Ship.ApplyImpulseAtWorldPoint(p.Position, p.Velocity / speed * p.Spec.Impulse);
 
-            int newDamage = math.min(255, block.Damage + p.Spec.Damage);
+            int hit = ScaledImpactDamage(block.TypeId, p.Spec.Damage);
+            int newDamage = math.min(255, block.Damage + hit);
             bool destroyed = newDamage >= 255 && key != grid.CoreKeyOrDefault();
             Tally(p.OwnerPeer, newDamage - block.Damage, destroyed ? 1 : 0, 0);
 

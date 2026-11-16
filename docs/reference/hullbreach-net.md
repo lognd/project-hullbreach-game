@@ -739,6 +739,11 @@ state never reads it.
 <!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.MaxPeerId -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.FirstFragmentId -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.ConfigureDemoArena -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.DefaultCoreHitScale -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.DefaultArmorHitScale -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.CoreHitScale -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.ArmorHitScale -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.ScaledImpactDamage -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.PlanetCrash -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.FlightTuning -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ServerSimulation.cs::ServerSimulation.Bounds -->
@@ -1122,6 +1127,11 @@ Launch scripts and log checks grep for both.
 <!-- describes: Assets/Scripts/Hullbreach.Net/ArenaConfig.cs::ArenaConfig.Storm -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ArenaConfig.cs::ArenaConfig.Crash -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ArenaConfig.cs::ArenaConfig.DefaultBounds -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ArenaConfig.cs::ArenaConfig.SpawnSeparation -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ArenaConfig.cs::ArenaConfig.DefaultSpawnSeparation -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ArenaConfig.cs::ArenaConfig.SpawnPose -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ArenaConfig.cs::ArenaConfig.SpawnLineY -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ArenaConfig.cs::ArenaConfig.DefaultSpawnLineY -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ArenaConfig.cs::ArenaConfig.ArenaConfig -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ArenaConfig.cs::ArenaConfig.Defaults -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ArenaConfig.cs::ConfigResult -->
@@ -1140,6 +1150,15 @@ Gravity and arena constants for the demo arena (S40-3), engine-free.
 `angleStep`, in multiples of pi) that ships orbit `Bodies[0]` on.
 `ArenaConfig.Defaults()` is exactly what `ServerSimulation.ConfigureDemoArena`
 hard-coded before, and the no-argument `ConfigureDemoArena()` still uses it.
+
+Match spawns (fight pacing): `SpawnSeparation` (JSON `spawn.separation`, default `DefaultSpawnSeparation` = 130) puts the
+two ships on opposite sides of `Bounds.Center` on a horizontal line `SpawnLineY` (default -20) away, at rest and facing each other (`SpawnPose(slot,
+count)`). `ConfigureDemoArena` places the joined peers there, and `ServerSimulation` places the two match peers again
+when the match starts, because a client's own join position is only where its ship sat through the build phase. With the
+default arena both spawns are 76 units from the primary planet and 45 from the moon, outside every
+atmosphere, with at most 0.16 u/s^2 of pull (an unflown ship still has 40 units of clearance after 15 s); a 130 unit gap is about 12 s of approach at the bots' 8 u/s closing cap.
+`SpawnSeparation == 0` (built through the constructor without it, or a `spawn` block that gives only `lateral`,
+`altitude`, `vertical` or `angleStep`) keeps the old orbit ring around `Bodies[0]`.
 
 `ArenaConfigLoader.Parse(json)` / `LoadFile(path)` read a JSON object such as
 `{"bodies":[{"x":0,"y":-60,"mu":900,"radius":18}],"spawn":{"altitude":30}}`.
