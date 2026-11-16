@@ -66,6 +66,9 @@ namespace Hullbreach.NetCode.Entities
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         static void HookApplicationQuit()
         {
+            // Enter Play Mode runs without a domain reload, so statics outlive the session: a test script's
+            // pilot would otherwise keep swallowing the keyboard in the next hand-played session.
+            ScriptedInput = null;
             Application.quitting -= OnApplicationQuitting;
             Application.quitting += OnApplicationQuitting;
         }
