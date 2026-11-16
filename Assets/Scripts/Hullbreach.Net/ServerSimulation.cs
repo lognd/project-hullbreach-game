@@ -395,6 +395,10 @@ namespace Hullbreach.Net
         // Server tick the storm clock counts from (the tick the match started on).
         uint _stormStartTick;
 
+        // Server tick the live storm's clock started on (the match start); subtract it from a tick to read the ring.
+        // frob:doc docs/reference/hullbreach-net.md#serversimulation
+        public uint StormStartTick => _stormStartTick;
+
         // What the live storm was announced with, kept so a peer who joins mid-match can be told again.
         // frob:ticket 01M7FJ5MGNZ0RSXJ5AWKZEE3R4
         uint _stormSeed;

@@ -33,8 +33,7 @@ namespace Hullbreach.NetCode.Entities
         uint _nextMessageId = 1;
         bool _arenaConfigured;
         bool _sparringJoined;
-        BotPeer _bot;
-        uint _sparringTick;
+        SparringDriver _sparring;
         uint _simTick; // counts _simulation.Tick() calls, the same clock as StormStarted.StartTick
 
         protected override void OnCreate()
@@ -183,7 +182,7 @@ namespace Hullbreach.NetCode.Entities
             if (_sparringJoined && (_joinedPeers.Count != 1 || !HullbreachSparring.Requested))
             {
                 _sparringJoined = false;
-                _bot = null;
+                _sparring = null;
                 _simulation.Leave(peer);
                 Debug.Log("Hullbreach server: bot opponent left.");
             }
@@ -199,15 +198,14 @@ namespace Hullbreach.NetCode.Entities
                 if (_sparringJoined)
                 {
                     _simulation.SetReady(peer, true); // the bot is always ready; the human's READY starts the match
-                    _bot = new BotPeer(peer, human, new BotPilot(BotProfile.For(difficulty, BotPersonality.Balanced), new BotRng(seed)));
+                    _sparring = new SparringDriver(_simulation, new BotPeer(peer, human, new BotPilot(BotProfile.For(difficulty, BotPersonality.Balanced), new BotRng(seed))));
                     Debug.Log($"Hullbreach server: bot opponent joined ({difficulty}, {design.BlockCount} blocks).");
                 }
             }
-            if (_sparringJoined && _bot != null)
+            if (_sparringJoined && _sparring != null)
             {
-                // The bot sits still through the build phase: shots would land before the match has started.
-                if (_simulation.Match != null && _simulation.Match.Phase == MatchPhase.Running) _bot.Drive(_simulation, _simTick);
-                else _simulation.SetInput(peer, new InputMessage((ushort)peer, ++_sparringTick, 0, 0, 0));
+                // Frozen in build mode until the match runs (gravity would otherwise pull it onto a planet), then flown with the storm in view.
+                _sparring.Tick(_simulation, _simTick);
             }
         }
 

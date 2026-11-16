@@ -1,0 +1,1 @@
+The offline bot now holds still in build mode until the match runs (it used to fall onto a planet during the build phase) and flies with the storm in view; the match tests drive the offline server path.
