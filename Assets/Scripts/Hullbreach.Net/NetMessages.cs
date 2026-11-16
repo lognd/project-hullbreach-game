@@ -38,6 +38,7 @@ namespace Hullbreach.Net
         PickupDespawned = 18,
         InventorySnapshot = 19,
         PlacementResult = 20,
+        Leave = 21,
     }
 
     // Client -> server, unreliable: this tick's intent. Latest-wins on drop.
@@ -441,6 +442,34 @@ namespace Hullbreach.Net
                 return default;
             }
             return new ReadyUp(flag == 1);
+        }
+    }
+
+    // Client -> server, reliable: the player is leaving on purpose (Back to lobby, Quit), sent just before the
+    // client closes its connection. The server removes the ship at once (ServerSimulation.Leave) instead of holding
+    // it for the reconnect grace window that a bare transport drop gets. A server that predates this kind ignores it
+    // (HostInbox returns false) and falls back to the grace window, so an old server and a new client still work.
+    // frob:doc docs/reference/hullbreach-net.md#leavemessage
+    public readonly struct LeaveMessage
+    {
+        // frob:doc docs/reference/hullbreach-net.md#leavemessage
+        public const int ByteSize = 1;
+
+        // frob:doc docs/reference/hullbreach-net.md#leavemessage
+        public void Write(ref ByteWriter w) => w.WriteU8((byte)MessageKind.Leave);
+
+        // Reads the MessageKind byte; fails the reader on any other kind. Bytes after it are ignored so a later
+        // version can append fields.
+        // frob:doc docs/reference/hullbreach-net.md#leavemessage
+        public static LeaveMessage Read(ref ByteReader r)
+        {
+            byte kind = r.ReadU8();
+            if (r.Failed || kind != (byte)MessageKind.Leave)
+            {
+                r.Fail();
+                return default;
+            }
+            return new LeaveMessage();
         }
     }
 

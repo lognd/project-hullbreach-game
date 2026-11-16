@@ -29,6 +29,7 @@ namespace Hullbreach.NetCode.Entities
         EntityQuery _buildQuery;
         EntityQuery _designQuery;
         EntityQuery _ticketQuery;
+        EntityQuery _leaveQuery;
         uint _nextMessageId = 1;
         bool _arenaConfigured;
         bool _sparringJoined;
@@ -56,6 +57,9 @@ namespace Hullbreach.NetCode.Entities
                 ComponentType.ReadOnly<ReceiveRpcCommandRequest>());
             _designQuery = GetEntityQuery(
                 ComponentType.ReadOnly<HullbreachDesignRpc>(),
+                ComponentType.ReadOnly<ReceiveRpcCommandRequest>());
+            _leaveQuery = GetEntityQuery(
+                ComponentType.ReadOnly<HullbreachLeaveRpc>(),
                 ComponentType.ReadOnly<ReceiveRpcCommandRequest>());
             _ticketQuery = GetEntityQuery(
                 ComponentType.ReadOnly<HullbreachJoinTicketRpc>(),
@@ -98,6 +102,26 @@ namespace Hullbreach.NetCode.Entities
             if (_simulation.RequireJoinTicket) Debug.Log("Hullbreach server: join tickets are required.");
         }
 
+        // A deliberate leave (Back to lobby, Quit): free the ship now rather than holding it as for a drop. The connection
+        // itself closes when the client does; _joinedPeers keeps the peer until then so it is not rejoined meanwhile.
+        void ConsumeLeaves()
+        {
+            using var entities = _leaveQuery.ToEntityArray(Allocator.Temp);
+            using var sources = _leaveQuery.ToComponentDataArray<ReceiveRpcCommandRequest>(Allocator.Temp);
+            for (int i = 0; i < entities.Length; i++)
+            {
+                Entity source = sources[i].SourceConnection;
+                if (!EntityManager.HasComponent<NetworkId>(source)) continue;
+                int peer = EntityManager.GetComponentData<NetworkId>(source).Value;
+                _simulation.Leave(peer);
+                if (_shipGhosts.TryGetValue(peer, out Entity ghost) && EntityManager.Exists(ghost))
+                    EntityManager.DestroyEntity(ghost);
+                _shipGhosts.Remove(peer);
+                Debug.Log($"Hullbreach server: peer #{peer} left on purpose; ship removed without a reconnect hold.");
+            }
+            if (entities.Length > 0) EntityManager.DestroyEntity(entities);
+        }
+
         void ConsumeJoinTickets()
         {
             using var entities = _ticketQuery.ToEntityArray(Allocator.Temp);
@@ -118,6 +142,7 @@ namespace Hullbreach.NetCode.Entities
         {
             if (QueueServerRequested && !_simulation.RequireJoinTicket) ConfigureQueueServer();
             ConsumeJoinTickets();
+            ConsumeLeaves(); // before SynchronizeConnections: a leave beats the close that follows it
             SynchronizeConnections();
             PrepareGameplayIfLoaded();
             if (!_arenaConfigured) return;
@@ -203,6 +228,9 @@ namespace Hullbreach.NetCode.Entities
                 bool ticketed = !_simulation.RequireJoinTicket || _simulation.IsTicketed(peer);
                 if (gameplayLoaded && admitted && ticketed && _joinedPeers.Add(peer))
                 {
+                    // The remote host (no port) is the fallback identity guard for a held-ship reclaim on a LAN.
+                    _simulation.SetRemoteAddress(peer, RemoteAddress.HostOf(
+                        SystemAPI.GetSingleton<NetworkStreamDriver>().GetRemoteEndpoint(entities[i]).ToString()));
                     _simulation.Join(peer, CreateStarterShip(peer));
                     Debug.Log($"Hullbreach server: peer #{peer} joined the match ({_joinedPeers.Count} in match).");
                 }

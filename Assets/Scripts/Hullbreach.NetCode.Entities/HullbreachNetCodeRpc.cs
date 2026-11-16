@@ -23,6 +23,15 @@ namespace Hullbreach.NetCode.Entities
         public FixedString64Bytes Skin;
     }
 
+    /// <summary>
+    /// Client -> server, sent right before the client closes the connection on purpose (Back to lobby, Quit, results
+    /// screen exit): the engine-free <c>LeaveMessage</c> on the Netcode wire. The server removes the ship at once instead
+    /// of holding it for the reconnect grace window. An older server never reads it and falls back to the window.
+    /// </summary>
+    public struct HullbreachLeaveRpc : IRpcCommand
+    {
+    }
+
     /// <summary>Client-side tag: the join ticket for this connection has been sent.</summary>
     public struct HullbreachJoinTicketSent : Unity.Entities.IComponentData
     {

@@ -49,6 +49,29 @@ namespace Hullbreach.NetCode.Entities
             _haveEndpoint = true;
         }
 
+        /// <summary>
+        /// Tells the server this player is leaving on purpose so it frees the ship immediately instead of holding it for the
+        /// reconnect grace window. Call it just before closing the connection; the RPC goes out on the world's next update,
+        /// so callers that dispose the worlds do so a frame later. Returns false when there is no connected client world.
+        /// </summary>
+        public static bool SendLeave()
+        {
+            Unity.Entities.World client = ClientServerBootstrap.ClientWorld;
+            if (client == null || !client.IsCreated || LocalNetworkId == 0) return false;
+            client.EntityManager.CreateEntity(typeof(HullbreachLeaveRpc), typeof(SendRpcCommandRequest));
+            return true;
+        }
+
+        // Closing the game window is a deliberate leave too. Best effort: the world may not get another update.
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        static void HookApplicationQuit()
+        {
+            Application.quitting -= OnApplicationQuitting;
+            Application.quitting += OnApplicationQuitting;
+        }
+
+        static void OnApplicationQuitting() => SendLeave();
+
         /// <summary>Asks the client world to connect to the remembered endpoint again; false when there is nothing to dial.</summary>
         public static bool TryRequestReconnect()
         {

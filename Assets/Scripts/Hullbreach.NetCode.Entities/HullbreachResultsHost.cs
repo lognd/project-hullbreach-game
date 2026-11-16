@@ -35,6 +35,10 @@ namespace Hullbreach.NetCode.Entities
             else Debug.Log("Hullbreach results: rematch requested; waiting for the lobby host to start.");
         }
 
-        void ReturnToLobby() => _ = HullbreachLobbyService.Instance.LeaveAndReturnToLobbyAsync();
+        void ReturnToLobby()
+        {
+            HullbreachNetCodeClient.SendLeave();
+            _ = HullbreachLobbyService.Instance.LeaveAndReturnToLobbyAsync();
+        }
     }
 }
