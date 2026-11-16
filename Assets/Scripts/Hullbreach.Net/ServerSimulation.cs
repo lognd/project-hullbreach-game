@@ -288,6 +288,7 @@ namespace Hullbreach.Net
             public int DamageDealt;
             public int BlocksDestroyed;
             public int BlocksPlaced;
+            public int BlocksDeconstructed;
         }
 
         readonly Dictionary<int, PeerState> _peers = new Dictionary<int, PeerState>();
@@ -698,18 +699,19 @@ namespace Hullbreach.Net
             var tally = _tallies[peer];
             return new MatchParticipant(peer, _peers[peer].Ship.Grid, () => new PlayerMatchStats(
                 string.Empty, tally.DamageDealt, tally.BlocksDestroyed, tally.BlocksPlaced,
-                (int)Math.Round((_tickIndex - tally.StartTick) * (double)Dt)));
+                (int)Math.Round((_tickIndex - tally.StartTick) * (double)Dt), tally.BlocksDeconstructed));
         }
 
         // Adds to a peer's tally only while a match is live; no-op for unknown peers or no match.
         // frob:ticket 01M5VA5A9YR599CEWSFN3QWRNB
-        void Tally(int peer, int damage, int destroyed, int placed)
+        void Tally(int peer, int damage, int destroyed, int placed, int deconstructed = 0)
         {
             if (Match == null || Match.Phase != MatchPhase.Running) return;
             if (!_tallies.TryGetValue(peer, out var tally)) return;
             tally.DamageDealt += damage;
             tally.BlocksDestroyed += destroyed;
             tally.BlocksPlaced += placed;
+            tally.BlocksDeconstructed += deconstructed;
         }
 
         // A transport drop, as opposed to Leave: while a match is running the ship and its stock are kept for

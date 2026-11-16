@@ -14,16 +14,19 @@ namespace Hullbreach.Platform
         public readonly int BlocksDestroyed;
         public readonly int BlocksPlaced;
         public readonly int TimeAliveSeconds;
+        // Blocks the player took back with deconstruct; shown on the results screen, not sent to the platform.
+        public readonly int BlocksDeconstructed;
 
         // frob:doc docs/platform-link.md#reporting-a-finished-match
         public PlayerMatchStats(string userId, int damageDealt, int blocksDestroyed, int blocksPlaced,
-            int timeAliveSeconds)
+            int timeAliveSeconds, int blocksDeconstructed = 0)
         {
             UserId = userId ?? string.Empty;
             DamageDealt = damageDealt;
             BlocksDestroyed = blocksDestroyed;
             BlocksPlaced = blocksPlaced;
             TimeAliveSeconds = timeAliveSeconds;
+            BlocksDeconstructed = blocksDeconstructed;
         }
     }
 

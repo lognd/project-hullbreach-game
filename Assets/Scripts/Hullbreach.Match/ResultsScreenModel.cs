@@ -15,6 +15,7 @@ namespace Hullbreach.Match
         public readonly string DamageDealt;
         public readonly string BlocksDestroyed;
         public readonly string BlocksPlaced;
+        public readonly string BlocksDeconstructed;
         public readonly string TimeAlive;
 
         // frob:doc docs/reference/hullbreach-match.md#resultsscreenmodel
@@ -26,6 +27,7 @@ namespace Hullbreach.Match
             DamageDealt = stats.DamageDealt.ToString(CultureInfo.InvariantCulture);
             BlocksDestroyed = stats.BlocksDestroyed.ToString(CultureInfo.InvariantCulture);
             BlocksPlaced = stats.BlocksPlaced.ToString(CultureInfo.InvariantCulture);
+            BlocksDeconstructed = stats.BlocksDeconstructed.ToString(CultureInfo.InvariantCulture);
             TimeAlive = ResultsScreenModel.FormatClock(stats.TimeAliveSeconds);
         }
     }

@@ -266,6 +266,7 @@ namespace Hullbreach.Net
             }
             state.InventoryDirty = true;
             FlushPickupEvents();
+            Tally(peer, 0, 0, 0, 1);
             SendPlacementResult(peer, state, BuildAction.Deconstruct, x, y, target.TypeId, PlacementResult.Ok, 0);
             return PlacementResult.Ok;
         }
