@@ -1,0 +1,1 @@
+Easy bots now close to about 13 blocks (0.6 of their personality's engage range) and keep a wider, longer-looking berth around planets, so their weak ships no longer crash-land and sit in avoid-planet for the whole match; Easy mirrors end by core breach and draw less often. Normal and Hard are unchanged.

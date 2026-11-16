@@ -138,5 +138,47 @@ namespace Hullbreach.Bots.Tests
             Assert.AreEqual(4.5f, BotShip.RebuildSeconds(3, 1.5f), 1e-4f);
             Assert.AreEqual(0f, BotShip.RebuildSeconds(-2, 1.5f), 1e-4f);
         }
+
+        // Easy closes to a short engage range (so its loose aim still lands) and keeps a wide berth of planets
+        // (its ship is too weak to climb out of a well); Normal and Hard keep their original 6-block clearance.
+        // frob:tests Assets/Scripts/Hullbreach.Bots/BotProfile.cs::BotProfile.For kind="unit"
+        [Test]
+        public void EasyEngagesClose_AndKeepsClearOfPlanets_WithoutChangingNormalOrHard()
+        {
+            foreach (BotPersonality p in System.Enum.GetValues(typeof(BotPersonality)))
+            {
+                BotProfile easy = BotProfile.For(BotDifficulty.Easy, p);
+                BotProfile normal = BotProfile.For(BotDifficulty.Normal, p);
+                BotProfile hard = BotProfile.For(BotDifficulty.Hard, p);
+                Assert.AreEqual(normal.EngageRange, hard.EngageRange, 1e-4f, "same personality range above Easy");
+                Assert.Less(easy.EngageRange, 0.7f * normal.EngageRange, p.ToString());
+                Assert.Greater(easy.PlanetMargin, normal.PlanetMargin);
+                Assert.AreEqual(6f, normal.PlanetMargin, 1e-4f);
+                Assert.AreEqual(6f, hard.PlanetMargin, 1e-4f);
+            }
+            Assert.AreEqual(22f, BotProfile.For(BotDifficulty.Normal, BotPersonality.Balanced).EngageRange, 1e-4f);
+            Assert.AreEqual(13.2f, BotProfile.For(BotDifficulty.Easy, BotPersonality.Balanced).EngageRange, 1e-3f);
+        }
+
+        // frob:tests Assets/Scripts/Hullbreach.Bots/BotPilot.cs::BotPilot.Next kind="unit"
+        [Test]
+        public void FallingTowardAPlanet_EveryDifficultyStillAvoidsIt()
+        {
+            var planet = new Hullbreach.World.GravityBody(new float2(0f, 0f), 900f, 18f, 0.2f);
+            foreach (BotDifficulty d in new[] { BotDifficulty.Easy, BotDifficulty.Normal, BotDifficulty.Hard })
+            {
+                var obs = new BotObservation { Tick = 0, Dt = 0.02f };
+                obs.Planets.Add(planet);
+                obs.Self = new SelfView
+                {
+                    Position = new float2(0f, 30f), Velocity = new float2(0f, -6f), Alive = true, MaxForwardAccel = 2f,
+                    MaxRetroAccel = 1f, MaxAngularAccel = 0.6f, MaxTurnRate = 1.5f, AimLocal = new float2(0f, 1f),
+                    HasCannon = true, CannonCooldownSeconds = 0.3f, Radius = 3f,
+                };
+                var pilot = new BotPilot(BotProfile.For(d, BotPersonality.Balanced), new BotRng(5));
+                pilot.Next(obs);
+                Assert.AreEqual(BotMode.AvoidPlanet, pilot.Mode, d.ToString());
+            }
+        }
     }
 }

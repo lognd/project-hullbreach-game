@@ -59,6 +59,14 @@ profile fires on a perfect solution every time. The bot sees the enemy as a dela
 | aim error (sigma, rad) | 0.075 | 0.03 | 0.012 |
 | lead quality | 0.35 | 0.85 | 1.0 |
 | dodge skill | 0 | 0.5 | 0.9 |
+| engage range scale | 0.6 | 1 | 1 |
+| planet clearance (blocks) | 12 | 6 | 6 |
+| planet lookahead (s) | 6 | 4 | 4 |
+
+Easy holds 0.6 of the personality's engage range (13 blocks for Balanced) so its loose aim still lands on the core,
+and keeps 12 blocks (not 6) above a planet over a 6 s coast. Its ship has two thruster pairs and cannot climb out of a
+planet's well, so a graze that is only corrected late ends with the ship landed and stuck in avoid-planet for the rest
+of the match. Normal and Hard are unchanged. See `docs/bot-balance-report.md`.
 
 ### BotObservation
 

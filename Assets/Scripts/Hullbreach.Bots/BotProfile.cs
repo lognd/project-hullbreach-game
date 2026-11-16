@@ -55,6 +55,13 @@ namespace Hullbreach.Bots
         // Seconds of coasting prediction used to avoid planets.
         public float PlanetLookahead { get; private set; }
 
+        // Clearance (blocks) kept above a planet's surface when predicting a graze; below it the bot stops fighting
+        // and burns away. A smaller margin leaves more time on the enemy near a planet.
+        public float PlanetMargin { get; private set; }
+
+        // Fraction of the personality's range the bot actually holds: Easy closes in, where its sloppy aim still lands.
+        public float EngageScale { get; private set; }
+
         // Preferred distance to the enemy.
         public float EngageRange { get; private set; }
 
@@ -91,14 +98,14 @@ namespace Hullbreach.Bots
 
         public static BotProfile For(BotDifficulty difficulty, BotPersonality personality)
         {
-            var p = new BotProfile { Difficulty = difficulty, Personality = personality };
+            var p = new BotProfile { Difficulty = difficulty, Personality = personality, PlanetMargin = 6f, EngageScale = 1f };
             switch (difficulty)
             {
                 case BotDifficulty.Easy:
                     p.ReactionTicks = 30; p.DecisionTicks = 18; p.AimSigma = 0.075f; p.LeadQuality = 0.35f;
                     p.GravityAwareLead = false; p.TriggerDiscipline = 0.55f; p.FireToleranceScale = 2.2f;
-                    p.DodgeSkill = 0f; p.PlanetLookahead = 3f; p.StrafePeriod = 0f; p.RangeSlack = 0.5f;
-                    p.FlankPeriod = 0f; p.Pressure = 0f; p.ScavengeRange = 0f;
+                    p.DodgeSkill = 0f; p.PlanetLookahead = 6f; p.StrafePeriod = 0f; p.RangeSlack = 0.5f;
+                    p.FlankPeriod = 0f; p.Pressure = 0f; p.ScavengeRange = 0f; p.EngageScale = 0.6f; p.PlanetMargin = 12f;
                     p.StormLeadSeconds = 2f; p.StormMargin = 0f; p.StormExtentFactor = 0.3f; p.StormSteerSigma = 0.4f;
                     break;
                 case BotDifficulty.Normal:
@@ -132,6 +139,7 @@ namespace Hullbreach.Bots
                     p.EngageRange = 22f; p.RetreatCoreDamage = 0.6f;
                     break;
             }
+            p.EngageRange *= p.EngageScale;
             return p;
         }
     }

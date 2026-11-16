@@ -142,3 +142,33 @@ Reading it:
 Compared with the earlier tables: breach share is 54% (the 6-seed run had 47%, the 30-match schedule C run 73%), and
 Hard vs Normal remains close to even in every run so far. The earlier numbers should be read with the randomised match
 id in mind.
+
+## Update: Easy engages (planet clearance and closer range)
+
+Cause of the Easy mirror draws (8 of 12, 0 core breaches). It was not passivity in the fight logic. The Easy ship has
+two thruster pairs (acceleration about 0.8 against about 2.0 for Normal), and the main planet (radius 18, mu 900) pulls
+harder than that near its surface. With a 3 s, 6-block planet check an Easy ship grazed the planet late, crash-landed
+or fell into plunging orbits, and then spent about 65% of its ticks in avoid-planet (Normal: 25 to 30%) with 70 to 130
+shots in a whole match. Easy also held 22 blocks, where its loose aim (0.075 rad, lead 0.35) scatters over the hull
+instead of the core.
+
+Change (Easy profile only): planet clearance 12 blocks (was 6) over a 6 s coast (was 3), and an engage range scale of 0.6
+(13 blocks for Balanced instead of 22). Normal and Hard values are untouched. Same seeds 1 to 12, 600 s, default storm,
+before is the sweep above:
+
+| Scenario | Before | After |
+|---|---|---|
+| Mirror Easy | 0 breaches, 4 storm, 8 draws | 2 breaches, 7 storm, 3 draws |
+| Normal vs Easy (Normal wins) | 12 of 12 | 10 of 12 (9 breaches, 1 storm win, 2 Easy storm wins) |
+| Hard vs Easy (Hard wins) | 9 of 12 (7 breaches) | 9 of 12 (7 breaches) |
+| Mirror Normal (A / B / draw) | 7 / 4 / 1, 8 breaches | 7 / 4 / 1, 8 breaches, rows identical |
+
+Honest reading: draws fall from 8 to 3 and Easy no longer spends the match stuck on a planet, but "most Easy mirrors end
+by core breach" is not reached (2 of 12; breaches at about 5.5 min). Easy shots mostly land on outer blocks and Easy
+never flanks. Normal and Hard results are unchanged, as intended (the Normal mirror is row-for-row identical). Cost:
+Normal beats Easy 10 of 12 instead of 12, because a ship that no longer crash-lands now survives to the ring more often.
+
+Tried and rejected: raising Easy trigger discipline to 0.7 and adding pressure 0.3 gave 5 of 12 mirror breaches but
+Normal beat Easy only 8 of 12 (Easy too strong); a range scale of 0.45 gave 1 of 12; a clearance of 1 to 3 blocks made
+the landing trap worse (up to 96% of ticks in avoid-planet). A better fix is probably in the arena (spawn orbits that do
+not plunge into the planet) or in giving Easy one more thruster pair, which is not done here.
