@@ -1,0 +1,6 @@
+kind = "comment"
+subtype = "note"
+body = "Closed: #171 late-join snapshot (RejoinSnapshotTests, 4 pass, incl. MidMatchJoiner_ReceivesPickupsStormAndStock). Editor run of the tests reported pass; two-client rejoin not verified."
+at = "2026-11-16T01:37:45Z"
+actor = "lognd"
+rev = 1
