@@ -45,6 +45,9 @@ is 255. Endings:
 `ServerSimulation` constructs, starts and ticks the machine itself (see
 `hullbreach-net.md#serversimulation`).
 
+`Rekey(oldPeer, newPeer)` re-labels a side when a dropped player reconnects under a new peer id (the grid and stats
+carry on, and the result names the new id). The server calls `Disconnect` only once the reconnect grace window has run out.
+
 After `Ended`, `Tick` and `Disconnect` do nothing, so the feed cannot fire twice.
 The clock, feed, match-id factory and log are injected; the feed defaults to
 `MatchEndFeed.Shared`.

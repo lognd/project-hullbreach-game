@@ -278,7 +278,7 @@ namespace Hullbreach.Net
             var buffer = new byte[PlacementResultMessage.ByteSize];
             var w = new ByteWriter(buffer);
             msg.Write(ref w);
-            _outbox.Send(peer, reliable: true, buffer, w.Position);
+            SendTo(peer, reliable: true, buffer, w.Position);
         }
 
         // Validates a joining design against the economy; null when it fits.
@@ -347,7 +347,7 @@ namespace Hullbreach.Net
             var buffer = new byte[snapshot.ByteSize];
             var w = new ByteWriter(buffer);
             snapshot.Write(ref w);
-            _outbox.Send(peer, reliable: true, buffer, w.Position);
+            SendTo(peer, reliable: true, buffer, w.Position);
         }
 
         // Each pickup goes to the ship whose nearest block is closest (lower peer id on an exact tie), and only if

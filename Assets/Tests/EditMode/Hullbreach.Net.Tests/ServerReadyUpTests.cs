@@ -13,7 +13,7 @@ namespace Hullbreach.Net.Tests
         static (ServerSimulation server, ServerOutbox outbox) Lobby(bool requireReady = true)
         {
             var outbox = new ServerOutbox();
-            var server = new ServerSimulation(outbox) { TickRate = 50f, MatchFeed = new MatchEndFeed(), RequireReady = requireReady };
+            var server = new ServerSimulation(outbox) { TickRate = 50f, MatchFeed = new MatchEndFeed(), RequireReady = requireReady, ReconnectGraceSeconds = 0f };
             return (server, outbox);
         }
 

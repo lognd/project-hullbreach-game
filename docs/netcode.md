@@ -203,9 +203,28 @@ A client whose link drops redials the same host by itself and rejoins the runnin
   the match start (with ready-up), `StormStarted`, a `PickupSpawned` per pickup in the field (crates and salvage) and the
   peer's `InventorySnapshot`. They are sequenced, so they go to every peer; each is idempotent on a client that already
   knows it. `RejoinSnapshotTests` pins this.
-- Not done: the server does not yet hold a dropped peer's ship for a grace period (`Leave` still removes it and the
-  match handles the disconnect), so a rejoin gets a new ship and an empty stock. Unity wiring above is unverified
-  in the editor.
+- Grace period (ticket CEV1DG7): `ServerSimulation.Disconnect(peer)` is the transport-drop counterpart of `Leave`. During
+  a running match it keeps the ship, stock and match slot for `ReconnectGraceSeconds` (default 20 s, converted to a tick
+  deadline when the drop happens, so it is deterministic). The held ship is unpiloted (input, fire and build mode
+  cleared, so it drifts), stays damageable and stays in the storm; nothing is sent to it. A silent peer that hits
+  `TimeoutSeconds` is held the same way (the host is still told to close the connection). The match treats a held
+  ship as alive: an opponent who breaches its core still ends the match normally. When the window runs out the ship
+  is removed through the normal path (`ShipRemoved`, forfeit to the opponent); a match that ends frees it at once.
+  A deliberate `Leave`, no grace (0) or no running match removes immediately, as before. There is no new wire message:
+  clients see the dropped ship stop answering, which is all the notice there is.
+- Reattach: a `Join` while a ship is held claims it. The new connection has a new peer id, so the ship is re-keyed
+  (`ShipRemoved` for the old NetId, then a fresh `ShipSnapshot` under the new one, then `SendLateJoinState`); the
+  submitted design is ignored, and match slot, tally, projectile ownership and stock follow. Identity: the claimer
+  must match `SetIdentity` (the intended source is the platform user id from the join ticket, or address plus nick on
+  a LAN) when both sides have one; with no identity on either side it claims the only held ship, which in a two-player
+  match is the dropped player. The JoinTicket wire message carries no user id yet and the Unity host sets no identity,
+  so today the anonymous rule is what applies: on a queue server the ticket match id already limits who can join,
+  but on a LAN a third player arriving during the window could take the held ship.
+- Unity wiring: `HullbreachNetCodeServerSystem` calls `Disconnect` instead of `Leave` when a connection vanishes and
+  keeps the held ship's ghost. NetCode cannot tell a deliberate Back to lobby from a drop on the server (both just
+  close the connection), so a player who leaves on purpose also leaves their ship drifting for the window before the
+  forfeit; a leave message or reading `NetworkStreamDisconnected.Reason` would fix that. Unverified in the editor.
+  `ReconnectGraceTests` pins the simulation side.
 
 ### Online clock, sparring partner and effects
 

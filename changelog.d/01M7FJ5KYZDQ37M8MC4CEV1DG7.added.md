@@ -1,0 +1,1 @@
+- Dropped connections no longer lose the ship: the server holds an unpiloted ship and its stock for a 20 s grace window, and a returning player takes it back with a fresh snapshot.
