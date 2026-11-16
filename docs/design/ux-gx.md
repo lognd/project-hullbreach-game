@@ -538,7 +538,14 @@ touchdown above the safe landing speed, "BRAKE" once the stop distance with a
 1.3x margin reaches the gap, a "GRAVITY TRAP - THRUST AWAY" state when the ship
 is within 12 units of the surface, not climbing away and its thrusters cannot
 beat gravity (`PlanetProximity.NetClimbAccel` of 0.5 or less), and a silent
-"on the surface" hint when landed. `FlightHudView` draws an orange edge tint
+"on the surface" hint when landed. The trap alert is gated by
+`PlanetTrapTracker` so it does not nag an intended landing: it shows only
+while the ship is not resting (closing speed 0.3 or more, or moving along the
+surface at 1.0 or more), for at most 4 s per episode, after which the silent
+"on the surface" hint takes over. A new episode starts when the ship climbs above
+the trap band plus an 8 unit hysteresis, can climb again, or its thrust-minus-
+gravity changes by more than 0.5. BRAKE and Terrain notices are unchanged.
+`FlightHudView` draws an orange edge tint
 (0.15 to 0.45 by level), an arrow pointing away from the planet (the surface
 normal, corrected for camera roll), and plays the warning beep every 0.35 s
 (level 4) or 0.7 s (level 3 and the trap).
@@ -550,7 +557,7 @@ normal, corrected for camera roll), and plays the warning beep every 0.35 s
 
 Needs editor verification: the vignette and arrow look and size, the "CORE HIT"
 position beside the banner, two-line difficulty buttons fitting, alarm and beep
-loudness, and that the trap warning does not nag on an intended landing.
+loudness, and that the trap warning no longer nags on an intended landing (rest on a planet for a minute: no alert; sink in a weak ship: alert for about 4 s, then the surface hint).
 
 ## What this pass could not assess
 

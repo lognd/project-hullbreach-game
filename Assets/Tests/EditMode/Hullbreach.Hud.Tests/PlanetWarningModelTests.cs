@@ -119,5 +119,73 @@ namespace Hullbreach.Hud.Tests
             Assert.AreEqual(90f, PlanetWarningModel.ArrowAngleDegrees(-1f, 0f, 0f), 1e-3f);
             Assert.AreEqual(-30f, PlanetWarningModel.ArrowAngleDegrees(0f, 1f, 30f), 1e-3f, "camera roll is subtracted");
         }
+
+        // Runs the tracker and the model together the way FlightHudView does, once per frame.
+        static PlanetWarning Frame(PlanetTrapTracker t, float dt, float altitude, float closing, float tangential, float net)
+        {
+            bool allowed = t.Update(dt, altitude, closing, tangential, net);
+            return PlanetWarningModel.Evaluate(altitude, closing, tangential, float.PositiveInfinity, 0f, Safe, float.PositiveInfinity, net, 0, false, false, allowed);
+        }
+
+        [Test]
+        public void RestingShip_StaysQuiet_ForANinetySecondLanding()
+        {
+            var t = new PlanetTrapTracker();
+            for (int i = 0; i < 90 * 60; i++)
+            {
+                var w = Frame(t, 1f / 60f, 0.5f, 0f, 0f, -2f);
+                Assert.IsFalse(w.Trapped);
+                Assert.AreNotEqual(PlanetWarningModel.TrapText, w.Text);
+                Assert.AreEqual(0f, w.BeepInterval);
+            }
+            Assert.AreEqual(PlanetWarningModel.LandedText, Frame(t, 1f / 60f, 0.5f, 0f, 0f, -2f).Text);
+        }
+
+        [Test]
+        public void SinkingShip_Alerts()
+        {
+            var t = new PlanetTrapTracker();
+            var w = Frame(t, 1f / 60f, 6f, 1.0f, 0f, -2f);
+            Assert.IsTrue(w.Trapped);
+            Assert.AreEqual(PlanetWarningModel.TrapText, w.Text);
+            Assert.Greater(w.BeepInterval, 0f);
+        }
+
+        [Test]
+        public void Alert_TimesOut_ThenFallsBackToTheSilentSurfaceHint()
+        {
+            var t = new PlanetTrapTracker();
+            PlanetWarning w = default;
+            for (int i = 0; i < 3 * 60; i++) w = Frame(t, 1f / 60f, 1f, 0.9f, 0f, -2f);
+            Assert.IsTrue(w.Trapped, "still alerting at 3 s");
+            for (int i = 0; i < 2 * 60; i++) w = Frame(t, 1f / 60f, 1f, 0.9f, 0f, -2f);
+            Assert.IsFalse(w.Trapped, "silent after 4 s");
+            Assert.AreEqual(PlanetWarningModel.LandedText, w.Text);
+            Assert.AreEqual(0f, w.BeepInterval);
+            Assert.IsTrue(t.Expired);
+        }
+
+        [Test]
+        public void Alert_ReArms_AfterClimbingClear()
+        {
+            var t = new PlanetTrapTracker();
+            for (int i = 0; i < 5 * 60; i++) Frame(t, 1f / 60f, 1f, 1.0f, 0f, -2f);
+            Assert.IsTrue(t.Expired);
+            // Hovering just above the trap band does not re-arm; climbing past the hysteresis band does.
+            Frame(t, 1f / 60f, PlanetWarningModel.TrapAltitude + 1f, 0f, 0f, -2f);
+            Assert.IsTrue(t.Expired);
+            Frame(t, 1f / 60f, PlanetWarningModel.TrapAltitude + PlanetWarningModel.RearmAltitudeMargin + 1f, 0f, 0f, -2f);
+            Assert.IsFalse(t.Expired);
+            Assert.IsTrue(Frame(t, 1f / 60f, 5f, 1.0f, 0f, -2f).Trapped, "a new descent alerts again");
+        }
+
+        [Test]
+        public void Alert_ReArms_WhenThrustVsGravityChanges()
+        {
+            var t = new PlanetTrapTracker();
+            for (int i = 0; i < 5 * 60; i++) Frame(t, 1f / 60f, 1f, 1.0f, 0f, -2f);
+            Assert.IsTrue(t.Expired);
+            Assert.IsTrue(Frame(t, 1f / 60f, 1f, 1.0f, 0f, -3f).Trapped, "weaker thrust is a new situation");
+        }
     }
 }

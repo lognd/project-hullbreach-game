@@ -43,6 +43,14 @@ namespace Hullbreach.Hud
         public const float MinClimbAccel = 0.5f;
         // Closing speed below which the ship is not really falling.
         public const float SlowClosing = 1.5f;
+        // Speeds under which a ship counts as resting on the surface (no alert for an intended landing).
+        public const float RestClosing = 0.3f;
+        public const float RestTangential = 1.0f;
+        // Longest the trap alert may show per episode, in seconds; afterwards only the silent surface hint remains.
+        public const float TrapAlertSeconds = 4f;
+        // The alert re-arms once the ship is this far above TrapAltitude, or thrust-vs-gravity changes by this much.
+        public const float RearmAltitudeMargin = 8f;
+        public const float RearmAccelChange = 0.5f;
         public const string TrapText = "GRAVITY TRAP - THRUST AWAY";
         public const string LandedText = "On the surface - thrust away to lift off";
 
@@ -55,6 +63,20 @@ namespace Hullbreach.Hud
         public static PlanetWarning Evaluate(float altitude, float closing, float tangential, float timeToImpact,
             float predictedImpact, float safeSpeed, float stopDistance, float netClimbAccel,
             int severity, bool mustBrake, bool heating)
+            => Evaluate(altitude, closing, tangential, timeToImpact, predictedImpact, safeSpeed, stopDistance, netClimbAccel,
+                severity, mustBrake, heating, true);
+
+        // True while the ship sits low, is not climbing away and cannot beat gravity (before any rest/timeout gating).
+        public static bool IsTrapCandidate(float altitude, float closing, float netClimbAccel)
+            => altitude <= TrapAltitude && closing < SlowClosing && closing > -2f * SlowClosing
+               && !float.IsNaN(netClimbAccel) && netClimbAccel <= MinClimbAccel;
+
+        // trapAllowed: false suppresses the trap alert (ship resting, or this episode's alert already timed out);
+        // PlanetTrapTracker supplies it.
+        // frob:doc docs/design/ux-gx.md#planet-warning
+        public static PlanetWarning Evaluate(float altitude, float closing, float tangential, float timeToImpact,
+            float predictedImpact, float safeSpeed, float stopDistance, float netClimbAccel,
+            int severity, bool mustBrake, bool heating, bool trapAllowed)
         {
             int level = Math.Max(0, Math.Min(4, severity));
             bool brake = mustBrake;
@@ -71,8 +93,7 @@ namespace Hullbreach.Hud
                 }
             }
 
-            bool low = altitude <= TrapAltitude && closing < SlowClosing && closing > -2f * SlowClosing && netClimbAccel <= MinClimbAccel && !float.IsNaN(netClimbAccel);
-            bool trapped = low;
+            bool trapped = trapAllowed && IsTrapCandidate(altitude, closing, netClimbAccel);
             bool landed = !trapped && altitude <= LandedAltitude && closing < 1f && tangential < 6f;
             if (trapped) level = Math.Max(level, 3);
 
@@ -94,5 +115,46 @@ namespace Hullbreach.Hud
         {
             return (float)(Math.Atan2(ny, nx) * 180.0 / Math.PI) - 90f - cameraRollDegrees;
         }
+    }
+
+    // Per-ship state that decides whether the gravity-trap alert may show. The alert is for a ship that is moving
+    // (sinking or drifting) while low and too weak to climb, not for one resting on a surface; it lasts at most
+    // PlanetWarningModel.TrapAlertSeconds per episode, then falls back to the silent "on the surface" hint. A new
+    // episode starts after the ship climbs clear (above TrapAltitude + RearmAltitudeMargin), can climb again, or
+    // its thrust-minus-gravity changes.
+    // frob:doc docs/design/ux-gx.md#planet-warning
+    public sealed class PlanetTrapTracker
+    {
+        float _alertTime;
+        bool _expired;
+        float _netAtExpiry;
+
+        // Seconds of alert used so far this episode.
+        public float AlertSeconds => _alertTime;
+        public bool Expired => _expired;
+
+        // Call once per frame; returns whether the trap alert may show this frame.
+        public bool Update(float dt, float altitude, float closing, float tangential, float netClimbAccel)
+        {
+            if (altitude > PlanetWarningModel.TrapAltitude + PlanetWarningModel.RearmAltitudeMargin
+                || (!float.IsNaN(netClimbAccel) && netClimbAccel > PlanetWarningModel.MinClimbAccel)
+                || (_expired && Math.Abs(netClimbAccel - _netAtExpiry) > PlanetWarningModel.RearmAccelChange))
+            {
+                Reset();
+            }
+            if (!PlanetWarningModel.IsTrapCandidate(altitude, closing, netClimbAccel)) return false;
+            bool resting = Math.Abs(closing) < PlanetWarningModel.RestClosing && tangential < PlanetWarningModel.RestTangential;
+            if (resting || _expired) return false;
+            _alertTime += Math.Max(0f, dt);
+            if (_alertTime >= PlanetWarningModel.TrapAlertSeconds)
+            {
+                _expired = true;
+                _netAtExpiry = netClimbAccel;
+                return false;
+            }
+            return true;
+        }
+
+        public void Reset() { _alertTime = 0f; _expired = false; _netAtExpiry = 0f; }
     }
 }

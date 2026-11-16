@@ -1,0 +1,1 @@
+The GRAVITY TRAP alert no longer nags a ship resting on a planet: it shows only while the ship is sinking or drifting, for at most 4 s per episode, then falls back to the silent surface hint until the ship climbs clear or its thrust changes.
