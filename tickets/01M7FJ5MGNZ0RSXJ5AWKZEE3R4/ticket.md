@@ -7,7 +7,7 @@ priority = "medium"
 points = 3
 reporter = "lognd"
 created = "2026-11-15T12:16:03Z"
-updated = "2026-11-16T01:34:48Z"
+updated = "2026-11-16T01:35:04Z"
 labels = ["game"]
 
 [[acceptance]]
@@ -16,5 +16,5 @@ bound = true
 
 [[acceptance]]
 text = "A ServerSimulation test covers the snapshot"
-bound = false
+bound = true
 +++
