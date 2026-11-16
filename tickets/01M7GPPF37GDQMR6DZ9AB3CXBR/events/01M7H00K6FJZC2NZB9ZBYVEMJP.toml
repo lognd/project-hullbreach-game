@@ -1,0 +1,7 @@
+kind = "field"
+field = "acceptance"
+new = ["The builder presenter turns the stress preview into a tint, a status line and a READY structure warning (StressPreviewPresenterTests, BuildPanelModelTests)"]
+moved = []
+at = "2026-11-16T01:37:12Z"
+actor = "lognd"
+rev = 1
