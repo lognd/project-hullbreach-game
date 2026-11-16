@@ -79,3 +79,25 @@ Not fixed here, to be honest about it: Hard vs Normal is close to even (Hard won
 the 600 s no-storm run, 8 of 20 in the earlier one), so the Hard over Normal ordering is not established at
 these sample sizes. Mirror matches sit near 50%. Bots spend about half of all ticks in the planet-avoidance
 layer; shrinking its margin from 6 to 3 made no clear difference and was not kept.
+
+## Update: storm-aware pilot
+
+The pilot now reads the ring ahead of time (per-difficulty lead, footprint and steering error), keeps fighting when the
+enemy is in range and the ring is only coming, and presses the attack in sudden death. Small sweep, default storm, 600 s
+limit, 6 seeds per scenario (36 matches each run), same seeds before and after, no crashes in either:
+
+| Scenario | Before: A wins (core / sudden death) | After: A wins (core / sudden death) |
+|---|---|---|
+| Hard vs Easy | 3 of 6 (2 / 4) | 4 of 6 (2 / 4) |
+| Hard vs Normal | 1 of 6 (3 / 3) | 2 of 6 (4 / 2) |
+| Normal vs Easy | 4 of 6 (3 / 3) | 4 of 6 (3 / 2, 1 draw) |
+| Mirror Easy | 3 of 6 (0 / 3) | 4 of 6 (0 / 2) |
+| Mirror Normal | 3 of 6 (4 / 2) | 2 of 6 (4 / 2) |
+| Mirror Hard | 1 of 6 (3 / 2) | 2 of 6 (4 / 2) |
+| All matches ending by core breach | 15 of 36 (42%) | 17 of 36 (47%) |
+| All matches ending by sudden death | 17 of 36 (47%) | 14 of 36 (39%) |
+
+Mirror matches: 7 of 18 A wins before, 8 of 18 after (slots alternate, so a 6-seed mirror cannot sit at exactly 50%).
+Six seeds cannot separate Hard from Normal (Hard won 1 of 6 before and 2 of 6 after), so, as before, that ordering is not
+established at this size; Hard and Normal both beat Easy 4 of 6. The ordering the change does guarantee is in the storm
+skill itself (`StormAwarenessTests`): Hard reads the ring 12 s ahead, Normal 8 s, Easy 2 s.

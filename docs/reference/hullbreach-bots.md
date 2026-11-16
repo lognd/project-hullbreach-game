@@ -96,8 +96,15 @@ can drive a `BotPeer`, which is how a scripted test pilot or a replay would plug
 The layered pilot. Layers, highest priority first:
 
 1. Survive: predict a coasting path under the visible gravity and burn away from any planet it
-   grazes; turn back at the arena edge; stay inside the storm ring (and pre-position for the next
-   one) when a storm is present. With no storm the layer is simply inactive.
+   grazes; turn back at the arena edge; keep the ship's blocks inside the storm ring when a storm is
+   present. The pilot reads the ring `StormLeadSeconds` ahead (a shrink that starts inside that window
+   is already the edge, so it pre-positions), keeps `StormExtentFactor` of the ship's radius plus
+   `StormMargin` and its coasting speed inside the edge, and steers to the safe centre with a heading
+   error of `StormSteerSigma`. Hard reads furthest and steers exactly, Easy only notices the ring when
+   it moves and steers loosely. Outside the ring the bot always flies back (still firing if the nose
+   happens to cover the enemy); merely about to be caught with the enemy in range it keeps fighting
+   and gives ground toward the centre. In sudden death nobody runs or retreats: the bot closes to half
+   range and presses the attack. With no storm the layer is simply inactive.
 2. Scavenge: when the enemy is over 24 units away and nothing is shooting, fly to a nearby pickup (not near a planet, the edge or the storm ring, and not about to expire) with a velocity-matching burn.
 3. Retreat when the core is badly hurt and losing.
 4. Dodge a shot whose closest approach is inside the ship's width (Easy never, Normal and Hard lightly; they do not strafe, because turning away from the target costs shots).

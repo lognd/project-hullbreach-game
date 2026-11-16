@@ -1,0 +1,1 @@
+Bots now read the storm: a bot whose ship is outside the safe ring, or is about to be, flies back toward the centre (Hard looks furthest ahead and steers exactly, Easy only reacts late and loosely), keeps fighting when the enemy is in range and the ring is only coming, and presses the attack in sudden death instead of running.
