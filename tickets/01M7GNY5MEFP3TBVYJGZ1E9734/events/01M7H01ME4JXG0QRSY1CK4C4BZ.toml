@@ -1,0 +1,6 @@
+kind = "comment"
+subtype = "note"
+body = "Closed: #167 (WingStressTests + DamageModelTests, ShipStressPreviewTests; tie-break test fix in #170). Criteria were added to the ticket by the ledger pass. Editor-verified pass of ShipStressPreview tests."
+at = "2026-11-16T01:37:46Z"
+actor = "lognd"
+rev = 1

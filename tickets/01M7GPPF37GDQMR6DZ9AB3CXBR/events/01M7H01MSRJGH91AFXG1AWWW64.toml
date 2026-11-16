@@ -1,0 +1,6 @@
+kind = "comment"
+subtype = "note"
+body = "Closed: #168 (StressPreviewPresenterTests + BuildPanelModelTests). Stress-preview UI verified visually in the editor per coordinator; not an automated test."
+at = "2026-11-16T01:37:47Z"
+actor = "lognd"
+rev = 1

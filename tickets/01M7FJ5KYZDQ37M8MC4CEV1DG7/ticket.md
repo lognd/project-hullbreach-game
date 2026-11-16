@@ -7,7 +7,7 @@ priority = "medium"
 points = 5
 reporter = "lognd"
 created = "2026-11-15T12:16:02Z"
-updated = "2026-11-15T12:16:02Z"
+updated = "2026-11-16T01:37:47Z"
 labels = ["game"]
 
 [[acceptance]]
@@ -16,5 +16,5 @@ bound = false
 
 [[acceptance]]
 text = "A rejoin test covers the server keeping the ship for a grace period"
-bound = false
+bound = true
 +++

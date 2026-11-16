@@ -1,0 +1,1 @@
+- The results screen shows how many blocks each player deconstructed.
