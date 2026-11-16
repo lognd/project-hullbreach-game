@@ -128,6 +128,7 @@ The layered pilot. Layers, highest priority first:
 <!-- describes: Assets/Scripts/Hullbreach.Bots/BotBuilder.cs::BotBuilder -->
 <!-- describes: Assets/Scripts/Hullbreach.Bots/BotBuilder.cs::BotBuilder.Build -->
 <!-- describes: Assets/Scripts/Hullbreach.Bots/BotBuilder.cs::BotBuilder.Validate -->
+<!-- describes: Assets/Scripts/Hullbreach.Bots/BotBuilder.cs::BotBuilder.FromTemplate -->
 <!-- describes: Assets/Scripts/Hullbreach.Bots/BotBuilder.cs::BotBuilder.BlockBudget -->
 
 Generates a ship for a seed, difficulty and personality: a symmetric hull around a welded core,

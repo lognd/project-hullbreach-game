@@ -71,10 +71,10 @@ namespace Hullbreach.NetCode.Entities
                 var rt = (RectTransform)go.transform;
                 rt.anchorMin = rt.anchorMax = rt.pivot = new Vector2(0.5f, 0f);
                 rt.anchoredPosition = new Vector2((tier - 1) * 200f, 0f);
-                rt.sizeDelta = new Vector2(190f, 48f);
+                rt.sizeDelta = new Vector2(190f, 56f);
                 var label = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI)).GetComponent<TextMeshProUGUI>();
                 label.transform.SetParent(go.transform, false);
-                label.fontSize = 22; label.alignment = TextAlignmentOptions.Center; label.raycastTarget = false; label.textWrappingMode = TMPro.TextWrappingModes.NoWrap;
+                label.fontSize = 22; label.alignment = TextAlignmentOptions.Center; label.raycastTarget = false; label.textWrappingMode = TMPro.TextWrappingModes.NoWrap; label.richText = true;
                 label.rectTransform.anchorMin = Vector2.zero; label.rectTransform.anchorMax = Vector2.one;
                 label.rectTransform.offsetMin = label.rectTransform.offsetMax = Vector2.zero;
                 var button = go.GetComponent<Button>();
@@ -90,9 +90,9 @@ namespace Hullbreach.NetCode.Entities
 
         void RefreshBotLabels(MatchmakingMachine machine)
         {
-            int suggested = QueueScreenModel.SuggestedBotTier(machine.Rating, HullbreachCadetTrialView.EverCompleted);
+            int suggested = HullbreachBotPrefs.DefaultTier(machine.Rating, HullbreachCadetTrialView.EverCompleted);
             for (int i = 0; i < 3; i++)
-                _botButtons[i].GetComponentInChildren<TextMeshProUGUI>().text = TierNames[i] + (i == suggested ? " *" : string.Empty);
+                _botButtons[i].GetComponentInChildren<TextMeshProUGUI>().text = Hullbreach.Hud.HubMenuModel.TierLabelWithHint(i, suggested);
         }
 
         void FightBot(int tier)

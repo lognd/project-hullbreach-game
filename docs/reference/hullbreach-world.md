@@ -210,6 +210,7 @@ Every tunable of planet crashes and the thin atmosphere, in one struct with
 <!-- describes: Assets/Scripts/Hullbreach.World/PlanetProximity.cs::PlanetProximity.PredictedImpactSpeed -->
 <!-- describes: Assets/Scripts/Hullbreach.World/PlanetProximity.cs::PlanetProximity.AtmosphereDensity -->
 <!-- describes: Assets/Scripts/Hullbreach.World/PlanetProximity.cs::PlanetProximity.StopDistance -->
+<!-- describes: Assets/Scripts/Hullbreach.World/PlanetProximity.cs::PlanetProximity.NetClimbAccel -->
 <!-- describes: Assets/Scripts/Hullbreach.World/PlanetProximity.cs::PlanetProximity.MustBrake -->
 <!-- describes: Assets/Scripts/Hullbreach.World/PlanetProximity.cs::PlanetProximity.Heating -->
 <!-- describes: Assets/Scripts/Hullbreach.World/PlanetProximity.cs::PlanetProximity.Severity -->
@@ -221,7 +222,9 @@ Read-only picture of the nearest planet for the HUD, filled by
 `ShipBody.QueryPlanetProximity()`: altitude of the lowest block, closing and
 tangential speed, time to impact (gravity included), the predicted impact
 speed, atmosphere density, whether the ship is heating, the stop distance of
-full thrust and `MustBrake`, plus an `ImpactSeverity` (None, Safe, Caution,
+full thrust and `MustBrake`, `NetClimbAccel` (thruster acceleration minus
+gravity; zero or less means the ship cannot lift off; filled even when the
+ship is not falling), plus an `ImpactSeverity` (None, Safe, Caution,
 Danger, Catastrophic) and `IsSafe`. It never changes the ship.
 
 ### StormZone

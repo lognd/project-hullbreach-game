@@ -81,14 +81,17 @@ namespace Hullbreach.NetCode.Entities
             _botRow.transform.SetParent(crt, false);
             var rrt = (RectTransform)_botRow.transform;
             rrt.anchorMin = rrt.anchorMax = rrt.pivot = new Vector2(0.5f, 0.5f);
-            rrt.anchoredPosition = new Vector2(0f, y); rrt.sizeDelta = new Vector2(480f, 52f);
+            rrt.anchoredPosition = new Vector2(0f, y); rrt.sizeDelta = new Vector2(480f, 64f);
+            int defaultTier = HullbreachBotPrefs.DefaultTier(0.0, HullbreachCadetTrialView.EverCompleted);
             for (int tier = 0; tier < 3; tier++)
             {
                 BotDifficulty difficulty = (BotDifficulty)tier;
-                var b = SmallButton(rrt, HubMenuModel.BotTierNames[tier], (tier - 1) * 164f, 150f, () => StartBot(difficulty, false));
+                var b = SmallButton(rrt, HubMenuModel.TierLabelWithHint(tier, defaultTier), (tier - 1) * 164f, 150f, () => StartBot(difficulty, false));
+                b.gameObject.name = HubMenuModel.BotTierNames[tier];
+                b.GetComponentInChildren<TextMeshProUGUI>().richText = true;
             }
             _botRow.SetActive(false);
-            y -= 62f;
+            y -= 74f;
             Button(crt, HullbreachCadetTrialView.EverCompleted ? "CADET TRIAL  (replay)" : "CADET TRIAL  (learn to fly)", y, false, () => StartBot(BotDifficulty.Easy, true)); y -= 66f;
             _online = Button(crt, HubMenuModel.OnlineLabel(PlatformSession.IsSignedIn), y, false, OpenOnline); y -= 66f;
             Button(crt, "LAN  HOST / JOIN", y, false, OpenLan); y -= 66f;
@@ -195,8 +198,8 @@ namespace Hullbreach.NetCode.Entities
             go.GetComponent<UnityEngine.UI.Button>().onClick.AddListener(onClick);
             var rt = (RectTransform)go.transform;
             rt.anchorMin = rt.anchorMax = rt.pivot = new Vector2(0.5f, 0.5f);
-            rt.anchoredPosition = new Vector2(x, 0f); rt.sizeDelta = new Vector2(width, 48f);
-            var t = Text(rt, text, 22, FontStyles.Bold, BrandColors.Ink, width, 0f, 48f);
+            rt.anchoredPosition = new Vector2(x, 0f); rt.sizeDelta = new Vector2(width, 64f);
+            var t = Text(rt, text, 22, FontStyles.Bold, BrandColors.Ink, width, 0f, 64f);
             t.rectTransform.anchorMin = Vector2.zero; t.rectTransform.anchorMax = Vector2.one;
             t.rectTransform.offsetMin = t.rectTransform.offsetMax = Vector2.zero;
             return go.GetComponent<UnityEngine.UI.Button>();

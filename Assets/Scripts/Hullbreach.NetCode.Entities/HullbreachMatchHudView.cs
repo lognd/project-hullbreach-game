@@ -29,7 +29,9 @@ namespace Hullbreach.NetCode.Entities
 
         Canvas _canvas;
         CoreBar _own, _enemy;
-        TextMeshProUGUI _feed, _banner;
+        TextMeshProUGUI _feed, _banner, _hitText;
+        Image _edge;
+        readonly CoreAlertModel _alert = new CoreAlertModel();
         readonly List<FeedLine> _lines = new List<FeedLine>(8);
         bool _announced;
 
@@ -51,6 +53,10 @@ namespace Hullbreach.NetCode.Entities
             scaler.referenceResolution = new Vector2(1280f, 720f);
             scaler.matchWidthOrHeight = 0.5f;
 
+            // Red screen-edge flash for core hits and the low-core pulse; behind everything else on this canvas.
+            _edge = Hullbreach.Game.EdgeVignette.Create(transform, "CoreEdge");
+            _edge.transform.SetAsFirstSibling();
+
             _own = MakeBar("OwnCore", -125f);
             _enemy = MakeBar("EnemyCore", 125f);
 
@@ -66,6 +72,14 @@ namespace Hullbreach.NetCode.Entities
             brt.anchorMin = brt.anchorMax = brt.pivot = new Vector2(0.5f, 1f);
             brt.anchoredPosition = new Vector2(0f, -122f);
             brt.sizeDelta = new Vector2(700f, 40f);
+
+            // "CORE HIT" under your own core bar.
+            _hitText = MakeText("CoreHit", 30, TextAlignmentOptions.Center);
+            _hitText.fontStyle = FontStyles.Bold;
+            var hrt = _hitText.rectTransform;
+            hrt.anchorMin = hrt.anchorMax = hrt.pivot = new Vector2(0.5f, 1f);
+            hrt.anchoredPosition = new Vector2(-125f, -166f);
+            hrt.sizeDelta = new Vector2(230f, 40f);
             _canvas.enabled = false;
         }
 
@@ -123,7 +137,7 @@ namespace Hullbreach.NetCode.Entities
         {
             var replica = HullbreachNetCodeClient.Replica;
             bool show = replica != null && HullbreachNetworkGameplayController.Active && HullbreachNetCodeClient.IsConnected;
-            if (!show) { _canvas.enabled = false; _announced = false; Feed.Clear(); return; }
+            if (!show) { _canvas.enabled = false; _announced = false; Feed.Clear(); _alert.Reset(); return; }
             _canvas.enabled = true;
 
             replica.Ships.TryGetValue(HullbreachNetCodeClient.LocalNetworkId, out ShipBody mine);
@@ -141,7 +155,19 @@ namespace Hullbreach.NetCode.Entities
             // Banner: only when your own core is in real trouble.
             float health = CoreHealth(mine);
             bool critical = mine != null && CoreHealthModel.Danger(health) == CoreDanger.Critical;
-            _banner.text = critical ? "CORE CRITICAL" : string.Empty;
+
+            // Core-hit feedback: red edge flash + "CORE HIT" + alarm on damage (with a cooldown), and a persistent
+            // pulse and "CORE LOW" at or below 35%. The trigger logic is CoreAlertModel's.
+            float now = Time.unscaledTime;
+            if (mine == null) _alert.Reset(); else _alert.Observe(health, now);
+            if (_alert.TakeAlarm()) Hullbreach.Game.FeelFx.PlayCoreAlarm(false);
+            else if (_alert.TakeLowBeep()) Hullbreach.Game.FeelFx.PlayCoreAlarm(true);
+            float flash = _alert.FlashAlpha(now);
+            _edge.color = new Color(1f, 0.1f, 0.05f, Mathf.Clamp01(Mathf.Max(flash, _alert.LowPulse(now))));
+            _hitText.text = _alert.HitTextVisible(now) ? CoreAlertModel.HitText : string.Empty;
+            _hitText.color = new Color(1f, 0.3f, 0.25f, Mathf.Clamp01(flash * 1.6f));
+
+            _banner.text = critical ? "CORE CRITICAL" : _alert.IsLow ? CoreAlertModel.LowText : string.Empty;
             _banner.color = ToColor(HudColor.WarningCriticalRed, CoreHealthModel.Pulse(health, Time.unscaledTime));
 
             Feed.Visible(Time.unscaledTime, _lines);

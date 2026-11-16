@@ -52,6 +52,10 @@ namespace Hullbreach.World
         // Distance full forward thrust needs to cancel the closing speed, +Infinity when the thrusters cannot beat gravity.
         // frob:doc docs/reference/hullbreach-world.md#planetproximity
         public float StopDistance;
+        // Thruster acceleration minus gravity along the surface normal, in units/s^2 (always filled when HasBody);
+        // zero or negative means the thrusters cannot lift the ship off this planet.
+        // frob:doc docs/reference/hullbreach-world.md#planetproximity
+        public float NetClimbAccel;
         // True when the ship should burn away from the surface now: closing in and the stop distance is nearly the whole gap.
         // frob:doc docs/reference/hullbreach-world.md#planetproximity
         public bool MustBrake;
