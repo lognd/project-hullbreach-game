@@ -1,0 +1,6 @@
+kind = "comment"
+subtype = "note"
+body = "Not reproducible on current main at 1280x720 and 1920x1080 (#176/#177 coordinator check). Left open: frob cannot bind a visual check (no unity/screenshot provider), and closing as invalid needs a person's attestation or --no-evidence with a reason. Suggest wont-fix/invalid close by the owner."
+at = "2026-11-16T01:37:47Z"
+actor = "lognd"
+rev = 1
