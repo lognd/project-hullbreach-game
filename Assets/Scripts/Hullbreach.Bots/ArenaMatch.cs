@@ -147,6 +147,10 @@ namespace Hullbreach.Bots
                 StormEnabled = config.Storm.HasValue,   // before Join: the match can start on the second join
             };
 
+            // The match id seeds the storm ring and the pickup field (StormSeedFor). Left alone it is a fresh random uuid per
+            // match, so the same Seed played a different fight every run. Derive it from the config instead.
+            if (!sim.AssignQueueMatch(new Guid(0xA2E4A000u, 0, 0, (byte)(config.Seed >> 56), (byte)(config.Seed >> 48), (byte)(config.Seed >> 40), (byte)(config.Seed >> 32), (byte)(config.Seed >> 24), (byte)(config.Seed >> 16), (byte)(config.Seed >> 8), (byte)config.Seed).ToString("D"))) throw new InvalidOperationException("arena match id refused");
+
             int peerA = config.SwapSlots ? 2 : 1;
             int peerB = config.SwapSlots ? 1 : 2;
             // The real server configures the arena before anyone joins: the match, its storm and its economy start on the
