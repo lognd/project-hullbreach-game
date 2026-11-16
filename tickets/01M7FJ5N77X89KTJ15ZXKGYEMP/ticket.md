@@ -7,7 +7,7 @@ priority = "low"
 points = 2
 reporter = "lognd"
 created = "2026-11-15T12:16:04Z"
-updated = "2026-11-16T01:36:31Z"
+updated = "2026-11-16T01:36:39Z"
 labels = ["game"]
 
 [[acceptance]]
@@ -16,5 +16,5 @@ bound = true
 
 [[acceptance]]
 text = "Wire round-trip test covers the new field"
-bound = false
+bound = true
 +++
