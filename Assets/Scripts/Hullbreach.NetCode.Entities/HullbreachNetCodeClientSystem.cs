@@ -5,6 +5,7 @@ using Hullbreach.Ship;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.NetCode;
+using Unity.Networking.Transport;
 using UnityEngine;
 using Unity.Mathematics;
 
@@ -37,6 +38,26 @@ namespace Hullbreach.NetCode.Entities
         // Test hook (Play Mode scripts): replaces the keyboard while flying. Null = real input.
         public static ShipInput? ScriptedInput;
         public static bool IsConnected => Replica != null && LocalNetworkId != 0;
+
+        static NetworkEndpoint _lastEndpoint;
+        static bool _haveEndpoint;
+
+        /// <summary>Remembers where the client last dialled, so a dropped link can be redialled (ReconnectPolicy).</summary>
+        public static void RememberEndpoint(NetworkEndpoint endpoint)
+        {
+            _lastEndpoint = endpoint;
+            _haveEndpoint = true;
+        }
+
+        /// <summary>Asks the client world to connect to the remembered endpoint again; false when there is nothing to dial.</summary>
+        public static bool TryRequestReconnect()
+        {
+            Unity.Entities.World client = ClientServerBootstrap.ClientWorld;
+            if (!_haveEndpoint || client == null || !client.IsCreated) return false;
+            Entity request = client.EntityManager.CreateEntity(typeof(NetworkStreamRequestConnect));
+            client.EntityManager.SetComponentData(request, new NetworkStreamRequestConnect { Endpoint = _lastEndpoint });
+            return true;
+        }
     }
 
     sealed class PendingPayload
@@ -68,17 +89,23 @@ namespace Hullbreach.NetCode.Entities
                 ComponentType.ReadOnly<HullbreachPayloadRpc>(),
                 ComponentType.ReadOnly<ReceiveRpcCommandRequest>());
             _ghostQuery = GetEntityQuery(ComponentType.ReadOnly<HullbreachGhostPose>());
-            _replica = new ClientReplica();
-            // The server runs ArenaConfig.Defaults() (ConfigureDemoArena); mirror it so planets exist client side.
-            _replica.UseArena(ArenaConfig.Defaults());
-            // Remote clients never see the server's feed, so the replicated match end feeds the results screen.
-            if (!World.IsThinClient()) _replica.MatchFeed = Hullbreach.Platform.MatchEndFeed.Shared;
+            _replica = CreateReplica();
             if (!World.IsThinClient())
             {
                 HullbreachNetCodeClient.Replica = _replica;
                 HullbreachNetCodeClient.Projectiles = _projectiles;
             }
             RequireForUpdate<NetworkStreamDriver>();
+        }
+
+        ClientReplica CreateReplica()
+        {
+            var replica = new ClientReplica();
+            // The server runs ArenaConfig.Defaults() (ConfigureDemoArena); mirror it so planets exist client side.
+            replica.UseArena(ArenaConfig.Defaults());
+            // Remote clients never see the server's feed, so the replicated match end feeds the results screen.
+            if (!World.IsThinClient()) replica.MatchFeed = Hullbreach.Platform.MatchEndFeed.Shared;
+            return replica;
         }
 
         protected override void OnDestroy()
@@ -101,7 +128,19 @@ namespace Hullbreach.NetCode.Entities
 
             if (!SystemAPI.TryGetSingleton<NetworkId>(out var networkId))
             {
-                if (!World.IsThinClient()) HullbreachNetCodeClient.LocalNetworkId = 0;
+                if (!World.IsThinClient())
+                {
+                    // A dropped link: start from a clean replica, because the rejoin snapshot restarts the ordered
+                    // stream far past this one's cursor (the server re-sends storm, pickups and stock on join).
+                    if (HullbreachNetCodeClient.LocalNetworkId != 0)
+                    {
+                        _replica = CreateReplica();
+                        _projectiles.Clear();
+                        HullbreachNetCodeClient.Replica = _replica;
+                        _lastMatchStatus = null;
+                    }
+                    HullbreachNetCodeClient.LocalNetworkId = 0;
+                }
                 return;
             }
 

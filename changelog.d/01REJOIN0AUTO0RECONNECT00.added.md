@@ -1,0 +1,1 @@
+A client whose connection drops now retries automatically ("Reconnecting... (n/6)", backoff to an 8 s cap, then a give-up message) and is not retried after Back to lobby or match end; a peer joining a running match is sent the match start, storm, pickups and its stock.

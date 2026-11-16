@@ -47,7 +47,9 @@ namespace Hullbreach.NetCode.Entities
         static void Listen(World server, World client, ushort port)
         {
             Request(server, new NetworkStreamRequestListen { Endpoint = NetworkEndpoint.AnyIpv4.WithPort(port) });
-            Request(client, new NetworkStreamRequestConnect { Endpoint = NetworkEndpoint.LoopbackIpv4.WithPort(port) });
+            NetworkEndpoint loopback = NetworkEndpoint.LoopbackIpv4.WithPort(port);
+            Request(client, new NetworkStreamRequestConnect { Endpoint = loopback });
+            HullbreachNetCodeClient.RememberEndpoint(loopback);
         }
 
         // Dials the typed address; the endpoint was already validated by LanEndpoint.
@@ -71,6 +73,7 @@ namespace Hullbreach.NetCode.Entities
             // A validated numeric address cannot fail NetworkEndpoint parsing.
             NetworkEndpoint.TryParse(lan.Address, lan.Port, out NetworkEndpoint endpoint);
             Request(client, new NetworkStreamRequestConnect { Endpoint = endpoint });
+            HullbreachNetCodeClient.RememberEndpoint(endpoint);
             Debug.Log($"Hullbreach LAN: joining {lan}, loading {DirectLaunchPlan.GameScene}.");
             LoadMatch();
             return true;
@@ -97,6 +100,7 @@ namespace Hullbreach.NetCode.Entities
             }
 
             Request(client, new NetworkStreamRequestConnect { Endpoint = endpoint });
+            HullbreachNetCodeClient.RememberEndpoint(endpoint);
             Debug.Log(target.Request.Describe() + $" resolved={target}, loading {DirectLaunchPlan.GameScene}.");
             error = null;
             LoadMatch();

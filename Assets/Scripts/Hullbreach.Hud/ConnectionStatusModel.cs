@@ -8,6 +8,7 @@ namespace Hullbreach.Hud
         Connecting,  // loading: waiting for the server to accept us
         Unstable,    // connected but the server has gone quiet: reconnect banner
         Lost,        // gone: failed to connect, timed out or the host left
+        Reconnecting, // dropped after a working link: retrying automatically (ReconnectPolicy)
     }
 
     // One thing to show: a title, a detail line and what the player can do about it.
@@ -63,6 +64,24 @@ namespace Hullbreach.Hud
                 return new ConnectionBanner(ConnectionPhase.Unstable, "Connection unstable",
                     "Waiting for the host... " + Seconds(sinceTraffic), false);
             return ConnectionBanner.None;
+        }
+
+        // Same as Evaluate, but a link that dropped after working shows the automatic retry ("Reconnecting... (n/N)")
+        // while the policy is retrying, and the policy's give-up message once it has stopped. Every other state, and
+        // a policy that is not retrying (deliberate leave, match over), keeps Evaluate's wording.
+        // frob:ticket 01M7FJ5KYZDQ37M8MC4CEV1DG7
+        // frob:doc docs/design/ui-port.md#hullbreachhud-module-reference
+        public static ConnectionBanner Evaluate(bool inMatchScene, bool connected, bool everConnected,
+            double sinceEnteredMatch, double sinceTraffic, bool matchOver, ReconnectPolicy policy)
+        {
+            ConnectionBanner b = Evaluate(inMatchScene, connected, everConnected, sinceEnteredMatch, sinceTraffic, matchOver);
+            if (policy == null || connected || !everConnected || b.Phase != ConnectionPhase.Lost) return b;
+            if (policy.Phase == ReconnectPhase.Waiting || policy.Phase == ReconnectPhase.Dialing)
+                return new ConnectionBanner(ConnectionPhase.Reconnecting, policy.StatusText,
+                    "Lost the connection to the host. Trying to rejoin the match.", true);
+            if (policy.Phase == ReconnectPhase.GaveUp)
+                return new ConnectionBanner(ConnectionPhase.Lost, "Disconnected", policy.GiveUpText, true);
+            return b;
         }
 
         static string Seconds(double s) => ((int)(s < 0 ? 0 : s)).ToString(System.Globalization.CultureInfo.InvariantCulture) + " s";

@@ -29,6 +29,9 @@ namespace Hullbreach.NetCode.Entities
         World _watched;
         EntityQuery _ackQuery;
         bool _haveQuery;
+        // Redials a link that dropped after working; never after Back to lobby or a finished match (ReconnectPolicy).
+        // frob:ticket 01M7FJ5KYZDQ37M8MC4CEV1DG7
+        readonly ReconnectPolicy _policy = new ReconnectPolicy();
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         static void Create()
@@ -95,10 +98,13 @@ namespace Hullbreach.NetCode.Entities
 
             bool matchOver = HullbreachMatchExit.Restarting ||
                 (HullbreachResultsOverlay.Instance != null && HullbreachResultsOverlay.Instance.IsShowing);
+            if (_policy.Update(now, connected, matchOver) == ReconnectAction.Attempt)
+                HullbreachNetCodeClient.TryRequestReconnect();
             ConnectionBanner b = ConnectionStatusModel.Evaluate(true, connected, _everConnected,
-                now - _enteredAt, now - _lastTraffic, matchOver);
+                now - _enteredAt, now - _lastTraffic, matchOver, _policy);
 
-            bool full = b.Phase == ConnectionPhase.Connecting || b.Phase == ConnectionPhase.Lost;
+            bool full = b.Phase == ConnectionPhase.Connecting || b.Phase == ConnectionPhase.Lost
+                || b.Phase == ConnectionPhase.Reconnecting;
             _panel.SetActive(full);
             _strip.SetActive(b.Phase == ConnectionPhase.Unstable);
             if (full)
@@ -134,6 +140,7 @@ namespace Hullbreach.NetCode.Entities
 
         void BackToLobby()
         {
+            _policy.NoteDeliberateLeave();
             if (HullbreachResultsOverlay.Instance != null) HullbreachResultsOverlay.Instance.LeaveLocalToLobby();
             else SceneManager.LoadScene(HullbreachLobbyService.DefaultLobbyScene);
         }
