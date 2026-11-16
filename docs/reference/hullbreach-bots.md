@@ -201,6 +201,22 @@ adds its own cooldown, which is the price of doing it. Collecting crates and sal
 does it (`BotMode.Scavenge`); the server collects on contact. `ArenaMatchConfig.Quartermaster = false` turns the
 whole economy side off to measure what it is worth.
 
+### SparringDriver
+
+<!-- describes: Assets/Scripts/Hullbreach.Bots/SparringDriver.cs::SimulationStormSource -->
+<!-- describes: Assets/Scripts/Hullbreach.Bots/SparringDriver.cs::SimulationStormSource.TryGetState -->
+<!-- describes: Assets/Scripts/Hullbreach.Bots/SparringDriver.cs::SparringDriver -->
+<!-- describes: Assets/Scripts/Hullbreach.Bots/SparringDriver.cs::SparringDriver.MatchRunning -->
+<!-- describes: Assets/Scripts/Hullbreach.Bots/SparringDriver.cs::SparringDriver.Tick -->
+
+What the offline "play vs bot" server runs each tick for its virtual opponent (`HullbreachNetCodeServerSystem`). Until
+the match is running the bot sends build-mode input, so it stays frozen on its starting point like a player who is
+still building; a ship in flight mode feels gravity, and left alone through a long build phase the bot fell onto the
+planet. Once the match runs it is driven by a `BotPeer` and, unlike before, sees the storm: `SimulationStormSource`
+reads the server's live ring on the match clock (`ServerSimulation.StormStartTick`), because the bot is driven with
+absolute server ticks and a build phase makes those run ahead of the ring. `OfflineSparringTests` drives the
+real `ServerSimulation` through this path, and checks the HUD's replica agrees with the server's core damage.
+
 ### ArenaMatch
 
 <!-- describes: Assets/Scripts/Hullbreach.Bots/ArenaMatch.cs::ArenaMatch -->
