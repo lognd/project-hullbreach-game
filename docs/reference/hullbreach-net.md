@@ -1133,6 +1133,11 @@ Launch scripts and log checks grep for both.
 <!-- describes: Assets/Scripts/Hullbreach.Net/ArenaConfig.cs::ArenaConfig.SpawnPose -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ArenaConfig.cs::ArenaConfig.SpawnLineY -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ArenaConfig.cs::ArenaConfig.DefaultSpawnLineY -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ArenaConfig.cs::ArenaConfig.SpawnSpeed -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ArenaConfig.cs::ArenaConfig.SpawnLaunchDegrees -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ArenaConfig.cs::ArenaConfig.DefaultSpawnSpeed -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ArenaConfig.cs::ArenaConfig.DefaultSpawnLaunchDegrees -->
+<!-- describes: Assets/Scripts/Hullbreach.Net/ArenaConfig.cs::ArenaConfig.SpawnVelocity -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ArenaConfig.cs::ArenaConfig.ArenaConfig -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ArenaConfig.cs::ArenaConfig.Defaults -->
 <!-- describes: Assets/Scripts/Hullbreach.Net/ArenaConfig.cs::ConfigResult -->
@@ -1152,12 +1157,20 @@ Gravity and arena constants for the demo arena (S40-3), engine-free.
 `ArenaConfig.Defaults()` is exactly what `ServerSimulation.ConfigureDemoArena`
 hard-coded before, and the no-argument `ConfigureDemoArena()` still uses it.
 
-Match spawns (fight pacing): `SpawnSeparation` (JSON `spawn.separation`, default `DefaultSpawnSeparation` = 130) puts the
-two ships on opposite sides of `Bounds.Center` on a horizontal line `SpawnLineY` (default -20) away, at rest and facing each other (`SpawnPose(slot,
+Match spawns (fight pacing): `SpawnSeparation` (JSON `spawn.separation`, default `DefaultSpawnSeparation` = 140) puts the
+two ships on opposite sides of `Bounds.Center` on a horizontal line `SpawnLineY` (default -22) away, facing each other (`SpawnPose(slot,
 count)`). `ConfigureDemoArena` places the joined peers there, and `ServerSimulation` places the two match peers again
 when the match starts, because a client's own join position is only where its ship sat through the build phase. With the
-default arena both spawns are 76 units from the primary planet and 45 from the moon, outside every
-atmosphere, with at most 0.16 u/s^2 of pull (an unflown ship still has 40 units of clearance after 15 s); a 130 unit gap is about 12 s of approach at the bots' 8 u/s closing cap.
+default arena both spawns are about 74 units from the primary planet and 50 from the moon, outside every
+atmosphere; a 140 unit gap is about 12 s of approach at the bots' 8 u/s closing cap.
+
+Launch velocity: a ship placed at rest 74 units from the mu-900 planet falls onto it and rests there about 21 s later (an
+idle new player felt trapped). `SpawnSpeed` (JSON `spawn.speed`, default 4 u/s) and `SpawnLaunchDegrees` (`spawn.launchDegrees`,
+default 100) give each match spawn a velocity (`SpawnVelocity(slot, count)`): `SpawnSpeed` at that angle from "toward the arena
+centre", counter-clockwise to +y, mirrored for the +x slot (100 degrees is almost straight up, leaning slightly away from the
+centre). An idle ship arcs up and over the arena and first comes within 12 units of a surface or into an atmosphere after
+93 to 100 s (headless, `tools/plaincs/bot_report.sh --idle 130`). Speed 0 restores the at-rest spawn. The velocity is set
+server-side with the position (match start and `ConfigureDemoArena`), so clients receive it in the first snapshot.
 `SpawnSeparation == 0` (built through the constructor without it, or a `spawn` block that gives only `lateral`,
 `altitude`, `vertical` or `angleStep`) keeps the old orbit ring around `Bodies[0]`.
 

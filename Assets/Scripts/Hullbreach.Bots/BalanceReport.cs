@@ -70,6 +70,8 @@ namespace Hullbreach.Bots
         public EconomyConfig? Economy;
         public PlanetCrashConfig? Crash;
         public bool Quartermaster = true;
+        // Spawn overrides (see ArenaMatchConfig); null keeps the arena defaults.
+        public float? SpawnSeparation, SpawnLineY, SpawnSpeed, SpawnLaunchDegrees;
     }
 
     // Runs seed sweeps and prints the numbers that tuning needs: who wins, how long it takes, how it ends.
@@ -91,6 +93,7 @@ namespace Hullbreach.Bots
                     MaxSeconds = maxSeconds, Storm = storm,
                     Economy = rules?.Economy, Crash = rules?.Crash, Quartermaster = rules == null || rules.Quartermaster,
                     SameShip = a.Label == b.Label && a.Ship == null && b.Ship == null,
+                    SpawnSeparation = rules?.SpawnSeparation, SpawnLineY = rules?.SpawnLineY, SpawnSpeed = rules?.SpawnSpeed, SpawnLaunchDegrees = rules?.SpawnLaunchDegrees,
                 };
                 batch.Matches.Add(ArenaMatch.Run(cfg));
             }

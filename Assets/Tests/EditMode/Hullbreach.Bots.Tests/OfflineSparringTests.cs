@@ -98,7 +98,7 @@ namespace Hullbreach.Bots.Tests
         }
 
         [Test]
-        public void MatchStartPlacesBothShipsOnTheSharedSpawnsAtRest()
+        public void MatchStartPlacesBothShipsOnTheSharedSpawnsWithTheLaunchVelocity()
         {
             var game = new Offline(BotDifficulty.Easy);
             game.Build(30f);
@@ -111,7 +111,9 @@ namespace Hullbreach.Bots.Tests
                 Assert.AreEqual(position.x, game.Sim.Ships[peer].Position.x, 1e-3f);
                 Assert.AreEqual(position.y, game.Sim.Ships[peer].Position.y, 1e-3f);
                 Assert.AreEqual(rotation, game.Sim.Ships[peer].Rotation, 1e-3f);
-                Assert.AreEqual(0f, math.length(game.Sim.Ships[peer].Velocity), 1e-4f);
+                float2 launch = arena.SpawnVelocity(peer == Human ? 0 : 1, 2);
+                Assert.AreEqual(launch.x, game.Sim.Ships[peer].Velocity.x, 1e-4f);
+                Assert.AreEqual(launch.y, game.Sim.Ships[peer].Velocity.y, 1e-4f);
             }
         }
 

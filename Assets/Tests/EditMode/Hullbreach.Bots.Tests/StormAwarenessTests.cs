@@ -143,7 +143,7 @@ namespace Hullbreach.Bots.Tests
                 new StormPhase(20f, 15f, 15f, 8f),
             });
             int aware = 0, blind = 0;
-            foreach (ulong seed in new ulong[] { 3, 4, 5, 6 })
+            foreach (ulong seed in new ulong[] { 3, 4, 5, 6, 7, 8, 9, 10 })
             {
                 ArenaMatchResult r = ArenaMatch.Run(new ArenaMatchConfig
                 {
