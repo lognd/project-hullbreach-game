@@ -8,7 +8,7 @@ points = 1
 parent = "01M3DG5Y3BPBEF660P4HCFME76"
 reporter = "lognd"
 created = "2026-11-15T12:16:07Z"
-updated = "2026-11-15T12:16:07Z"
+updated = "2026-11-16T01:37:48Z"
 labels = ["game"]
 
 [[acceptance]]
