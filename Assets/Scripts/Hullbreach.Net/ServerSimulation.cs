@@ -168,12 +168,31 @@ namespace Hullbreach.Net
         // peer for disconnect and returns false.
         // frob:ticket 01M5XACF0K75AVMM0MCNDDWXNE
         // frob:doc docs/reference/hullbreach-net.md#serversimulation
-        public bool PresentTicket(int peer, string matchId, string skin = null)
+        public bool PresentTicket(int peer, string matchId, string skin = null, string identity = null)
         {
             bool ok = CheckTicket(peer, matchId);
-            if (ok) _skins[peer] = ShipSkins.IdOf(skin);
+            if (ok)
+            {
+                _skins[peer] = ShipSkins.IdOf(skin);
+                SetIdentity(peer, identity);
+            }
             return ok;
         }
+
+        /// <summary>
+        /// Names the player behind a connection (the platform user id from the join ticket, or address plus nick on a
+        /// LAN) so a reconnect under a new peer id can claim the ship held for them. Null or empty clears it. A peer
+        /// with no identity can still reclaim the one held ship when exactly one is held (a two-player match).
+        /// </summary>
+        // frob:ticket 01M7FJ5KYZDQ37M8MC4CEV1DG7
+        // frob:doc docs/reference/hullbreach-net.md#serversimulation
+        public void SetIdentity(int peer, string identity)
+        {
+            if (string.IsNullOrEmpty(identity)) _identities.Remove(peer);
+            else _identities[peer] = identity;
+        }
+
+        readonly Dictionary<int, string> _identities = new Dictionary<int, string>();
 
         // The skin id (ShipSkins) a peer presented with its ticket; 0 (default) when none, unknown, or a bot.
         // frob:ticket 01M5XACF0K75AVMM0MCNDDWXNE
@@ -229,7 +248,22 @@ namespace Hullbreach.Net
             public readonly Dictionary<int, bool> Failing = new Dictionary<int, bool>();
             // Storm damage below one whole point, per block key, carried to the next tick.
             public readonly Dictionary<int, float> StormCarry = new Dictionary<int, float>();
+            // Disconnected but kept for the reconnect grace window; see Disconnect.
+            public bool Held;
+            public uint HeldUntilTick;
         }
+
+        /// <summary>
+        /// How long, in seconds, a ship is kept after its peer's connection drops (Disconnect) so the same player can
+        /// rejoin with the ship and stock intact. Converted to ticks when the drop happens, so it is deterministic.
+        /// 0 disables the grace period (a drop then behaves like Leave). Default 20.
+        /// </summary>
+        // frob:ticket 01M7FJ5KYZDQ37M8MC4CEV1DG7
+        // frob:doc docs/reference/hullbreach-net.md#serversimulation
+        public float ReconnectGraceSeconds = DefaultReconnectGraceSeconds;
+
+        // frob:doc docs/reference/hullbreach-net.md#serversimulation
+        public const float DefaultReconnectGraceSeconds = 20f;
 
         // Per-peer counters for the match report. They live outside PeerState so the report
         // can still be read after the peer's ship is removed (forfeit on leave).
@@ -465,6 +499,8 @@ namespace Hullbreach.Net
             if (peer < 1 || peer > MaxPeerId) return JoinResult.InvalidPeerId;
             if (_peers.ContainsKey(peer)) return JoinResult.AlreadyJoined;
             if (RequireJoinTicket && !_ticketed.Contains(peer)) return JoinResult.TicketRejected;
+            // A returning player takes over the ship held for them; the submitted design is ignored.
+            if (TryFindHeldFor(peer, out int heldPeer)) return Reattach(heldPeer, peer);
             if (DesignValidator.ValidateDesign(initialDesign) != DesignVerdict.Ok) return JoinResult.InvalidDesign;
             JoinResult? tooBig = CheckDesignAgainstEconomy(initialDesign);
             if (tooBig.HasValue) return tooBig.Value;
@@ -578,7 +614,7 @@ namespace Hullbreach.Net
                 var buffer = new byte[StormStarted.MaxByteSize];
                 var w = new ByteWriter(buffer);
                 if (!message.TryWrite(ref w)) return;
-                _outbox.Send(peer, reliable: true, buffer, w.Position);
+                SendTo(peer, reliable: true, buffer, w.Position);
             }
         }
 
@@ -634,7 +670,7 @@ namespace Hullbreach.Net
                 var buffer = new byte[MatchStarted.ByteSize];
                 var w = new ByteWriter(buffer);
                 message.Write(ref w);
-                _outbox.Send(peer, reliable: true, buffer, w.Position);
+                SendTo(peer, reliable: true, buffer, w.Position);
             }
         }
 
@@ -661,7 +697,105 @@ namespace Hullbreach.Net
             tally.BlocksPlaced += placed;
         }
 
-        // Safe to call for an unknown peer (no-op); tells the others the ship is gone.
+        // A transport drop, as opposed to Leave: while a match is running the ship and its stock are kept for
+        // ReconnectGraceSeconds, unpiloted, still damageable and still in the storm. Returns true when the ship is held.
+        // Outside a running match, with no grace configured, or for an unknown peer it behaves like Leave.
+        // frob:ticket 01M7FJ5KYZDQ37M8MC4CEV1DG7
+        // frob:doc docs/reference/hullbreach-net.md#serversimulation
+        public bool Disconnect(int peer)
+        {
+            if (_peers.TryGetValue(peer, out var state) && state.Held) return true;
+            if (state == null || ReconnectGraceSeconds <= 0f || !MatchIsRunning)
+            {
+                Leave(peer);
+                return false;
+            }
+            state.Held = true;
+            state.HeldUntilTick = _tickIndex + (uint)Math.Ceiling(ReconnectGraceSeconds * TickRate);
+            state.HasInput = false;
+            state.LatestInput = default;
+            state.PendingFire = false;
+            state.IsBuilding = false;
+            state.SecondsSinceInput = 0f;
+            _ticketed.Remove(peer);
+            MatchLog?.Warning($"Hullbreach match: peer #{peer} dropped; holding its ship for {ReconnectGraceSeconds:0.#}s.");
+            return true;
+        }
+
+        /// <summary>True while the peer's ship is kept after a drop and not yet claimed or expired.</summary>
+        // frob:ticket 01M7FJ5KYZDQ37M8MC4CEV1DG7
+        // frob:doc docs/reference/hullbreach-net.md#serversimulation
+        public bool IsHeld(int peer) => _peers.TryGetValue(peer, out var s) && s.Held;
+
+        // The held ship the joining peer may claim: same identity, or (either side anonymous) the only one held.
+        bool TryFindHeldFor(int peer, out int heldPeer)
+        {
+            heldPeer = -1;
+            int heldCount = 0, anonymous = -1;
+            _identities.TryGetValue(peer, out string mine);
+            var ids = new List<int>(_peers.Keys);
+            ids.Sort();
+            foreach (int id in ids)
+            {
+                if (!_peers[id].Held) continue;
+                heldCount++;
+                _identities.TryGetValue(id, out string theirs);
+                if (mine != null && theirs != null)
+                {
+                    if (mine != theirs) continue;
+                    heldPeer = id;
+                    return true;
+                }
+                anonymous = id;
+            }
+            if (heldCount == 1 && anonymous >= 0) { heldPeer = anonymous; return true; }
+            return false;
+        }
+
+        // Moves the held ship to the new peer id (the match, tally and projectiles follow) and tells everyone: the old
+        // NetId is removed and the ship reappears under the new one, then the joiner gets the late-join snapshot.
+        JoinResult Reattach(int oldPeer, int newPeer)
+        {
+            PeerState state = _peers[oldPeer];
+            _peers.Remove(oldPeer);
+            _identities.Remove(oldPeer);
+            _skins.Remove(oldPeer);
+            _ticketed.Remove(oldPeer);
+            state.Held = false;
+            state.NetId = (ushort)newPeer;
+            state.HasInput = false;
+            state.SecondsSinceInput = 0f;
+            BroadcastReliable(new ShipRemoved(NextSequence(), (ushort)oldPeer));
+            foreach (var kv in _peers)
+                EmitReliable(newPeer, BuildSnapshot(kv.Value, _sequence));
+            _peers[newPeer] = state;
+            if (_tallies.TryGetValue(oldPeer, out var tally)) { _tallies.Remove(oldPeer); _tallies[newPeer] = tally; }
+            if (_matchPeerA == oldPeer) _matchPeerA = newPeer;
+            if (_matchPeerB == oldPeer) _matchPeerB = newPeer;
+            Match?.Rekey(oldPeer, newPeer);
+            foreach (var p in _projectiles)
+                if (p.OwnerPeer == oldPeer) p.OwnerPeer = newPeer;
+            var snapshot = BuildSnapshot(state, NextSequence());
+            foreach (var kv in _peers) EmitReliable(kv.Key, snapshot);
+            SendLateJoinState(newPeer);
+            MatchLog?.Info($"Hullbreach match: peer #{newPeer} rejoined and took over the ship held for #{oldPeer}.");
+            return JoinResult.Joined;
+        }
+
+        // Frees held ships whose window ran out, and any left over once the match is no longer running (the player
+        // is gone, so there is nothing to wait for). Expiry forfeits through RemovePeer like a plain leave.
+        void ExpireHeldPeers()
+        {
+            List<int> gone = null;
+            foreach (var kv in _peers)
+                if (kv.Value.Held && (_tickIndex >= kv.Value.HeldUntilTick || !MatchIsRunning))
+                    (gone ??= new List<int>()).Add(kv.Key);
+            if (gone == null) return;
+            gone.Sort();
+            foreach (int peer in gone) RemovePeer(peer, _peers[peer]);
+        }
+
+        // Safe to call for an unknown peer (no-op); tells the others the ship is gone. A deliberate leave: nothing is held.
         // frob:doc docs/reference/hullbreach-net.md#serversimulation
         public void Leave(int peer)
         {
@@ -671,6 +805,7 @@ namespace Hullbreach.Net
                 // Connected and ticketed but never joined: forget the ticket and skin too.
                 _ticketed.Remove(peer);
                 _skins.Remove(peer);
+                _identities.Remove(peer);
             }
         }
 
@@ -689,6 +824,7 @@ namespace Hullbreach.Net
             _peers.Remove(peer);
             _ticketed.Remove(peer);
             _skins.Remove(peer);
+            _identities.Remove(peer);
             _gate.RemovePeer(peer);
             Match?.Disconnect(peer);
             AnnounceMatchEnd();
@@ -724,6 +860,7 @@ namespace Hullbreach.Net
             float dt = Dt;
 
             TimeoutStalePeers(dt);
+            ExpireHeldPeers();
             _gravity.Tick(dt);
             StepProjectiles(dt);
 
@@ -787,6 +924,7 @@ namespace Hullbreach.Net
             // Last, so impacts and structural damage from this tick are already on the grids.
             Match?.Tick();
             AnnounceMatchEnd();
+            ExpireHeldPeers();
         }
 
         // Hurts every block outside the ring through the normal damage path; the core is spared until
@@ -890,7 +1028,7 @@ namespace Hullbreach.Net
                 var buffer = new byte[MatchEnded.MaxByteSize];
                 var w = new ByteWriter(buffer);
                 message.Write(ref w);
-                _outbox.Send(peer, reliable: true, buffer, w.Position);
+                SendTo(peer, reliable: true, buffer, w.Position);
             }
         }
 
@@ -933,6 +1071,7 @@ namespace Hullbreach.Net
             List<int> dead = null;
             foreach (var kv in _peers)
             {
+                if (kv.Value.Held) continue; // already disconnected; the grace window is its clock
                 kv.Value.SecondsSinceInput += dt;
                 if (kv.Value.SecondsSinceInput > TimeoutSeconds)
                     (dead ??= new List<int>()).Add(kv.Key);
@@ -940,7 +1079,7 @@ namespace Hullbreach.Net
             if (dead == null) return;
             foreach (int peer in dead)
             {
-                RemovePeer(peer, _peers[peer]);
+                Disconnect(peer); // holds the ship during a running match, else removes it
                 _droppedPeers.Enqueue(peer);
             }
         }
@@ -1254,8 +1393,15 @@ namespace Hullbreach.Net
                 var buffer = new byte[message.ByteSize];
                 var w = new ByteWriter(buffer);
                 message.Write(ref w);
-                _outbox.Send(peer, reliable: false, buffer, w.Position);
+                SendTo(peer, reliable: false, buffer, w.Position);
             }
+        }
+
+        // Every outgoing byte goes through here: a held ship's connection is gone, so nothing is sent to it.
+        void SendTo(int peer, bool reliable, byte[] buffer, int length)
+        {
+            if (_peers.TryGetValue(peer, out var state) && state.Held) return;
+            _outbox.Send(peer, reliable, buffer, length);
         }
 
         void EmitUnreliable(int peer, ShipState state)
@@ -1263,7 +1409,7 @@ namespace Hullbreach.Net
             var buffer = new byte[ShipState.ByteSize];
             var w = new ByteWriter(buffer);
             state.Write(ref w);
-            _outbox.Send(peer, reliable: false, buffer, w.Position);
+            SendTo(peer, reliable: false, buffer, w.Position);
         }
 
         void EmitReliable(int peer, ShipSnapshot snapshot)
@@ -1271,7 +1417,7 @@ namespace Hullbreach.Net
             var buffer = new byte[snapshot.ByteSize];
             var w = new ByteWriter(buffer);
             snapshot.Write(ref w);
-            _outbox.Send(peer, reliable: true, buffer, w.Position);
+            SendTo(peer, reliable: true, buffer, w.Position);
         }
 
         // Broadcasts to every peer, not just the ship's own owner.
@@ -1282,7 +1428,7 @@ namespace Hullbreach.Net
                 var buffer = new byte[64];
                 var w = new ByteWriter(buffer);
                 WriteAny(message, ref w);
-                _outbox.Send(peer, reliable: true, buffer, w.Position);
+                SendTo(peer, reliable: true, buffer, w.Position);
             }
         }
 

@@ -837,9 +837,22 @@ overwrite a peer's replica. Each peer's `StructuralSolver` gets the shared
 calibrated `StructuralSolver.DefaultLoadScale` /
 `DefaultMaterialStiffnessScale`, the same values `ShipStructure` uses.
 
-`Leave` and the input timeout both broadcast `ShipRemoved` to the remaining
-peers and orphan the leaver's in-flight projectiles; timed-out peers are
-queued for `TryDequeueDroppedPeer` so the host can close their connection.
+`Leave` broadcasts `ShipRemoved` to the remaining peers and orphans the
+leaver's in-flight projectiles. `Disconnect(peer)` is the transport-drop
+variant: during a running match it holds the ship for `ReconnectGraceSeconds`
+(default 20, a tick deadline fixed at the drop) with controls cleared, the
+ship still damageable and in the storm, and nothing sent to it; it returns
+true when held, and otherwise (no match, grace 0, unknown peer) acts as
+`Leave`. The input timeout calls `Disconnect` and queues the peer for
+`TryDequeueDroppedPeer` so the host can close its connection. When the window
+ends, or the match ends, the held ship goes through the normal removal
+(`ShipRemoved`, forfeit). `IsHeld(peer)` reports a held ship.
+`SetIdentity(peer, id)` (or the optional `identity` argument of
+`PresentTicket`) names the player; a later `Join` re-attaches to the ship held
+for the same identity, or to the only held ship when either side has none, and
+ignores the submitted design: the ship is re-keyed to the new peer id (old
+`ShipRemoved`, new `ShipSnapshot`, then the late-join state below). The match
+machine follows through `MatchStateMachine.Rekey`.
 
 `SetInput` keeps the latest axes (clamped to -1..1; -128 decodes to -1) but
 latches a fire press until the next `Tick` consumes it, so a release that

@@ -18,7 +18,7 @@ namespace Hullbreach.Match
     public sealed class MatchParticipant
     {
         // frob:doc docs/reference/hullbreach-match.md#matchparticipant
-        public readonly int Peer;
+        public int Peer { get; internal set; }
 
         // frob:doc docs/reference/hullbreach-match.md#matchparticipant
         public readonly BlockGrid Grid;
@@ -150,6 +150,17 @@ namespace Hullbreach.Match
             int remaining = peer == _a.Peer ? _b.Peer : _a.Peer;
             _log.Warning($"Hullbreach match {MatchId}: peer {peer} disconnected, forfeit to peer {remaining}.");
             End(MatchResult.Forfeit, remaining);
+        }
+
+        // A reconnecting player comes back under a new peer id: the same participant (grid, stats, side) is re-labelled
+        // so the match carries on and reports the new id. True when `oldPeer` was one of the two sides.
+        // frob:ticket 01M7FJ5KYZDQ37M8MC4CEV1DG7
+        // frob:doc docs/reference/hullbreach-match.md#matchstatemachine
+        public bool Rekey(int oldPeer, int newPeer)
+        {
+            if (_a.Peer == oldPeer) { _a.Peer = newPeer; return true; }
+            if (_b.Peer == oldPeer) { _b.Peer = newPeer; return true; }
+            return false;
         }
 
         // Only a destroyed core ends a match; an isolated one is still alive.

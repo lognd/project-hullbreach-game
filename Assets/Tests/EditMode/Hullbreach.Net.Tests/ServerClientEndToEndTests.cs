@@ -31,7 +31,7 @@ namespace Hullbreach.Net.Tests
             hub.Connect(serverId, peerCannon);
 
             var outbox = new ServerOutbox();
-            var server = new ServerSimulation(outbox) { TickRate = 50f, TimeoutSeconds = 5f };
+            var server = new ServerSimulation(outbox) { TickRate = 50f, TimeoutSeconds = 5f, ReconnectGraceSeconds = 0f };
 
             var shipA = new[]
             {

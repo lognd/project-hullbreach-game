@@ -215,8 +215,11 @@ namespace Hullbreach.NetCode.Entities
             foreach (int peer in disconnected)
             {
                 _joinedPeers.Remove(peer);
-                _simulation.Leave(peer);
-                Debug.Log($"Hullbreach server: peer #{peer} left the match ({_joinedPeers.Count} in match).");
+                // A closed connection is a drop: a running match keeps the ship for the reconnect grace window
+                // (ServerSimulation.Disconnect), and SynchronizeGhosts keeps its ghost while the ship exists.
+                bool held = _simulation.Disconnect(peer);
+                Debug.Log($"Hullbreach server: peer #{peer} {(held ? "dropped; ship held for reconnect" : "left the match")} ({_joinedPeers.Count} in match).");
+                if (held) continue;
                 if (_shipGhosts.TryGetValue(peer, out Entity ghost) && EntityManager.Exists(ghost))
                     EntityManager.DestroyEntity(ghost);
                 _shipGhosts.Remove(peer);
@@ -230,9 +233,12 @@ namespace Hullbreach.NetCode.Entities
             while (_simulation.TryDequeueDroppedPeer(out int peer))
             {
                 Debug.Log($"Hullbreach server: peer #{peer} timed out; closing its connection.");
-                if (_shipGhosts.TryGetValue(peer, out Entity ghost) && EntityManager.Exists(ghost))
-                    EntityManager.DestroyEntity(ghost);
-                _shipGhosts.Remove(peer);
+                if (!_simulation.IsHeld(peer))
+                {
+                    if (_shipGhosts.TryGetValue(peer, out Entity ghost) && EntityManager.Exists(ghost))
+                        EntityManager.DestroyEntity(ghost);
+                    _shipGhosts.Remove(peer);
+                }
                 if (_connections.TryGetValue(peer, out Entity connection) && EntityManager.Exists(connection) &&
                     !EntityManager.HasComponent<NetworkStreamRequestDisconnect>(connection))
                     EntityManager.AddComponentData(connection, new NetworkStreamRequestDisconnect
