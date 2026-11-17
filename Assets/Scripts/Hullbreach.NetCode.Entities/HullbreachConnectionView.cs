@@ -98,10 +98,11 @@ namespace Hullbreach.NetCode.Entities
 
             bool matchOver = HullbreachMatchExit.Restarting ||
                 (HullbreachResultsOverlay.Instance != null && HullbreachResultsOverlay.Instance.IsShowing);
-            if (_policy.Update(now, connected, matchOver) == ReconnectAction.Attempt)
+            bool relay = HullbreachLobbyService.Instance.IsRelayMatch;
+            if (!relay && _policy.Update(now, connected, matchOver) == ReconnectAction.Attempt)
                 HullbreachNetCodeClient.TryRequestReconnect();
             ConnectionBanner b = ConnectionStatusModel.Evaluate(true, connected, _everConnected,
-                now - _enteredAt, now - _lastTraffic, matchOver, _policy);
+                now - _enteredAt, now - _lastTraffic, matchOver, relay ? null : _policy);
 
             bool full = b.Phase == ConnectionPhase.Connecting || b.Phase == ConnectionPhase.Lost
                 || b.Phase == ConnectionPhase.Reconnecting;
@@ -138,11 +139,22 @@ namespace Hullbreach.NetCode.Entities
             return true;
         }
 
-        void BackToLobby()
+        async void BackToLobby()
         {
             _policy.NoteDeliberateLeave();
             HullbreachNetCodeClient.SendLeave(); // free the ship now, not after the reconnect hold
-            if (HullbreachResultsOverlay.Instance != null) HullbreachResultsOverlay.Instance.LeaveLocalToLobby();
+            var lobby = HullbreachLobbyService.Instance;
+            if (lobby.IsRelayMatch)
+            {
+                _lobby.interactable = false;
+                try { await lobby.LeaveAndReturnToLobbyAsync(); }
+                catch (System.Exception exception)
+                {
+                    _lobby.interactable = true;
+                    HullbreachPlatformRuntime.Log.Warning("Could not return to the lobby: " + exception.Message);
+                }
+            }
+            else if (HullbreachResultsOverlay.Instance != null) HullbreachResultsOverlay.Instance.LeaveLocalToLobby();
             else SceneManager.LoadScene(HullbreachLobbyService.DefaultLobbyScene);
         }
 

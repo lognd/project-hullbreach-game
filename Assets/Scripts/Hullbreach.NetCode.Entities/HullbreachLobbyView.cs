@@ -61,6 +61,10 @@ namespace Hullbreach.NetCode.Entities
         HullbreachLobbyService _service;
         string _localError;
         HullbreachSignInView _signIn;
+        HullbreachHubView _hub;
+        CanvasGroup _inputGroup;
+
+        internal bool CanReturnToHub => _service == null || (!_service.IsBusy && _service.Session == null);
 
         // Tab order, Enter-to-submit and Esc-to-leave.
         // frob:ticket 01M6WV5HP3KVSZNJT6H99MFS3Z
@@ -68,7 +72,7 @@ namespace Hullbreach.NetCode.Entities
         {
             HullbreachTabNavigation tabs = GetComponent<HullbreachTabNavigation>();
             if (tabs == null) tabs = gameObject.AddComponent<HullbreachTabNavigation>();
-            tabs.Gate = SignInClosed;
+            tabs.Gate = HasFocus;
             tabs.SetOrder(HullbreachPlatformRuntime.Log, lobbyNameInput, maxPlayersInput, privateToggle,
                 hostPasswordInput, hostButton, joinCodeInput, joinPasswordInput, joinCodeButton,
                 lanHostButton, lanAddressInput, lanJoinButton, refreshButton, startGameButton, leaveButton, quitButton);
@@ -91,13 +95,15 @@ namespace Hullbreach.NetCode.Entities
             if (lanAddressInput != null) lanAddressInput.onSubmit.RemoveListener(SubmitLan);
         }
 
-        void SubmitHost(string _) { if (!_service.IsBusy) Host(); }
-        void SubmitJoin(string _) { if (!_service.IsBusy) JoinCode(); }
-        void SubmitLan(string _) => JoinLan();
+        void SubmitHost(string _) { if (HasFocus() && !_service.IsBusy) Host(); }
+        void SubmitJoin(string _) { if (HasFocus() && !_service.IsBusy) JoinCode(); }
+        void SubmitLan(string _) { if (HasFocus()) JoinLan(); }
 
-        // The sign-in form owns the keyboard until it is answered.
-        bool SignInClosed()
+        // the screen in front owns the mouse and keyboard.
+        bool HasFocus()
         {
+            if (_hub == null) _hub = FindFirstObjectByType<HullbreachHubView>();
+            if (_hub != null && !_hub.LobbyHasFocus) return false;
             if (_signIn == null) _signIn = FindFirstObjectByType<HullbreachSignInView>();
             return _signIn == null || !_signIn.FormVisible;
         }
@@ -105,8 +111,15 @@ namespace Hullbreach.NetCode.Entities
         // Esc leaves the joined room (LobbyForm.EscapeLeavesRoom); it never quits the game.
         void Update()
         {
-            if (_service == null || !HullbreachKeys.EscapePressed() || !SignInClosed()) return;
+            bool focused = HasFocus();
+            if (_inputGroup != null)
+            {
+                _inputGroup.interactable = focused;
+                _inputGroup.blocksRaycasts = focused;
+            }
+            if (_service == null || !HullbreachKeys.EscapePressed() || !focused) return;
             if (LobbyForm.EscapeLeavesRoom(_service.Session != null, _service.IsBusy)) Leave();
+            else if (CanReturnToHub && _hub != null) _hub.ReturnToHub();
         }
 
         // Closes the player; in the editor it stops play mode instead.
@@ -124,6 +137,8 @@ namespace Hullbreach.NetCode.Entities
             // Direct/LAN and server launches skip the lobby (S47-5); do not start
             // Unity Services for a scene that is about to be replaced.
             if (HullbreachDirectLaunch.Plan.IsDirect) return;
+            _inputGroup = GetComponent<CanvasGroup>();
+            if (_inputGroup == null) _inputGroup = gameObject.AddComponent<CanvasGroup>();
             _service = HullbreachLobbyService.Instance;
             _service.Changed += Refresh;
             hostButton.onClick.AddListener(Host);

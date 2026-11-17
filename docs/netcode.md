@@ -275,14 +275,22 @@ The Unity project must be linked to the intended Dashboard project and that
 project must allow Authentication, Lobby, and Relay. At runtime players sign
 in anonymously; Unity Authentication persists that player identity locally.
 
-For a real two-player check, make two standalone development builds (or use
-Multiplayer Play Mode with isolated player profiles). Both instances begin in
-`LobbyScene`: host in one, then either select its public listing or enter its
-join code in the other. Confirm both names appear in the waiting room, then
-press **Start Game** in the host. Both instances should load the multiplayer
-scene, show two ships, and report `Replicated ships: 2`. A password is optional
-for public and private lobbies, but when present must be 8-64 characters
-because that is the Unity Lobby service contract.
+For a two-player check, open the same development build on both computers.
+Open the Relay lobby from the Play menu. The host creates a room and the
+other player joins from the public list or by invite code. Confirm both names
+appear in the waiting room, then press **Start Game** on the host. Both players
+should load the multiplayer scene and see two ships. Press **F3** to see the
+network ID and ship count. A lobby password is optional and must be 8–64
+characters when set.
+
+When the host leaves, the room closes and its join code expires. The other
+player can use **Back to Lobby** on the disconnect screen. Start a second
+room without restarting either game and check for two ships again. The game
+recreates the Netcode worlds after leaving Relay so the next match starts
+with a fresh connection and simulation.
+
+To run both copies on one computer, start them with different Unity profiles
+(`-hullbreachProfile player1` and `-hullbreachProfile player2`).
 
 ## The governing rule: send causes, not effects
 

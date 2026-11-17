@@ -22,9 +22,12 @@ namespace Hullbreach.NetCode.Entities
         static HullbreachLobbyService s_Instance;
 
         Task _initializationTask;
+        Task _sessionCleanup = Task.CompletedTask;
         ISession _session;
         IReadOnlyList<ISessionInfo> _publicSessions = Array.Empty<ISessionInfo>();
         bool _loadingGameScene;
+        bool _busy;
+        bool _leavingSession;
         string _loggedStatus;
 
         public const string DefaultLobbyScene = "LobbyScene";
@@ -44,7 +47,8 @@ namespace Hullbreach.NetCode.Entities
         public event Action Changed;
 
         public bool IsReady { get; private set; }
-        public bool IsBusy { get; private set; }
+        public bool IsBusy => _busy || !_sessionCleanup.IsCompleted;
+        internal bool IsRelayMatch { get; private set; }
         public string Status { get; private set; } = "Starting Unity Services...";
         public string LastError { get; private set; }
         public ISession Session => _session;
@@ -143,7 +147,7 @@ namespace Hullbreach.NetCode.Entities
             }
             finally
             {
-                IsBusy = false;
+                _busy = false;
                 NotifyChanged();
             }
         }
@@ -160,7 +164,7 @@ namespace Hullbreach.NetCode.Entities
                     .Where(session => !session.IsLocked && session.AvailableSlots > 0)
                     .OrderByDescending(session => session.LastUpdated)
                     .ToArray();
-                Status = $"Found {_publicSessions.Count} public lobby" + (_publicSessions.Count == 1 ? string.Empty : "ies");
+                Status = $"Found {_publicSessions.Count} public " + (_publicSessions.Count == 1 ? "lobby" : "lobbies");
             });
         }
 
@@ -222,6 +226,7 @@ namespace Hullbreach.NetCode.Entities
 
         public async Task LeaveAsync()
         {
+            await _sessionCleanup;
             await RunOperationAsync("Leaving lobby...", async () =>
             {
                 await LeaveCurrentSessionInternalAsync();
@@ -253,6 +258,7 @@ namespace Hullbreach.NetCode.Entities
             await LeaveAsync();
             if (!string.IsNullOrWhiteSpace(lobbySceneName))
                 await SceneManager.LoadSceneAsync(lobbySceneName.Trim(), LoadSceneMode.Single);
+            IsRelayMatch = false;
         }
 
         async Task LeaveCurrentSessionInternalAsync()
@@ -261,16 +267,27 @@ namespace Hullbreach.NetCode.Entities
                 return;
 
             ISession leavingSession = _session;
-
-            // A Relay allocation belongs to its host. Deleting the host's lobby avoids
-            // leaving a migrated lobby that points at a Relay allocation which no longer exists.
-            if (leavingSession.IsHost)
-                await leavingSession.AsHost().DeleteAsync();
-            else
-                await leavingSession.LeaveAsync();
-
-            if (_session == leavingSession)
-                DetachSession();
+            _leavingSession = true;
+            try
+            {
+                // the relay ends when its host leaves.
+                if (leavingSession.IsHost)
+                    await leavingSession.AsHost().DeleteAsync();
+                else
+                    await leavingSession.LeaveAsync();
+            }
+            finally
+            {
+                try
+                {
+                    DetachSession();
+                    await RestartWorldsAsync();
+                }
+                finally
+                {
+                    _leavingSession = false;
+                }
+            }
         }
 
         void AttachSession(ISession session)
@@ -280,10 +297,13 @@ namespace Hullbreach.NetCode.Entities
             if (_session == null)
                 return;
 
+            HullbreachSparring.Requested = false;
+            HullbreachSparring.Trial = false;
             _session.Changed += OnSessionChanged;
-            _session.Deleted += OnSessionEnded;
-            _session.RemovedFromSession += OnSessionEnded;
+            _session.Deleted += OnSessionDeleted;
+            _session.RemovedFromSession += OnSessionRemoved;
             NotifyChanged();
+            _ = LoadGameSceneIfReady();
         }
 
         void DetachSession()
@@ -291,12 +311,11 @@ namespace Hullbreach.NetCode.Entities
             if (_session != null)
             {
                 _session.Changed -= OnSessionChanged;
-                _session.Deleted -= OnSessionEnded;
-                _session.RemovedFromSession -= OnSessionEnded;
+                _session.Deleted -= OnSessionDeleted;
+                _session.RemovedFromSession -= OnSessionRemoved;
             }
             _session = null;
             _loadingGameScene = false;
-            NotifyChanged();
         }
 
         void OnSessionChanged()
@@ -307,13 +326,14 @@ namespace Hullbreach.NetCode.Entities
 
         async Task LoadGameSceneIfReady()
         {
-            if (_loadingGameScene || _session == null ||
+            if (_loadingGameScene || _leavingSession || _session == null ||
                 !_session.Properties.TryGetValue(GameSceneProperty, out SessionProperty property) ||
                 string.IsNullOrWhiteSpace(property?.Value) ||
                 SceneManager.GetActiveScene().name == property.Value)
                 return;
 
             _loadingGameScene = true;
+            IsRelayMatch = true;
             try
             {
                 await SceneManager.LoadSceneAsync(property.Value, LoadSceneMode.Single);
@@ -321,16 +341,64 @@ namespace Hullbreach.NetCode.Entities
             catch (Exception exception)
             {
                 _loadingGameScene = false;
+                IsRelayMatch = false;
                 SetError(exception);
                 Debug.LogException(exception);
             }
         }
 
-        void OnSessionEnded()
+        void OnSessionDeleted() => OnSessionEnded(true);
+        void OnSessionRemoved() => OnSessionEnded(false);
+
+        void OnSessionEnded(bool deleted)
         {
+            if (_leavingSession || _session == null) return;
+            ISession session = _session;
             DetachSession();
-            Status = "Session ended";
+            Status = "Closing the lobby...";
+            _sessionCleanup = CloseEndedSessionAsync(session, deleted);
             NotifyChanged();
+        }
+
+        async Task CloseEndedSessionAsync(ISession session, bool deleted)
+        {
+            // let the sdk finish sending the room event before cleaning up.
+            await Awaitable.NextFrameAsync();
+            try
+            {
+                if (deleted) await session.LeaveAsync();
+            }
+            catch (SessionException exception) when (exception.Error == SessionError.SessionDeleted ||
+                exception.Error == SessionError.SessionNotFound || exception.Error == SessionError.NotInLobby)
+            {
+                // the host already removed the room.
+            }
+            catch (Exception exception)
+            {
+                HullbreachPlatformRuntime.Log.Warning($"Hullbreach could not leave the closed lobby: {exception.Message}");
+            }
+
+            try
+            {
+                await RestartWorldsAsync();
+                Status = "Session ended";
+            }
+            catch (Exception exception)
+            {
+                SetError(exception);
+            }
+            finally
+            {
+                _sessionCleanup = Task.CompletedTask;
+                NotifyChanged();
+            }
+        }
+
+        static async Task RestartWorldsAsync()
+        {
+            // give netcode a frame to send its disconnect before closing the worlds.
+            await Awaitable.NextFrameAsync();
+            HullbreachMatchExit.ResetWorlds();
         }
 
         async Task RunOperationAsync(string busyStatus, Func<Task> operation)
@@ -351,14 +419,14 @@ namespace Hullbreach.NetCode.Entities
             }
             finally
             {
-                IsBusy = false;
+                _busy = false;
                 NotifyChanged();
             }
         }
 
         void SetBusy(bool busy, string status)
         {
-            IsBusy = busy;
+            _busy = busy;
             Status = status;
             LastError = null;
             NotifyChanged();

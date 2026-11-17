@@ -425,11 +425,11 @@ again to stop.
 
 ## Guide 2: multiplayer through the Relay lobby
 
-This is the main multiplayer path. Every copy of the game starts on a
-lobby screen; one player hosts, the others join with a code, the host
-presses Start Game. Traffic goes through Unity Relay, so it works across
-the internet and through home routers. It needs internet access and the
-Unity project linked to Unity's online services (step 2.1).
+Use this path to host a room for friends over the internet. In the Play
+menu, select **Online Lobby (Host / Join)**. One player hosts, the others
+join by code or from the public list, then the host starts the game.
+Guest players can use this lobby. Traffic goes through Unity Relay and
+requires the team’s linked Unity Cloud project (step 2.1).
 
 The scenes involved: `LobbyScene` (the lobby screen, first in the build)
 and `MultiplayerGame` (the match, loaded when the host presses Start
@@ -464,7 +464,7 @@ You should see: the Services page showing the linked project name.
 ### 2.2 Try it inside the editor (one computer)
 
 1. Open `Assets/Scenes/LobbyScene` and press **Play**.
-2. The lobby shows the title **HULLBREACH ONLINE** and a status line that
+2. Select **Online Lobby (Host / Join)**. The lobby shows a status line that
    says `Connecting to Unity Services...` and then `Online`.
 
 If it says `Online service error` instead, the project is not linked or
@@ -477,7 +477,8 @@ windows that each run their own copy:
 1. **Window -> Multiplayer -> Multiplayer Play Mode**.
 2. Tick **Player 2**. Wait until it says it is active (the first time
    takes a minute or two; a second Unity window opens).
-3. With `LobbyScene` open, press **Play**. Both windows start the lobby.
+3. With `LobbyScene` open, press **Play**. Select **Online Lobby (Host / Join)**
+   in both windows.
 4. Host in one window and join in the other (step 2.4).
 
 The [netcode doc](docs/netcode.md) notes the virtual players need
@@ -495,8 +496,8 @@ two computers instead (2.3).
    - **Windows**: `.\play.cmd online`
    - **macOS / Linux**: `./play.sh online`
 
-You should see: the game window opens on the lobby screen, and the
-terminal prints which build it started and where its log is.
+The game opens the Play menu. Select **Online Lobby (Host / Join)**.
+The terminal prints which build it started and where its log is.
 
 Windows may show "Windows protected your PC" the first time because the
 build is not signed; click **More info** -> **Run anyway**. (Mac: see
@@ -547,17 +548,12 @@ Both copies should list both players under **PLAYERS**. Then on the host
 click **START GAME** (only the host has it; anyone else gets `Only the
 lobby host can start the game.`).
 
-You should see in both copies: the match scene with two ships (yours
-light blue, the other orange) and a status line at the top like
-
-```
-Connected as #1  *  Replicated ships: 2  *  BUILD
-```
-
-(the real separator is a small dot). **`Replicated ships: 2` is the
-proof that multiplayer works.** Build with 1-7 and left click, press Tab
-to fly, W/S/A/D to move, Space or left click to fire. **LEAVE** returns to
-the lobby.
+Both copies should load the match scene with two ships. Press **F3** to
+check that each player has a different network ID and sees two ships.
+Press **Ready** on both ships to begin, then use the flight controls shown
+in the HUD. **Leave** returns to the Play menu. If the host leaves, the
+room closes and the other player can select **Back to Lobby** on the
+disconnect screen. Open a new room to play again.
 
 ## Guide 3: direct LAN connection
 
