@@ -83,6 +83,21 @@ namespace Hullbreach.Bots
         // Extra range-keeping slack as a fraction of EngageRange.
         public float RangeSlack { get; private set; }
 
+        // 0 = off. Otherwise the bot treats every planet as reaching out to the radius where gravity equals this share of
+        // its own forward thrust: inside it the ship cannot climb back out, so it must not be drawn in by the chase. Easy's
+        // light ship (about 1 unit/s^2) fell down the 900-mu planet's well in nearly every long match and sat landed.
+        public float WellThrustShare { get; private set; }
+
+        // 0 = use 1.5 x EngageRange. Otherwise the distance (blocks) within which an enemy counts as "in range" for deciding
+        // to keep fighting while the storm is merely about to catch the bot. Easy holds a short EngageRange, so by default it
+        // gave up a chase for the ring whenever the enemy was more than 20 blocks away.
+        public float StormFightRange { get; private set; }
+
+        // Pursuit: gain (1/s) of the closing-speed controller toward the preferred distance, and the fastest closing speed
+        // (units/s) it asks for. Easy chases a moving target harder; Normal and Hard keep 0.3 and 8.
+        public float PursuitGain { get; private set; }
+        public float PursuitMaxClosing { get; private set; }
+
         // Storm awareness. How far ahead (seconds) the bot reads the ring: a shrink that starts inside this window is
         // already treated as the new edge. Easy only sees the ring about when it moves; Hard pre-positions early.
         public float StormLeadSeconds { get; private set; }
@@ -98,14 +113,15 @@ namespace Hullbreach.Bots
 
         public static BotProfile For(BotDifficulty difficulty, BotPersonality personality)
         {
-            var p = new BotProfile { Difficulty = difficulty, Personality = personality, PlanetMargin = 6f, EngageScale = 1f };
+            var p = new BotProfile { Difficulty = difficulty, Personality = personality, PlanetMargin = 6f, EngageScale = 1f, PursuitGain = 0.3f, PursuitMaxClosing = 8f };
             switch (difficulty)
             {
                 case BotDifficulty.Easy:
-                    p.ReactionTicks = 30; p.DecisionTicks = 18; p.AimSigma = 0.075f; p.LeadQuality = 0.35f;
-                    p.GravityAwareLead = false; p.TriggerDiscipline = 0.55f; p.FireToleranceScale = 2.2f;
+                    p.ReactionTicks = 30; p.DecisionTicks = 18; p.AimSigma = 0.06f; p.LeadQuality = 0.6f;
+                    p.GravityAwareLead = false; p.TriggerDiscipline = 0.75f; p.FireToleranceScale = 2.2f;
                     p.DodgeSkill = 0f; p.PlanetLookahead = 6f; p.StrafePeriod = 0f; p.RangeSlack = 0.5f;
-                    p.FlankPeriod = 0f; p.Pressure = 0f; p.ScavengeRange = 0f; p.EngageScale = 0.6f; p.PlanetMargin = 12f;
+                    p.FlankPeriod = 12f; p.Pressure = 0.3f; p.ScavengeRange = 0f; p.EngageScale = 0.6f; p.PlanetMargin = 12f;
+                    p.PursuitGain = 0.45f; p.PursuitMaxClosing = 12f; p.WellThrustShare = 0.75f;
                     p.StormLeadSeconds = 2f; p.StormMargin = 0f; p.StormExtentFactor = 0.3f; p.StormSteerSigma = 0.4f;
                     break;
                 case BotDifficulty.Normal:
