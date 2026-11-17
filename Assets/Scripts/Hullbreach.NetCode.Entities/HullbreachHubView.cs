@@ -70,8 +70,13 @@ namespace Hullbreach.NetCode.Entities
                 var tabs = signIn.GetComponent<HullbreachTabNavigation>();
                 if (tabs != null) tabs.Gate = () => !IsVisible;
             }
-            if (EventSystem.current != null) EventSystem.current.SetSelectedGameObject(null);
-            if (OpenOnSignIn) { OpenOnSignIn = false; ShowHub(false); }
+            if (OpenOnSignIn)
+            {
+                OpenOnSignIn = false;
+                ShowHub(false);
+                if (signIn != null) signIn.FocusUsername();
+            }
+            else if (EventSystem.current != null) EventSystem.current.SetSelectedGameObject(null);
         }
 
         void OnEnable() => RefreshAccount();
@@ -177,7 +182,11 @@ namespace Hullbreach.NetCode.Entities
                 var queue = FindFirstObjectByType<HullbreachQueueView>();
                 if (queue != null) queue.Open();
             }
-            // Otherwise the sign-in form behind the hub is what the player now sees.
+            else
+            {
+                var signIn = FindFirstObjectByType<HullbreachSignInView>();
+                if (signIn != null) signIn.FocusUsername();
+            }
         }
 
         void OpenLobby()

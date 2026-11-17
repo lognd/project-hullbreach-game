@@ -20,14 +20,7 @@ namespace Hullbreach.NetCode.Entities
     /// </summary>
     public static class HullbreachMatchExit
     {
-        public static bool IsLocalMatch
-        {
-            get
-            {
-                var lobby = HullbreachLobbyService.Instance;
-                return !lobby.IsRelayMatch && lobby.Session == null;
-            }
-        }
+        public static bool IsLocalMatch => !HullbreachLobbyService.IsRelayMatch && !HullbreachLobbyService.HasSession;
 
         /// <summary>Disposes and recreates the client and server worlds (one frame later, outside any system update).</summary>
         public static bool Restarting { get; private set; }

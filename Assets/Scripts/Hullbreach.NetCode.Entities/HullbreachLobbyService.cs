@@ -26,6 +26,7 @@ namespace Hullbreach.NetCode.Entities
         ISession _session;
         IReadOnlyList<ISessionInfo> _publicSessions = Array.Empty<ISessionInfo>();
         bool _loadingGameScene;
+        bool _isRelayMatch;
         bool _busy;
         bool _leavingSession;
         string _loggedStatus;
@@ -48,7 +49,9 @@ namespace Hullbreach.NetCode.Entities
 
         public bool IsReady { get; private set; }
         public bool IsBusy => _busy || !_sessionCleanup.IsCompleted;
-        internal bool IsRelayMatch { get; private set; }
+        // checking a direct match should not start unity services.
+        internal static bool IsRelayMatch => s_Instance != null && s_Instance._isRelayMatch;
+        internal static bool HasSession => s_Instance != null && s_Instance._session != null;
         public string Status { get; private set; } = "Starting Unity Services...";
         public string LastError { get; private set; }
         public ISession Session => _session;
@@ -258,7 +261,7 @@ namespace Hullbreach.NetCode.Entities
             await LeaveAsync();
             if (!string.IsNullOrWhiteSpace(lobbySceneName))
                 await SceneManager.LoadSceneAsync(lobbySceneName.Trim(), LoadSceneMode.Single);
-            IsRelayMatch = false;
+            _isRelayMatch = false;
         }
 
         async Task LeaveCurrentSessionInternalAsync()
@@ -333,7 +336,7 @@ namespace Hullbreach.NetCode.Entities
                 return;
 
             _loadingGameScene = true;
-            IsRelayMatch = true;
+            _isRelayMatch = true;
             try
             {
                 await SceneManager.LoadSceneAsync(property.Value, LoadSceneMode.Single);
@@ -341,7 +344,7 @@ namespace Hullbreach.NetCode.Entities
             catch (Exception exception)
             {
                 _loadingGameScene = false;
-                IsRelayMatch = false;
+                _isRelayMatch = false;
                 SetError(exception);
                 Debug.LogException(exception);
             }

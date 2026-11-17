@@ -98,7 +98,7 @@ namespace Hullbreach.NetCode.Entities
 
             bool matchOver = HullbreachMatchExit.Restarting ||
                 (HullbreachResultsOverlay.Instance != null && HullbreachResultsOverlay.Instance.IsShowing);
-            bool relay = HullbreachLobbyService.Instance.IsRelayMatch;
+            bool relay = HullbreachLobbyService.IsRelayMatch;
             if (!relay && _policy.Update(now, connected, matchOver) == ReconnectAction.Attempt)
                 HullbreachNetCodeClient.TryRequestReconnect();
             ConnectionBanner b = ConnectionStatusModel.Evaluate(true, connected, _everConnected,
@@ -143,11 +143,10 @@ namespace Hullbreach.NetCode.Entities
         {
             _policy.NoteDeliberateLeave();
             HullbreachNetCodeClient.SendLeave(); // free the ship now, not after the reconnect hold
-            var lobby = HullbreachLobbyService.Instance;
-            if (lobby.IsRelayMatch)
+            if (HullbreachLobbyService.IsRelayMatch)
             {
                 _lobby.interactable = false;
-                try { await lobby.LeaveAndReturnToLobbyAsync(); }
+                try { await HullbreachLobbyService.Instance.LeaveAndReturnToLobbyAsync(); }
                 catch (System.Exception exception)
                 {
                     _lobby.interactable = true;
