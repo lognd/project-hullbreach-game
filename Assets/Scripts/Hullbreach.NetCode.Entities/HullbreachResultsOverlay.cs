@@ -16,12 +16,11 @@ namespace Hullbreach.NetCode.Entities
     using World = Unity.Entities.World;
 
     /// <summary>
-    /// Leaving a match that has no lobby session behind it (a bot match, LAN or direct): the Netcode worlds still hold the
-    /// finished server simulation, so they are rebuilt before the next match or the lobby.
+    /// Rebuilds the Netcode worlds so the next match starts with fresh state.
     /// </summary>
     public static class HullbreachMatchExit
     {
-        public static bool IsLocalMatch => HullbreachLobbyService.Instance.Session == null;
+        public static bool IsLocalMatch => !HullbreachLobbyService.IsRelayMatch && !HullbreachLobbyService.HasSession;
 
         /// <summary>Disposes and recreates the client and server worlds (one frame later, outside any system update).</summary>
         public static bool Restarting { get; private set; }
@@ -30,11 +29,22 @@ namespace Hullbreach.NetCode.Entities
         {
             Restarting = true;
             yield return null;
+            try { ResetWorlds(); }
+            finally { Restarting = false; }
+        }
+
+        internal static void ResetWorlds()
+        {
             var old = new List<World>();
             foreach (World w in World.All)
                 if (w.IsClient() || w.IsServer() || w.IsThinClient()) old.Add(w);
-            foreach (World w in old) w.Dispose();
+            foreach (World w in old)
+            {
+                ScriptBehaviourUpdateOrder.RemoveWorldFromCurrentPlayerLoop(w);
+                w.Dispose();
+            }
 
+            NetworkStreamReceiveSystem.DriverConstructor = new IPCAndSocketDriverConstructor();
             World server = ClientServerBootstrap.CreateServerWorld("ServerWorld");
             ClientServerBootstrap.CreateClientWorld("ClientWorld");
             var tickRate = new ClientServerTickRate
@@ -47,7 +57,6 @@ namespace Hullbreach.NetCode.Entities
             tickRate.ResolveDefaults();
             server.EntityManager.CreateSingleton(tickRate, "Hullbreach NetCode Tick Rate");
             HullbreachNetCodeClient.LocalNetworkId = 0;
-            Restarting = false;
         }
     }
 

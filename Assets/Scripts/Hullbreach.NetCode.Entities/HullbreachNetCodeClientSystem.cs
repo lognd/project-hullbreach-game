@@ -177,6 +177,11 @@ namespace Hullbreach.NetCode.Entities
             // controller only exists in MultiplayerGame after the host starts.
             if (!HullbreachNetworkGameplayController.Active) return;
 
+            // wait for the ship prefab before accepting match snapshots.
+            if (!SystemAPI.TryGetSingleton<HullbreachGhostPrefab>(out var prefab) ||
+                !EntityManager.HasComponent<GhostType>(prefab.Value))
+                return;
+
             // Greppable proof that this client reached the match (scripts and docs use it).
             string matchStatus = DirectLaunchPlan.MatchStatus(networkId.Value, _replica.Ships.Count);
             if (matchStatus != _lastMatchStatus)

@@ -63,7 +63,7 @@ namespace Hullbreach.NetCode.Entities
 
         // Cursor starts in the username box so the player can type straight away.
         // frob:ticket 01M6WV5HP3KVSZNJT6H99MFS3Z
-        void FocusUsername()
+        internal void FocusUsername()
         {
             if (FormVisible && usernameInput.interactable && EventSystem.current != null)
             {

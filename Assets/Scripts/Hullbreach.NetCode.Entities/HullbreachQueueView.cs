@@ -26,6 +26,8 @@ namespace Hullbreach.NetCode.Entities
         MatchmakingSession _session;
         MatchmakingState _lastState = MatchmakingState.Idle;
 
+        internal bool IsVisible => panelRoot != null && panelRoot.activeInHierarchy;
+
         // Raised once when a match is found; the lobby flow connects to the handoff.
         // frob:doc docs/reference/hullbreach-net.md#matchmaking
         public event System.Action<MatchHandoff> Matched;

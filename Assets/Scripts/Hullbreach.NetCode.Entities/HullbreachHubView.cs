@@ -3,15 +3,15 @@ using Hullbreach.Hud;
 using Hullbreach.Platform;
 using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 namespace Hullbreach.NetCode.Entities
 {
     /// <summary>
-    /// The Play hub: the first thing the lobby scene shows. Play vs Bot (Easy / Normal / Hard), the Cadet Trial, the online
-    /// queue, LAN host / join and back to the title. Only the queue needs an account; everything else works as a guest, so
-    /// no sign-in form stands between a new player and a match. Built at runtime over the lobby scene, so no scene is rebuilt.
+    /// the play hub offers bots, the cadet trial, ranked queue, online lobbies and lan.
+    /// only the ranked queue needs an account. the hub is built over the saved lobby at runtime.
     /// </summary>
     public sealed class HullbreachHubView : MonoBehaviour
     {
@@ -19,10 +19,18 @@ namespace Hullbreach.NetCode.Entities
         public static bool OpenOnSignIn;
 
         GameObject _hub;
-        GameObject _menuButton;
+        Button _menuButton;
         GameObject _botRow;
         TextMeshProUGUI _note, _account;
         Button _online;
+        HullbreachLobbyView _lobby;
+        HullbreachQueueView _queue;
+
+        bool IsVisible => _hub != null && _hub.activeSelf;
+        internal bool LobbyHasFocus => !IsVisible && (_queue == null || !_queue.IsVisible);
+
+        bool CanReturnToHub => (_lobby == null || _lobby.CanReturnToHub) &&
+                               (_queue == null || !_queue.IsVisible);
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         static void Create()
@@ -52,12 +60,32 @@ namespace Hullbreach.NetCode.Entities
             scaler.matchWidthOrHeight = 0.5f;
             gameObject.AddComponent<GraphicRaycaster>();
 
+            _lobby = FindFirstObjectByType<HullbreachLobbyView>();
+            _queue = FindFirstObjectByType<HullbreachQueueView>();
             BuildHub();
             BuildMenuButton();
-            if (OpenOnSignIn) { OpenOnSignIn = false; ShowHub(false); }
+            var signIn = FindFirstObjectByType<HullbreachSignInView>();
+            if (signIn != null)
+            {
+                var tabs = signIn.GetComponent<HullbreachTabNavigation>();
+                if (tabs != null) tabs.Gate = () => !IsVisible;
+            }
+            if (OpenOnSignIn)
+            {
+                OpenOnSignIn = false;
+                ShowHub(false);
+                if (signIn != null) signIn.FocusUsername();
+            }
+            else if (EventSystem.current != null) EventSystem.current.SetSelectedGameObject(null);
         }
 
         void OnEnable() => RefreshAccount();
+
+        void Update()
+        {
+            if (_menuButton.gameObject.activeSelf)
+                _menuButton.interactable = CanReturnToHub;
+        }
 
         void BuildHub()
         {
@@ -70,7 +98,7 @@ namespace Hullbreach.NetCode.Entities
             column.transform.SetParent(_hub.transform, false);
             var crt = (RectTransform)column.transform;
             crt.anchorMin = crt.anchorMax = crt.pivot = new Vector2(0.5f, 0.5f);
-            crt.sizeDelta = new Vector2(520f, 640f);
+            crt.sizeDelta = new Vector2(520f, 680f);
 
             Text(crt, "PLAY", 54, FontStyles.Bold, BrandColors.Ink, 300f, 250f, 70f);
             _account = Text(crt, string.Empty, 20, FontStyles.Normal, BrandColors.Muted, 300f, 200f, 34f);
@@ -94,38 +122,47 @@ namespace Hullbreach.NetCode.Entities
             y -= 74f;
             Button(crt, HullbreachCadetTrialView.EverCompleted ? "CADET TRIAL  (replay)" : "CADET TRIAL  (learn to fly)", y, false, () => StartBot(BotDifficulty.Easy, true)); y -= 66f;
             _online = Button(crt, HubMenuModel.OnlineLabel(PlatformSession.IsSignedIn), y, false, OpenOnline); y -= 66f;
-            Button(crt, "LAN  HOST / JOIN", y, false, OpenLan); y -= 66f;
+            Button(crt, "ONLINE LOBBY  (host / join)", y, false, OpenLobby); y -= 66f;
+            Button(crt, "LAN  HOST / JOIN", y, false, OpenLobby); y -= 66f;
             Button(crt, "BACK TO TITLE", y, false, () => SceneManager.LoadScene("TitleScene"));
-            _note = Text(crt, string.Empty, 20, FontStyles.Normal, BrandColors.Orange, 300f, -245f, 34f);
+            _note = Text(crt, string.Empty, 20, FontStyles.Normal, BrandColors.Orange, 300f, -311f, 34f);
         }
 
         void BuildMenuButton()
         {
-            _menuButton = new GameObject("MenuButton", typeof(RectTransform), typeof(Image), typeof(UnityEngine.UI.Button));
-            _menuButton.transform.SetParent(transform, false);
-            var rt = (RectTransform)_menuButton.transform;
+            var menu = new GameObject("MenuButton", typeof(RectTransform), typeof(Image), typeof(UnityEngine.UI.Button));
+            menu.transform.SetParent(transform, false);
+            var rt = (RectTransform)menu.transform;
             rt.anchorMin = rt.anchorMax = rt.pivot = new Vector2(0f, 1f);
             rt.anchoredPosition = new Vector2(16f, -16f); rt.sizeDelta = new Vector2(160f, 40f);
-            _menuButton.GetComponent<Image>().color = BrandColors.Raised;
-            _menuButton.GetComponent<UnityEngine.UI.Button>().onClick.AddListener(() => ShowHub(true));
+            menu.GetComponent<Image>().color = BrandColors.Raised;
+            _menuButton = menu.GetComponent<UnityEngine.UI.Button>();
+            _menuButton.onClick.AddListener(ReturnToHub);
             var label = Text(rt, "< PLAY MENU", 18, FontStyles.Bold, BrandColors.Cyan, 160f, 0f, 40f);
             label.alignment = TextAlignmentOptions.Center;
             label.rectTransform.anchorMin = Vector2.zero; label.rectTransform.anchorMax = Vector2.one;
             label.rectTransform.offsetMin = label.rectTransform.offsetMax = Vector2.zero;
-            _menuButton.SetActive(false);
+            menu.SetActive(false);
         }
 
         void ShowHub(bool show)
         {
+            // close the room or queue with its own controls before changing play modes.
+            if (show && !CanReturnToHub) return;
             _hub.SetActive(show);
-            _menuButton.SetActive(!show);
+            _menuButton.gameObject.SetActive(!show);
+            if (EventSystem.current != null) EventSystem.current.SetSelectedGameObject(null);
             if (show) { _note.text = string.Empty; RefreshAccount(); }
         }
+
+        internal void ReturnToHub() => ShowHub(true);
 
         void RefreshAccount()
         {
             if (_account == null) return;
             _account.text = HubMenuModel.AccountLine(PlatformSession.IsSignedIn, PlatformSession.IsOffline, PlatformSession.Username);
+            if (!PlatformSession.IsSignedIn && !PlatformSession.IsOffline)
+                _account.text = "Guests can play bots, lobbies and LAN";
             if (_online != null) _online.GetComponentInChildren<TextMeshProUGUI>().text = HubMenuModel.OnlineLabel(PlatformSession.IsSignedIn);
         }
 
@@ -145,13 +182,23 @@ namespace Hullbreach.NetCode.Entities
                 var queue = FindFirstObjectByType<HullbreachQueueView>();
                 if (queue != null) queue.Open();
             }
-            // Otherwise the sign-in form behind the hub is what the player now sees.
+            else
+            {
+                var signIn = FindFirstObjectByType<HullbreachSignInView>();
+                if (signIn != null) signIn.FocusUsername();
+            }
         }
 
-        void OpenLan()
+        void OpenLobby()
         {
+            if (_lobby == null)
+            {
+                _note.text = "Lobby unavailable. Return to title and retry.";
+                return;
+            }
             ShowHub(false);
             var signIn = FindFirstObjectByType<HullbreachSignInView>();
+            // this skips the form for guests and keeps an existing account signed in.
             if (signIn != null) signIn.ContinueAsGuest();
         }
 
