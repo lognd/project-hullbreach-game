@@ -131,6 +131,10 @@ namespace Hullbreach.Hud
             return string.Join("\n", _items.ConvertAll(i => i.text));
         }
 
+        // Drops one message early (a status that stopped being true, such as "waiting for your opponent" once the match runs).
+        // frob:doc docs/design/ui-port.md#hullbreachhud-module-reference
+        public void Remove(string text) => _items.RemoveAll(i => i.text == text);
+
         // frob:doc docs/design/ui-port.md#hullbreachhud-module-reference
         public void Clear() => _items.Clear();
     }
