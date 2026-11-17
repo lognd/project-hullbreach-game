@@ -128,6 +128,23 @@ namespace Hullbreach.NetCode.Entities
 
         public bool IsShowing => _root != null && _root.activeSelf;
 
+        float _shownAt;
+        bool _guarding;
+
+        void SetButtonsInteractable(bool on)
+        {
+            if (_rematch != null) _rematch.interactable = on;
+            if (_lobby != null) _lobby.interactable = on;
+        }
+
+        // Buttons stay inert for ResultsFlow.InputGuardSeconds so a held fire key cannot press REMATCH.
+        void Update()
+        {
+            if (!_guarding || Time.unscaledTime - _shownAt < ResultsFlow.InputGuardSeconds) return;
+            _guarding = false;
+            SetButtonsInteractable(true);
+        }
+
         public void Show(ResultsScreenModel model)
         {
             Unbind();
@@ -145,6 +162,9 @@ namespace Hullbreach.NetCode.Entities
             bool showPlaced = model.PlayerA.BlocksPlaced != "0" || model.PlayerB.BlocksPlaced != "0";
             _left.text = Lines(model.PlayerA, showPlaced);
             _right.text = Lines(model.PlayerB, showPlaced);
+            _shownAt = Time.unscaledTime;
+            _guarding = true;
+            SetButtonsInteractable(false);
             _backdrop.SetActive(true);
             _root.SetActive(true);
             EnsureEventSystem();

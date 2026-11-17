@@ -21,6 +21,13 @@ namespace Hullbreach.Match
     // frob:doc docs/reference/hullbreach-match.md#resultsflow
     public sealed class ResultsFlow : IDisposable
     {
+        // Seconds after the results screen appears before its buttons accept input: a player holding fire (Space) or
+        // mashing keys when their core breaks must not trigger REMATCH, which would skip the results entirely.
+        public const float InputGuardSeconds = 1f;
+
+        // True once the guard has elapsed since the screen was shown.
+        public static bool InputAllowed(float shownAt, float now) => now - shownAt >= InputGuardSeconds;
+
         readonly IResultsPresenter _presenter;
         readonly Action _onRematch;
         readonly Action _onReturnToLobby;
