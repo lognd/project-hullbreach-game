@@ -85,6 +85,18 @@ namespace Hullbreach.Hud.Tests
         }
 
         [Test]
+        public void RemovedToast_VanishesAtOnce_AndLeavesTheOthers()
+        {
+            var q = new ToastQueue(2.5f, 3);
+            q.Push("Ready. The match starts when your opponent is ready too.", 0f);
+            q.Push("other", 0f);
+            q.Remove("Ready. The match starts when your opponent is ready too.");
+            Assert.AreEqual("other", q.Text(0.1f));
+            q.Remove("not showing");
+            Assert.AreEqual("other", q.Text(0.1f));
+        }
+
+        [Test]
         public void ReadyLabel_StructureWarning_ReadsFlyAnywayOnlyWhileConfirming()
         {
             bool press;

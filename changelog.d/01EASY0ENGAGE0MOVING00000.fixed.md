@@ -1,0 +1,1 @@
+The Easy bot no longer falls into a planet's gravity well while chasing and pursues a moving target harder (Easy profile only). Normal beats Easy 9 of 12 and Hard 8 of 12 (seeds 1 to 12, 600 s, storm); Easy mirrors still rarely breach a core. Adds a moving-player proxy to the bot CLI.

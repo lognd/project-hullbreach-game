@@ -160,6 +160,55 @@ namespace Hullbreach.Bots.Tests
             Assert.AreEqual(13.2f, BotProfile.For(BotDifficulty.Easy, BotPersonality.Balanced).EngageRange, 1e-3f);
         }
 
+        // The Easy pursuit changes (harder chase, better lead, closer press, well-aware planet clearance) are Easy-only:
+        // Normal and Hard keep the closing controller and have no well margin.
+        // frob:tests Assets/Scripts/Hullbreach.Bots/BotProfile.cs::BotProfile.For kind="unit"
+        [Test]
+        public void EasyPursuesHarder_NormalAndHardPursuitIsUnchanged()
+        {
+            foreach (BotPersonality p in System.Enum.GetValues(typeof(BotPersonality)))
+            {
+                BotProfile easy = BotProfile.For(BotDifficulty.Easy, p);
+                foreach (BotDifficulty d in new[] { BotDifficulty.Normal, BotDifficulty.Hard })
+                {
+                    BotProfile x = BotProfile.For(d, p);
+                    Assert.AreEqual(0.3f, x.PursuitGain, 1e-6f);
+                    Assert.AreEqual(8f, x.PursuitMaxClosing, 1e-6f);
+                    Assert.AreEqual(0f, x.WellThrustShare, 1e-6f);
+                    Assert.Greater(easy.PursuitGain, x.PursuitGain);
+                    Assert.Greater(easy.PursuitMaxClosing, x.PursuitMaxClosing);
+                    Assert.Greater(x.LeadQuality, easy.LeadQuality, "Easy still leads worse than Normal and Hard");
+                    Assert.Greater(x.TriggerDiscipline, easy.TriggerDiscipline);
+                }
+                Assert.Greater(easy.WellThrustShare, 0f);
+            }
+        }
+
+        // A ship whose thrust cannot beat the planet's pull at 30 units must not be drawn toward it: Easy (weak thrust) leaves
+        // a planet alone from farther out than Normal does with the same ship and the same path.
+        // frob:tests Assets/Scripts/Hullbreach.Bots/BotPilot.cs::BotPilot.Next kind="unit"
+        [Test]
+        public void EasyWithWeakThrust_AvoidsAPlanetFromFartherOutThanNormal()
+        {
+            var planet = new Hullbreach.World.GravityBody(new float2(0f, 0f), 900f, 18f, 0.2f);
+            BotMode Mode(BotDifficulty d)
+            {
+                var obs = new BotObservation { Tick = 0, Dt = 0.02f };
+                obs.Planets.Add(planet);
+                obs.Self = new SelfView
+                {
+                    Position = new float2(0f, 40f), Velocity = new float2(3f, 0f), Alive = true, MaxForwardAccel = 1f,
+                    MaxRetroAccel = 0.5f, MaxAngularAccel = 0.6f, MaxTurnRate = 1.5f, AimLocal = new float2(0f, 1f),
+                    HasCannon = true, CannonCooldownSeconds = 0.3f, Radius = 3f,
+                };
+                var pilot = new BotPilot(BotProfile.For(d, BotPersonality.Balanced), new BotRng(5));
+                pilot.Next(obs);
+                return pilot.Mode;
+            }
+            Assert.AreEqual(BotMode.AvoidPlanet, Mode(BotDifficulty.Easy), "Easy: the coast sinks inside 35 units, where the pull beats 0.75 of its 1.0 thrust");
+            Assert.AreNotEqual(BotMode.AvoidPlanet, Mode(BotDifficulty.Normal), "Normal: 6-block clearance, the pass is far enough away");
+        }
+
         // frob:tests Assets/Scripts/Hullbreach.Bots/BotPilot.cs::BotPilot.Next kind="unit"
         [Test]
         public void FallingTowardAPlanet_EveryDifficultyStillAvoidsIt()

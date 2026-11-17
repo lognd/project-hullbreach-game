@@ -153,7 +153,7 @@ namespace Hullbreach.Bots
             // to be caught and has the enemy in range keeps fighting and gives ground toward the centre (below).
             bool suddenDeath = obs.HasStorm && obs.Storm.IsSuddenDeath;
             StormNeed storm = StormCheck(obs, out float2 stormPull);
-            bool enemyInRange = enemy.Visible && math.distance(enemy.Position, self.Position) < _profile.EngageRange * 1.5f;
+            bool enemyInRange = enemy.Visible && math.distance(enemy.Position, self.Position) < (_profile.StormFightRange > 0f ? _profile.StormFightRange : _profile.EngageRange * 1.5f);
             if (storm == StormNeed.Outside || (storm == StormNeed.Soon && !enemyInRange))
             {
                 _mode = BotMode.ReturnToRing;
@@ -264,7 +264,7 @@ namespace Hullbreach.Bots
             _headDir = _aimValid ? _aimDir : u;
             _headAxisLocal = self.HasCannon ? self.AimLocal : new float2(0f, 1f);
             float slack = engageRange * _profile.RangeSlack;
-            float desiredClosing = math.clamp(0.3f * (range - engageRange), -5f, 8f);
+            float desiredClosing = math.clamp(_profile.PursuitGain * (range - engageRange), -5f, _profile.PursuitMaxClosing);
             if (range < 9f) desiredClosing = math.min(desiredClosing, -1f);
             if (math.abs(range - engageRange) < slack * 0.5f) desiredClosing = 0f;
             float error = desiredClosing - closing;
@@ -396,7 +396,7 @@ namespace Hullbreach.Bots
                 for (int i = 0; i < obs.Planets.Count; i++)
                 {
                     GravityBody p = obs.Planets[i];
-                    float clearance = math.length(pos - p.Position) - (p.Radius + margin);
+                    float clearance = math.length(pos - p.Position) - (p.Radius + WellMargin(self, p, margin));
                     if (clearance >= 0f) continue;
                     float2 outward = math.normalizesafe(self.Position - p.Position, new float2(0f, 1f));
                     // Bias the burn so it also cancels the inbound speed instead of only pushing outward.
@@ -410,6 +410,15 @@ namespace Hullbreach.Bots
                 }
             }
             return false;
+        }
+
+        // Planet clearance for this ship: the profile's margin, widened (only when the profile asks) to the altitude at which the
+        // planet's pull is still within the share of thrust the ship can spare.
+        float WellMargin(in SelfView self, in GravityBody planet, float margin)
+        {
+            if (_profile.WellThrustShare <= 0f || self.MaxForwardAccel <= 0f) return margin;
+            float reach = math.sqrt(planet.Mu / (_profile.WellThrustShare * self.MaxForwardAccel));
+            return math.max(margin, reach - planet.Radius);
         }
 
         // The arena edge (the storm ring is StormCheck).

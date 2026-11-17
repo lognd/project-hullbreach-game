@@ -16,7 +16,7 @@ static class Program
         float seconds = 150f;
         bool storm = false, personalities = false, trace = false; string only = null; string shipDiff = null;
         string[] one = null; string tmplId = null; bool legacySpawn = false;
-        bool idleB = false;
+        bool idleB = false; ProxyKind proxyB = ProxyKind.None; bool proxyReport = false; string proxyDiff = "EASY";
         float?[] spawnOv = new float?[4]; float idleSeconds = 0f;
         ulong first = 1; bool noEcon = false, noCrash = false, noQm = false;
         for (int i = 0; i < args.Length; i++)
@@ -44,7 +44,9 @@ static class Program
                 case "--spawn":   // sep,y,speed,deg (any may be '-' to keep the default), e.g. --spawn -,-,0,0 for the at-rest spawn
                     { string[] f = args[++i].Split(','); for (int k = 0; k < 4 && k < f.Length; k++) if (f[k] != "-") spawnOv[k] = float.Parse(f[k], System.Globalization.CultureInfo.InvariantCulture); }
                     break;
-                case "--idle-b": idleB = true; break;   // side B sends no input (a player who never touches the controls)
+                case "--idle-b": idleB = true; break;
+                case "--proxy": proxyReport = true; proxyB = (ProxyKind)Enum.Parse(typeof(ProxyKind), args[++i], true); break;   // moving-target probe: <difficulty> vs a proxy (nofire|orbit); see --proxy-diff
+                case "--proxy-diff": proxyDiff = args[++i]; break;   // side B sends no input (a player who never touches the controls)
                 case "--idle": idleSeconds = float.Parse(args[++i], System.Globalization.CultureInfo.InvariantCulture); break;   // two idle ships on the spawns, report planet clearance
                 case "--nocrash": noCrash = true; break;
                 case "--noqm": noQm = true; break;
@@ -60,6 +62,25 @@ static class Program
         if (noEcon) rules.Economy = Hullbreach.Net.EconomyConfig.Default().WithEnabled(false);
         if (noCrash) { var pc = PlanetCrashConfig.Default(); pc.DamagePerSpeed = 0f; pc.HeatDamagePerSecond = 0f; pc.HeatMaxDamagePerSecond = 0f; rules.Crash = pc; }
         if (idleSeconds > 0f) return IdleReport.Run(idleSeconds, spawnOv);
+        if (proxyReport)
+        {
+            // Moving-target probe: side A (difficulty --proxy-diff) shoots at a Normal-skill proxy that never fires. Storm off unless --storm.
+            Console.WriteLine("seed  first-hit  dmg@60s  dmg-total  shots  in-range%  mean-range  ending  core-B");
+            for (int k = 0; k < seeds; k++)
+            {
+                ulong sd = first + (ulong)k;
+                var pc = new ArenaMatchConfig
+                {
+                    Seed = sd, MaxSeconds = seconds, Storm = stormConfig, Economy = rules.Economy, Crash = rules.Crash, Quartermaster = rules.Quartermaster, SwapSlots = (k & 1) == 1,
+                    A = new ArenaSide { Difficulty = (BotDifficulty)Enum.Parse(typeof(BotDifficulty), proxyDiff, true) },
+                    B = new ArenaSide { Difficulty = BotDifficulty.Normal, Proxy = proxyB },
+                };
+                if (tmplId != null) pc.B.Ship = BotBuilder.FromTemplate(Hullbreach.Builder.ShipTemplates.ById(tmplId) ?? throw new ArgumentException("no template " + tmplId));
+                ArenaMatchResult r = ArenaMatch.Run(pc);
+                Console.WriteLine($"{sd,4}  {(r.FirstDamageOnBSeconds < 0 ? "never" : r.FirstDamageOnBSeconds.ToString("0.0")),9}  {r.DamageOnBAt60,7}  {r.DamageA,9}  {r.ShotsA,5}  {100.0 * r.InRangeTicks / Math.Max(1, r.Ticks),8:0}  {r.MeanRange,10:0.0}  {r.Ending}  {r.CoreHealthB:0.00}  modes " + string.Join(" ", Enumerable.Range(0, 8).Where(m => r.ModeTicksA[m] > 0).Select(m => ((BotMode)m).ToString().Substring(0, 3) + "=" + (100 * r.ModeTicksA[m] / Math.Max(1, r.Ticks)) + "%")) + " " + r.Error);
+            }
+            return 0;
+        }
         if (one != null)
         {
             var cfg = new ArenaMatchConfig
@@ -80,7 +101,7 @@ static class Program
             ArenaMatchResult r = ArenaMatch.Run(cfg);
             Console.WriteLine($"{r.LabelA} vs {r.LabelB} seed {r.Seed}: winner={r.Winner} ending={r.Ending} {r.Seconds:0.0}s " +
                 $"shots {r.ShotsA}/{r.ShotsB} dmg {r.DamageA}/{r.DamageB} core {r.CoreHealthA:0.00}/{r.CoreHealthB:0.00} " +
-                $"first shot {r.FirstShotSecondsA:0.0}/{r.FirstShotSecondsB:0.0}s blocks {r.BlocksA}/{r.BlocksB} quiet {r.LongestQuietSeconds:0.0}s err={r.Error} simMs={r.SimMs:0} botMs={r.BotMs:0}");
+                $"first shot {r.FirstShotSecondsA:0.0}/{r.FirstShotSecondsB:0.0}s blocks {r.BlocksA}/{r.BlocksB} quiet {r.LongestQuietSeconds:0.0}s inrange {100.0 * r.InRangeTicks / Math.Max(1, r.Ticks):0}% meanrange {r.MeanRange:0.0} err={r.Error} simMs={r.SimMs:0} botMs={r.BotMs:0}");
             if (trace) Console.WriteLine("modes A " + string.Join(" ", Enumerable.Range(0, 8).Select(i => ((BotMode)i) + "=" + r.ModeTicksA[i])) + " | B " + string.Join(" ", Enumerable.Range(0, 8).Select(i => ((BotMode)i) + "=" + r.ModeTicksB[i])));
             return r.Ending == ArenaEnding.Crash ? 1 : 0;
         }

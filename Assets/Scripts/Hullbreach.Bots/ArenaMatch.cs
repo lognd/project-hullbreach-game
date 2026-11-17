@@ -23,6 +23,47 @@ namespace Hullbreach.Bots
         Crash = 5,
     }
 
+    // What a proxy side flies; see ArenaSide.Proxy.
+    // frob:doc docs/reference/hullbreach-bots.md#arenamatch
+    public enum ProxyKind
+    {
+        None = 0,
+        NoFire = 1,
+        Orbit = 2,
+        Dash = 3,
+    }
+
+    // A pilot that never fires, optionally chasing a waypoint that circles the arena instead of the enemy: the stand-in
+    // for a human who keeps moving. It is a normal BotPilot underneath, so planets, edge and storm are still handled.
+    // frob:doc docs/reference/hullbreach-bots.md#arenamatch
+    public sealed class MovingProxyPilot : IShipInputSource
+    {
+        readonly BotPilot _inner;
+        readonly bool _orbit;
+        readonly float _period;
+        public BotPilot Inner => _inner;
+
+        public MovingProxyPilot(BotPilot inner, bool orbit, float period = 90f) { _inner = inner; _orbit = orbit; _period = period; }
+
+        public ShipInput Next(BotObservation obs)
+        {
+            EnemyView real = obs.Enemy;
+            if (_orbit && real.Visible && obs.Bounds.Radius > 0f)
+            {
+                // A point circling the arena centre every Period seconds (90 s: 3 units/s, Dash 30 s: 9 units/s), 45 units out.
+                float a = obs.Tick / 50f * (6.2831855f / _period);
+                float2 at = obs.Bounds.Center + 45f * new float2(math.cos(a), math.sin(a));
+                float2 vel = 45f * (6.2831855f / _period) * new float2(-math.sin(a), math.cos(a));
+                EnemyView ghost = real;
+                ghost.Position = at; ghost.CorePosition = at; ghost.Velocity = vel;
+                obs.Enemy = ghost;
+            }
+            ShipInput input = _inner.Next(obs);
+            obs.Enemy = real;
+            return new ShipInput(input.ThrustAxis, input.Steer, false);
+        }
+    }
+
     // One side of an arena match: who plays it and with what ship.
     // frob:doc docs/reference/hullbreach-bots.md#arenamatch
     public sealed class ArenaSide
@@ -38,6 +79,10 @@ namespace Hullbreach.Bots
 
         // True sends no input at all: a player who joined and never touched the controls (the idle-player probe).
         public bool Idle;
+
+        // The scripted stand-ins for a human who keeps moving (the moving-target probe): a Normal-skill pilot that never fires,
+        // either fighting normally (NoFire) or flying a slow circle round the arena (Orbit) so its path never settles.
+        public ProxyKind Proxy;
 
         public string Label => Difficulty + "/" + Personality;
     }
@@ -113,6 +158,12 @@ namespace Hullbreach.Bots
         public int BlocksA, BlocksB;
         // Ticks each ship's centre of mass spent outside a damaging ring (sudden death not counted).
         public int OutsideTicksA, OutsideTicksB;
+        // Moving-target probe: ticks the two ships were within gun range of each other (90 percent of shot speed times life),
+        // the mean range, and A's damage onto B (sum of B's block damage; storm damage included, so probe with the storm off).
+        public int InRangeTicks;
+        public float MeanRange;
+        public float FirstDamageOnBSeconds = -1f;
+        public int DamageOnBAt60;
         public string Error;
 
         // Wall time spent in ServerSimulation.Tick versus in the bots, in milliseconds.
@@ -187,8 +238,10 @@ namespace Hullbreach.Bots
 
             var pilotA = new BotPilot(BotProfile.For(config.A.Difficulty, config.A.Personality), master.Fork(1));
             var pilotB = new BotPilot(BotProfile.For(config.B.Difficulty, config.B.Personality), master.Fork(2));
-            var driverA = new BotPeer(peerA, peerB, pilotA);
-            var driverB = new BotPeer(peerB, peerA, pilotB);
+            IShipInputSource sourceA = config.A.Proxy == ProxyKind.None ? (IShipInputSource)pilotA : new MovingProxyPilot(pilotA, config.A.Proxy >= ProxyKind.Orbit, config.A.Proxy == ProxyKind.Dash ? 30f : 90f);
+            IShipInputSource sourceB = config.B.Proxy == ProxyKind.None ? (IShipInputSource)pilotB : new MovingProxyPilot(pilotB, config.B.Proxy >= ProxyKind.Orbit, config.B.Proxy == ProxyKind.Dash ? 30f : 90f);
+            var driverA = new BotPeer(peerA, peerB, sourceA);
+            var driverB = new BotPeer(peerB, peerA, sourceB);
 
             IStormSource stormSource = sim.ActiveStorm != null ? new StormZoneSource(sim.ActiveStorm) : null;
             driverA.Quartermaster = config.Quartermaster ? new BotQuartermaster(shipA) : null;
@@ -199,6 +252,10 @@ namespace Hullbreach.Bots
             int lastDamageTick = 0, longestQuiet = 0;
             int damageSignature = Signature(sim, peerA, peerB);
             uint tick = 0;
+            ProjectileSpec shotSpec = sim.Ships[peerA].Projectile;
+            float gunRange = 0.9f * shotSpec.Speed * shotSpec.LifetimeSeconds;
+            double rangeSum = 0;
+            int bDamagePrev = GridDamage(sim.Ships[peerB].Grid), bDamageCum = 0;
             for (int i = 1; i <= maxTicks; i++)
             {
                 tick = (uint)i;
@@ -229,6 +286,14 @@ namespace Hullbreach.Bots
                     else if (shot.OwnerPeer == peerB) { if (result.ShotsB++ == 0) result.FirstShotSecondsB = i / sim.TickRate; }
                 }
 
+                float range = math.distance(sim.Ships[peerA].Position, sim.Ships[peerB].Position);
+                rangeSum += range;
+                if (range < gunRange) result.InRangeTicks++;
+                int bDamage = GridDamage(sim.Ships[peerB].Grid);
+                if (bDamage > bDamagePrev) { bDamageCum += bDamage - bDamagePrev; if (result.FirstDamageOnBSeconds < 0f) result.FirstDamageOnBSeconds = i / sim.TickRate; }
+                bDamagePrev = bDamage;
+                if (i == (int)(60 * sim.TickRate)) result.DamageOnBAt60 = bDamageCum;
+
                 if (config.Trace != null && i % 100 == 0) config.Trace(TraceLine(sim, i, peerA, peerB, pilotA, pilotB));
                 int sig = Signature(sim, peerA, peerB);
                 if (sig != damageSignature) { damageSignature = sig; longestQuiet = Math.Max(longestQuiet, i - lastDamageTick); lastDamageTick = i; }
@@ -237,6 +302,7 @@ namespace Hullbreach.Bots
             }
             longestQuiet = Math.Max(longestQuiet, (int)tick - lastDamageTick);
 
+            result.MeanRange = (float)(rangeSum / Math.Max(1, tick));
             result.Ticks = (int)tick;
             result.Seconds = tick / sim.TickRate;
             result.LongestQuietSeconds = longestQuiet / sim.TickRate;
@@ -253,6 +319,13 @@ namespace Hullbreach.Bots
             result.BlocksB = ships[peerB].Grid.Count;
             result.CoreHealthA = CoreHealth(ships[peerA].Grid);
             result.CoreHealthB = CoreHealth(ships[peerB].Grid);
+        }
+
+        static int GridDamage(BlockGrid grid)
+        {
+            int sum = 0;
+            foreach (var kv in grid.All) sum += kv.Value.Damage;
+            return sum;
         }
 
         static float2 CenterOfMass(ShipBody ship) => ship.LocalToWorld(ship.Grid.Mass.CenterOfMass);

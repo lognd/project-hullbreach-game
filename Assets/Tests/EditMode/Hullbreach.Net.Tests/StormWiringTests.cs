@@ -59,6 +59,32 @@ namespace Hullbreach.Net.Tests
             Assert.That(Damage(server, 2, 0, 1), Is.InRange(19, 20), "outside the ring");
         }
 
+        // The results screen once showed "Damage dealt: 420" next to "Blocks destroyed: 0" after a storm-only match, so the
+        // stats are pinned: the ring is nobody's weapon, its damage and the blocks it destroys credit no player.
+        [Test]
+        public void StormDamage_IsNotCreditedToAnyPlayersStats()
+        {
+            var feed = new MatchEndFeed();
+            var raised = new List<MatchEndedArgs>();
+            feed.Ended += raised.Add;
+            var server = new ServerSimulation(new ServerOutbox()) { TickRate = 50f, TimeoutSeconds = 1e6f, Storm = ShortStorm(), MatchFeed = feed };
+            server.Join(1, Ship(Core(), Plain(1), Plain(2)));
+            server.Join(2, Ship(Core(), Plain(1), Plain(2)));
+            server.Ships[1].Position = new float2(-300f, 0f);   // both far outside the ring: only the storm hurts them
+            server.Ships[2].Position = new float2(300f, 0f);
+            for (int i = 0; i < 4000 && server.Match.Phase == MatchPhase.Running; i++)
+            {
+                foreach (var ship in server.Ships.Values) ship.Velocity = float2.zero;
+                server.Tick();
+            }
+            Assert.AreEqual(MatchPhase.Ended, server.Match.Phase, "sudden death ends the match");
+            Assert.AreEqual(1, raised.Count);
+            Assert.AreEqual(0, raised[0].StatsA.DamageDealt, "storm damage is not damage dealt (A)");
+            Assert.AreEqual(0, raised[0].StatsB.DamageDealt, "storm damage is not damage dealt (B)");
+            Assert.AreEqual(0, raised[0].StatsA.BlocksDestroyed);
+            Assert.AreEqual(0, raised[0].StatsB.BlocksDestroyed);
+        }
+
         [Test]
         public void LowDamage_IsNotLostToTruncation()
         {

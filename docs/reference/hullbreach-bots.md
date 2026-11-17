@@ -56,8 +56,10 @@ profile fires on a perfect solution every time. The bot sees the enemy as a dela
 |---|---|---|---|
 | reaction | 30 ticks | 14 | 9 |
 | decision interval | 18 | 9 | 5 |
-| aim error (sigma, rad) | 0.075 | 0.03 | 0.012 |
-| lead quality | 0.35 | 0.85 | 1.0 |
+| aim error (sigma, rad) | 0.06 | 0.03 | 0.012 |
+| lead quality | 0.6 | 0.85 | 1.0 |
+| pursuit gain / max closing | 0.45 / 12 | 0.3 / 8 | 0.3 / 8 |
+| well thrust share (0 = off) | 0.75 | 0 | 0 |
 | dodge skill | 0 | 0.5 | 0.9 |
 | engage range scale | 0.6 | 1 | 1 |
 | planet clearance (blocks) | 12 | 6 | 6 |
@@ -66,7 +68,10 @@ profile fires on a perfect solution every time. The bot sees the enemy as a dela
 Easy holds 0.6 of the personality's engage range (13 blocks for Balanced) so its loose aim still lands on the core,
 and keeps 12 blocks (not 6) above a planet over a 6 s coast. Its ship has two thruster pairs and cannot climb out of a
 planet's well, so a graze that is only corrected late ends with the ship landed and stuck in avoid-planet for the rest
-of the match. Normal and Hard are unchanged. See `docs/bot-balance-report.md`.
+of the match. `WellThrustShare` widens that clearance to where the planet's pull is that share of the ship's thrust.
+Normal and Hard are unchanged. The CLI has a moving-player proxy (`--proxy nofire|orbit|dash`, `--proxy-diff`) that
+reports time in gun range, first hit and damage in the first 60 s (`MovingProxyPilot` in `ArenaMatch.cs`).
+See `docs/bot-balance-report.md`.
 
 ### BotObservation
 

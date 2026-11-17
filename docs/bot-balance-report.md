@@ -179,6 +179,45 @@ Normal beat Easy only 8 of 12 (Easy too strong); a range scale of 0.45 gave 1 of
 the landing trap worse (up to 96% of ticks in avoid-planet). Next candidates: give the Easy ship one more thruster pair,
 let Easy flank slowly, or lower Easy fire discipline less than 0.7, each with its own sweep.
 
+## Update: Easy chases a moving target (planet well and pursuit)
+
+Playtest: the Easy bot (16 blocks, Balanced template, storm on) never shot a moving 27-block player in about 9 minutes
+and the match ended in a storm draw. Reproduced headlessly with a moving-player proxy (`MovingProxyPilot`, CLI
+`--proxy nofire|orbit|dash`): the proxy did NOT reproduce "never shoots" (Easy hit a moving proxy 11 to 28 s in, in range
+38 to 90% of ticks), so the in-editor failure is the same one the mirror shows, not a lack of firing logic.
+
+Root cause (trace of Mirror Easy, seed 3): an Easy ship has about 1.0 forward acceleration and the big planet (centre
+(0,-60), radius 18, mu 900) pulls about 1.0 at 30 units from its centre. Both ships chase each other down the well, fall,
+land (speed 0.4, range 5) and sit in avoid-planet for the rest of the match, shooting the planet. Easy spent 32 to 50% of
+its ticks in avoid-planet. A second cause: Easy's slow closing speed (gain 0.3, cap 8) let a moving target outrun it.
+
+Change (Easy only; Normal and Hard paths unchanged, their new profile fields keep the old values): `WellThrustShare` 0.75
+widens the planet clearance to the radius at which the planet's pull is 0.75 of the ship's forward thrust
+(`sqrt(mu / (share * accel)) - radius`), `PursuitGain` 0.45 and `PursuitMaxClosing` 12 (were 0.3 and 8), `FlankPeriod`
+12 s, `Pressure` 0.3, aim sigma 0.06 (was 0.075), lead 0.6 (was 0.35), trigger discipline 0.75.
+
+Seeds 1 to 12, 600 s, storm on, chunks of 4 (CSV kept in the PR description):
+
+| Scenario | before | after |
+|---|---|---|
+| Mirror Easy | 0 breaches, 2 draws, 10 storm | 0 breaches, 6 draws, 6 storm |
+| Normal vs Easy (Normal wins) | 10 of 12 (8 breaches) | 9 of 12 |
+| Hard vs Easy (Hard wins) | 10 of 12 (3 breaches) | 8 of 12 |
+
+Moving-proxy (nofire proxy, 120 s, no storm): first hit 12 to 19 s before, 11 to 20 s after; damage in the first 60 s
+900 to 3013 before, 350 to 2662 after (every seed above zero in both).
+
+Honest reading: the required ladder (Normal >= 7, Hard >= 8 of 12) holds, and the landed-on-the-planet trap is gone, but
+the mirror target (>= 6 of 12 core breaches, fewer storm endings) was NOT reached: 0 breaches and more draws. Mirror Easy
+needs a pursuit that is stronger than the ladder allows. The results are chaotic: nearby profiles flipped between
+Normal 6 of 12 / Hard 10 of 12 and Normal 10 of 12 / Hard 7 of 12 (n=12 is noisy, one hit changes a storm tiebreak).
+A gravity-aware lead gave 5 of 12 mirror breaches but only 5 of 12 for Hard over Easy, and a wider storm-fight range did
+not help. Next candidate: one more thruster pair for Easy, each with its own sweep.
+
+Stats note: the "Damage dealt 420 / Blocks destroyed 0" results screen came from real cannon hits spread over hull
+blocks, none destroyed. The storm path never calls the stats tally and self hits are excluded, so no code credited
+storm damage; `StormWiringTests.StormDamage_IsNotCreditedToAnyPlayersStats` pins that.
+
 ## Fight pacing (spawn separation and core hit scale)
 
 Playtest: a 60-point Balanced ship lost its core in about 20 s and the match lasted 0:55 against a Normal bot.

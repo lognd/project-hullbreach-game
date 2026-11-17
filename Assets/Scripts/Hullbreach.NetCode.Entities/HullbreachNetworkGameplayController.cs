@@ -109,6 +109,10 @@ namespace Hullbreach.NetCode.Entities
         // What the build panel shows: refusals from the server and from the local preview, and the READY state.
         public static readonly ToastQueue Toasts = new ToastQueue();
         public static bool ReadySent { get; private set; }
+
+        // Only true until the match starts: the offline bot is ready at once, so the match can start within the toast's
+        // lifetime and the line would sit under the "MATCH STARTED" banner. Removed again when the match runs.
+        public const string ReadyToast = "Ready. The match starts when your opponent is ready too.";
         public static string HoverReason { get; private set; } = string.Empty;
         // True once the server has started the match (both players ready): stock replaces the point budget.
         public static bool MatchRunning
@@ -192,7 +196,7 @@ namespace Hullbreach.NetCode.Entities
             ReadySent = true;
             RememberDesign();
             Requests.Enqueue(new BuildRequest(0, 0, 0, 0, HullbreachBuildAction.Ready));
-            Toasts.Push("Ready. The match starts when your opponent is ready too.", Time.unscaledTime);
+            Toasts.Push(ReadyToast, Time.unscaledTime);
         }
 
         // ---- starter templates and the remembered design ----
@@ -289,7 +293,7 @@ namespace Hullbreach.NetCode.Entities
             RestoreLastDesign();
             // The moment the match starts the player is at the controls: WASD must fly without a Tab first.
             bool running = MatchRunning;
-            if (running && !_wasRunning) { IsBuildMode = false; _pendingKey = null; _buildStatus = "Flight mode"; PublishStatus(); }
+            if (running && !_wasRunning) { IsBuildMode = false; _pendingKey = null; _buildStatus = "Flight mode"; Toasts.Remove(ReadyToast); PublishStatus(); }
             _wasRunning = running;
             UpdateStress();
             if (Input.GetKeyDown(KeyCode.Tab))
