@@ -78,7 +78,8 @@ namespace Hullbreach.NetCode.Entities
             _hitText.fontStyle = FontStyles.Bold;
             var hrt = _hitText.rectTransform;
             hrt.anchorMin = hrt.anchorMax = hrt.pivot = new Vector2(0.5f, 1f);
-            hrt.anchoredPosition = new Vector2(-125f, -166f);
+            // Just under the bar, clear of the planet/flight warning line (about -171 and below).
+            hrt.anchoredPosition = new Vector2(-125f, -122f);
             hrt.sizeDelta = new Vector2(230f, 40f);
             _canvas.enabled = false;
         }

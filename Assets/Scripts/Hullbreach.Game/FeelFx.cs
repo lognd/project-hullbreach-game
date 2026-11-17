@@ -308,7 +308,7 @@ namespace Hullbreach.Game
                 }
             }
             var tt = GetText();
-            tt.position = pos + Vector2.up * 0.6f + Vector2.right * num.OffsetX;
+            tt.position = pos + Vector2.up * 0.6f + Vector2.right * num.OffsetX + Vector2.up * num.OffsetY;
             var tm = tt.GetComponent<TextMesh>();
             tm.text = FeelModel.DamageText(num.Sum, num.Destroyed);
             tm.color = onPlayer ? new Color(1f, 0.4f, 0.35f) : new Color(1f, 0.95f, 0.5f);

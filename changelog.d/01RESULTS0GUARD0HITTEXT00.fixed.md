@@ -1,0 +1,1 @@
+Results buttons ignore input for 1 s after the results screen appears, so holding fire when your core breaks no longer presses REMATCH and skips the results. CORE HIT text sits just under the core bar clear of the planet warning, and simultaneous damage numbers are staggered vertically.

@@ -106,5 +106,14 @@ namespace Hullbreach.Match.Tests
             Assert.That(feed.Raise(Ended(1)), Is.EqualTo(0));
             Assert.That(view.Shown, Is.Null);
         }
+
+        [Test]
+        public void InputGuard_BlocksButtonsRightAfterShow()
+        {
+            Assert.That(ResultsFlow.InputAllowed(10f, 10f), Is.False);
+            Assert.That(ResultsFlow.InputAllowed(10f, 10.9f), Is.False);
+            Assert.That(ResultsFlow.InputAllowed(10f, 11f), Is.True);
+            Assert.That(ResultsFlow.InputAllowed(10f, 20f), Is.True);
+        }
     }
 }

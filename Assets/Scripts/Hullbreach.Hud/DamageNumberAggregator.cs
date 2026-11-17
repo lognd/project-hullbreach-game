@@ -18,6 +18,8 @@ namespace Hullbreach.Hud
         public const float SpreadWindow = 0.4f;
         // Horizontal step between fanned-out numbers (world units).
         public const float SpreadStep = 0.7f;
+        // Vertical stagger per simultaneous number (cycles over 3 rows).
+        public const float StaggerY = 0.45f;
 
         // 0, +1, -1, +2, -2 steps, repeating.
         static readonly int[] Pattern = { 0, 1, -1, 2, -2 };
@@ -37,9 +39,11 @@ namespace Hullbreach.Hud
             public readonly bool Destroyed;
             // Horizontal offset to apply to a new number (0 when merged).
             public readonly float OffsetX;
+            // Small vertical stagger so numbers fanned out sideways do not overlap their neighbours' digits.
+            public readonly float OffsetY;
 
-            public Result(int id, bool merged, float sum, bool destroyed, float offsetX)
-            { Id = id; Merged = merged; Sum = sum; Destroyed = destroyed; OffsetX = offsetX; }
+            public Result(int id, bool merged, float sum, bool destroyed, float offsetX, float offsetY = 0f)
+            { Id = id; Merged = merged; Sum = sum; Destroyed = destroyed; OffsetX = offsetX; OffsetY = offsetY; }
         }
 
         readonly List<Entry> _live = new List<Entry>(16);
@@ -81,7 +85,7 @@ namespace Hullbreach.Hud
             float offset = Pattern[together % Pattern.Length] * SpreadStep;
             var n = new Entry { Id = _nextId++, X = x, Y = y, Sum = damage, Born = now, Last = now, Destroyed = destroyed };
             _live.Add(n);
-            return new Result(n.Id, false, damage, destroyed, offset);
+            return new Result(n.Id, false, damage, destroyed, offset, (together % 3) * StaggerY);
         }
 
         void Prune(float now)

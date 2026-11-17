@@ -94,5 +94,17 @@ namespace Hullbreach.Hud.Tests
             a.Clear();
             Assert.AreEqual(0, a.LiveCount);
         }
+
+        [Test]
+        public void SimultaneousNumbers_AreStaggeredVertically()
+        {
+            var a = new DamageNumberAggregator();
+            var first = a.Add(0f, 0f, 20f, false, 0f);
+            var second = a.Add(10f, 0f, 20f, false, 0.05f);
+            var third = a.Add(20f, 0f, 20f, false, 0.1f);
+            Assert.AreEqual(0f, first.OffsetY);
+            Assert.AreEqual(DamageNumberAggregator.StaggerY, second.OffsetY, 1e-4f);
+            Assert.AreEqual(2f * DamageNumberAggregator.StaggerY, third.OffsetY, 1e-4f);
+        }
     }
 }
